@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '0.6.1';
+const APP_VERSION = '0.6.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',

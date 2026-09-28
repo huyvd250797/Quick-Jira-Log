@@ -7,7 +7,7 @@
 - ✅ V0.4.0 – Bulk Logwork & Flexible Filters
 - ✅ V0.5.0 – Jira Reliability & Audit
 - ✅ V0.6.0 – Daily Worklog Planner & Validation
-- ✅ V0.6.1 – Jira Auth/Permission Compatibility Fix
+- ✅ V0.6.2 – Worklog Timezone & Exhaustive Guard Fix
 - ⏭️ V0.7.0 – Mobile PWA & Quick Actions
 - V0.8.0 – Worklog History & Correction
 - V0.9.0 – Production Hardening

@@ -4,7 +4,7 @@ const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../l
 const { getSession, clearSessionCookie } = require('../lib/session');
 const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog } = require('../lib/jira');
 const { parseTimeSpent, schedule, jiraStarted, displaySegments, validateScheduledSegments } = require('../lib/scheduler');
-const { loadOccupiedRanges } = require('../lib/worklog-guard');
+const { loadOccupiedRanges, loadOccupiedRangesStable } = require('../lib/worklog-guard');
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
@@ -69,7 +69,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Guard lần 1: phải nhìn thấy toàn bộ worklog hiện tại trước khi bắt đầu.
-    const initialGuard = await loadOccupiedRanges(date, [key], me, session);
+    const initialGuard = await loadOccupiedRangesStable(date, [key], me, session);
     try {
       const initialPlan = schedule(minutes, initialGuard.occupied);
       validateScheduledSegments(initialPlan, initialGuard.occupied);

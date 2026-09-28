@@ -5,7 +5,7 @@ const { getSession, clearSessionCookie } = require('../lib/session');
 const { JiraError, getMyself } = require('../lib/jira');
 const { displaySegments, availableSlots, hhmmToMinute } = require('../lib/scheduler');
 const { WORK_WINDOWS } = require('../lib/config');
-const { loadOccupiedRanges } = require('../lib/worklog-guard');
+const { loadOccupiedRanges, loadOccupiedRangesStable } = require('../lib/worklog-guard');
 
 function minutesInsideWorkWindows(ranges) {
   let total = 0;
@@ -33,7 +33,7 @@ module.exports = async function handler(req, res) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return sendJson(res, 400, { ok: false, error: 'Ngày planner không hợp lệ.' });
 
     const me = await getMyself(session);
-    const guard = await loadOccupiedRanges(date, key ? [key] : [], me, session);
+    const guard = await loadOccupiedRangesStable(date, key ? [key] : [], me, session);
     const occupiedRaw = guard.occupied.map(r => ({ ...r, minutes: r.end - r.start }));
     const freeRaw = availableSlots(guard.occupied).map(r => ({ ...r, minutes: r.end - r.start }));
     const occupiedMinutes = minutesInsideWorkWindows(guard.occupied);

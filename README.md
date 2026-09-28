@@ -1,4 +1,4 @@
-# Quick Jira Log V0.6.1 – Jira Auth/Permission Compatibility Fix
+# Quick Jira Log V0.6.2 – Worklog Timezone & Exhaustive Guard Fix
 
 Web app cá nhân để đăng nhập Jira bằng ID/Password và log work nhanh với 5 trường:
 
@@ -19,7 +19,7 @@ App chỉ được phép tạo worklog trong:
 
 Tổng tối đa 8 giờ/ngày. App tự chia worklog khi đi qua giờ nghỉ trưa.
 
-## V0.6.1 có gì mới
+## V0.6.2 có gì mới
 
 ### Daily Worklog Planner & Validation
 
@@ -69,7 +69,7 @@ Nếu một TimeSpent phải chia thành nhiều segment, trước mỗi segment
 
 ## Lưu ý Jira
 
-API `/worklog/updated` của Jira Data Center có thể không trả worklog được cập nhật trong khoảng một phút gần nhất. V0.6.1 bù khoảng này bằng việc đọc các issue vừa cập nhật và đọc worklog trực tiếp trên issue trước khi tạo.
+API `/worklog/updated` của Jira Data Center có thể không trả worklog được cập nhật trong khoảng một phút gần nhất. V0.6.2 bù khoảng này bằng việc đọc các issue vừa cập nhật và đọc worklog trực tiếp trên issue trước khi tạo.
 
 ## Environment Variable
 
@@ -91,13 +91,22 @@ openssl rand -hex 32
 npm test
 ```
 
-Version `V0.6.1` được hiển thị ở Header và Footer.
+Version `V0.6.2` được hiển thị ở Header và Footer.
 
 
-## V0.6.1 – Fix 401/403 compatibility
+## V0.6.2 – Fix 401/403 compatibility
 
 - Chỉ HTTP `401` mới được xem là phiên Jira hết hạn và xóa session.
 - HTTP `403` được giữ đúng nghĩa là endpoint/quyền không khả dụng, không tự logout.
 - `/rest/api/2/worklog/updated` và `/rest/api/2/worklog/list` là nguồn bổ trợ: nếu Jira chặn `403`, app tự fallback sang JQL + worklog theo issue.
 - Search JQL thử GET fallback kể cả khi POST search trả `403`.
 - Issue đến từ nguồn bổ trợ mà không đọc được worklog sẽ không làm hỏng phiên; riêng target issue hoặc issue mà JQL xác nhận user đã log trong ngày vẫn fail-closed để bảo vệ khỏi trùng giờ.
+
+
+## V0.6.2 – Worklog Timezone & Exhaustive Guard Fix
+
+- Sửa lỗi đọc `started` bằng cách cắt chuỗi giờ. Mọi timestamp Jira giờ được quy đổi về `Asia/Ho_Chi_Minh` trước khi xác định ngày/giờ bận.
+- JQL `worklogDate` quét ngày liền trước + ngày chọn + ngày liền sau để bù khác biệt timezone server của Jira Data Center.
+- Thêm nguồn `worklogAuthor=currentUser()` không phụ thuộc worklogDate cho các issue được làm gần đây.
+- Với ngày hiện tại, guard quét 2 lần cách nhau 1.2 giây và hợp nhất occupied ranges để giảm rủi ro index delay ngay sau khi log tay trên Jira.
+- Vẫn đọc worklog thật của từng issue và chỉ sau đó mới lọc đúng author + ngày + giờ.

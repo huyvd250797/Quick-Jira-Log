@@ -5,7 +5,7 @@ const { getSession, clearSessionCookie } = require('../lib/session');
 const { BULK_MAX_ITEMS } = require('../lib/config');
 const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog } = require('../lib/jira');
 const { parseTimeSpent, schedule, jiraStarted, displaySegments, validateScheduledSegments } = require('../lib/scheduler');
-const { loadOccupiedRanges } = require('../lib/worklog-guard');
+const { loadOccupiedRanges, loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { planBulkItems } = require('../lib/bulk');
 
 function validDate(value) {
@@ -85,7 +85,7 @@ module.exports = async function handler(req, res) {
     if (verified.some(item => !item.description)) throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
 
     const targetKeys = verified.map(item => item.key);
-    const initialGuard = await loadOccupiedRanges(date, targetKeys, me, session);
+    const initialGuard = await loadOccupiedRangesStable(date, targetKeys, me, session);
     try { planBulkItems(verified, initialGuard.occupied); }
     catch (error) { throw planningError(error, error.bulkItem || verified[0]); }
 
