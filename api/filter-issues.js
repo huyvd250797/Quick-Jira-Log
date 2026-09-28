@@ -18,7 +18,15 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 400, { ok: false, error: 'Hãy chọn một Jira Filter trước khi tải issue.' });
     }
 
-    const filter = await getFilter(filterId, session);
+    // Không để lỗi đọc metadata filter chặn việc chạy filter. Một số Jira Server/Data Center
+    // cho phép chạy `filter = ID` nhưng endpoint /filter/{id}?expand=jql lại lỗi hoặc thiếu expand.
+    let filter = { id: filterId, name: `Filter ${filterId}` };
+    try {
+      const metadata = await getFilter(filterId, session);
+      if (metadata?.id) filter = metadata;
+    } catch (error) {
+      if (error?.status === 401) throw error;
+    }
     const result = await searchFilterIssues(filter, session, FILTER_MAX_ISSUES);
     const issues = result.issues.map(issue => ({
       id: issue?.id || '',

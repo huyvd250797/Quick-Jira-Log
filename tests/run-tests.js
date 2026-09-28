@@ -51,7 +51,7 @@ assert.throws(() => validateScheduledSegments([{ start: 510, end: 570, minutes: 
 assert.throws(() => validateScheduledSegments([{ start: 720, end: 780, minutes: 60 }], []), /SEGMENT_OUTSIDE_WORK_WINDOWS/);
 
 
-// V0.4.0 - Bulk phải dùng chung occupied timeline, item sau không được đè item trước.
+// V0.5.0 - Bulk vẫn phải dùng chung occupied timeline, item sau không được đè item trước.
 const bulkPlan = planBulkItems([
   { key: 'A-1', minutes: 120 },
   { key: 'B-2', minutes: 120 }
@@ -68,3 +68,15 @@ assert.throws(() => planBulkItems([
   { key: 'B-2', minutes: 240 },
   { key: 'C-3', minutes: 30 }
 ], []), /NOT_ENOUGH_TIME/);
+
+
+// V0.5.0 - nhận diện author không phân biệt hoa/thường và có username alias.
+const normalizedCaseInsensitive = normalizeExistingWorklogs([
+  { author: { name: 'huyvo' }, started: '2026-09-28T08:00:00.000+0700', timeSpentSeconds: 3600 },
+  { author: { name: 'HUYVO' }, started: '2026-09-28T09:00:00.000+0700', timeSpentSeconds: 1800 }
+], '2026-09-28', { name: 'HuyVo', username: 'HuyVo' });
+assert.deepStrictEqual(normalizedCaseInsensitive, [{ start: 480, end: 570 }]);
+assert.deepStrictEqual(displaySegments(schedule(60, normalizedCaseInsensitive)), [
+  { start: '09:30', end: '10:30', minutes: 60 }
+]);
+console.log('V0.5.0 reliability tests passed.');

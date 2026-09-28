@@ -1,11 +1,12 @@
 'use strict';
 
-const APP_VERSION = '0.4.0';
+const APP_VERSION = '0.5.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
   templates: 'quick-jira-log:templates:v1',
-  lastLog: 'quick-jira-log:last-log:v1'
+  lastLog: 'quick-jira-log:last-log:v1',
+  audit: 'quick-jira-log:audit:v1'
 };
 
 const $ = id => document.getElementById(id);
@@ -28,7 +29,8 @@ const state = {
   prefs: { lastProject: '', lastTimeSpent: '', selectedFilterId: '' },
   recentIssues: [],
   templates: [],
-  lastLog: null
+  lastLog: null,
+  auditHistory: []
 };
 
 function todayLocal() {
@@ -79,6 +81,8 @@ function loadQuickData() {
   state.templates = Array.isArray(templates) ? templates.filter(t => t?.id && t?.name && typeof t?.content === 'string').slice(0, 30) : [];
   const lastLog = readStorage(STORAGE.lastLog, null);
   state.lastLog = lastLog && typeof lastLog === 'object' ? lastLog : null;
+  const audit = readStorage(STORAGE.audit, []);
+  state.auditHistory = Array.isArray(audit) ? audit.slice(0, 40) : [];
 }
 
 function savePrefs() {
@@ -453,6 +457,7 @@ function applyTemplateById(id) {
   $('templateSelect').value = id;
   $('description').value = expandTemplate(template.content);
   showToast(`Đã áp dụng mẫu “${template.name}”.`);
+  closeSettings();
   $('description').focus();
 }
 
@@ -531,6 +536,76 @@ function hydrateQuickInputs() {
   $('repeatLastBtn').classList.toggle('hidden', !state.lastLog?.key);
   renderRecentIssues();
   renderTemplates();
+  renderAuditHistory();
+}
+
+function openSettings() {
+  const overlay = $('settingsOverlay');
+  overlay.classList.remove('hidden');
+  overlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('settings-open');
+  $('auditDate').value = $('date').value || todayLocal();
+  $('auditKey').value = $('key').value.trim().toUpperCase();
+  renderTemplates();
+  renderAuditHistory();
+}
+
+function closeSettings() {
+  const overlay = $('settingsOverlay');
+  overlay.classList.add('hidden');
+  overlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('settings-open');
+}
+
+function addAuditEntry(entry) {
+  state.auditHistory = [{
+    id: `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    at: new Date().toISOString(),
+    ...entry
+  }, ...state.auditHistory].slice(0, 40);
+  writeStorage(STORAGE.audit, state.auditHistory);
+  renderAuditHistory();
+}
+
+function renderAuditHistory() {
+  const wrap = $('auditHistory');
+  if (!wrap) return;
+  if (!state.auditHistory.length) {
+    wrap.innerHTML = '<div class="template-empty">Chưa có lịch sử thao tác trên thiết bị này.</div>';
+    return;
+  }
+  wrap.innerHTML = state.auditHistory.slice(0, 20).map(item => {
+    const when = item.at ? new Date(item.at).toLocaleString('vi-VN') : '';
+    const status = item.ok ? '✓' : '×';
+    const segments = Array.isArray(item.segments) && item.segments.length
+      ? item.segments.map(s => `${escapeHtml(s.start)}–${escapeHtml(s.end)}`).join(', ')
+      : '';
+    return `<div class="audit-history-item ${item.ok ? 'ok' : 'bad'}">
+      <div><strong>${status} ${escapeHtml(item.key || item.type || 'Logwork')}</strong><small>${escapeHtml(when)}</small></div>
+      <span>${escapeHtml(item.message || segments || '')}</span>
+    </div>`;
+  }).join('');
+}
+
+async function runDayAudit() {
+  const date = $('auditDate').value || todayLocal();
+  const key = $('auditKey').value.trim().toUpperCase();
+  const btn = $('runAuditBtn');
+  const out = $('auditResult');
+  btn.disabled = true;
+  btn.textContent = 'ĐANG KIỂM TRA...';
+  out.classList.remove('hidden');
+  out.innerHTML = 'Đang đọc worklog trực tiếp từ Jira...';
+  try {
+    const data = await api(`/api/day-audit?date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
+    out.innerHTML = `<div class="audit-summary"><strong>${escapeHtml(date)}</strong><span>Đã kiểm tra ${data.checkedIssues} issue · ${data.checkedWorklogs} worklog</span></div>
+      ${data.occupied?.length ? data.occupied.map(s => `<div class="segment"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('') : '<div class="template-empty">Không thấy worklog của bạn trong ngày này.</div>'}`;
+  } catch (error) {
+    out.innerHTML = `<div class="error-text audit-error">${escapeHtml(error.message)}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'KIỂM TRA GIỜ ĐÃ LOG';
+  }
 }
 
 
@@ -683,6 +758,7 @@ async function submitBulkWorklog(event) {
       setLastLog({ ...last, date }, (data.items || []).find(x => x.key === last.key)?.summary || last.description);
     }
     renderBulkSuccess(data);
+    addAuditEntry({ ok: true, type: 'Bulk', key: `${data.items.length} issue`, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: (data.items || []).flatMap(x => x.segments || []) });
     showToast(`Đã log ${data.items.length} issue lên Jira.`);
     state.bulkSelectedKeys.clear();
     state.bulkDrafts.clear();
@@ -696,6 +772,7 @@ async function submitBulkWorklog(event) {
     result.className = 'result error';
     result.innerHTML = `<h3>Bulk Logwork chưa thành công</h3><div class="meta">${escapeHtml(error.message)}</div>`;
     result.classList.remove('hidden');
+    addAuditEntry({ ok: false, type: 'Bulk', message: error.message });
     showToast(error.message);
   } finally {
     btn.disabled = false;
@@ -841,6 +918,22 @@ $('saveTemplateBtn').addEventListener('click', () => {
   }
 });
 
+
+$('settingsBtn').addEventListener('click', openSettings);
+$('closeSettingsBtn').addEventListener('click', closeSettings);
+document.querySelectorAll('[data-close-settings]').forEach(el => el.addEventListener('click', closeSettings));
+$('runAuditBtn').addEventListener('click', runDayAudit);
+$('clearAuditHistoryBtn').addEventListener('click', () => {
+  if (!state.auditHistory.length) return;
+  if (!confirm('Xóa toàn bộ lịch sử thao tác trên thiết bị này?')) return;
+  state.auditHistory = [];
+  writeStorage(STORAGE.audit, state.auditHistory);
+  renderAuditHistory();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !$('settingsOverlay').classList.contains('hidden')) closeSettings();
+});
+
 $('worklogForm').addEventListener('submit', async event => {
   event.preventDefault();
   const btn = $('logBtn');
@@ -873,6 +966,7 @@ $('worklogForm').addEventListener('submit', async event => {
     `;
     result.classList.remove('hidden');
     $('resultRepeatBtn').addEventListener('click', applyLastLog);
+    addAuditEntry({ ok: true, key: data.issue.key, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: data.segments });
     showToast('Đã log work lên Jira.');
     $('key').select();
     setTimeout(() => loadFilterIssues({ quiet: true }), 1200);
@@ -881,6 +975,7 @@ $('worklogForm').addEventListener('submit', async event => {
     result.className = 'result error';
     result.innerHTML = `<h3>Logwork chưa thành công</h3><div class="meta">${escapeHtml(error.message)}</div>`;
     result.classList.remove('hidden');
+    addAuditEntry({ ok: false, key: $('key').value.trim().toUpperCase(), message: error.message });
     showToast(error.message);
   } finally {
     btn.disabled = false;

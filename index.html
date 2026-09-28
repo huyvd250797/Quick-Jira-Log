@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <meta name="theme-color" content="#101827" />
-  <title>Quick Jira Log · V0.4.0</title>
+  <title>Quick Jira Log · V0.5.0</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -12,7 +12,7 @@
     <section class="brand">
       <div class="brand-icon">QJ</div>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.4.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.5.0</span></div>
         <p>Chọn KEY, nhập thời lượng, còn giờ logwork để app tự xử lý.</p>
       </div>
     </section>
@@ -22,7 +22,10 @@
         <span class="dot"></span>
         <div><strong>Jira đã đăng nhập</strong><small id="userLabel"></small></div>
       </div>
-      <button id="logoutBtn" class="text-btn">Đăng xuất</button>
+      <div class="status-actions">
+        <button id="settingsBtn" class="icon-btn compact-icon" type="button" aria-label="Cài đặt" title="Cài đặt">⚙</button>
+        <button id="logoutBtn" class="text-btn">Đăng xuất</button>
+      </div>
     </section>
 
     <section id="loginCard" class="card">
@@ -123,34 +126,62 @@
           <textarea id="description" rows="4" placeholder="Mô tả công việc đã thực hiện..." required></textarea>
         </label>
 
-        <div class="template-quick">
-          <select id="templateSelect" aria-label="Chọn mẫu Description">
-            <option value="">Mẫu Description...</option>
-          </select>
-          <button id="applyTemplateBtn" class="soft-btn" type="button">Dùng mẫu</button>
-          <button id="saveCurrentTemplateBtn" class="soft-btn" type="button">+ Lưu mẫu</button>
-        </div>
-
-        <details id="templateManager" class="template-manager">
-          <summary>Quản lý mẫu Description</summary>
-          <div class="template-manager-body">
-            <div class="grid-2">
-              <label>Tên mẫu<input id="templateName" placeholder="VD: Fix bug" maxlength="60" /></label>
-              <div class="template-helper">Có thể dùng biến <code>{summary}</code>, <code>{key}</code>, <code>{project}</code>, <code>{date}</code>.</div>
-            </div>
-            <label>Nội dung mẫu<textarea id="templateContent" rows="3" placeholder="VD: {summary}"></textarea></label>
-            <button id="saveTemplateBtn" class="secondary" type="button">LƯU MẪU</button>
-            <div id="templateList" class="template-list"></div>
-          </div>
-        </details>
+        <div class="form-compact-note">Mẫu Description và Audit đã được chuyển vào ⚙ Cài đặt để giao diện gọn hơn.</div>
 
         <button id="logBtn" class="primary" type="submit">LOG WORK</button>
       </form>
       <div class="hint">App luôn đọc worklog của chính bạn trước khi tạo: không log trùng giờ và không vượt ngoài 08:00–12:00 / 13:30–17:30. KEY hợp lệ vẫn tự lấy Summary làm Description.</div>
     </section>
 
+    <div id="settingsOverlay" class="settings-overlay hidden" aria-hidden="true">
+      <div class="settings-backdrop" data-close-settings></div>
+      <section class="settings-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="settings-head">
+          <div><h2 id="settingsTitle">Cài đặt & Audit</h2><p>Template Description · kiểm tra giờ Jira · lịch sử thao tác</p></div>
+          <button id="closeSettingsBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
+        </div>
+
+        <div class="settings-section">
+          <h3>Mẫu Description</h3>
+          <div class="template-quick settings-template-quick">
+            <select id="templateSelect" aria-label="Chọn mẫu Description"><option value="">Chọn mẫu...</option></select>
+            <button id="applyTemplateBtn" class="soft-btn" type="button">Dùng mẫu</button>
+            <button id="saveCurrentTemplateBtn" class="soft-btn" type="button">+ Lưu Description hiện tại</button>
+          </div>
+          <details id="templateManager" class="template-manager">
+            <summary>Quản lý mẫu</summary>
+            <div class="template-manager-body">
+              <div class="grid-2">
+                <label>Tên mẫu<input id="templateName" placeholder="VD: Fix bug" maxlength="60" /></label>
+                <div class="template-helper">Biến hỗ trợ <code>{summary}</code>, <code>{key}</code>, <code>{project}</code>, <code>{date}</code>.</div>
+              </div>
+              <label>Nội dung mẫu<textarea id="templateContent" rows="3" placeholder="VD: {summary}"></textarea></label>
+              <button id="saveTemplateBtn" class="secondary" type="button">LƯU MẪU</button>
+              <div id="templateList" class="template-list"></div>
+            </div>
+          </details>
+        </div>
+
+        <div class="settings-section">
+          <h3>Jira Worklog Audit</h3>
+          <p class="settings-help">Đọc trực tiếp Jira để xem các khoảng giờ app đang coi là đã bận trước khi log.</p>
+          <div class="audit-fields">
+            <label>Ngày<input id="auditDate" type="date" /></label>
+            <label>KEY (không bắt buộc)<input id="auditKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
+          </div>
+          <button id="runAuditBtn" class="secondary" type="button">KIỂM TRA GIỜ ĐÃ LOG</button>
+          <div id="auditResult" class="audit-result hidden"></div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title"><h3>Lịch sử thao tác</h3><button id="clearAuditHistoryBtn" class="text-btn" type="button">Xóa lịch sử</button></div>
+          <div id="auditHistory" class="audit-history"></div>
+        </div>
+      </section>
+    </div>
+
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 0.4.0</footer>
+    <footer class="app-footer">Quick Jira Log · Version 0.5.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

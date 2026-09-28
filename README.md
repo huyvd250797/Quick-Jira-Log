@@ -1,109 +1,81 @@
-# Quick Jira Log V0.4.0 – Bulk Logwork & Flexible Filters
+# Quick Jira Log V0.5.0 – Jira Reliability & Audit
 
-Web app cá nhân để logwork nhanh vào `https://task.ascvn.com.vn` từ mobile/desktop.
-
-## Điểm mới V0.4.0
-
-### 1. Bulk Logwork
-- Bật **Chọn nhiều** tại danh sách issue của Jira Filter.
-- Chọn tối đa 20 issue.
-- Mỗi issue có `TimeSpent` và `Description` riêng; Description mặc định lấy từ Summary.
-- Chọn một `Date` chung cho batch.
-- Backend đọc worklog đã có và tự xếp các issue lần lượt vào thời gian còn trống.
-- Issue sau không bao giờ được xếp đè issue trước trong cùng batch.
-- Trước khi tạo từng issue, backend đọc worklog Jira lại để giảm tối đa rủi ro trùng giờ khi dữ liệu vừa thay đổi.
-- Chỉ log trong:
-  - `08:00–12:00`
-  - `13:30–17:30`
-- Nếu giữa batch xảy ra lỗi, app cố rollback các worklog vừa tạo của batch.
-
-### 2. Flexible Jira Filters
-- Không còn hard-code `[HuyVo] - No Work Logged`.
-- Sau khi login, app tải danh sách Jira Filter của tài khoản.
-- Có dropdown chuyển filter ngay trong app.
-- Nhớ filter dùng gần nhất trên thiết bị.
-- Có nút tải lại danh sách filter và nút refresh issue riêng.
-- Backend ưu tiên `filter/my`; nếu Jira phiên bản cũ không hỗ trợ sẽ fallback qua filter search/Favourite.
-
-### 3. Mobile zoom lock
-- Viewport khóa `maximum-scale=1` và `user-scalable=no`.
-- Chặn gesture zoom trên Safari/iOS.
-- Form control dùng font-size 16px ở mobile để iPhone không tự zoom khi focus input.
+Web app cá nhân để logwork nhanh vào Jira `https://task.ascvn.com.vn`.
 
 ## Luồng sử dụng
 
-1. Đăng nhập bằng `ID Jira + Password`.
-2. Chọn Jira Filter muốn dùng.
-3. Có 2 cách:
-   - **Log đơn:** chạm issue → nhập TimeSpent/Date → Log Work.
-   - **Bulk:** bấm `Chọn nhiều` → chọn issue → `Tiếp tục` → nhập TimeSpent từng issue → `LOG BULK`.
+1. Đăng nhập bằng ID + Password Jira.
+2. Chọn Jira Filter của tài khoản hoặc nhập KEY trực tiếp.
+3. KEY hợp lệ tự lấy PROJECT + Summary; Description mặc định = Summary.
+4. Nhập TimeSpent + Date.
+5. App tự xếp giờ trong đúng 2 khung:
+   - 08:00–12:00
+   - 13:30–17:30
+6. App luôn né worklog đã tồn tại của chính tài khoản.
 
-## Quy tắc xếp giờ
+## V0.5.0 có gì mới
 
-App chỉ sử dụng 2 khung giờ:
+### Reliability Guard
+- Sửa nhận diện author Jira không phân biệt hoa/thường (`HuyVo`, `huyvo`, `HUYVO` đều được coi là cùng user khi khớp identity).
+- Bổ sung username trong session làm identity alias.
+- Search issue có worklog theo ngày được phân trang.
+- Trước từng segment tạo worklog, app đọc Jira lại và tính slot lại.
+- Nếu phát hiện overlap/out-of-window hoặc không đủ giờ thì dừng và rollback worklog vừa tạo trong request.
+- Bulk Logwork dùng cùng cơ chế live guard.
 
-```text
-08:00–12:00
-13:30–17:30
-```
+Ví dụ Jira đã có:
+- 08:00–09:00
+- 09:00–09:30
 
-Ví dụ ngày đã có:
+Nhập thêm `1h` thì slot đầu tiên phải là:
+- 09:30–10:30
 
-```text
-08:00–09:00  đã log
-10:00–11:00  đã log
-```
+### Filter compatibility
+- Không còn phụ thuộc bắt buộc vào `GET /filter/{id}?expand=jql` để chạy filter.
+- Search issue thử POST `/rest/api/2/search`; nếu Jira cũ không hỗ trợ phù hợp sẽ fallback GET search.
+- Có thể chạy trực tiếp `filter = <ID>`; nếu metadata có JQL thì có thêm fallback JQL.
 
-Bulk gồm:
+### Settings & Audit
+- Description Template được chuyển khỏi form chính vào nút ⚙ Settings.
+- Có Jira Worklog Audit:
+  - chọn Date;
+  - KEY tùy chọn;
+  - đọc Jira trực tiếp;
+  - hiển thị các khoảng giờ mà app đang coi là đã bận.
+- Lưu lịch sử thành công/thất bại cục bộ trên thiết bị.
 
-```text
-TASK-A  2h
-TASK-B  2h
-```
+## Cấu hình Vercel
 
-Có thể được xếp:
-
-```text
-TASK-A
-09:00–10:00  1h
-11:00–12:00  1h
-
-TASK-B
-13:30–15:30  2h
-```
-
-## Deploy Vercel
-
-Environment Variables:
+Thêm Environment Variable:
 
 ```env
-APP_SESSION_SECRET=<chuỗi ngẫu nhiên tối thiểu 32 ký tự>
+APP_SESSION_SECRET=<random-secret-toi-thieu-32-ky-tu>
 SESSION_MAX_AGE_SECONDS=43200
 ```
 
-Tạo secret ví dụ:
+Có thể tạo secret:
 
 ```bash
 openssl rand -hex 32
 ```
 
-Không cần cấu hình Jira URL trong UI; app dùng cố định:
+Sau đó deploy source lên Vercel.
 
-```text
-https://task.ascvn.com.vn
-```
-
-## Bảo mật
-
-- Password Jira không lưu `localStorage`.
-- Jira auth/session được mã hóa trong HttpOnly cookie.
-- Request thay đổi dữ liệu kiểm tra same-origin.
-- Backend chỉ gọi Jira từ server-side.
-
-## Kiểm tra source
+## Test
 
 ```bash
 npm test
 ```
 
-Test bao gồm parser TimeSpent, khung giờ làm việc, chống overlap và xếp lịch tuần tự cho Bulk Logwork.
+Test bao gồm case quan trọng:
+
+```text
+08:00–09:00 đã có
+09:00–09:30 đã có
+TimeSpent mới: 1h
+=> 09:30–10:30
+```
+
+## Version
+
+`V0.5.0` hiển thị tại Header và Footer.

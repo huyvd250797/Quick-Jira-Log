@@ -3,22 +3,9 @@
 const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
 const { BULK_MAX_ITEMS } = require('../lib/config');
-const {
-  JiraError,
-  getMyself,
-  getIssue,
-  searchIssuesWorkedOnDate,
-  getIssueWorklogs,
-  createWorklog,
-  deleteWorklog
-} = require('../lib/jira');
-const {
-  parseTimeSpent,
-  normalizeExistingWorklogs,
-  jiraStarted,
-  displaySegments,
-  mergeRanges
-} = require('../lib/scheduler');
+const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog } = require('../lib/jira');
+const { parseTimeSpent, schedule, jiraStarted, displaySegments, validateScheduledSegments } = require('../lib/scheduler');
+const { loadOccupiedRanges } = require('../lib/worklog-guard');
 const { planBulkItems } = require('../lib/bulk');
 
 function validDate(value) {
@@ -27,18 +14,6 @@ function validDate(value) {
 
 function fmtMinutes(minutes) {
   return `${Math.floor(minutes / 60)}h${minutes % 60 ? `${minutes % 60}m` : ''}`;
-}
-
-async function loadOccupiedRanges(date, targetKeys, me, session) {
-  const searchedKeys = await searchIssuesWorkedOnDate(date, session);
-  const issueKeys = [...new Set([...(searchedKeys || []), ...(targetKeys || [])].filter(Boolean))];
-  const worklogLists = await Promise.all(issueKeys.map(async issueKey => {
-    try { return await getIssueWorklogs(issueKey, session); }
-    catch (error) {
-      throw new JiraError(`Không kiểm tra đầy đủ worklog của ${issueKey}; tạm dừng để tránh log trùng thời gian.`, error.status || 502);
-    }
-  }));
-  return mergeRanges(normalizeExistingWorklogs(worklogLists.flat(), date, me));
 }
 
 function normalizeItems(rawItems) {
@@ -107,39 +82,44 @@ module.exports = async function handler(req, res) {
       return { ...item, summary, description: item.description || summary };
     });
 
-    if (verified.some(item => !item.description)) {
-      throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
-    }
+    if (verified.some(item => !item.description)) throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
 
     const targetKeys = verified.map(item => item.key);
+    const initialGuard = await loadOccupiedRanges(date, targetKeys, me, session);
+    try { planBulkItems(verified, initialGuard.occupied); }
+    catch (error) { throw planningError(error, error.bulkItem || verified[0]); }
 
-    // Guard lần 1 để preview/kiểm tra khả năng xếp lịch.
-    let occupied = await loadOccupiedRanges(date, targetKeys, me, session);
-    try { planBulkItems(verified, occupied); }
-    catch (error) {
-      throw planningError(error, error.bulkItem || verified[0]);
-    }
-
-    // Khi tạo thật, đọc lại occupied trước TỪNG issue. Issue sau vì thế luôn thấy
-    // worklog vừa tạo của issue trước, đồng thời cũng né các worklog mới xuất hiện từ bên ngoài.
     const created = [];
     const actualPlans = [];
     try {
       for (const item of verified) {
-        const liveOccupied = await loadOccupiedRanges(date, targetKeys, me, session);
-        let livePlan;
-        try { livePlan = planBulkItems([item], liveOccupied).plans[0]; }
-        catch (error) { throw planningError(error, error.bulkItem || item); }
+        let remaining = item.minutes;
+        const itemSegments = [];
 
-        for (const segment of livePlan.segments) {
+        while (remaining > 0) {
+          // Guard lại Jira trước từng segment để né cả worklog vừa phát sinh từ bên ngoài.
+          const liveGuard = await loadOccupiedRanges(date, targetKeys, me, session);
+          let livePlan;
+          try {
+            livePlan = schedule(remaining, liveGuard.occupied);
+            validateScheduledSegments(livePlan, liveGuard.occupied);
+          } catch (error) {
+            throw planningError(error, item);
+          }
+
+          const segment = livePlan[0];
+          if (!segment) throw new JiraError(`Không tìm được khoảng giờ hợp lệ cho ${item.key}.`, 409);
           const worklog = await createWorklog(item.key, {
             started: jiraStarted(date, segment.start),
             seconds: segment.minutes * 60,
             description: item.description
           }, session);
           created.push({ key: item.key, id: worklog?.id, segment });
+          itemSegments.push(segment);
+          remaining -= segment.minutes;
         }
-        actualPlans.push(livePlan);
+
+        actualPlans.push({ ...item, segments: itemSegments });
       }
     } catch (error) {
       await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(x.key, x.id, session)));
@@ -150,6 +130,11 @@ module.exports = async function handler(req, res) {
       ok: true,
       date,
       totalMinutes: verified.reduce((sum, item) => sum + item.minutes, 0),
+      audit: {
+        checkedIssues: initialGuard.issueKeys.length,
+        checkedWorklogs: initialGuard.checkedWorklogs,
+        occupiedBefore: displaySegments(initialGuard.occupied.map(r => ({ ...r, minutes: r.end - r.start })))
+      },
       items: actualPlans.map(item => ({
         key: item.key,
         project: item.project,

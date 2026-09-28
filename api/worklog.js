@@ -2,42 +2,32 @@
 
 const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
-const {
-  JiraError,
-  getMyself,
-  getIssue,
-  searchIssuesWorkedOnDate,
-  getIssueWorklogs,
-  createWorklog,
-  deleteWorklog
-} = require('../lib/jira');
-const {
-  parseTimeSpent,
-  normalizeExistingWorklogs,
-  schedule,
-  jiraStarted,
-  displaySegments,
-  mergeRanges,
-  validateScheduledSegments
-} = require('../lib/scheduler');
+const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog } = require('../lib/jira');
+const { parseTimeSpent, schedule, jiraStarted, displaySegments, validateScheduledSegments } = require('../lib/scheduler');
+const { loadOccupiedRanges } = require('../lib/worklog-guard');
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
 }
 
-async function loadOccupiedRanges(date, targetKey, me, session) {
-  const searchedKeys = await searchIssuesWorkedOnDate(date, session);
-  // Luôn đọc cả issue đang chuẩn bị log, kể cả khi Jira JQL chưa index worklog mới nhất.
-  const issueKeys = [...new Set([...(searchedKeys || []), targetKey].filter(Boolean))];
-  const worklogLists = await Promise.all(issueKeys.map(async issueKey => {
-    try { return await getIssueWorklogs(issueKey, session); }
-    catch (error) {
-      // Target issue phải đọc được; issue khác lỗi tạm thời thì không âm thầm bỏ qua vì có thể gây trùng giờ.
-      if (issueKey === targetKey) throw error;
-      throw new JiraError(`Không kiểm tra đầy đủ worklog của ${issueKey}; tạm dừng để tránh log trùng thời gian.`, error.status || 502);
-    }
-  }));
-  return mergeRanges(normalizeExistingWorklogs(worklogLists.flat(), date, me));
+function fmtMinutes(minutes) {
+  return `${Math.floor(minutes / 60)}h${minutes % 60 ? `${minutes % 60}m` : ''}`;
+}
+
+function planningResponse(res, error) {
+  if (error.message === 'NOT_ENOUGH_TIME') {
+    return sendJson(res, 409, {
+      ok: false,
+      error: `Không đủ thời gian trống trong 2 khung giờ làm việc. Còn ${fmtMinutes(error.availableMinutes)}, cần ${fmtMinutes(error.requiredMinutes)}.`
+    });
+  }
+  if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') {
+    return sendJson(res, 409, { ok: false, error: 'Hệ thống phát hiện giờ log nằm ngoài 08:00–12:00 hoặc 13:30–17:30 nên đã chặn thao tác.' });
+  }
+  if (error.message === 'SEGMENT_OVERLAP') {
+    return sendJson(res, 409, { ok: false, error: 'Hệ thống phát hiện khoảng giờ bị trùng worklog hiện có nên đã chặn thao tác.' });
+  }
+  return null;
 }
 
 module.exports = async function handler(req, res) {
@@ -78,44 +68,55 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 400, { ok: false, error: `Issue ${key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${project}.` });
     }
 
-    // Đọc worklog sát thời điểm tạo để tránh xếp đè dữ liệu đã có.
-    const existing = await loadOccupiedRanges(date, key, me, session);
-
-    let segments;
+    // Guard lần 1: phải nhìn thấy toàn bộ worklog hiện tại trước khi bắt đầu.
+    const initialGuard = await loadOccupiedRanges(date, [key], me, session);
     try {
-      segments = schedule(minutes, existing);
-      validateScheduledSegments(segments, existing);
-    }
-    catch (error) {
-      if (error.message === 'NOT_ENOUGH_TIME') {
-        const fmt = m => `${Math.floor(m / 60)}h${m % 60 ? `${m % 60}m` : ''}`;
-        return sendJson(res, 409, {
-          ok: false,
-          error: `Không đủ thời gian trống trong 2 khung giờ làm việc. Còn ${fmt(error.availableMinutes)}, cần ${fmt(error.requiredMinutes)}.`
-        });
-      }
-      if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') {
-        return sendJson(res, 409, { ok: false, error: 'Hệ thống phát hiện giờ log nằm ngoài 08:00–12:00 hoặc 13:30–17:30 nên đã chặn thao tác.' });
-      }
-      if (error.message === 'SEGMENT_OVERLAP') {
-        return sendJson(res, 409, { ok: false, error: 'Hệ thống phát hiện khoảng giờ bị trùng worklog hiện có nên đã chặn thao tác.' });
-      }
+      const initialPlan = schedule(minutes, initialGuard.occupied);
+      validateScheduledSegments(initialPlan, initialGuard.occupied);
+    } catch (error) {
+      const response = planningResponse(res, error);
+      if (response) return response;
       throw error;
     }
 
+    // Reliability guard: trước TỪNG segment đều đọc Jira lại và tính slot lại.
+    // Nhờ vậy nếu 08:00–09:00 / 09:00–09:30 đã tồn tại hoặc vừa được tạo từ nơi khác,
+    // segment mới sẽ tự né thay vì tiếp tục dùng kế hoạch cũ.
+    let remaining = minutes;
     const created = [];
+    const actualSegments = [];
     try {
-      for (const seg of segments) {
+      while (remaining > 0) {
+        const liveGuard = await loadOccupiedRanges(date, [key], me, session);
+        let livePlan;
+        try {
+          livePlan = schedule(remaining, liveGuard.occupied);
+          validateScheduledSegments(livePlan, liveGuard.occupied);
+        } catch (error) {
+          const mapped = planningResponse(res, error);
+          if (mapped) {
+            // Response đã được gửi, rollback trước khi thoát bằng sentinel.
+            const sent = new Error('RESPONSE_ALREADY_SENT');
+            sent.responseAlreadySent = true;
+            throw sent;
+          }
+          throw error;
+        }
+
+        const seg = livePlan[0];
+        if (!seg) throw new JiraError('Không tìm được khoảng giờ hợp lệ để logwork.', 409);
         const worklog = await createWorklog(key, {
           started: jiraStarted(date, seg.start),
           seconds: seg.minutes * 60,
           description
         }, session);
         created.push({ id: worklog?.id, segment: seg });
+        actualSegments.push(seg);
+        remaining -= seg.minutes;
       }
     } catch (error) {
-      // Best effort rollback để tránh log nửa chừng khi một đoạn phía sau lỗi.
       await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(key, x.id, session)));
+      if (error.responseAlreadySent) return;
       throw error;
     }
 
@@ -125,12 +126,17 @@ module.exports = async function handler(req, res) {
       project,
       date,
       totalMinutes: minutes,
-      segments: displaySegments(segments)
+      segments: displaySegments(actualSegments),
+      audit: {
+        checkedIssues: initialGuard.issueKeys.length,
+        checkedWorklogs: initialGuard.checkedWorklogs,
+        occupiedBefore: displaySegments(initialGuard.occupied.map(r => ({ ...r, minutes: r.end - r.start })))
+      }
     });
   } catch (error) {
     if (error instanceof JiraError) {
       if (error.status === 401) res.setHeader('Set-Cookie', clearSessionCookie());
-      return sendJson(res, error.status || 500, { ok: false, error: error.message });
+      return sendJson(res, error.status || 500, { ok: false, error: error.message, details: error.details || undefined });
     }
     return sendJson(res, 500, { ok: false, error: 'Logwork thất bại. Vui lòng thử lại.' });
   }
