@@ -4,16 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#101827" />
-  <title>Quick Jira Log</title>
+  <title>Quick Jira Log · V0.3.0</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <main class="shell">
     <section class="brand">
       <div class="brand-icon">QJ</div>
-      <div>
-        <h1>Quick Jira Log</h1>
-        <p>Chọn KEY từ filter hoặc nhập tay. Giờ logwork để app tự xử lý.</p>
+      <div class="brand-copy">
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.3.0</span></div>
+        <p>Chọn KEY, nhập thời lượng, còn giờ logwork để app tự xử lý.</p>
       </div>
     </section>
 
@@ -47,27 +47,74 @@
       <div id="filterError" class="filter-state error-text hidden"></div>
       <div id="filterEmpty" class="filter-state hidden">Không có issue phù hợp trong filter.</div>
       <div id="filterIssueList" class="issue-list hidden"></div>
-      <div class="hint filter-hint">Chạm vào một issue để tự điền KEY và PROJECT xuống form Log Work.</div>
+      <div class="hint filter-hint">Chạm vào issue để tự điền KEY, PROJECT và Description theo Summary.</div>
     </section>
 
     <section id="worklogCard" class="card hidden">
       <div class="card-title"><span class="step">3</span><div><h2>Logwork nhanh</h2><p>08:00–12:00 · 13:30–17:30</p></div></div>
+
+      <div id="quickInputPanel" class="quick-panel">
+        <div class="quick-panel-head">
+          <div><strong>Nhập nhanh</strong><small>Recent KEY · Quick Repeat · Time preset</small></div>
+          <button id="repeatLastBtn" class="soft-btn hidden" type="button">↻ Lặp lại gần nhất</button>
+        </div>
+        <div id="recentWrap" class="quick-section hidden">
+          <span class="quick-label">KEY gần đây</span>
+          <div id="recentIssues" class="chip-row"></div>
+        </div>
+      </div>
+
       <form id="worklogForm">
         <div class="grid-2">
           <label>KEY<input id="key" placeholder="HIUCR-123" autocapitalize="characters" autocomplete="off" required /><small id="issueLookupState" class="field-help"></small></label>
           <label>PROJECT<input id="project" placeholder="HIUCR" autocapitalize="characters" required /></label>
         </div>
         <div class="grid-2">
-          <label>TimeSpent<input id="timeSpent" placeholder="2h30m" inputmode="text" required /></label>
+          <label>
+            TimeSpent
+            <input id="timeSpent" placeholder="2h30m" inputmode="text" required />
+            <span class="preset-row" aria-label="TimeSpent nhanh">
+              <button type="button" class="preset-btn" data-time="30m">30m</button>
+              <button type="button" class="preset-btn" data-time="1h">1h</button>
+              <button type="button" class="preset-btn" data-time="2h">2h</button>
+              <button type="button" class="preset-btn" data-time="4h">4h</button>
+            </span>
+          </label>
           <label>Date<input id="date" type="date" required /></label>
         </div>
-        <label>Description<textarea id="description" rows="4" placeholder="Mô tả công việc đã thực hiện..." required></textarea></label>
+
+        <label>Description
+          <textarea id="description" rows="4" placeholder="Mô tả công việc đã thực hiện..." required></textarea>
+        </label>
+
+        <div class="template-quick">
+          <select id="templateSelect" aria-label="Chọn mẫu Description">
+            <option value="">Mẫu Description...</option>
+          </select>
+          <button id="applyTemplateBtn" class="soft-btn" type="button">Dùng mẫu</button>
+          <button id="saveCurrentTemplateBtn" class="soft-btn" type="button">+ Lưu mẫu</button>
+        </div>
+
+        <details id="templateManager" class="template-manager">
+          <summary>Quản lý mẫu Description</summary>
+          <div class="template-manager-body">
+            <div class="grid-2">
+              <label>Tên mẫu<input id="templateName" placeholder="VD: Fix bug" maxlength="60" /></label>
+              <div class="template-helper">Có thể dùng biến <code>{summary}</code>, <code>{key}</code>, <code>{project}</code>, <code>{date}</code>.</div>
+            </div>
+            <label>Nội dung mẫu<textarea id="templateContent" rows="3" placeholder="VD: {summary}"></textarea></label>
+            <button id="saveTemplateBtn" class="secondary" type="button">LƯU MẪU</button>
+            <div id="templateList" class="template-list"></div>
+          </div>
+        </details>
+
         <button id="logBtn" class="primary" type="submit">LOG WORK</button>
       </form>
-      <div class="hint">App luôn kiểm tra worklog của chính bạn trước khi tạo: không log trùng giờ và không bao giờ vượt ngoài 08:00–12:00 / 13:30–17:30. Description tự lấy theo Summary khi chọn/nhập KEY hợp lệ.</div>
+      <div class="hint">App luôn đọc worklog của chính bạn trước khi tạo: không log trùng giờ và không vượt ngoài 08:00–12:00 / 13:30–17:30. KEY hợp lệ vẫn tự lấy Summary làm Description.</div>
     </section>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
+    <footer class="app-footer">Quick Jira Log · Version 0.3.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

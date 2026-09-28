@@ -1,92 +1,64 @@
-# Quick Jira Log V0.2.1
+# Quick Jira Log V0.3.0 – Quick Input & Templates
 
-Web app cá nhân để lấy KEY từ Jira Filter và logwork nhanh vào `https://task.ascvn.com.vn` mà không cần mở Jira.
+Web app cá nhân để logwork nhanh lên Jira `https://task.ascvn.com.vn`.
 
-## Flow sử dụng
+## Luồng sử dụng
 
-1. Đăng nhập bằng **ID Jira + Password**.
-2. App tự tải saved filter **`[HuyVo] - No Work Logged`**.
-3. Tìm hoặc chạm issue cần log → app tự điền **KEY + PROJECT**.
-4. Nhập **TimeSpent / Date / Description** rồi bấm **LOG WORK**.
+1. Đăng nhập bằng ID + Password Jira.
+2. Chọn KEY từ filter `[HuyVo] - No Work Logged` hoặc nhập KEY bằng tay.
+3. App tự lấy PROJECT + Summary và điền Description.
+4. Chọn TimeSpent bằng preset hoặc nhập tay.
+5. Chọn Date, chỉnh Description nếu cần.
+6. Bấm `LOG WORK`.
+7. Backend tự né worklog đã tồn tại và chỉ xếp giờ trong:
+   - 08:00–12:00
+   - 13:30–17:30
 
-Bạn vẫn có thể nhập KEY/PROJECT bằng tay nếu cần.
+## Mới trong V0.3.0
 
-## Jira Filter Quick Pick
+- Hiển thị version rõ ngay trên giao diện.
+- Preset TimeSpent: `30m`, `1h`, `2h`, `4h`.
+- Nhớ TimeSpent gần nhất.
+- Nhớ PROJECT gần nhất.
+- Recent KEY: lưu tối đa 8 issue log gần đây trên thiết bị.
+- Quick Repeat: nạp lại issue/time/description của lần log gần nhất, ngày tự chuyển về hôm nay.
+- Description Templates:
+  - lưu Description hiện tại thành mẫu;
+  - áp dụng nhanh từ dropdown;
+  - quản lý/xóa mẫu;
+  - tối đa 30 mẫu.
+- Template hỗ trợ biến:
+  - `{summary}`
+  - `{key}`
+  - `{project}`
+  - `{date}`
 
-Backend thử lấy filter theo thứ tự:
+Dữ liệu Quick Input/Template chỉ lưu trong `localStorage` của trình duyệt hiện tại. Password Jira không được lưu ở đây.
 
-1. `/rest/api/2/filter/favourite` – nhanh và tương thích tốt với Jira Server/Data Center.
-2. Nếu không có trong Favourite, thử `/rest/api/2/filter/search?filterName=...` trên Jira version có hỗ trợ.
-3. Chạy saved filter bằng JQL `filter = <FILTER_ID>` và lấy tối đa 500 issue.
+## Cấu hình Vercel
 
-Danh sách hiển thị KEY, Summary, Project, Status, Issue Type và Priority. Chạm issue sẽ tự đưa KEY/PROJECT xuống form.
-
-Sau khi logwork thành công app tự refresh filter nền vì `[HuyVo] - No Work Logged` có thể thay đổi sau khi Jira cập nhật worklog.
-
-## Quy tắc tự xếp giờ
-
-- Ca sáng: `08:00 - 12:00`
-- Ca chiều: `13:30 - 17:30`
-- Tối đa: `8h/ngày`
-- Đọc worklog hiện có của chính tài khoản để tránh chồng giờ.
-- Ưu tiên giờ trống sớm nhất.
-- Tự chia thành nhiều worklog nếu đi qua giờ nghỉ trưa hoặc gặp worklog đã có.
-
-## Xác thực Jira
-
-App thử:
-
-1. Jira REST session `/rest/auth/1/session`.
-2. Fallback HTTP Basic Auth.
-
-Thông tin xác thực được mã hóa AES-256-GCM trong **HttpOnly + Secure cookie**. Password không nằm trong localStorage/frontend.
-
-## Deploy Vercel
-
-Environment variable bắt buộc:
+Biến môi trường bắt buộc:
 
 ```env
 APP_SESSION_SECRET=<chuỗi ngẫu nhiên tối thiểu 32 ký tự>
 ```
 
-Tạo nhanh:
+Jira URL đã được cấu hình cố định trong app: `https://task.ascvn.com.vn`.
 
-```bash
-openssl rand -hex 32
-```
+## Bảo vệ worklog
 
-Tùy chọn:
+Logic V0.2.1 tiếp tục được giữ nguyên:
 
-```env
-SESSION_MAX_AGE_SECONDS=43200
-```
-
-Jira URL và tên filter đã cố định trong `lib/config.js`:
-
-```js
-JIRA_BASE_URL = 'https://task.ascvn.com.vn'
-JIRA_FILTER_NAME = '[HuyVo] - No Work Logged'
-```
-
-Nếu sau này đổi tên filter chỉ cần đổi `JIRA_FILTER_NAME` rồi redeploy.
-
-## Cấu trúc mới V0.2.1
-
-- `api/filter-issues.js`: tìm saved filter + lấy issue list.
-- `lib/jira.js`: bổ sung favourite filter, filter search và paginated issue search.
-- `app.js`: auto-load filter, search local, chọn KEY/PROJECT, refresh sau logwork.
+- đọc worklog của chính user trong ngày trước khi tạo;
+- không xếp trùng thời gian;
+- không log trước 08:00;
+- không log trong 12:00–13:30;
+- không log sau 17:30;
+- tự chia segment nếu TimeSpent đi qua giờ nghỉ trưa hoặc gặp khoảng đã có worklog;
+- validate segment lần cuối trước khi POST lên Jira.
 
 ## Test
 
 ```bash
 npm test
 ```
-
-
-## V0.2.1 - Worklog Guard & Summary Autofill
-
-- Không xếp worklog trùng với bất kỳ worklog hiện có của chính tài khoản trong ngày.
-- Chỉ tạo worklog trong 08:00–12:00 và 13:30–17:30.
-- Luôn đọc lại worklog từ Jira trước khi tính lịch.
-- Chọn issue từ `[HuyVo] - No Work Logged` sẽ tự điền KEY, PROJECT và Description = Summary.
-- Nhập KEY Jira hợp lệ bằng tay sẽ tự đọc Summary/Project và điền vào form.
