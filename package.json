@@ -1,0 +1,9 @@
+{
+  "name": "quick-jira-log",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node tests/run-tests.js"
+  }
+}

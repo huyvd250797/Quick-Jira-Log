@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#101827" />
+  <title>Quick Jira Log</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <section class="brand">
+      <div class="brand-icon">QJ</div>
+      <div>
+        <h1>Quick Jira Log</h1>
+        <p>Nhập 5 trường. Giờ logwork để app tự xử lý.</p>
+      </div>
+    </section>
+
+    <section id="statusCard" class="status-card hidden">
+      <div class="status-left">
+        <span class="dot"></span>
+        <div><strong>Jira đã đăng nhập</strong><small id="userLabel"></small></div>
+      </div>
+      <button id="logoutBtn" class="text-btn">Đăng xuất</button>
+    </section>
+
+    <section id="loginCard" class="card">
+      <div class="card-title"><span class="step">1</span><div><h2>Đăng nhập Jira</h2><p>Chỉ cần ID và mật khẩu.</p></div></div>
+      <form id="loginForm" autocomplete="on">
+        <label>ID Jira<input id="username" name="username" autocomplete="username" autocapitalize="none" required /></label>
+        <label>Mật khẩu<input id="password" name="password" type="password" autocomplete="current-password" required /></label>
+        <button id="loginBtn" class="primary" type="submit">ĐĂNG NHẬP</button>
+      </form>
+    </section>
+
+    <section id="worklogCard" class="card hidden">
+      <div class="card-title"><span class="step">2</span><div><h2>Logwork nhanh</h2><p>08:00–12:00 · 13:30–17:30</p></div></div>
+      <form id="worklogForm">
+        <div class="grid-2">
+          <label>KEY<input id="key" placeholder="HIUCR-123" autocapitalize="characters" required /></label>
+          <label>PROJECT<input id="project" placeholder="HIUCR" autocapitalize="characters" required /></label>
+        </div>
+        <div class="grid-2">
+          <label>TimeSpent<input id="timeSpent" placeholder="2h30m" inputmode="text" required /></label>
+          <label>Date<input id="date" type="date" required /></label>
+        </div>
+        <label>Description<textarea id="description" rows="4" placeholder="Mô tả công việc đã thực hiện..." required></textarea></label>
+        <button id="logBtn" class="primary" type="submit">LOG WORK</button>
+      </form>
+      <div class="hint">App tự tìm giờ trống của bạn trong ngày, tránh trùng worklog và tự tách qua giờ nghỉ trưa khi cần.</div>
+    </section>
+
+    <section id="resultCard" class="result hidden" aria-live="polite"></section>
+    <div id="toast" class="toast hidden" role="status"></div>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>

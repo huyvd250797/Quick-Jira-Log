@@ -1,0 +1,54 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --text: #172033;
+  --muted: #6d778b;
+  --line: #e5eaf2;
+  --primary: #1769e0;
+  --primary2: #0b57c4;
+  --ok: #1e9e61;
+  --danger: #d83a52;
+  --shadow: 0 14px 38px rgba(17, 33, 61, .08);
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; min-height: 100vh; font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); background: radial-gradient(circle at top right, #e7f0ff 0, transparent 30%), var(--bg); }
+button, input, textarea { font: inherit; }
+button { touch-action: manipulation; }
+.shell { width: min(100%, 620px); margin: 0 auto; padding: max(24px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom)); }
+.brand { display: flex; align-items: center; gap: 14px; padding: 8px 4px 22px; }
+.brand-icon { width: 52px; height: 52px; border-radius: 17px; display: grid; place-items: center; font-weight: 900; color: #fff; background: linear-gradient(145deg, #1c75f0, #104ca9); box-shadow: 0 12px 24px rgba(23,105,224,.25); }
+h1, h2, p { margin: 0; }
+h1 { font-size: 24px; letter-spacing: -.5px; }
+.brand p, .card-title p { color: var(--muted); margin-top: 4px; font-size: 13px; }
+.card, .status-card, .result { background: var(--card); border: 1px solid rgba(229,234,242,.9); border-radius: 22px; box-shadow: var(--shadow); }
+.card { padding: 20px; margin-bottom: 16px; }
+.card-title { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; }
+.card-title h2 { font-size: 18px; }
+.step { width: 34px; height: 34px; border-radius: 11px; background: #eaf2ff; color: var(--primary); display: grid; place-items: center; font-weight: 900; }
+form { display: grid; gap: 14px; }
+label { display: grid; gap: 7px; font-size: 12px; font-weight: 800; color: #3c465b; letter-spacing: .2px; }
+input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; color: var(--text); background: #fbfcfe; outline: none; transition: border-color .18s, box-shadow .18s, background .18s; }
+input:focus, textarea:focus { border-color: #8bb8f3; background: #fff; box-shadow: 0 0 0 4px rgba(23,105,224,.09); }
+textarea { resize: vertical; min-height: 104px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.primary { border: 0; min-height: 48px; border-radius: 15px; padding: 13px 18px; color: #fff; background: linear-gradient(180deg, var(--primary), var(--primary2)); font-weight: 900; letter-spacing: .3px; box-shadow: 0 10px 24px rgba(23,105,224,.22); cursor: pointer; }
+.primary:disabled { opacity: .58; cursor: wait; }
+.hint { margin-top: 14px; padding: 12px 13px; border-radius: 14px; background: #f6f8fc; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.status-card { margin-bottom: 16px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.status-left { display: flex; align-items: center; gap: 10px; }
+.status-left div { display: grid; gap: 2px; }
+.status-left small { color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 5px rgba(30,158,97,.12); }
+.text-btn { border: 0; background: transparent; color: var(--primary); font-weight: 800; cursor: pointer; padding: 8px; }
+.result { padding: 18px; margin-top: 2px; }
+.result.ok { border-color: rgba(30,158,97,.2); }
+.result.error { border-color: rgba(216,58,82,.22); }
+.result h3 { margin: 0 0 10px; font-size: 18px; }
+.result .meta { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+.segment { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-top: 1px solid var(--line); font-weight: 800; }
+.segment span:last-child { color: var(--primary); }
+.toast { position: fixed; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(calc(100% - 32px), 520px); padding: 13px 15px; border-radius: 14px; background: #101827; color: #fff; font-size: 13px; box-shadow: 0 16px 38px rgba(0,0,0,.2); z-index: 20; }
+.hidden { display: none !important; }
+@media (max-width: 480px) { .grid-2 { grid-template-columns: 1fr; } .card { padding: 17px; border-radius: 19px; } .shell { padding-left: 12px; padding-right: 12px; } h1 { font-size: 22px; } }
