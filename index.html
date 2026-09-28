@@ -13,7 +13,7 @@
       <div class="brand-icon">QJ</div>
       <div>
         <h1>Quick Jira Log</h1>
-        <p>Nhập 5 trường. Giờ logwork để app tự xử lý.</p>
+        <p>Chọn KEY từ filter hoặc nhập tay. Giờ logwork để app tự xử lý.</p>
       </div>
     </section>
 
@@ -34,8 +34,24 @@
       </form>
     </section>
 
+    <section id="filterCard" class="card hidden">
+      <div class="filter-heading">
+        <div class="card-title compact-title"><span class="step">2</span><div><h2>KEY từ Jira Filter</h2><p id="filterName">[HuyVo] - No Work Logged</p></div></div>
+        <button id="refreshFilterBtn" class="icon-btn" type="button" aria-label="Tải lại filter" title="Tải lại filter">↻</button>
+      </div>
+      <div class="filter-tools">
+        <div class="search-wrap"><span class="search-icon">⌕</span><input id="filterIssueSearch" type="search" placeholder="Tìm KEY hoặc nội dung..." autocomplete="off" /></div>
+        <span id="filterCount" class="count-pill">0</span>
+      </div>
+      <div id="filterLoading" class="filter-state">Đang tải danh sách issue...</div>
+      <div id="filterError" class="filter-state error-text hidden"></div>
+      <div id="filterEmpty" class="filter-state hidden">Không có issue phù hợp trong filter.</div>
+      <div id="filterIssueList" class="issue-list hidden"></div>
+      <div class="hint filter-hint">Chạm vào một issue để tự điền KEY và PROJECT xuống form Log Work.</div>
+    </section>
+
     <section id="worklogCard" class="card hidden">
-      <div class="card-title"><span class="step">2</span><div><h2>Logwork nhanh</h2><p>08:00–12:00 · 13:30–17:30</p></div></div>
+      <div class="card-title"><span class="step">3</span><div><h2>Logwork nhanh</h2><p>08:00–12:00 · 13:30–17:30</p></div></div>
       <form id="worklogForm">
         <div class="grid-2">
           <label>KEY<input id="key" placeholder="HIUCR-123" autocapitalize="characters" required /></label>
