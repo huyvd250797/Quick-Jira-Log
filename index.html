@@ -2,9 +2,9 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <meta name="theme-color" content="#101827" />
-  <title>Quick Jira Log · V0.3.0</title>
+  <title>Quick Jira Log · V0.4.0</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -12,7 +12,7 @@
     <section class="brand">
       <div class="brand-icon">QJ</div>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.3.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.4.0</span></div>
         <p>Chọn KEY, nhập thời lượng, còn giờ logwork để app tự xử lý.</p>
       </div>
     </section>
@@ -36,18 +36,54 @@
 
     <section id="filterCard" class="card hidden">
       <div class="filter-heading">
-        <div class="card-title compact-title"><span class="step">2</span><div><h2>KEY từ Jira Filter</h2><p id="filterName">[HuyVo] - No Work Logged</p></div></div>
-        <button id="refreshFilterBtn" class="icon-btn" type="button" aria-label="Tải lại filter" title="Tải lại filter">↻</button>
+        <div class="card-title compact-title"><span class="step">2</span><div><h2>KEY từ Jira Filter</h2><p id="filterName">Chọn Jira Filter</p></div></div>
+        <div class="filter-head-actions">
+          <button id="bulkModeBtn" class="soft-btn" type="button">Chọn nhiều</button>
+          <button id="refreshFilterBtn" class="icon-btn" type="button" aria-label="Tải lại issue" title="Tải lại issue">↻</button>
+        </div>
       </div>
+
+      <div class="filter-selector-row">
+        <label class="filter-select-label">Jira Filter
+          <select id="filterSelect" aria-label="Chọn Jira Filter"><option value="">Đang tải filter...</option></select>
+        </label>
+        <button id="refreshFilterListBtn" class="soft-btn filter-list-refresh" type="button">↻ Danh sách</button>
+      </div>
+
       <div class="filter-tools">
         <div class="search-wrap"><span class="search-icon">⌕</span><input id="filterIssueSearch" type="search" placeholder="Tìm KEY hoặc nội dung..." autocomplete="off" /></div>
         <span id="filterCount" class="count-pill">0</span>
       </div>
+
+      <div id="bulkSelectionBar" class="bulk-selection-bar hidden">
+        <div><strong id="bulkSelectedCount">0 issue</strong><small>đã chọn cho Bulk Logwork</small></div>
+        <div class="bulk-selection-actions">
+          <button id="selectVisibleBtn" type="button" class="soft-btn">Chọn đang hiện</button>
+          <button id="openBulkBtn" type="button" class="primary small-primary">Tiếp tục</button>
+        </div>
+      </div>
+
       <div id="filterLoading" class="filter-state">Đang tải danh sách issue...</div>
       <div id="filterError" class="filter-state error-text hidden"></div>
       <div id="filterEmpty" class="filter-state hidden">Không có issue phù hợp trong filter.</div>
       <div id="filterIssueList" class="issue-list hidden"></div>
-      <div class="hint filter-hint">Chạm vào issue để tự điền KEY, PROJECT và Description theo Summary.</div>
+      <div class="hint filter-hint">Chọn filter Jira bất kỳ của bạn. Chạm issue để log đơn, hoặc bật “Chọn nhiều” để tạo Bulk Logwork.</div>
+    </section>
+
+    <section id="bulkCard" class="card hidden">
+      <div class="card-title bulk-title"><span class="step">3</span><div><h2>Bulk Logwork</h2><p>Nhiều KEY · cùng một ngày · tự né toàn bộ giờ đã log</p></div></div>
+      <form id="bulkForm">
+        <label>Ngày Bulk Logwork<input id="bulkDate" type="date" required /></label>
+        <div id="bulkItems" class="bulk-items"></div>
+        <div class="bulk-summary">
+          <span>Tổng yêu cầu</span><strong id="bulkTotal">0m</strong>
+        </div>
+        <div class="bulk-actions">
+          <button id="cancelBulkBtn" type="button" class="secondary">HỦY</button>
+          <button id="bulkLogBtn" type="submit" class="primary">LOG BULK</button>
+        </div>
+      </form>
+      <div class="hint">App xếp lần lượt theo thứ tự đã chọn. Issue sau chỉ dùng phần thời gian còn trống sau issue trước. Mọi đoạn đều bị giới hạn trong 08:00–12:00 / 13:30–17:30.</div>
     </section>
 
     <section id="worklogCard" class="card hidden">
@@ -114,7 +150,7 @@
     </section>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 0.3.0</footer>
+    <footer class="app-footer">Quick Jira Log · Version 0.4.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

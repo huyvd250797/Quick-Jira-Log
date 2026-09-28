@@ -1,64 +1,109 @@
-# Quick Jira Log V0.3.0 – Quick Input & Templates
+# Quick Jira Log V0.4.0 – Bulk Logwork & Flexible Filters
 
-Web app cá nhân để logwork nhanh lên Jira `https://task.ascvn.com.vn`.
+Web app cá nhân để logwork nhanh vào `https://task.ascvn.com.vn` từ mobile/desktop.
+
+## Điểm mới V0.4.0
+
+### 1. Bulk Logwork
+- Bật **Chọn nhiều** tại danh sách issue của Jira Filter.
+- Chọn tối đa 20 issue.
+- Mỗi issue có `TimeSpent` và `Description` riêng; Description mặc định lấy từ Summary.
+- Chọn một `Date` chung cho batch.
+- Backend đọc worklog đã có và tự xếp các issue lần lượt vào thời gian còn trống.
+- Issue sau không bao giờ được xếp đè issue trước trong cùng batch.
+- Trước khi tạo từng issue, backend đọc worklog Jira lại để giảm tối đa rủi ro trùng giờ khi dữ liệu vừa thay đổi.
+- Chỉ log trong:
+  - `08:00–12:00`
+  - `13:30–17:30`
+- Nếu giữa batch xảy ra lỗi, app cố rollback các worklog vừa tạo của batch.
+
+### 2. Flexible Jira Filters
+- Không còn hard-code `[HuyVo] - No Work Logged`.
+- Sau khi login, app tải danh sách Jira Filter của tài khoản.
+- Có dropdown chuyển filter ngay trong app.
+- Nhớ filter dùng gần nhất trên thiết bị.
+- Có nút tải lại danh sách filter và nút refresh issue riêng.
+- Backend ưu tiên `filter/my`; nếu Jira phiên bản cũ không hỗ trợ sẽ fallback qua filter search/Favourite.
+
+### 3. Mobile zoom lock
+- Viewport khóa `maximum-scale=1` và `user-scalable=no`.
+- Chặn gesture zoom trên Safari/iOS.
+- Form control dùng font-size 16px ở mobile để iPhone không tự zoom khi focus input.
 
 ## Luồng sử dụng
 
-1. Đăng nhập bằng ID + Password Jira.
-2. Chọn KEY từ filter `[HuyVo] - No Work Logged` hoặc nhập KEY bằng tay.
-3. App tự lấy PROJECT + Summary và điền Description.
-4. Chọn TimeSpent bằng preset hoặc nhập tay.
-5. Chọn Date, chỉnh Description nếu cần.
-6. Bấm `LOG WORK`.
-7. Backend tự né worklog đã tồn tại và chỉ xếp giờ trong:
-   - 08:00–12:00
-   - 13:30–17:30
+1. Đăng nhập bằng `ID Jira + Password`.
+2. Chọn Jira Filter muốn dùng.
+3. Có 2 cách:
+   - **Log đơn:** chạm issue → nhập TimeSpent/Date → Log Work.
+   - **Bulk:** bấm `Chọn nhiều` → chọn issue → `Tiếp tục` → nhập TimeSpent từng issue → `LOG BULK`.
 
-## Mới trong V0.3.0
+## Quy tắc xếp giờ
 
-- Hiển thị version rõ ngay trên giao diện.
-- Preset TimeSpent: `30m`, `1h`, `2h`, `4h`.
-- Nhớ TimeSpent gần nhất.
-- Nhớ PROJECT gần nhất.
-- Recent KEY: lưu tối đa 8 issue log gần đây trên thiết bị.
-- Quick Repeat: nạp lại issue/time/description của lần log gần nhất, ngày tự chuyển về hôm nay.
-- Description Templates:
-  - lưu Description hiện tại thành mẫu;
-  - áp dụng nhanh từ dropdown;
-  - quản lý/xóa mẫu;
-  - tối đa 30 mẫu.
-- Template hỗ trợ biến:
-  - `{summary}`
-  - `{key}`
-  - `{project}`
-  - `{date}`
+App chỉ sử dụng 2 khung giờ:
 
-Dữ liệu Quick Input/Template chỉ lưu trong `localStorage` của trình duyệt hiện tại. Password Jira không được lưu ở đây.
+```text
+08:00–12:00
+13:30–17:30
+```
 
-## Cấu hình Vercel
+Ví dụ ngày đã có:
 
-Biến môi trường bắt buộc:
+```text
+08:00–09:00  đã log
+10:00–11:00  đã log
+```
+
+Bulk gồm:
+
+```text
+TASK-A  2h
+TASK-B  2h
+```
+
+Có thể được xếp:
+
+```text
+TASK-A
+09:00–10:00  1h
+11:00–12:00  1h
+
+TASK-B
+13:30–15:30  2h
+```
+
+## Deploy Vercel
+
+Environment Variables:
 
 ```env
 APP_SESSION_SECRET=<chuỗi ngẫu nhiên tối thiểu 32 ký tự>
+SESSION_MAX_AGE_SECONDS=43200
 ```
 
-Jira URL đã được cấu hình cố định trong app: `https://task.ascvn.com.vn`.
+Tạo secret ví dụ:
 
-## Bảo vệ worklog
+```bash
+openssl rand -hex 32
+```
 
-Logic V0.2.1 tiếp tục được giữ nguyên:
+Không cần cấu hình Jira URL trong UI; app dùng cố định:
 
-- đọc worklog của chính user trong ngày trước khi tạo;
-- không xếp trùng thời gian;
-- không log trước 08:00;
-- không log trong 12:00–13:30;
-- không log sau 17:30;
-- tự chia segment nếu TimeSpent đi qua giờ nghỉ trưa hoặc gặp khoảng đã có worklog;
-- validate segment lần cuối trước khi POST lên Jira.
+```text
+https://task.ascvn.com.vn
+```
 
-## Test
+## Bảo mật
+
+- Password Jira không lưu `localStorage`.
+- Jira auth/session được mã hóa trong HttpOnly cookie.
+- Request thay đổi dữ liệu kiểm tra same-origin.
+- Backend chỉ gọi Jira từ server-side.
+
+## Kiểm tra source
 
 ```bash
 npm test
 ```
+
+Test bao gồm parser TimeSpent, khung giờ làm việc, chống overlap và xếp lịch tuần tự cho Bulk Logwork.

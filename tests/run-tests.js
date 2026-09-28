@@ -2,6 +2,7 @@
 
 const assert = require('assert');
 const { parseTimeSpent, schedule, displaySegments, normalizeExistingWorklogs, validateScheduledSegments, isRangeInsideWorkWindows } = require('../lib/scheduler');
+const { planBulkItems } = require('../lib/bulk');
 
 assert.equal(parseTimeSpent('30m'), 30);
 assert.equal(parseTimeSpent('1h'), 60);
@@ -48,3 +49,22 @@ assert.equal(isRangeInsideWorkWindows(1020, 1080), false);   // vượt 17:30
 assert.equal(validateScheduledSegments([{ start: 540, end: 600, minutes: 60 }], [{ start: 480, end: 540 }]), true);
 assert.throws(() => validateScheduledSegments([{ start: 510, end: 570, minutes: 60 }], [{ start: 480, end: 540 }]), /SEGMENT_OVERLAP/);
 assert.throws(() => validateScheduledSegments([{ start: 720, end: 780, minutes: 60 }], []), /SEGMENT_OUTSIDE_WORK_WINDOWS/);
+
+
+// V0.4.0 - Bulk phải dùng chung occupied timeline, item sau không được đè item trước.
+const bulkPlan = planBulkItems([
+  { key: 'A-1', minutes: 120 },
+  { key: 'B-2', minutes: 120 }
+], [{ start: 480, end: 540 }]).plans;
+assert.deepStrictEqual(displaySegments(bulkPlan[0].segments), [
+  { start: '09:00', end: '11:00', minutes: 120 }
+]);
+assert.deepStrictEqual(displaySegments(bulkPlan[1].segments), [
+  { start: '11:00', end: '12:00', minutes: 60 },
+  { start: '13:30', end: '14:30', minutes: 60 }
+]);
+assert.throws(() => planBulkItems([
+  { key: 'A-1', minutes: 240 },
+  { key: 'B-2', minutes: 240 },
+  { key: 'C-3', minutes: 30 }
+], []), /NOT_ENOUGH_TIME/);

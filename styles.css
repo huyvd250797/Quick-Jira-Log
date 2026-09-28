@@ -147,3 +147,57 @@ textarea { resize: vertical; min-height: 104px; }
   .template-helper { min-height: 0; }
   .template-item small { max-width: 190px; }
 }
+
+/* V0.4.0 - Flexible Filters + Bulk Logwork + Mobile zoom lock */
+html, body { touch-action: pan-x pan-y; }
+select { font: inherit; color: var(--text); }
+.filter-head-actions { display: flex; align-items: center; gap: 7px; }
+.filter-selector-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; margin-bottom: 12px; }
+.filter-select-label { min-width: 0; }
+.filter-select-label select { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 13px; padding: 11px 12px; background: #fbfcfe; outline: none; }
+.filter-select-label select:focus { border-color: #8bb8f3; box-shadow: 0 0 0 4px rgba(23,105,224,.09); background: #fff; }
+.filter-list-refresh { white-space: nowrap; min-height: 44px; }
+.bulk-selection-bar { margin-bottom: 12px; padding: 11px 12px; border: 1px solid #b8d2f5; border-radius: 14px; background: #edf5ff; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.bulk-selection-bar > div:first-child { min-width: 0; display: grid; gap: 1px; }
+.bulk-selection-bar strong { color: var(--primary); font-size: 12px; }
+.bulk-selection-bar small { color: var(--muted); font-size: 9px; }
+.bulk-selection-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.small-primary { min-height: 36px; padding: 8px 11px; border-radius: 11px; box-shadow: none; font-size: 10px; }
+.issue-row { position: relative; }
+.issue-check { width: 24px; height: 24px; flex: 0 0 24px; border: 2px solid #b8c5d8; border-radius: 8px; display: grid; place-items: center; color: #fff; background: #fff; font-size: 13px; font-weight: 900; }
+.issue-row.bulk-selected { border-color: #85b5ef; background: #edf5ff; }
+.issue-row.bulk-selected .issue-check { border-color: var(--primary); background: var(--primary); }
+.bulk-title { margin-bottom: 14px; }
+.bulk-items { display: grid; gap: 10px; }
+.bulk-item { border: 1px solid var(--line); border-radius: 15px; padding: 12px; background: #fbfcfe; display: grid; gap: 10px; }
+.bulk-item-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.bulk-item-title { min-width: 0; display: grid; gap: 3px; }
+.bulk-item-title strong { color: var(--primary); font-size: 13px; }
+.bulk-item-title span { color: var(--text); font-size: 11px; font-weight: 700; line-height: 1.35; }
+.bulk-item-title small { color: var(--muted); font-size: 9px; }
+.bulk-remove { width: 32px; height: 32px; border: 0; border-radius: 9px; background: #fff0f2; color: var(--danger); font-size: 18px; font-weight: 900; cursor: pointer; flex: 0 0 32px; }
+.bulk-item-fields { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 9px; align-items: start; }
+.bulk-item-fields textarea { min-height: 72px; }
+.bulk-summary { padding: 12px 13px; border-radius: 13px; background: #f1f5fa; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; font-weight: 800; }
+.bulk-summary strong { color: var(--primary); font-size: 14px; }
+.bulk-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px; }
+.bulk-result-item { padding: 12px 0; border-top: 1px solid var(--line); }
+.bulk-result-item:first-of-type { border-top: 0; }
+.bulk-result-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.bulk-result-head strong { color: var(--primary); }
+.bulk-result-head span { color: var(--muted); font-size: 11px; }
+
+@media (max-width: 480px) {
+  input, textarea, select { font-size: 16px !important; }
+  .filter-heading { align-items: center; }
+  .filter-head-actions { gap: 5px; }
+  .filter-head-actions .soft-btn { padding: 7px 8px; font-size: 10px; }
+  .filter-selector-row { grid-template-columns: minmax(0, 1fr) 92px; }
+  .filter-list-refresh { padding-left: 8px; padding-right: 8px; font-size: 10px; }
+  .bulk-selection-bar { align-items: stretch; flex-direction: column; }
+  .bulk-selection-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .bulk-selection-actions .soft-btn, .bulk-selection-actions .small-primary { width: 100%; }
+  .bulk-item-fields { grid-template-columns: 1fr; }
+  .bulk-actions { grid-template-columns: 1fr; }
+  .bulk-actions .primary { order: -1; }
+}
