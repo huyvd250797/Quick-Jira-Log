@@ -1,4 +1,4 @@
-# Quick Jira Log V0.2.0
+# Quick Jira Log V0.2.1
 
 Web app cá nhân để lấy KEY từ Jira Filter và logwork nhanh vào `https://task.ascvn.com.vn` mà không cần mở Jira.
 
@@ -70,7 +70,7 @@ JIRA_FILTER_NAME = '[HuyVo] - No Work Logged'
 
 Nếu sau này đổi tên filter chỉ cần đổi `JIRA_FILTER_NAME` rồi redeploy.
 
-## Cấu trúc mới V0.2.0
+## Cấu trúc mới V0.2.1
 
 - `api/filter-issues.js`: tìm saved filter + lấy issue list.
 - `lib/jira.js`: bổ sung favourite filter, filter search và paginated issue search.
@@ -81,3 +81,12 @@ Nếu sau này đổi tên filter chỉ cần đổi `JIRA_FILTER_NAME` rồi re
 ```bash
 npm test
 ```
+
+
+## V0.2.1 - Worklog Guard & Summary Autofill
+
+- Không xếp worklog trùng với bất kỳ worklog hiện có của chính tài khoản trong ngày.
+- Chỉ tạo worklog trong 08:00–12:00 và 13:30–17:30.
+- Luôn đọc lại worklog từ Jira trước khi tính lịch.
+- Chọn issue từ `[HuyVo] - No Work Logged` sẽ tự điền KEY, PROJECT và Description = Summary.
+- Nhập KEY Jira hợp lệ bằng tay sẽ tự đọc Summary/Project và điền vào form.

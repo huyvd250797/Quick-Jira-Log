@@ -85,3 +85,9 @@ textarea { resize: vertical; min-height: 104px; }
   .issue-row { padding: 11px; }
   .status-pill { max-width: 120px; }
 }
+
+/* V0.2.1 - Worklog guard + Summary autofill */
+.field-help { min-height: 15px; font-size: 11px; line-height: 1.35; color: var(--muted); font-weight: 600; letter-spacing: 0; }
+.field-help.ok { color: var(--ok); }
+.field-help.error { color: var(--danger); }
+.field-help.loading { color: var(--primary); }

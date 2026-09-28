@@ -6,7 +6,10 @@ const state = {
   toastTimer: null,
   filterIssues: [],
   filterLoaded: false,
-  filterLoading: false
+  filterLoading: false,
+  issueLookupTimer: null,
+  issueLookupSeq: 0,
+  lastAutoIssueKey: ''
 };
 
 function todayLocal() {
@@ -118,7 +121,7 @@ function renderFilterIssues() {
   }
 
   list.innerHTML = issues.map(issue => `
-    <button class="issue-row" type="button" data-key="${escapeHtml(issue.key)}" data-project="${escapeHtml(issue.project)}">
+    <button class="issue-row" type="button" data-key="${escapeHtml(issue.key)}" data-project="${escapeHtml(issue.project)}" data-summary="${escapeHtml(issue.summary || '')}">
       <div class="issue-main">
         <div class="issue-key-line"><strong>${escapeHtml(issue.key)}</strong>${issue.status ? `<span class="status-pill">${escapeHtml(issue.status)}</span>` : ''}</div>
         <div class="issue-summary">${escapeHtml(issue.summary || 'Không có summary')}</div>
@@ -131,11 +134,16 @@ function renderFilterIssues() {
 
   list.querySelectorAll('.issue-row').forEach(button => {
     button.addEventListener('click', () => {
-      $('key').value = button.dataset.key || '';
-      $('project').value = button.dataset.project || String(button.dataset.key || '').split('-')[0] || '';
+      const key = button.dataset.key || '';
+      const summary = button.dataset.summary || '';
+      $('key').value = key;
+      $('project').value = button.dataset.project || String(key).split('-')[0] || '';
+      $('description').value = summary;
+      state.lastAutoIssueKey = key;
+      setIssueLookupState(summary ? `Summary: ${summary}` : 'Issue không có Summary.', 'ok');
       $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
       setTimeout(() => $('timeSpent').focus(), 350);
-      showToast(`Đã chọn ${button.dataset.key}.`);
+      showToast(`Đã chọn ${key} và tự điền Description theo Summary.`);
     });
   });
 }
@@ -198,6 +206,59 @@ $('logoutBtn').addEventListener('click', async () => {
 
 $('refreshFilterBtn').addEventListener('click', () => loadFilterIssues());
 $('filterIssueSearch').addEventListener('input', renderFilterIssues);
+
+
+function setIssueLookupState(message = '', mode = '') {
+  const el = $('issueLookupState');
+  el.textContent = message;
+  el.className = `field-help${mode ? ` ${mode}` : ''}`;
+}
+
+function validIssueKey(value) {
+  return /^[A-Z][A-Z0-9_]*-\d+$/.test(String(value || '').trim().toUpperCase());
+}
+
+async function loadIssueByKey(rawKey) {
+  const key = String(rawKey || '').trim().toUpperCase();
+  if (!validIssueKey(key) || !state.user) {
+    setIssueLookupState('');
+    return;
+  }
+
+  const seq = ++state.issueLookupSeq;
+  setIssueLookupState('Đang lấy Summary từ Jira...', 'loading');
+  try {
+    const data = await api(`/api/issue-info?key=${encodeURIComponent(key)}`, { method: 'GET', cache: 'no-store' });
+    if (seq !== state.issueLookupSeq) return;
+    if ($('key').value.trim().toUpperCase() !== key) return;
+
+    const issue = data.issue || {};
+    $('key').value = issue.key || key;
+    $('project').value = issue.project || key.split('-')[0] || '';
+    $('description').value = issue.summary || '';
+    state.lastAutoIssueKey = key;
+    setIssueLookupState(issue.summary ? `Summary: ${issue.summary}` : 'Issue không có Summary.', 'ok');
+  } catch (error) {
+    if (seq !== state.issueLookupSeq) return;
+    setIssueLookupState(error.message, 'error');
+  }
+}
+
+$('key').addEventListener('input', () => {
+  clearTimeout(state.issueLookupTimer);
+  const key = $('key').value.trim().toUpperCase();
+  if (!validIssueKey(key)) {
+    ++state.issueLookupSeq;
+    setIssueLookupState('');
+    return;
+  }
+  state.issueLookupTimer = setTimeout(() => loadIssueByKey(key), 450);
+});
+
+$('key').addEventListener('blur', () => {
+  const key = $('key').value.trim().toUpperCase();
+  if (validIssueKey(key) && key !== state.lastAutoIssueKey) loadIssueByKey(key);
+});
 
 $('worklogForm').addEventListener('submit', async event => {
   event.preventDefault();

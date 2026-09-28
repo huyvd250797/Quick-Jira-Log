@@ -35,3 +35,6 @@
   - PWA.
   - Production hardening.
   - Mobile polish + audit/recovery.
+
+
+- ✅ V0.2.1 – Worklog Guard & Summary Autofill: chống trùng giờ, khóa khung giờ hợp lệ, tự load Summary theo KEY.

@@ -54,7 +54,7 @@
       <div class="card-title"><span class="step">3</span><div><h2>Logwork nhanh</h2><p>08:00–12:00 · 13:30–17:30</p></div></div>
       <form id="worklogForm">
         <div class="grid-2">
-          <label>KEY<input id="key" placeholder="HIUCR-123" autocapitalize="characters" required /></label>
+          <label>KEY<input id="key" placeholder="HIUCR-123" autocapitalize="characters" autocomplete="off" required /><small id="issueLookupState" class="field-help"></small></label>
           <label>PROJECT<input id="project" placeholder="HIUCR" autocapitalize="characters" required /></label>
         </div>
         <div class="grid-2">
@@ -64,7 +64,7 @@
         <label>Description<textarea id="description" rows="4" placeholder="Mô tả công việc đã thực hiện..." required></textarea></label>
         <button id="logBtn" class="primary" type="submit">LOG WORK</button>
       </form>
-      <div class="hint">App tự tìm giờ trống của bạn trong ngày, tránh trùng worklog và tự tách qua giờ nghỉ trưa khi cần.</div>
+      <div class="hint">App luôn kiểm tra worklog của chính bạn trước khi tạo: không log trùng giờ và không bao giờ vượt ngoài 08:00–12:00 / 13:30–17:30. Description tự lấy theo Summary khi chọn/nhập KEY hợp lệ.</div>
     </section>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
