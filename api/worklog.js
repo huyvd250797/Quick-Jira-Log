@@ -130,7 +130,8 @@ module.exports = async function handler(req, res) {
       audit: {
         checkedIssues: initialGuard.issueKeys.length,
         checkedWorklogs: initialGuard.checkedWorklogs,
-        occupiedBefore: displaySegments(initialGuard.occupied.map(r => ({ ...r, minutes: r.end - r.start })))
+        occupiedBefore: displaySegments(initialGuard.occupied.map(r => ({ ...r, minutes: r.end - r.start }))),
+        sources: initialGuard.sources
       }
     });
   } catch (error) {

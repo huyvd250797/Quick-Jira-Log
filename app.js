@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '0.5.0';
+const APP_VERSION = '0.6.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -593,18 +593,26 @@ async function runDayAudit() {
   const btn = $('runAuditBtn');
   const out = $('auditResult');
   btn.disabled = true;
-  btn.textContent = 'ĐANG KIỂM TRA...';
+  btn.textContent = 'ĐANG QUÉT JIRA...';
   out.classList.remove('hidden');
-  out.innerHTML = 'Đang đọc worklog trực tiếp từ Jira...';
+  out.innerHTML = 'Đang quét worklog trong ngày từ nhiều nguồn Jira...';
   try {
     const data = await api(`/api/day-audit?date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
-    out.innerHTML = `<div class="audit-summary"><strong>${escapeHtml(date)}</strong><span>Đã kiểm tra ${data.checkedIssues} issue · ${data.checkedWorklogs} worklog</span></div>
-      ${data.occupied?.length ? data.occupied.map(s => `<div class="segment"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('') : '<div class="template-empty">Không thấy worklog của bạn trong ngày này.</div>'}`;
+    const sourceBits = [];
+    if (data.sources?.authorDay?.ok) sourceBits.push(`JQL user: ${data.sources.authorDay.issues}`);
+    if (data.sources?.anyDay?.ok) sourceBits.push(`JQL ngày: ${data.sources.anyDay.issues}`);
+    if (data.sources?.recentIssues?.ok) sourceBits.push(`Recent: ${data.sources.recentIssues.issues}`);
+    if (data.sources?.worklogDelta?.supported) sourceBits.push(`Delta: ${data.sources.worklogDelta.worklogs}`);
+    out.innerHTML = `<div class="audit-summary"><strong>${escapeHtml(date)}</strong><span>Quét ${data.checkedIssues} issue · ${data.checkedWorklogs} worklog</span></div>
+      <div class="planner-kpis"><div><small>Đã bận</small><strong>${minutesLabel(data.occupiedMinutes || 0)}</strong></div><div><small>Còn trống</small><strong>${minutesLabel(data.freeMinutes || 0)}</strong></div></div>
+      <div class="planner-group"><strong>Giờ đã log</strong>${data.occupied?.length ? data.occupied.map(s => `<div class="segment busy"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('') : '<div class="template-empty">Chưa thấy worklog của bạn trong ngày này.</div>'}</div>
+      <div class="planner-group"><strong>Giờ còn trống</strong>${data.available?.length ? data.available.map(s => `<div class="segment free"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('') : '<div class="template-empty">Không còn thời gian trống trong 2 khung giờ cho phép.</div>'}</div>
+      <div class="planner-source">Nguồn kiểm tra: ${escapeHtml(sourceBits.join(' · ') || 'Jira')}</div>`;
   } catch (error) {
     out.innerHTML = `<div class="error-text audit-error">${escapeHtml(error.message)}</div>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = 'KIỂM TRA GIỜ ĐÃ LOG';
+    btn.textContent = 'KIỂM TRA & LẬP KẾ HOẠCH';
   }
 }
 

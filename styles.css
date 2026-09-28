@@ -240,3 +240,15 @@ body.settings-open { overflow: hidden; }
   .audit-history-item { grid-template-columns: 1fr; }
   .audit-history-item > span { max-width: none; text-align: left; white-space: normal; }
 }
+
+/* V0.6.0 - Daily Worklog Planner lives only inside Settings */
+.planner-kpis { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0 12px; }
+.planner-kpis > div { border:1px solid var(--line); border-radius:12px; padding:10px 11px; background:#fbfcfe; display:grid; gap:3px; }
+.planner-kpis small { color:var(--muted); font-size:9px; }
+.planner-kpis strong { font-size:16px; }
+.planner-group { display:grid; gap:6px; margin-top:10px; }
+.planner-group > strong { font-size:11px; }
+.planner-group .segment { margin:0; }
+.planner-group .segment.busy { border-color:rgba(216,58,82,.18); background:rgba(216,58,82,.035); }
+.planner-group .segment.free { border-color:rgba(30,158,97,.18); background:rgba(30,158,97,.035); }
+.planner-source { margin-top:10px; color:var(--muted); font-size:9px; line-height:1.45; word-break:break-word; }

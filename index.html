@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <meta name="theme-color" content="#101827" />
-  <title>Quick Jira Log · V0.5.0</title>
+  <title>Quick Jira Log · V0.6.0</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -12,7 +12,7 @@
     <section class="brand">
       <div class="brand-icon">QJ</div>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.5.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.6.0</span></div>
         <p>Chọn KEY, nhập thời lượng, còn giờ logwork để app tự xử lý.</p>
       </div>
     </section>
@@ -137,7 +137,7 @@
       <div class="settings-backdrop" data-close-settings></div>
       <section class="settings-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
         <div class="settings-head">
-          <div><h2 id="settingsTitle">Cài đặt & Audit</h2><p>Template Description · kiểm tra giờ Jira · lịch sử thao tác</p></div>
+          <div><h2 id="settingsTitle">Cài đặt & Daily Planner</h2><p>Template Description · planner trong ngày · audit độ tin cậy</p></div>
           <button id="closeSettingsBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
         </div>
 
@@ -163,13 +163,13 @@
         </div>
 
         <div class="settings-section">
-          <h3>Jira Worklog Audit</h3>
-          <p class="settings-help">Đọc trực tiếp Jira để xem các khoảng giờ app đang coi là đã bận trước khi log.</p>
+          <h3>Daily Worklog Planner & Validation</h3>
+          <p class="settings-help">Chức năng này chỉ nằm trong ⚙ Cài đặt. App quét worklog trên Jira của ngày được chọn, hiển thị giờ đã bận / còn trống và dùng chính dữ liệu này để né giờ trước khi log.</p>
           <div class="audit-fields">
             <label>Ngày<input id="auditDate" type="date" /></label>
             <label>KEY (không bắt buộc)<input id="auditKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
           </div>
-          <button id="runAuditBtn" class="secondary" type="button">KIỂM TRA GIỜ ĐÃ LOG</button>
+          <button id="runAuditBtn" class="secondary" type="button">KIỂM TRA & LẬP KẾ HOẠCH</button>
           <div id="auditResult" class="audit-result hidden"></div>
         </div>
 
@@ -181,7 +181,7 @@
     </div>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 0.5.0</footer>
+    <footer class="app-footer">Quick Jira Log · Version 0.6.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

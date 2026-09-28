@@ -6,17 +6,23 @@
 - ✅ V0.3.0 – Quick Input & Templates
 - ✅ V0.4.0 – Bulk Logwork & Flexible Filters
 - ✅ V0.5.0 – Jira Reliability & Audit
-- ⏭️ V0.6.0 – Daily Worklog Planner & Validation
-- V0.7.0 – Mobile PWA & Quick Actions
+- ✅ V0.6.0 – Daily Worklog Planner & Validation
+- ⏭️ V0.7.0 – Mobile PWA & Quick Actions
 - V0.8.0 – Worklog History & Correction
+- V0.9.0 – Production Hardening
 - V1.0.0 – Stable Personal Release
 
-## V0.6.0 – Daily Worklog Planner & Validation
+## V0.7.0 – Mobile PWA & Quick Actions
 
-Đề xuất bản tiếp theo:
-- xem timeline 08:00–12:00 / 13:30–17:30 của riêng user;
-- hiển thị slot đã bận / còn trống trước khi log;
-- tổng giờ đã log / còn thiếu trong ngày;
-- cảnh báo duplicate Description/KEY bất thường;
-- preview kế hoạch log trước khi gửi Jira;
-- one-tap fill phần thời gian còn trống trong ngày.
+Mục tiêu: mở app và logwork trên điện thoại nhanh như app native mà không làm Dashboard dày hơn.
+
+Dự kiến:
+
+- PWA installable;
+- app icon / splash screen;
+- quick action mở thẳng form Log Work;
+- nhớ filter gần nhất;
+- offline shell;
+- safe-area iPhone;
+- thông báo session Jira hết hạn rõ ràng;
+- tối ưu keyboard/focus cho mobile.
