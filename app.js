@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '0.6.2';
+const APP_VERSION = '0.7.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -30,7 +30,10 @@ const state = {
   recentIssues: [],
   templates: [],
   lastLog: null,
-  auditHistory: []
+  auditHistory: [],
+  settingsScrollY: 0,
+  deferredInstallPrompt: null,
+  quickHandled: false
 };
 
 function todayLocal() {
@@ -98,6 +101,8 @@ function setLoggedIn(user) {
   $('userLabel').textContent = user?.displayName || user?.username || '';
   hydrateQuickInputs();
   if (!state.filters.length && !state.filtersLoading) loadFilters();
+  updateConnectionState();
+  handleQuickLaunch();
 }
 
 function setLoggedOut() {
@@ -119,8 +124,70 @@ function setLoggedOut() {
   $('resultCard').classList.add('hidden');
   renderFilterIssues();
   renderBulkSelection();
+  updateConnectionState();
 }
 
+function updateConnectionState() {
+  const el = $('connectionState');
+  if (!el) return;
+  const online = navigator.onLine;
+  el.textContent = online ? 'Online' : 'Offline';
+  el.classList.toggle('offline', !online);
+}
+
+function handleQuickLaunch() {
+  if (state.quickHandled || !state.user) return;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('quick') !== '1') return;
+  state.quickHandled = true;
+  setTimeout(() => {
+    $('worklogCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => $('key')?.focus(), 320);
+  }, 180);
+}
+
+function isStandalonePwa() {
+  return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function updatePwaUi() {
+  const stateEl = $('pwaState');
+  const installBtn = $('installPwaBtn');
+  const help = $('pwaHelp');
+  if (!stateEl || !installBtn || !help) return;
+  if (isStandalonePwa()) {
+    stateEl.textContent = 'Đã cài';
+    stateEl.classList.add('installed');
+    installBtn.textContent = 'ĐÃ CÀI TRÊN THIẾT BỊ';
+    installBtn.disabled = true;
+    help.textContent = 'Quick Jira Log đang chạy ở chế độ ứng dụng độc lập.';
+    return;
+  }
+  stateEl.textContent = 'Web';
+  stateEl.classList.remove('installed');
+  installBtn.disabled = false;
+  if (state.deferredInstallPrompt) {
+    installBtn.textContent = 'CÀI ỨNG DỤNG';
+    help.textContent = 'Có thể cài trực tiếp Quick Jira Log lên màn hình chính.';
+  } else {
+    installBtn.textContent = 'HƯỚNG DẪN CÀI';
+    help.textContent = 'iPhone/iPad: Safari → Chia sẻ → Thêm vào Màn hình chính. Android: menu trình duyệt → Cài ứng dụng.';
+  }
+}
+
+async function installPwa() {
+  if (isStandalonePwa()) return;
+  if (!state.deferredInstallPrompt) {
+    updatePwaUi();
+    showToast('iPhone: Safari → Chia sẻ → Thêm vào Màn hình chính.');
+    return;
+  }
+  const prompt = state.deferredInstallPrompt;
+  state.deferredInstallPrompt = null;
+  await prompt.prompt();
+  try { await prompt.userChoice; } catch {}
+  updatePwaUi();
+}
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -541,20 +608,30 @@ function hydrateQuickInputs() {
 
 function openSettings() {
   const overlay = $('settingsOverlay');
+  if (!overlay || !overlay.classList.contains('hidden')) return;
+  state.settingsScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+  document.body.style.top = `-${state.settingsScrollY}px`;
+  document.body.classList.add('settings-open');
+  document.documentElement.classList.add('settings-open-root');
   overlay.classList.remove('hidden');
   overlay.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('settings-open');
   $('auditDate').value = $('date').value || todayLocal();
   $('auditKey').value = $('key').value.trim().toUpperCase();
   renderTemplates();
   renderAuditHistory();
+  updatePwaUi();
+  requestAnimationFrame(() => $('closeSettingsBtn')?.focus({ preventScroll: true }));
 }
 
 function closeSettings() {
   const overlay = $('settingsOverlay');
+  if (!overlay || overlay.classList.contains('hidden')) return;
   overlay.classList.add('hidden');
   overlay.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('settings-open');
+  document.documentElement.classList.remove('settings-open-root');
+  document.body.style.top = '';
+  window.scrollTo(0, state.settingsScrollY || 0);
 }
 
 function addAuditEntry(entry) {
@@ -930,6 +1007,10 @@ $('saveTemplateBtn').addEventListener('click', () => {
 $('settingsBtn').addEventListener('click', openSettings);
 $('closeSettingsBtn').addEventListener('click', closeSettings);
 document.querySelectorAll('[data-close-settings]').forEach(el => el.addEventListener('click', closeSettings));
+$('installPwaBtn')?.addEventListener('click', installPwa);
+$('settingsOverlay')?.addEventListener('touchmove', event => {
+  if (!event.target.closest('.settings-sheet')) event.preventDefault();
+}, { passive: false });
 $('runAuditBtn').addEventListener('click', runDayAudit);
 $('clearAuditHistoryBtn').addEventListener('click', () => {
   if (!state.auditHistory.length) return;
@@ -1003,4 +1084,21 @@ renderBulkSelection();
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(name => {
   document.addEventListener(name, event => event.preventDefault(), { passive: false });
 });
+window.addEventListener('online', updateConnectionState);
+window.addEventListener('offline', updateConnectionState);
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  state.deferredInstallPrompt = event;
+  updatePwaUi();
+});
+window.addEventListener('appinstalled', () => {
+  state.deferredInstallPrompt = null;
+  updatePwaUi();
+  showToast('Đã cài Quick Jira Log lên thiết bị.');
+});
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+updateConnectionState();
+updatePwaUi();
 checkStatus();

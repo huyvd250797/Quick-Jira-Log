@@ -1,4 +1,4 @@
-# Quick Jira Log V0.6.2 – Worklog Timezone & Exhaustive Guard Fix
+# Quick Jira Log V0.7.0 – Mobile PWA & Quick Actions
 
 Web app cá nhân để đăng nhập Jira bằng ID/Password và log work nhanh với 5 trường:
 
@@ -10,66 +10,66 @@ Web app cá nhân để đăng nhập Jira bằng ID/Password và log work nhanh
 
 Jira cố định: `https://task.ascvn.com.vn`.
 
-## Quy tắc thời gian
+## Quy tắc thời gian giữ nguyên
 
 App chỉ được phép tạo worklog trong:
 
 - 08:00–12:00
 - 13:30–17:30
 
-Tổng tối đa 8 giờ/ngày. App tự chia worklog khi đi qua giờ nghỉ trưa.
+Worklog Guard của V0.6.2 vẫn được giữ nguyên: đọc worklog Jira, quy đổi timestamp về `Asia/Ho_Chi_Minh`, né toàn bộ giờ đã bận và re-validation trước khi tạo segment.
 
-## V0.6.2 có gì mới
+## V0.7.0 có gì mới
 
-### Daily Worklog Planner & Validation
+### 1. PWA cho mobile
 
-Không thêm bất kỳ block mới nào ra Dashboard. Planner chỉ nằm trong:
+- Có `manifest.webmanifest`.
+- Có Service Worker cache app shell.
+- Có icon 192×192, 512×512 và Apple Touch Icon.
+- Cài lên Home Screen và chạy `standalone` như app.
+- Shortcut `Logwork nhanh` mở app với `/?quick=1` và focus thẳng vào form khi Jira session còn hiệu lực.
+- API Jira không được cache bởi Service Worker.
 
-`⚙ Cài đặt → Daily Worklog Planner & Validation`
+### 2. Quick Actions
 
-Planner hiển thị:
+Giữ và tối ưu các thao tác nhanh đã có:
 
-- giờ đã log trong ngày;
-- giờ còn trống;
-- tổng thời gian đã bận;
-- tổng thời gian còn có thể log;
-- số issue/worklog đã quét;
-- các nguồn Jira đã dùng để xác thực.
+- preset `30m / 1h / 2h / 4h`;
+- Recent KEY;
+- Lặp lại logwork gần nhất;
+- nhớ PROJECT / TimeSpent / filter gần nhất;
+- chọn issue từ Jira Filter và tự lấy Summary làm Description.
 
-### Worklog Guard V2 – chống trùng giờ
+### 3. Giao diện mobile chuyên nghiệp hơn
 
-Trước khi xếp giờ, backend hợp nhất nhiều nguồn Jira:
+- card, spacing, màu sắc và hierarchy được tinh chỉnh lại;
+- tối ưu safe-area iPhone;
+- trạng thái Online/Offline hiển thị cạnh Jira session;
+- toàn bộ input/select/date có `min-width:0` và `max-width:100%` để không tràn container;
+- `select` dùng arrow riêng, phù hợp khung mobile;
+- datepicker được ép đúng chiều rộng card;
+- input mobile giữ font-size 16px để Safari không tự zoom khi focus.
 
-1. `worklogAuthor = currentUser() AND worklogDate = <date>`;
-2. tất cả issue có `worklogDate = <date>`, sau đó lọc worklog thật theo author;
-3. issue vừa được cập nhật trong 30 phút gần nhất để bắt trường hợp vừa log trực tiếp trên Jira;
-4. `/rest/api/2/worklog/updated` + `/rest/api/2/worklog/list` nếu Jira hỗ trợ;
-5. issue đang chuẩn bị log luôn được đọc worklog trực tiếp.
+### 4. Modal Settings khóa background triệt để
 
-Sau đó app mới tính khoảng trống.
+Khi mở `⚙ Cài đặt`:
 
-Ví dụ Jira đã có:
+- body được khóa bằng `position: fixed` tại đúng scroll position hiện tại;
+- background không thể scroll;
+- đóng modal sẽ trả trang về đúng vị trí trước khi mở;
+- chỉ `.settings-sheet` được phép scroll dọc;
+- modal `overflow-x:hidden` và `touch-action:pan-y`, không kéo ngang;
+- backdrop không nhận gesture scroll;
+- header modal sticky để nút đóng luôn truy cập được;
+- combobox/datepicker bên trong modal không được phép vượt chiều rộng màn hình.
 
-- 08:00–09:00
-- 09:00–09:30
+### 5. PWA Settings
 
-Log thêm `1h` sẽ được xếp từ:
+Trong `⚙ Cài đặt → Ứng dụng trên điện thoại`:
 
-- 09:30–10:30
-
-Không được phép quay lại 08:00–09:00.
-
-### Fail-closed
-
-Nếu backend không thể kiểm tra đủ dữ liệu ngày từ Jira, thao tác log sẽ bị dừng thay vì mạo hiểm tạo worklog trùng.
-
-### Re-validation trước từng segment
-
-Nếu một TimeSpent phải chia thành nhiều segment, trước mỗi segment app quét Jira lại. Worklog vừa phát sinh từ Jira hoặc từ batch hiện tại sẽ được né ra.
-
-## Lưu ý Jira
-
-API `/worklog/updated` của Jira Data Center có thể không trả worklog được cập nhật trong khoảng một phút gần nhất. V0.6.2 bù khoảng này bằng việc đọc các issue vừa cập nhật và đọc worklog trực tiếp trên issue trước khi tạo.
+- browser hỗ trợ install prompt: có nút `CÀI ỨNG DỤNG`;
+- iPhone/iPad: hướng dẫn `Safari → Chia sẻ → Thêm vào Màn hình chính`;
+- khi chạy standalone, app hiển thị trạng thái `Đã cài`.
 
 ## Environment Variable
 
@@ -91,22 +91,4 @@ openssl rand -hex 32
 npm test
 ```
 
-Version `V0.6.2` được hiển thị ở Header và Footer.
-
-
-## V0.6.2 – Fix 401/403 compatibility
-
-- Chỉ HTTP `401` mới được xem là phiên Jira hết hạn và xóa session.
-- HTTP `403` được giữ đúng nghĩa là endpoint/quyền không khả dụng, không tự logout.
-- `/rest/api/2/worklog/updated` và `/rest/api/2/worklog/list` là nguồn bổ trợ: nếu Jira chặn `403`, app tự fallback sang JQL + worklog theo issue.
-- Search JQL thử GET fallback kể cả khi POST search trả `403`.
-- Issue đến từ nguồn bổ trợ mà không đọc được worklog sẽ không làm hỏng phiên; riêng target issue hoặc issue mà JQL xác nhận user đã log trong ngày vẫn fail-closed để bảo vệ khỏi trùng giờ.
-
-
-## V0.6.2 – Worklog Timezone & Exhaustive Guard Fix
-
-- Sửa lỗi đọc `started` bằng cách cắt chuỗi giờ. Mọi timestamp Jira giờ được quy đổi về `Asia/Ho_Chi_Minh` trước khi xác định ngày/giờ bận.
-- JQL `worklogDate` quét ngày liền trước + ngày chọn + ngày liền sau để bù khác biệt timezone server của Jira Data Center.
-- Thêm nguồn `worklogAuthor=currentUser()` không phụ thuộc worklogDate cho các issue được làm gần đây.
-- Với ngày hiện tại, guard quét 2 lần cách nhau 1.2 giây và hợp nhất occupied ranges để giảm rủi ro index delay ngay sau khi log tay trên Jira.
-- Vẫn đọc worklog thật của từng issue và chỉ sau đó mới lọc đúng author + ngày + giờ.
+Version `V0.7.0` được hiển thị ở Header, Footer và `package.json`.

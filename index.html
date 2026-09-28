@@ -3,8 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-  <meta name="theme-color" content="#101827" />
-  <title>Quick Jira Log · V0.6.2</title>
+  <meta name="theme-color" content="#0f5bd8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Quick Jira Log · V0.7.0</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -12,7 +20,7 @@
     <section class="brand">
       <div class="brand-icon">QJ</div>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.6.2</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.7.0</span></div>
         <p>Chọn KEY, nhập thời lượng, còn giờ logwork để app tự xử lý.</p>
       </div>
     </section>
@@ -20,7 +28,7 @@
     <section id="statusCard" class="status-card hidden">
       <div class="status-left">
         <span class="dot"></span>
-        <div><strong>Jira đã đăng nhập</strong><small id="userLabel"></small></div>
+        <div><strong>Jira đã đăng nhập</strong><small id="userLabel"></small><span id="connectionState" class="connection-state">Online</span></div>
       </div>
       <div class="status-actions">
         <button id="settingsBtn" class="icon-btn compact-icon" type="button" aria-label="Cài đặt" title="Cài đặt">⚙</button>
@@ -141,6 +149,13 @@
           <button id="closeSettingsBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
         </div>
 
+        <div class="settings-section pwa-settings">
+          <div class="settings-section-title"><h3>Ứng dụng trên điện thoại</h3><span id="pwaState" class="settings-status-pill">Web</span></div>
+          <p class="settings-help">Cài Quick Jira Log lên màn hình chính để mở nhanh như app. Jira vẫn cần kết nối mạng để đăng nhập và logwork.</p>
+          <button id="installPwaBtn" class="secondary" type="button">CÀI ỨNG DỤNG</button>
+          <div id="pwaHelp" class="pwa-help">iPhone/iPad: Safari → Chia sẻ → Thêm vào Màn hình chính.</div>
+        </div>
+
         <div class="settings-section">
           <h3>Mẫu Description</h3>
           <div class="template-quick settings-template-quick">
@@ -181,7 +196,7 @@
     </div>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 0.6.2</footer>
+    <footer class="app-footer">Quick Jira Log · Version 0.7.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>
