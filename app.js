@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -342,6 +342,23 @@ function toggleBulkIssue(issue) {
   renderBulkSelection();
 }
 
+function applyIssueListViewport(list, itemCount) {
+  list.classList.toggle('is-scrollable', itemCount > 5);
+  list.style.maxHeight = '';
+  list.style.overflowY = '';
+  if (itemCount <= 5) return;
+
+  requestAnimationFrame(() => {
+    const rows = [...list.querySelectorAll('.issue-row')].slice(0, 5);
+    if (!rows.length) return;
+    const styles = getComputedStyle(list);
+    const gap = Number.parseFloat(styles.rowGap || styles.gap || '0') || 0;
+    const visibleHeight = rows.reduce((sum, row) => sum + row.getBoundingClientRect().height, 0) + gap * Math.max(0, rows.length - 1) + 2;
+    list.style.maxHeight = `${Math.ceil(visibleHeight)}px`;
+    list.style.overflowY = 'auto';
+  });
+}
+
 function renderFilterIssues() {
   const list = $('filterIssueList');
   const issues = filteredIssues();
@@ -369,10 +386,11 @@ function renderFilterIssues() {
           <div class="issue-summary">${escapeHtml(issue.summary || 'Không có summary')}</div>
           <div class="issue-meta">${escapeHtml([issue.project, issue.issueType, issue.priority].filter(Boolean).join(' · '))}</div>
         </div>
-        <span class="issue-pick">${state.bulkMode ? (selected ? 'Đã chọn' : 'Chọn') : 'Dùng'}</span>
+        ${state.bulkMode ? '' : '<span class="issue-chevron" aria-hidden="true">›</span>'}
       </button>`;
   }).join('');
   setFilterUi('list');
+  applyIssueListViewport(list, issues.length);
 
   list.querySelectorAll('.issue-row').forEach(button => {
     button.addEventListener('click', () => {
@@ -471,12 +489,19 @@ function addRecentIssue(issue) {
   renderRecentIssues();
 }
 
+function updateQuickPanelVisibility() {
+  const hasRecent = state.recentIssues.length > 0;
+  const hasRepeat = Boolean(state.lastLog?.key);
+  $('quickInputPanel').classList.toggle('hidden', !hasRecent && !hasRepeat);
+}
+
 function renderRecentIssues() {
   const wrap = $('recentWrap');
   const list = $('recentIssues');
   if (!state.recentIssues.length) {
     wrap.classList.add('hidden');
     list.innerHTML = '';
+    updateQuickPanelVisibility();
     return;
   }
   wrap.classList.remove('hidden');
@@ -485,6 +510,7 @@ function renderRecentIssues() {
       <strong>${escapeHtml(issue.key)}</strong>${issue.summary ? `<span>${escapeHtml(issue.summary)}</span>` : ''}
     </button>
   `).join('');
+  updateQuickPanelVisibility();
   list.querySelectorAll('.recent-chip').forEach(button => {
     button.addEventListener('click', async () => {
       const key = button.dataset.key || '';
@@ -598,6 +624,7 @@ function setLastLog(payload, issueSummary = '') {
   };
   writeStorage(STORAGE.lastLog, state.lastLog);
   $('repeatLastBtn').classList.remove('hidden');
+  updateQuickPanelVisibility();
 }
 
 function applyLastLog() {
@@ -625,6 +652,7 @@ function hydrateQuickInputs() {
   if (!$('project').value && state.prefs.lastProject) $('project').value = state.prefs.lastProject;
   $('repeatLastBtn').classList.toggle('hidden', !state.lastLog?.key);
   renderRecentIssues();
+  updateQuickPanelVisibility();
   renderTemplates();
   renderAuditHistory();
 }

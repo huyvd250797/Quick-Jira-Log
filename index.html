@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.0.0</title>
+  <title>Quick Jira Log · V1.0.1</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -20,7 +20,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.0.0</div>
+      <div class="boot-version">V1.0.1</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -29,8 +29,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.0.0</span></div>
-        <p>Chọn KEY, nhập thời lượng, còn giờ logwork để app tự xử lý.</p>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.0.1</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -56,7 +55,7 @@
     </section>
 
     <section id="loginCard" class="card hidden">
-      <div class="card-title"><span class="step">1</span><div><h2>Đăng nhập Jira</h2><p>Chỉ cần ID và mật khẩu.</p></div></div>
+      <div class="card-title"><h2>Đăng nhập Jira</h2></div>
       <form id="loginForm" autocomplete="on">
         <label>ID Jira<input id="username" name="username" autocomplete="username" autocapitalize="none" required /></label>
         <label>Mật khẩu<input id="password" name="password" type="password" autocomplete="current-password" required /></label>
@@ -66,7 +65,7 @@
 
     <section id="filterCard" class="card hidden">
       <div class="filter-heading">
-        <div class="card-title compact-title"><span class="step">2</span><div><h2>Sub-task chưa logwork</h2><p id="filterName">Tự động theo tài khoản hiện tại</p></div></div>
+        <div class="card-title compact-title"><h2>Sub-task chưa logwork</h2><span id="filterName" class="hidden">Tự động theo tài khoản hiện tại</span></div>
         <div class="filter-head-actions">
           <button id="bulkModeBtn" class="soft-btn" type="button">Chọn nhiều</button>
           <button id="refreshFilterBtn" class="icon-btn" type="button" aria-label="Tải lại Sub-task" title="Tải lại Sub-task">↻</button>
@@ -90,11 +89,10 @@
       <div id="filterError" class="filter-state error-text hidden"></div>
       <div id="filterEmpty" class="filter-state hidden">Không còn Sub-task chưa logwork phù hợp.</div>
       <div id="filterIssueList" class="issue-list hidden"></div>
-      <div class="hint filter-hint">Tự động áp dụng: Sub-task · assignee = tài khoản hiện tại · tạo sau 19/10/2025 · Time Spent rỗng hoặc bằng 0. Không cần tạo Saved Filter trên Jira.</div>
     </section>
 
     <section id="bulkCard" class="card hidden">
-      <div class="card-title bulk-title"><span class="step">3</span><div><h2>Bulk Logwork</h2><p>Nhiều KEY · cùng một ngày · tự né toàn bộ giờ đã log</p></div></div>
+      <div class="card-title bulk-title"><h2>Bulk Logwork</h2></div>
       <form id="bulkForm">
         <label>Ngày Bulk Logwork<input id="bulkDate" type="date" required /></label>
         <div id="bulkItems" class="bulk-items"></div>
@@ -106,19 +104,17 @@
           <button id="bulkLogBtn" type="submit" class="primary">LOG BULK</button>
         </div>
       </form>
-      <div class="hint">App xếp lần lượt theo thứ tự đã chọn. Issue sau chỉ dùng phần thời gian còn trống sau issue trước. Mọi đoạn đều bị giới hạn trong 08:00–12:00 / 13:30–17:30.</div>
     </section>
 
     <section id="worklogCard" class="card hidden">
-      <div class="card-title"><span class="step">3</span><div><h2>Logwork nhanh</h2><p>08:00–12:00 · 13:30–17:30</p></div></div>
+      <div class="card-title worklog-title"><h2>Logwork nhanh</h2><span class="work-hours-pill">08:00–12:00 · 13:30–17:30</span></div>
 
-      <div id="quickInputPanel" class="quick-panel">
+      <div id="quickInputPanel" class="quick-panel hidden">
         <div class="quick-panel-head">
-          <div><strong>Nhập nhanh</strong><small>Recent KEY · Quick Repeat · Time preset</small></div>
-          <button id="repeatLastBtn" class="soft-btn hidden" type="button">↻ Lặp lại gần nhất</button>
+          <span class="quick-label">Gần đây</span>
+          <button id="repeatLastBtn" class="soft-btn hidden" type="button">↻ Lặp lại</button>
         </div>
         <div id="recentWrap" class="quick-section hidden">
-          <span class="quick-label">KEY gần đây</span>
           <div id="recentIssues" class="chip-row"></div>
         </div>
       </div>
@@ -146,31 +142,26 @@
           <textarea id="description" rows="4" placeholder="Mô tả công việc đã thực hiện..." required></textarea>
         </label>
 
-        <div class="form-compact-note">Mẫu Description và Audit đã được chuyển vào ⚙ Cài đặt để giao diện gọn hơn.</div>
-
         <button id="logBtn" class="primary" type="submit">LOG WORK</button>
       </form>
-      <div class="hint">App luôn đọc worklog của chính bạn trước khi tạo: không log trùng giờ và không vượt ngoài 08:00–12:00 / 13:30–17:30. KEY hợp lệ vẫn tự lấy Summary làm Description.</div>
     </section>
 
     <div id="settingsOverlay" class="settings-overlay hidden" aria-hidden="true">
       <div class="settings-backdrop" data-close-settings></div>
       <section class="settings-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
         <div class="settings-head">
-          <div><h2 id="settingsTitle">Cài đặt & Daily Planner</h2><p>Template Description · planner trong ngày · audit độ tin cậy</p></div>
+          <div><h2 id="settingsTitle">Cài đặt</h2></div>
           <button id="closeSettingsBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
         </div>
 
         <div class="settings-section pwa-settings">
           <div class="settings-section-title"><h3>Ứng dụng trên điện thoại</h3><span id="pwaState" class="settings-status-pill">Web</span></div>
-          <p class="settings-help">Cài Quick Jira Log lên màn hình chính để mở nhanh như app. Jira vẫn cần kết nối mạng để đăng nhập và logwork.</p>
           <button id="installPwaBtn" class="secondary" type="button">CÀI ỨNG DỤNG</button>
           <div id="pwaHelp" class="pwa-help">iPhone/iPad: Safari → Chia sẻ → Thêm vào Màn hình chính.</div>
         </div>
 
         <div class="settings-section">
           <div class="settings-section-title"><h3>Giao diện</h3><span id="themeState" class="settings-status-pill">Sáng</span></div>
-          <p class="settings-help">Chuyển nhanh giữa Light mode và Dark mode. Lựa chọn được ghi nhớ trên thiết bị này.</p>
           <div class="theme-choice" role="group" aria-label="Chọn giao diện">
             <button id="lightThemeBtn" class="theme-choice-btn" type="button">☀ Sáng</button>
             <button id="darkThemeBtn" class="theme-choice-btn" type="button">☾ Tối</button>
@@ -200,7 +191,6 @@
 
         <div class="settings-section">
           <h3>Daily Worklog Planner & Validation</h3>
-          <p class="settings-help">Chức năng này chỉ nằm trong ⚙ Cài đặt. App quét worklog trên Jira của ngày được chọn, hiển thị giờ đã bận / còn trống và dùng chính dữ liệu này để né giờ trước khi log.</p>
           <div class="audit-fields">
             <label>Ngày<input id="auditDate" type="date" /></label>
             <label>KEY (không bắt buộc)<input id="auditKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
@@ -211,7 +201,6 @@
 
         <div class="settings-section">
           <div class="settings-section-title"><h3>Worklog History & Correction</h3><button id="refreshWorklogHistoryBtn" class="text-btn" type="button">Tải lại</button></div>
-          <p class="settings-help">Xem worklog thật trên Jira theo ngày. Có thể sửa hoặc xóa worklog của chính bạn mà không cần mở Jira.</p>
           <div class="history-toolbar">
             <label>Ngày<input id="historyDate" type="date" /></label>
             <label>KEY (không bắt buộc)<input id="historyKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
@@ -240,7 +229,7 @@
     </div>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.0.0</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.0.1</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

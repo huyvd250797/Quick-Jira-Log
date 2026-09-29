@@ -13,6 +13,7 @@
 - ✅ V0.8.0 – Worklog History & Correction
 - ✅ V0.9.0 – Production Hardening
 - ✅ V1.0.0 – Stable Personal Release
+- ✅ V1.0.1 – Compact UI/UX Polish
   - Dark mode / Light mode;
   - Settings ở góc header;
   - Logout dạng icon + confirm;
