@@ -1,11 +1,11 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Logwork Jira nhanh cho Sub-task được giao, tự né giờ đã log, chuyển Done và quản lý lịch sử worklog.",
+  "description": "Quick Jira Log V1.0.0 – Stable Personal Release: logwork Jira nhanh, tự né giờ đã log, chuyển Done và quản lý lịch sử.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#061b40",
+  "background_color": "#07111f",
   "theme_color": "#0f63e6",
   "orientation": "portrait-primary",
   "icons": [

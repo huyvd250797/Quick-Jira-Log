@@ -567,3 +567,54 @@ body.booting { overflow: hidden; }
   .correction-actions { grid-template-columns: 1fr; }
   .correction-actions .primary { order: -1; }
 }
+
+
+/* V1.0.0 – Stable Personal Release: theme system + safer header actions */
+.brand { position: relative; min-width: 0; }
+.brand-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.header-icon-btn, .logout-icon-btn { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 13px; color: var(--text); background: var(--card); box-shadow: 0 5px 18px rgba(26, 47, 79, .06); cursor: pointer; touch-action: manipulation; transition: transform .16s ease, border-color .16s ease, background .16s ease, color .16s ease; }
+.header-icon-btn:active, .logout-icon-btn:active { transform: scale(.94); }
+.header-icon-btn svg, .logout-icon-btn svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.theme-toggle { color: var(--primary); }
+.theme-icon { width: 18px !important; height: 18px !important; }
+.theme-icon-sun { display: none; }
+html[data-theme="dark"] .theme-icon-moon { display: none; }
+html[data-theme="dark"] .theme-icon-sun { display: block; }
+.logout-icon-btn { color: var(--danger); background: rgba(213,62,85,.05); border-color: rgba(213,62,85,.18); }
+.logout-icon-btn:disabled { opacity: .45; cursor: wait; }
+.theme-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.theme-choice-btn { min-height: 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--muted); font-size: 12px; font-weight: 850; cursor: pointer; }
+.theme-choice-btn.active { color: var(--primary); border-color: #8db9f0; background: var(--primary-soft); }
+html[data-theme="dark"] { color-scheme: dark; --bg: #07111f; --card: #101b2c; --text: #edf4ff; --muted: #9ba9bd; --line: #26364d; --primary: #66a8ff; --primary2: #2f79dc; --primary-soft: #162d4e; --ok: #56d394; --danger: #ff7187; --shadow: 0 14px 40px rgba(0,0,0,.24); --shadow-soft: 0 8px 24px rgba(0,0,0,.2); }
+html[data-theme="dark"] body { background: radial-gradient(circle at 88% -5%, rgba(52,129,234,.18), transparent 30%), linear-gradient(180deg, #081421 0, var(--bg) 250px); }
+html[data-theme="dark"] .card, html[data-theme="dark"] .status-card, html[data-theme="dark"] .result { border-color: #26364d; background: var(--card); }
+html[data-theme="dark"] .status-card { background: rgba(16,27,44,.96); }
+html[data-theme="dark"] input, html[data-theme="dark"] textarea, html[data-theme="dark"] select { background-color: #0c1726 !important; border-color: #2b3b52; color: var(--text); }
+html[data-theme="dark"] input::placeholder, html[data-theme="dark"] textarea::placeholder { color: #72839a; }
+html[data-theme="dark"] input:focus, html[data-theme="dark"] textarea:focus, html[data-theme="dark"] select:focus { background-color: #0e1b2d !important; border-color: #4d8ddc; box-shadow: 0 0 0 4px rgba(66,137,229,.12); }
+html[data-theme="dark"] select { background-image: linear-gradient(45deg, transparent 50%, #93a6bf 50%), linear-gradient(135deg, #93a6bf 50%, transparent 50%); }
+html[data-theme="dark"] label { color: #c3cfdf; }
+html[data-theme="dark"] .version-badge, html[data-theme="dark"] .step, html[data-theme="dark"] .count-pill, html[data-theme="dark"] .issue-pick { background: #172f52; border-color: #26476f; color: #7bb7ff; }
+html[data-theme="dark"] .quick-panel { background: linear-gradient(180deg, #101f34, #0d192a); border-color: #263c5a; }
+html[data-theme="dark"] .recent-chip, html[data-theme="dark"] .soft-btn, html[data-theme="dark"] .secondary, html[data-theme="dark"] .icon-btn, html[data-theme="dark"] .header-icon-btn, html[data-theme="dark"] .theme-choice-btn { background: #0d1929; border-color: #2a3a51; color: var(--text); }
+html[data-theme="dark"] .theme-toggle, html[data-theme="dark"] .theme-choice-btn.active { color: var(--primary); }
+html[data-theme="dark"] .theme-choice-btn.active { background: #163356; border-color: #3f75b7; }
+html[data-theme="dark"] .logout-icon-btn { background: #281521; border-color: #513043; color: #ff8193; }
+html[data-theme="dark"] .preset-btn { background: #0d1929; border-color: #2a3a51; color: #9eacc1; }
+html[data-theme="dark"] .preset-btn.active, html[data-theme="dark"] .preset-btn:hover { background: #153359; border-color: #3b75bc; color: #82bcff; }
+html[data-theme="dark"] .hint, html[data-theme="dark"] .filter-state, html[data-theme="dark"] .issue-row, html[data-theme="dark"] .bulk-item, html[data-theme="dark"] .audit-result, html[data-theme="dark"] .audit-history-item, html[data-theme="dark"] .planner-kpis > div, html[data-theme="dark"] .history-state, html[data-theme="dark"] .worklog-history-item { background: #0d1929; border-color: #26364d; }
+html[data-theme="dark"] .issue-row:hover { background: #111f32; border-color: #3b6294; }
+html[data-theme="dark"] .status-pill, html[data-theme="dark"] .settings-status-pill { background: #18263a; color: #adbacb; }
+html[data-theme="dark"] .connection-state, html[data-theme="dark"] .settings-status-pill.installed { background: #123326; color: #6bdaa3; }
+html[data-theme="dark"] .connection-state.offline { background: #381c25; color: #ff8798; }
+html[data-theme="dark"] .settings-backdrop { background: rgba(0,4,10,.72); }
+html[data-theme="dark"] .settings-sheet { background: #0d1828; box-shadow: 0 -22px 58px rgba(0,0,0,.5); }
+html[data-theme="dark"] .settings-head { background: rgba(13,24,40,.97); border-bottom-color: #26364d; }
+html[data-theme="dark"] .settings-section { border-bottom-color: #26364d; }
+html[data-theme="dark"] .worklog-correction-panel { background: #0d1d30; border-color: #29476b; }
+html[data-theme="dark"] .history-delete-btn, html[data-theme="dark"] .danger-btn { background: #2e1720; border-color: #573140; color: #ff8496; }
+html[data-theme="dark"] .transition-note.ok { background: #113426; color: #74dda8; }
+html[data-theme="dark"] .transition-note.warn { background: #342a14; color: #efc66e; }
+html[data-theme="dark"] .toast { background: #e7edf7; color: #111a28; }
+html[data-theme="dark"] .app-footer { color: #718096; }
+@media (max-width: 480px) { .brand { align-items: flex-start; } .brand-actions { gap: 6px; } .header-icon-btn { width: 38px; height: 38px; flex-basis: 38px; border-radius: 12px; } .brand-copy .brand-title-row { gap: 6px; } .brand p { font-size: 11px; } }

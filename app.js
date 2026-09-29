@@ -1,12 +1,13 @@
 'use strict';
 
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '1.0.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
   templates: 'quick-jira-log:templates:v1',
   lastLog: 'quick-jira-log:last-log:v1',
-  audit: 'quick-jira-log:audit:v1'
+  audit: 'quick-jira-log:audit:v1',
+  theme: 'quick-jira-log:theme:v1'
 };
 
 const $ = id => document.getElementById(id);
@@ -35,7 +36,8 @@ const state = {
   historyItems: [],
   historyLoading: false,
   submitInFlight: false,
-  bulkSubmitInFlight: false
+  bulkSubmitInFlight: false,
+  theme: 'light'
 };
 
 
@@ -95,6 +97,38 @@ function writeStorage(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
 }
 
+function readThemePreference() {
+  try {
+    const saved = localStorage.getItem(STORAGE.theme);
+    if (saved === 'dark' || saved === 'light') return saved;
+  } catch {}
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme, { persist = true } = {}) {
+  const next = theme === 'dark' ? 'dark' : 'light';
+  state.theme = next;
+  document.documentElement.dataset.theme = next;
+  document.documentElement.style.colorScheme = next;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', next === 'dark' ? '#07111f' : '#0f63e6');
+  const themeBtn = $('themeBtn');
+  if (themeBtn) {
+    const toDark = next === 'light';
+    themeBtn.setAttribute('aria-label', toDark ? 'Chuyển giao diện tối' : 'Chuyển giao diện sáng');
+    themeBtn.setAttribute('title', toDark ? 'Dark mode' : 'Light mode');
+  }
+  if ($('themeState')) $('themeState').textContent = next === 'dark' ? 'Tối' : 'Sáng';
+  $('lightThemeBtn')?.classList.toggle('active', next === 'light');
+  $('darkThemeBtn')?.classList.toggle('active', next === 'dark');
+  if (persist) { try { localStorage.setItem(STORAGE.theme, next); } catch {} }
+}
+
+function toggleTheme() {
+  applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+  showToast(state.theme === 'dark' ? 'Đã bật Dark mode.' : 'Đã bật Light mode.');
+}
+
 function loadQuickData() {
   const prefs = readStorage(STORAGE.prefs, {});
   state.prefs = {
@@ -121,6 +155,7 @@ function setLoggedIn(user) {
   $('filterCard').classList.remove('hidden');
   $('worklogCard').classList.remove('hidden');
   $('statusCard').classList.remove('hidden');
+  $('settingsBtn')?.classList.remove('hidden');
   $('userLabel').textContent = user?.displayName || user?.username || '';
   hydrateQuickInputs();
   if (!state.filterLoaded && !state.filterLoading) loadFilterIssues();
@@ -137,6 +172,7 @@ function setLoggedOut() {
   state.bulkSelectedKeys.clear();
   state.bulkDrafts.clear();
   $('statusCard').classList.add('hidden');
+  $('settingsBtn')?.classList.add('hidden');
   $('filterCard').classList.add('hidden');
   $('worklogCard').classList.add('hidden');
   $('bulkCard').classList.add('hidden');
@@ -1008,7 +1044,10 @@ $('loginForm').addEventListener('submit', async event => {
 });
 
 $('logoutBtn').addEventListener('click', async () => {
+  if (!confirm('Đăng xuất khỏi Jira?')) return;
+  $('logoutBtn').disabled = true;
   try { await api('/api/logout', { method: 'POST', body: '{}' }); } catch {}
+  finally { $('logoutBtn').disabled = false; }
   setLoggedOut();
 });
 
@@ -1108,6 +1147,9 @@ $('saveTemplateBtn').addEventListener('click', () => {
 });
 
 
+$('themeBtn')?.addEventListener('click', toggleTheme);
+$('lightThemeBtn')?.addEventListener('click', () => applyTheme('light'));
+$('darkThemeBtn')?.addEventListener('click', () => applyTheme('dark'));
 $('settingsBtn').addEventListener('click', openSettings);
 $('closeSettingsBtn').addEventListener('click', closeSettings);
 document.querySelectorAll('[data-close-settings]').forEach(el => el.addEventListener('click', closeSettings));
@@ -1191,6 +1233,7 @@ function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[c]));
 }
 
+applyTheme(readThemePreference(), { persist: false });
 loadQuickData();
 $('date').value = todayLocal();
 $('bulkDate').value = todayLocal();

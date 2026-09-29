@@ -12,14 +12,12 @@
 - ✅ V0.7.0 – Mobile PWA & Quick Actions
 - ✅ V0.8.0 – Worklog History & Correction
 - ✅ V0.9.0 – Production Hardening
-  - fixed JQL cho Sub-task chưa logwork;
-  - bỏ Saved Filter;
-  - idempotency/double-submit guard;
-  - Jira read retry/backoff;
-  - login rate limit;
-  - session/security headers hardening.
-- ⏭️ V1.0.0 – Stable Personal Release
-  - khóa scope tính năng;
-  - regression test toàn bộ flow login → chọn Sub-task → log → Done → history/correction;
-  - tối ưu lỗi/telemetry cục bộ;
-  - checklist deploy production và release ổn định.
+- ✅ V1.0.0 – Stable Personal Release
+  - Dark mode / Light mode;
+  - Settings ở góc header;
+  - Logout dạng icon + confirm;
+  - khóa scope tính năng và ổn định cho sử dụng hằng ngày.
+
+## Sau V1.0.0
+
+Ưu tiên patch `V1.0.x` nếu có lỗi production; chỉ nâng `V1.1.0` khi có nhóm nhu cầu thực tế đủ rõ.

@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V0.9.0</title>
+  <title>Quick Jira Log · V1.0.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -20,7 +20,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V0.9.0</div>
+      <div class="boot-version">V1.0.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -29,8 +29,17 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.9.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.0.0</span></div>
         <p>Chọn KEY, nhập thời lượng, còn giờ logwork để app tự xử lý.</p>
+      </div>
+      <div class="brand-actions" aria-label="Thao tác ứng dụng">
+        <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8 8.7 8.7 0 1 0 20.2 15.2Z"/></svg>
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <button id="settingsBtn" class="header-icon-btn hidden" type="button" aria-label="Cài đặt" title="Cài đặt">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.42 1.42-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20h-2v-.48A1.7 1.7 0 0 0 12.38 18a1.7 1.7 0 0 0-1.88.34l-.06.06-1.42-1.42.06-.06A1.7 1.7 0 0 0 9.42 15a1.7 1.7 0 0 0-1.56-1.03H7.4v-2h.46A1.7 1.7 0 0 0 9.42 11a1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.42-1.42.06.06A1.7 1.7 0 0 0 12.38 8a1.7 1.7 0 0 0 1.03-1.56V6h2v.44A1.7 1.7 0 0 0 16.44 8a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.42 1.42-.06.06A1.7 1.7 0 0 0 19.4 11a1.7 1.7 0 0 0 1.56 1.03h.44v2h-.44A1.7 1.7 0 0 0 19.4 15Z"/></svg>
+        </button>
       </div>
     </section>
 
@@ -40,8 +49,9 @@
         <div><strong>Jira đã đăng nhập</strong><small id="userLabel"></small><span id="connectionState" class="connection-state">Online</span></div>
       </div>
       <div class="status-actions">
-        <button id="settingsBtn" class="icon-btn compact-icon" type="button" aria-label="Cài đặt" title="Cài đặt">⚙</button>
-        <button id="logoutBtn" class="text-btn">Đăng xuất</button>
+        <button id="logoutBtn" class="logout-icon-btn" type="button" aria-label="Đăng xuất Jira" title="Đăng xuất Jira">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H6.5A1.5 1.5 0 0 0 5 6.5v11A1.5 1.5 0 0 0 6.5 19H10"/><path d="M14 8l4 4-4 4M18 12H9"/></svg>
+        </button>
       </div>
     </section>
 
@@ -159,6 +169,15 @@
         </div>
 
         <div class="settings-section">
+          <div class="settings-section-title"><h3>Giao diện</h3><span id="themeState" class="settings-status-pill">Sáng</span></div>
+          <p class="settings-help">Chuyển nhanh giữa Light mode và Dark mode. Lựa chọn được ghi nhớ trên thiết bị này.</p>
+          <div class="theme-choice" role="group" aria-label="Chọn giao diện">
+            <button id="lightThemeBtn" class="theme-choice-btn" type="button">☀ Sáng</button>
+            <button id="darkThemeBtn" class="theme-choice-btn" type="button">☾ Tối</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
           <h3>Mẫu Description</h3>
           <div class="template-quick settings-template-quick">
             <select id="templateSelect" aria-label="Chọn mẫu Description"><option value="">Chọn mẫu...</option></select>
@@ -221,7 +240,7 @@
     </div>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 0.9.0</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.0.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>
