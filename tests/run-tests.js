@@ -104,5 +104,83 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.0.1');
-console.log('V1.0.1 compact UI release version test passed.');
+assert.equal(packageJson.version, '1.0.2');
+console.log('V1.0.2 workflow transition hotfix version test passed.');
+
+
+// V1.0.2 - To Do phải tìm transition sang In Progress trước, sau đó mới Done.
+const {
+  statusLooksTodo,
+  statusLooksInProgress,
+  statusLooksDone,
+  findTransitionToInProgress,
+  findTransitionToDone
+} = require('../lib/jira');
+
+const todoStatus = { name: 'To Do', statusCategory: { key: 'new' } };
+const inProgressStatus = { name: 'In Progress', statusCategory: { key: 'indeterminate' } };
+const doneStatus = { name: 'Done', statusCategory: { key: 'done' } };
+assert.equal(statusLooksTodo(todoStatus), true);
+assert.equal(statusLooksInProgress(inProgressStatus), true);
+assert.equal(statusLooksDone(doneStatus), true);
+
+const todoTransitions = [
+  { id: '11', name: 'Start Progress', to: inProgressStatus },
+  { id: '99', name: 'Cancel', to: { name: 'Cancelled', statusCategory: { key: 'done' } } }
+];
+assert.equal(findTransitionToInProgress(todoTransitions)?.id, '11');
+
+const progressTransitions = [
+  { id: '21', name: 'Stop Progress', to: todoStatus },
+  { id: '31', name: 'Done', to: doneStatus }
+];
+assert.equal(findTransitionToDone(progressTransitions)?.id, '31');
+console.log('V1.0.2 sequential workflow transition selector tests passed.');
+
+(async () => {
+  const { transitionIssueToDone } = require('../lib/jira');
+  const originalFetch = global.fetch;
+  const calls = [];
+  let transitionReads = 0;
+  global.fetch = async (url, options = {}) => {
+    const method = String(options.method || 'GET').toUpperCase();
+    calls.push({ url: String(url), method, body: options.body || '' });
+    if (String(url).includes('/transitions?')) {
+      transitionReads += 1;
+      const transitions = transitionReads === 1
+        ? [{ id: '11', name: 'Start Progress', to: { name: 'In Progress', statusCategory: { key: 'indeterminate' } } }]
+        : [{ id: '31', name: 'Done', to: { name: 'Done', statusCategory: { key: 'done' } } }];
+      return new Response(JSON.stringify({ transitions }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    if (String(url).endsWith('/transitions') && method === 'POST') {
+      return new Response(null, { status: 204 });
+    }
+    if (String(url).includes('/issue/ABC-1?fields=')) {
+      return new Response(JSON.stringify({
+        key: 'ABC-1',
+        fields: { project: { key: 'ABC' }, summary: 'Test', status: { name: 'In Progress', statusCategory: { key: 'indeterminate' } } }
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    throw new Error(`Unexpected fetch: ${method} ${url}`);
+  };
+
+  try {
+    const result = await transitionIssueToDone('ABC-1', { mode: 'basic', username: 'u', password: 'p' }, {
+      key: 'ABC-1',
+      fields: { status: { name: 'To Do', statusCategory: { key: 'new' } } }
+    });
+    assert.equal(result.ok, true);
+    assert.deepStrictEqual(result.path, ['To Do', 'In Progress', 'Done']);
+    assert.equal(calls.filter(c => c.method === 'POST' && c.url.endsWith('/transitions')).length, 2);
+    const postedIds = calls
+      .filter(c => c.method === 'POST' && c.url.endsWith('/transitions'))
+      .map(c => JSON.parse(c.body).transition.id);
+    assert.deepStrictEqual(postedIds, ['11', '31']);
+    console.log('V1.0.2 sequential To Do -> In Progress -> Done integration test passed.');
+  } finally {
+    global.fetch = originalFetch;
+  }
+})().catch(error => {
+  console.error(error);
+  process.exitCode = 1;
+});

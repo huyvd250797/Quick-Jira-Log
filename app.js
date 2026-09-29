@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -58,6 +58,12 @@ function minutesLabel(minutes) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return [h ? `${h}h` : '', m ? `${m}m` : ''].filter(Boolean).join('') || '0m';
+}
+
+function transitionPathLabel(transition) {
+  const path = Array.isArray(transition?.path) ? transition.path.filter(Boolean) : [];
+  if (path.length > 1) return path.join(' → ');
+  return transition?.status || 'Done';
 }
 
 function showToast(message) {
@@ -984,7 +990,7 @@ function renderBulkSuccess(data) {
       <div class="bulk-result-item">
         <div class="bulk-result-head"><strong>${escapeHtml(item.key)}</strong><span>${minutesLabel(item.minutes)}</span></div>
         ${item.segments.map(segment => `<div class="segment"><span>${escapeHtml(segment.start)} → ${escapeHtml(segment.end)}</span><span>${minutesLabel(segment.minutes)}</span></div>`).join('')}
-        ${(() => { const t = (data.transitions || []).find(x => x.key === item.key); return t ? `<div class="transition-note ${t.ok ? 'ok' : 'warn'}">${t.ok ? '✓ Đã chuyển sang Done' : `⚠ ${escapeHtml(t.message || 'Chưa chuyển được sang Done')}`}</div>` : ''; })()}
+        ${(() => { const t = (data.transitions || []).find(x => x.key === item.key); return t ? `<div class="transition-note ${t.ok ? 'ok' : 'warn'}">${t.ok ? `✓ ${escapeHtml(transitionPathLabel(t))}` : `⚠ ${escapeHtml(t.message || 'Chưa chuyển được trạng thái')}`}</div>` : ''; })()}
       </div>
     `).join('')}
   `;
@@ -1234,13 +1240,13 @@ $('worklogForm').addEventListener('submit', async event => {
       <h3>✓ Logwork thành công</h3>
       <div class="meta"><strong>${escapeHtml(data.issue.key)}</strong>${data.issue.summary ? ` · ${escapeHtml(data.issue.summary)}` : ''}<br>${escapeHtml(data.date)} · Tổng ${minutesLabel(data.totalMinutes)}</div>
       ${data.segments.map(s => `<div class="segment"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('')}
-      <div class="transition-note ${data.transition?.ok ? 'ok' : 'warn'}">${data.transition?.ok ? `✓ Trạng thái: ${escapeHtml(data.transition.status || 'Done')}` : `⚠ ${escapeHtml(data.transition?.message || 'Worklog đã tạo nhưng chưa chuyển được sang Done.')}`}</div>
+      <div class="transition-note ${data.transition?.ok ? 'ok' : 'warn'}">${data.transition?.ok ? `✓ Trạng thái: ${escapeHtml(transitionPathLabel(data.transition))}` : `⚠ ${escapeHtml(data.transition?.message || 'Worklog đã tạo nhưng chưa chuyển được trạng thái.')}`}</div>
       <button id="resultRepeatBtn" class="secondary result-action" type="button">↻ Lặp lại KEY này</button>
     `;
     result.classList.remove('hidden');
     $('resultRepeatBtn').addEventListener('click', applyLastLog);
     addAuditEntry({ ok: true, key: data.issue.key, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: data.segments });
-    showToast(data.transition?.ok ? 'Đã log work và chuyển Done.' : 'Đã log work lên Jira.');
+    showToast(data.transition?.ok ? `Đã log work · ${transitionPathLabel(data.transition)}` : 'Đã log work lên Jira.');
     $('key').select();
     setTimeout(() => loadFilterIssues({ quiet: true }), 1200);
   } catch (error) {

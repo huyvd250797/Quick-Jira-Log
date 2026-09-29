@@ -22,3 +22,5 @@
 ## Sau V1.0.0
 
 Ưu tiên patch `V1.0.x` nếu có lỗi production; chỉ nâng `V1.1.0` khi có nhóm nhu cầu thực tế đủ rõ.
+
+- ✅ V1.0.2 – Workflow Transition Hotfix (To Do → In Progress → Done)

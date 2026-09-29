@@ -620,7 +620,7 @@ html[data-theme="dark"] .app-footer { color: #718096; }
 @media (max-width: 480px) { .brand { align-items: flex-start; } .brand-actions { gap: 6px; } .header-icon-btn { width: 38px; height: 38px; flex-basis: 38px; border-radius: 12px; } .brand-copy .brand-title-row { gap: 6px; } .brand p { font-size: 11px; } }
 
 
-/* V1.0.1 – Compact professional UI */
+/* V1.0.2 – Workflow transition hotfix */
 .brand { padding-bottom: 16px; }
 .brand-copy { min-width: 0; }
 .brand-title-row { align-items: center; }

@@ -1,13 +1,15 @@
-# Quick Jira Log V1.0.1 – Compact UI Release
+# Quick Jira Log V1.0.2 – Workflow Transition Hotfix
 
-Patch UI/UX trên nền V1.0.0.
+Hotfix trên nền V1.0.1.
 
-## Thay đổi
-- Bỏ step 1/2/3 và các mô tả dài trên dashboard.
-- Tinh gọn card, spacing và Quick Actions.
-- Danh sách Sub-task chỉ hiển thị tối đa 5 mục; nhiều hơn sẽ scroll ngay trong danh sách.
-- Bulk selection tiếp tục hoạt động trong vùng scroll.
-- Giữ nguyên Worklog Guard, Auto Done, PWA, History/Correction, Dark/Light mode.
+## Thay đổi chính
+- Sau khi logwork thành công, issue ở **To Do** được chuyển tuần tự **To Do → In Progress → Done**.
+- Issue đã **In Progress** chỉ thực hiện **In Progress → Done**.
+- Issue đã **Done** được giữ nguyên.
+- Mỗi bước transition được đọc lại từ workflow Jira, không hard-code transition ID.
+- Nếu Jira không có transition To Do → In Progress hoặc In Progress → Done, worklog vẫn được giữ và app hiển thị cảnh báo rõ ràng.
+- Bulk Logwork dùng cùng cơ chế transition tuần tự.
+- UI kết quả hiển thị đường đi trạng thái thực tế, ví dụ `To Do → In Progress → Done`.
 
 ## Deploy
-Giữ nguyên biến môi trường của V1.0.0 và deploy lên Vercel.
+Giữ nguyên toàn bộ Environment Variables của V1.0.1 và deploy source lên Vercel. Không cần thay đổi database hay cấu hình Jira.
