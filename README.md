@@ -1,8 +1,8 @@
-# Quick Jira Log V1.0.5 – Desktop Control Consistency Fix
+# Quick Jira Log V1.0.6 – Desktop Control Consistency Fix
 
-V1.0.5 **rollback bố cục về đúng V1.0.3 – Desktop UI/UX Polish**. Không sử dụng layout V1.0.4.
+V1.0.6 **rollback bố cục về đúng V1.0.3 – Desktop UI/UX Polish**. Không sử dụng layout V1.0.4.
 
-## Thay đổi V1.0.5
+## Thay đổi V1.0.6
 
 - Giữ nguyên vị trí Bulk Logwork / danh sách ISSUE đang chọn **ở phía dưới như V1.0.3**.
 - Không chuyển Bulk editor sang cột phải.

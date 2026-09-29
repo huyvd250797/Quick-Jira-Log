@@ -1,6 +1,9 @@
 'use strict';
 
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const root = path.resolve(__dirname, '..');
 const { parseTimeSpent, schedule, displaySegments, normalizeExistingWorklogs, validateScheduledSegments, isRangeInsideWorkWindows, parseJiraStartedAtWorkTimezone } = require('../lib/scheduler');
 const { planBulkItems } = require('../lib/bulk');
 
@@ -104,8 +107,15 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.0.5');
-console.log('V1.0.5 desktop control consistency version test passed.');
+assert.equal(packageJson.version, '1.0.6');
+console.log('V1.0.6 desktop alignment version test passed.');
+
+const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
+assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
+assert.match(styles, /#worklogCard\s*\{[^}]*grid-column:\s*2;[^}]*grid-row:\s*3;/s);
+assert.match(styles, /#bulkCard\s*\{[^}]*grid-column:\s*1 \/ -1;[^}]*grid-row:\s*4;/s);
+assert.match(styles, /\.issue-main\s*\{[^}]*flex:\s*1 1 auto;/s);
+console.log('V1.0.6 stable desktop grid/alignment tests passed.');
 
 
 // V1.0.3 - To Do phải tìm transition sang In Progress trước, sau đó mới Done.

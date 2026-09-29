@@ -893,3 +893,68 @@ html[data-theme="dark"] .issue-list.is-scrollable::-webkit-scrollbar-thumb { bac
     line-height: 1.45;
   }
 }
+
+/* V1.0.6 – Desktop Alignment & Stable Columns Fix
+   Keep the V1.0.3 desktop composition, but pin each desktop section to a stable grid row
+   so Bulk mode never moves the single-worklog card. Also normalize issue-row alignment. */
+@media (min-width: 900px) {
+  /* Stable desktop rows: header -> Jira status -> main columns -> bulk -> result -> footer. */
+  .brand { grid-column: 1 / -1; grid-row: 1; }
+  #statusCard { grid-column: 1 / -1; grid-row: 2; }
+  #loginCard { grid-column: 1 / -1; grid-row: 2; }
+  #filterCard { grid-column: 1; grid-row: 3; align-self: start; }
+  #worklogCard { grid-column: 2; grid-row: 3; align-self: start; }
+  #bulkCard { grid-column: 1 / -1; grid-row: 4; align-self: start; }
+  #resultCard { grid-column: 1 / -1; grid-row: 5; }
+  .app-footer { grid-column: 1 / -1; grid-row: 6; }
+
+  /* Keep both primary cards on exactly the same top baseline. */
+  #filterCard,
+  #worklogCard {
+    margin-top: 0 !important;
+  }
+
+  /* Form rows use the same column geometry and baseline. */
+  #worklogCard .grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    column-gap: 10px;
+  }
+  #worklogCard .grid-2 > label {
+    min-width: 0;
+    width: 100%;
+  }
+  #worklogCard .grid-2 > label > input,
+  #worklogCard .grid-2 > label > select {
+    width: 100%;
+  }
+
+  /* In both normal and multi-select mode the issue text always starts from one left axis. */
+  .issue-row {
+    justify-content: flex-start;
+  }
+  .issue-main {
+    flex: 1 1 auto;
+    width: 0;
+    min-width: 0;
+    text-align: left;
+  }
+  .issue-chevron {
+    margin-left: auto;
+  }
+  .issue-check {
+    margin-right: 2px;
+  }
+
+  /* Bulk selection toolbar and list align to the same card content edges. */
+  .bulk-selection-bar,
+  .filter-tools,
+  #filterIssueList {
+    width: 100%;
+  }
+
+  /* Bulk editor stays below the main two-column row and never affects column placement. */
+  #bulkCard:not(.hidden) {
+    width: 100%;
+  }
+}
