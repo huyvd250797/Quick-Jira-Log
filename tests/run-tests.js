@@ -104,11 +104,11 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.0.3');
-console.log('V1.0.3 workflow transition hotfix version test passed.');
+assert.equal(packageJson.version, '1.0.4');
+console.log('V1.0.4 workflow transition hotfix version test passed.');
 
 
-// V1.0.3 - To Do phải tìm transition sang In Progress trước, sau đó mới Done.
+// V1.0.4 - To Do phải tìm transition sang In Progress trước, sau đó mới Done.
 const {
   statusLooksTodo,
   statusLooksInProgress,
@@ -135,7 +135,7 @@ const progressTransitions = [
   { id: '31', name: 'Done', to: doneStatus }
 ];
 assert.equal(findTransitionToDone(progressTransitions)?.id, '31');
-console.log('V1.0.3 sequential workflow transition selector tests passed.');
+console.log('V1.0.4 sequential workflow transition selector tests passed.');
 
 (async () => {
   const { transitionIssueToDone } = require('../lib/jira');
@@ -176,7 +176,7 @@ console.log('V1.0.3 sequential workflow transition selector tests passed.');
       .filter(c => c.method === 'POST' && c.url.endsWith('/transitions'))
       .map(c => JSON.parse(c.body).transition.id);
     assert.deepStrictEqual(postedIds, ['11', '31']);
-    console.log('V1.0.3 sequential To Do -> In Progress -> Done integration test passed.');
+    console.log('V1.0.4 sequential To Do -> In Progress -> Done integration test passed.');
   } finally {
     global.fetch = originalFetch;
   }

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.0.3';
+const APP_VERSION = '1.0.4';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -157,6 +157,7 @@ function savePrefs() {
 
 function setLoggedIn(user) {
   state.user = user;
+  document.body.classList.remove('bulk-editor-open');
   $('loginCard').classList.add('hidden');
   $('filterCard').classList.remove('hidden');
   $('worklogCard').classList.remove('hidden');
@@ -171,6 +172,7 @@ function setLoggedIn(user) {
 
 function setLoggedOut() {
   state.user = null;
+  document.body.classList.remove('bulk-editor-open');
   state.filterIssues = [];
   state.filterLoaded = false;
   state.filterLoading = false;
@@ -904,6 +906,7 @@ function renderBulkSelection() {
 function setBulkMode(enabled) {
   state.bulkMode = Boolean(enabled);
   if (!state.bulkMode) {
+    document.body.classList.remove('bulk-editor-open');
     state.bulkSelectedKeys.clear();
     state.bulkDrafts.clear();
     $('bulkCard').classList.add('hidden');
@@ -963,7 +966,10 @@ function renderBulkItems() {
       renderBulkItems();
       renderBulkSelection();
       renderFilterIssues();
-      if (!state.bulkSelectedKeys.size) $('bulkCard').classList.add('hidden');
+      if (!state.bulkSelectedKeys.size) {
+        $('bulkCard').classList.add('hidden');
+        document.body.classList.remove('bulk-editor-open');
+      }
     });
   });
   updateBulkTotal();
@@ -977,6 +983,7 @@ function openBulkEditor() {
   if (!$('bulkDate').value) $('bulkDate').value = $('date').value || todayLocal();
   renderBulkItems();
   $('bulkCard').classList.remove('hidden');
+  document.body.classList.add('bulk-editor-open');
   $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1039,6 +1046,7 @@ async function submitBulkWorklog(event) {
     state.bulkDrafts.clear();
     state.bulkMode = false;
     $('bulkCard').classList.add('hidden');
+    document.body.classList.remove('bulk-editor-open');
     renderBulkSelection();
     renderFilterIssues();
     setTimeout(() => loadFilterIssues({ quiet: true }), 1200);

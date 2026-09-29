@@ -23,4 +23,4 @@
 
 Ưu tiên patch `V1.0.x` nếu có lỗi production; chỉ nâng `V1.1.0` khi có nhóm nhu cầu thực tế đủ rõ.
 
-- ✅ V1.0.3 – Desktop UI/UX Polish (To Do → In Progress → Done)
+- ✅ V1.0.4 – Desktop UI/UX Polish (To Do → In Progress → Done)
