@@ -959,7 +959,7 @@ html[data-theme="dark"] .issue-list.is-scrollable::-webkit-scrollbar-thumb { bac
   }
 }
 
-/* V1.1.0 – Focused Logwork UX */
+/* V1.1.1 – Focused Logwork UX + Editable Log Date */
 .card-subtitle { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; font-weight: 650; }
 .log-all-btn { min-height: 40px; padding: 9px 14px; border-radius: 12px; font-size: 11px; white-space: nowrap; box-shadow: 0 6px 16px rgba(23,105,224,.16); }
 .filter-head-actions { display: flex; align-items: center; gap: 8px; }
@@ -1043,4 +1043,25 @@ html[data-theme="dark"] .tool-group-icon.history { background: #172c49; color: #
 
 @media (min-width: 900px) {
   body:not(.single-log-open) #filterCard { grid-column: 1 / -1; }
+}
+
+
+/* V1.1.1 – editable logwork date */
+.worklog-primary-fields {
+  display: grid;
+  grid-template-columns: minmax(150px,.72fr) minmax(0,1fr);
+  gap: 12px;
+  align-items: start;
+}
+.worklog-primary-fields > label { margin: 0; min-width: 0; }
+.bulk-global-fields {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.bulk-global-fields > label { margin: 0; }
+@media (max-width: 480px) {
+  .worklog-primary-fields { grid-template-columns: 1fr; }
+  .bulk-global-fields { grid-template-columns: 1fr; }
 }

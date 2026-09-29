@@ -1,6 +1,6 @@
-# Quick Jira Log V1.1.0 – Focused Logwork UX
+# Quick Jira Log V1.1.1 – Editable Log Date Hotfix
 
-V1.1.0 tập trung rút gọn luồng thao tác hằng ngày, giữ nguyên engine Jira, Worklog Guard, scheduler, workflow transition và Production Hardening của các bản trước.
+V1.1.1 giữ nguyên Focused Logwork UX của V1.1.0 và bổ sung lại quyền chọn/cập nhật Ngày logwork. KEY, Project và Summary tiếp tục lấy từ Jira; người dùng chỉ chỉnh Ngày logwork, TimeSpent và Description.
 
 ## Luồng Logwork cá nhân
 

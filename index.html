@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.1.0</title>
+  <title>Quick Jira Log · V1.1.1</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -20,7 +20,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.1.0</div>
+      <div class="boot-version">V1.1.1</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -29,7 +29,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.1.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.1.1</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -85,11 +85,13 @@
 
     <section id="bulkCard" class="card hidden">
       <div class="card-title bulk-title">
-        <div><h2>Log tất cả Sub-task</h2><p class="card-subtitle">Chỉ chỉnh TimeSpent và Description trước khi log.</p></div>
-        <span id="bulkDateLabel" class="work-hours-pill"></span>
+        <div><h2>Log tất cả Sub-task</h2><p class="card-subtitle">Chỉnh Ngày logwork, TimeSpent và Description trước khi log.</p></div>
+        <span class="work-hours-pill">08:00–12:00 · 13:30–17:30</span>
       </div>
       <form id="bulkForm">
-        <input id="bulkDate" type="hidden" />
+        <div class="bulk-global-fields">
+          <label>Ngày logwork<input id="bulkDate" type="date" required /></label>
+        </div>
         <div id="bulkItems" class="bulk-items"></div>
         <div class="bulk-summary">
           <span>Tổng yêu cầu</span><strong id="bulkTotal">0m</strong>
@@ -103,22 +105,25 @@
 
     <section id="worklogCard" class="card hidden">
       <div class="card-title worklog-title">
-        <div><h2>Logwork Sub-task</h2><p class="card-subtitle">Thông tin Jira được khóa. Bạn chỉ cần nhập TimeSpent và Description.</p></div>
+        <div><h2>Logwork Sub-task</h2><p class="card-subtitle">KEY/Project/Summary lấy từ Jira. Bạn chỉ cần chọn Ngày logwork, nhập TimeSpent và Description.</p></div>
         <button id="closeWorklogBtn" class="icon-btn compact-close" type="button" aria-label="Đóng form logwork" title="Đóng">×</button>
       </div>
 
       <div class="selected-issue-card">
         <div class="selected-issue-top"><strong id="selectedIssueKey">—</strong><span id="selectedIssueProject" class="status-pill">—</span></div>
         <div id="selectedIssueSummary" class="selected-issue-summary">Chọn một Sub-task để logwork.</div>
-        <div class="selected-issue-meta"><span>Ngày logwork</span><strong id="selectedIssueDate"></strong><span class="work-hours-pill">08:00–12:00 · 13:30–17:30</span></div>
+        <div class="selected-issue-meta"><span class="work-hours-pill">08:00–12:00 · 13:30–17:30</span></div>
       </div>
 
       <form id="worklogForm">
         <input id="key" type="hidden" />
         <input id="project" type="hidden" />
-        <input id="date" type="hidden" />
         <small id="issueLookupState" class="field-help hidden"></small>
-        <label>
+        <div class="worklog-primary-fields">
+          <label>Ngày logwork
+            <input id="date" type="date" required />
+          </label>
+          <label>
           TimeSpent
           <input id="timeSpent" placeholder="2h30m" inputmode="text" required />
           <span class="preset-row" aria-label="TimeSpent nhanh">
@@ -127,7 +132,8 @@
             <button type="button" class="preset-btn" data-time="2h">2h</button>
             <button type="button" class="preset-btn" data-time="4h">4h</button>
           </span>
-        </label>
+          </label>
+        </div>
 
         <label>Description
           <textarea id="description" rows="4" placeholder="Mô tả công việc đã thực hiện..." required></textarea>
@@ -238,7 +244,7 @@
     </div>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.1.0</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.1.1</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

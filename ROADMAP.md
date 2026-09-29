@@ -20,6 +20,7 @@
 - ✅ V1.0.5 – Desktop Control Consistency Fix
 - ✅ V1.0.6 – Desktop Alignment & Stable Columns Fix
 - ✅ V1.1.0 – Focused Logwork UX
+- ✅ V1.1.1 – Editable Log Date Hotfix
   - click Sub-task mới mở form logwork;
   - chỉ nhập TimeSpent và Description;
   - một nút Log tất cả;

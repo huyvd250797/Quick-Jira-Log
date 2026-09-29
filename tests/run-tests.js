@@ -107,8 +107,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.1.0');
-console.log('V1.1.0 focused UX version test passed.');
+assert.equal(packageJson.version, '1.1.1');
+console.log('V1.1.1 editable log date version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -125,11 +125,13 @@ assert(!indexHtml.includes('id="selectVisibleBtn"'));
 assert(!indexHtml.includes('id="openBulkBtn"'));
 assert(indexHtml.includes('id="key" type="hidden"'));
 assert(indexHtml.includes('id="project" type="hidden"'));
-assert(indexHtml.includes('id="date" type="hidden"'));
+assert(indexHtml.includes('id="date" type="date"'));
+assert(indexHtml.includes('id="bulkDate" type="date"'));
+assert(indexHtml.includes('Ngày logwork')); 
 assert(indexHtml.includes('TÌM WORKLOG ĐÃ LOG'));
 assert(appJs.includes('<small>Đã logwork</small>'));
 assert(appJs.includes("$('logAllBtn').addEventListener('click', openBulkAll)"));
-console.log('V1.1.0 focused logwork UX tests passed.');
+console.log('V1.1.1 focused logwork UX + editable date tests passed.');
 
 
 // V1.0.3 - To Do phải tìm transition sang In Progress trước, sau đó mới Done.

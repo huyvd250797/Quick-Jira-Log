@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.1.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -325,7 +325,6 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   $('selectedIssueKey').textContent = normalizedKey;
   $('selectedIssueProject').textContent = normalizedProject || '—';
   $('selectedIssueSummary').textContent = summary || 'Issue không có Summary.';
-  $('selectedIssueDate').textContent = logDate.split('-').reverse().join('/');
   state.currentIssueSummary = summary || '';
   state.lastAutoIssueKey = normalizedKey;
   setIssueLookupState(summary ? `Summary: ${summary}` : 'Issue không có Summary.', 'ok');
@@ -621,8 +620,6 @@ function applyLastLog() {
 function hydrateQuickInputs() {
   $('date').value = todayLocal();
   $('bulkDate').value = todayLocal();
-  $('selectedIssueDate').textContent = todayLocal().split('-').reverse().join('/');
-  $('bulkDateLabel').textContent = `Ngày ${todayLocal().split('-').reverse().join('/')}`;
   if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
   renderTemplates();
   renderAuditHistory();
@@ -884,9 +881,8 @@ function openBulkAll() {
       description: issue.summary || ''
     });
   }
-  const date = todayLocal();
+  const date = $('date').value || todayLocal();
   $('bulkDate').value = date;
-  $('bulkDateLabel').textContent = `Ngày ${date.split('-').reverse().join('/')}`;
   $('worklogCard').classList.add('hidden');
   document.body.classList.remove('single-log-open');
   $('resultCard').classList.add('hidden');
@@ -1054,6 +1050,13 @@ $('closeWorklogBtn').addEventListener('click', () => {
   $('worklogCard').classList.add('hidden');
   document.body.classList.remove('single-log-open');
   $('resultCard').classList.add('hidden');
+});
+
+$('date').addEventListener('change', () => {
+  if (!$('date').value) $('date').value = todayLocal();
+});
+$('bulkDate').addEventListener('change', () => {
+  if (!$('bulkDate').value) $('bulkDate').value = todayLocal();
 });
 
 $('timeSpent').addEventListener('change', () => {
