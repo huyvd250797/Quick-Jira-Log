@@ -822,188 +822,74 @@ html[data-theme="dark"] .issue-list.is-scrollable::-webkit-scrollbar-thumb { bac
 }
 
 
-/* V1.0.4 – Desktop Layout Balance Fix
-   Keep mobile behavior intact. Desktop uses one consistent workspace grid,
-   equal-height primary cards, internal list scrolling, and a dedicated bulk editor column. */
+
+/* V1.0.5 – Desktop Control Consistency Fix
+   IMPORTANT: layout intentionally remains V1.0.3.
+   Only native form-control sizing is normalized on desktop. */
 @media (min-width: 900px) {
-  .shell {
-    width: min(calc(100% - 48px), 1320px);
-    padding: 30px 0 48px;
-    grid-template-columns: minmax(0, 1.08fr) minmax(430px, .92fr);
-    grid-template-rows: auto auto auto auto auto;
-    column-gap: 24px;
-    row-gap: 18px;
-    align-items: stretch;
+  :root { --qjl-desktop-control-height: 46px; }
+
+  /* Textbox / combobox / datepicker / timepicker use the exact same box height. */
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+  select {
+    height: var(--qjl-desktop-control-height) !important;
+    min-height: var(--qjl-desktop-control-height) !important;
+    max-height: var(--qjl-desktop-control-height) !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: calc(var(--qjl-desktop-control-height) - 2px);
+    border-radius: 13px;
   }
 
-  .brand {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    min-height: 66px;
-    padding: 4px 6px 6px;
+  /* Keep horizontal paddings while removing UA-specific vertical sizing. */
+  input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]) {
+    padding-left: 13px !important;
+    padding-right: 13px !important;
+  }
+  select {
+    padding-left: 13px !important;
+    padding-right: 38px !important;
   }
 
-  .status-card {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    min-height: 64px;
-    padding: 13px 16px;
+  /* Native date/time inputs are the usual source of visual height mismatch. */
+  input[type="date"],
+  input[type="time"] {
+    appearance: none;
+    -webkit-appearance: none;
+    inline-size: 100%;
+    min-inline-size: 0;
   }
-
-  #filterCard {
-    grid-column: 1;
-    grid-row: 3;
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value {
     min-width: 0;
-    min-height: 590px;
     height: 100%;
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    align-items: center;
+    text-align: left;
   }
-
-  #worklogCard {
-    grid-column: 2;
-    grid-row: 3;
-    min-width: 0;
-    min-height: 590px;
-    height: 100%;
-    position: static;
-    top: auto;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #worklogCard > form {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  #worklogCard > form > .primary { margin-top: auto; }
-
-  #filterCard .filter-heading,
-  #filterCard .filter-tools,
-  #filterCard .bulk-selection-bar,
-  #filterCard .filter-state { flex: 0 0 auto; }
-
-  #filterCard .issue-list {
-    min-height: 0;
-    flex: 1 1 auto;
-    align-content: start;
-  }
-
-  #filterCard .issue-list.is-scrollable {
-    max-height: 490px;
-    overflow-y: auto !important;
-    padding-right: 6px;
-  }
-
-  .issue-main { flex: 1 1 auto; min-width: 0; }
-  .issue-row:has(.issue-check) { justify-content: flex-start; }
-  .issue-row:has(.issue-check) .issue-main { padding-left: 2px; }
-
-  .issue-row {
-    min-height: 82px;
-    padding: 12px 13px;
-  }
-  .issue-summary { -webkit-line-clamp: 2; line-height: 1.32; }
-  .issue-meta { max-width: none; }
-
-  .filter-heading { min-height: 42px; }
-  .filter-tools { grid-template-columns: minmax(0, 1fr) 44px; }
-  .count-pill { width: 44px; min-width: 44px; height: 44px; }
-  .search-wrap input { min-height: 44px; }
-
-  .worklog-title { min-height: 42px; margin-bottom: 16px; }
-  #worklogCard .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  #worklogCard textarea { min-height: 126px; resize: vertical; }
-  #worklogCard .primary { min-height: 50px; border-radius: 14px; }
-  #worklogCard .preset-row { min-height: 30px; align-items: center; }
-
-  /* Bulk editing becomes the right-side task editor instead of a detached full-width block. */
-  body.bulk-editor-open #worklogCard { display: none !important; }
-  body.bulk-editor-open #bulkCard {
-    display: block !important;
-    grid-column: 2;
-    grid-row: 3;
-    align-self: stretch;
-    min-width: 0;
-    min-height: 590px;
-    max-height: min(720px, calc(100vh - 210px));
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
     margin: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior: contain;
-    scrollbar-gutter: stable;
-  }
-  body.bulk-editor-open #bulkCard .bulk-items { grid-template-columns: 1fr; }
-  body.bulk-editor-open #bulkCard .bulk-item { min-width: 0; }
-  body.bulk-editor-open #bulkCard .bulk-item-fields { grid-template-columns: 118px minmax(0, 1fr); }
-  body.bulk-editor-open #bulkCard .bulk-actions {
-    position: sticky;
-    bottom: -1px;
-    z-index: 2;
-    padding-top: 12px;
-    background: linear-gradient(180deg, rgba(255,255,255,0), var(--card) 24%);
-  }
-  html[data-theme="dark"] body.bulk-editor-open #bulkCard .bulk-actions {
-    background: linear-gradient(180deg, rgba(16,27,44,0), var(--card) 24%);
+    padding: 4px;
   }
 
-
-  #resultCard {
-    grid-column: 1 / -1;
-    grid-row: 4;
-    margin: 0;
-  }
-  body.bulk-editor-open #resultCard { grid-row: 4; }
-
-  .app-footer {
-    grid-column: 1 / -1;
-    grid-row: 5;
-    margin-top: 0;
-    padding: 4px 2px 0;
+  /* Search and Settings controls follow the same desktop control rhythm. */
+  .search-wrap input,
+  .filter-select-label select,
+  .template-quick select,
+  .audit-fields input,
+  .history-toolbar input,
+  .correction-grid input,
+  .bulk-item-fields input,
+  #bulkDate {
+    height: var(--qjl-desktop-control-height) !important;
+    min-height: var(--qjl-desktop-control-height) !important;
   }
 
-  /* Consistent desktop card geometry. */
-  .card, .status-card, .result {
-    border-radius: 18px;
+  /* Textareas keep their intended multiline height. */
+  textarea {
+    height: auto !important;
+    max-height: none !important;
+    line-height: 1.45;
   }
-  .card {
-    padding: 22px;
-    box-shadow: 0 12px 34px rgba(25, 46, 77, .07);
-  }
-  html[data-theme="dark"] .card {
-    box-shadow: 0 12px 34px rgba(0, 0, 0, .18);
-  }
-
-  /* Settings is a centered desktop dialog with stable width and no horizontal drift. */
-  .settings-overlay { padding: 32px; }
-  .settings-sheet {
-    width: min(820px, calc(100vw - 64px));
-    max-width: 820px;
-    max-height: min(86vh, 860px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    border-radius: 22px;
-  }
-  .settings-head { position: sticky; top: -20px; z-index: 3; }
-
-  /* Keep result/history rows aligned on wide screens. */
-  .history-toolbar { align-items: end; }
-  .audit-history-item, .worklog-history-item { width: 100%; }
-}
-
-@media (min-width: 1280px) {
-  .shell {
-    grid-template-columns: minmax(0, 1.12fr) minmax(450px, .88fr);
-    column-gap: 28px;
-  }
-}
-
-@media (max-width: 899px) {
-  /* Preserve the 5-row scroll behavior requested for mobile/tablet too. */
-  .issue-list.is-scrollable { max-height: 455px; }
-  .issue-main { flex: 1 1 auto; }
-  .issue-row:has(.issue-check) { justify-content: flex-start; }
 }

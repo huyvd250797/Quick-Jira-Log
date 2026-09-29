@@ -1,4 +1,20 @@
-# Quick Jira Log V1.0.4 – Desktop UI/UX Polish
+# Quick Jira Log V1.0.5 – Desktop Control Consistency Fix
+
+V1.0.5 **rollback bố cục về đúng V1.0.3 – Desktop UI/UX Polish**. Không sử dụng layout V1.0.4.
+
+## Thay đổi V1.0.5
+
+- Giữ nguyên vị trí Bulk Logwork / danh sách ISSUE đang chọn **ở phía dưới như V1.0.3**.
+- Không chuyển Bulk editor sang cột phải.
+- Chỉ chuẩn hóa chiều cao control trên desktop:
+  - textbox
+  - combobox / select
+  - datepicker
+  - timepicker
+- Tất cả control một dòng trên desktop dùng chiều cao chuẩn **46px**.
+- Áp dụng cả form Logwork, Bulk và Settings.
+- Textarea vẫn giữ chiều cao nhiều dòng riêng.
+- Mobile không thay đổi layout.
 
 Hotfix trên nền V1.0.1.
 
@@ -14,7 +30,7 @@ Hotfix trên nền V1.0.1.
 ## Deploy
 Giữ nguyên toàn bộ Environment Variables của V1.0.1 và deploy source lên Vercel. Không cần thay đổi database hay cấu hình Jira.
 
-## V1.0.4 – Desktop UI/UX Polish
+## V1.0.3 – Desktop UI/UX Polish
 
 - Giữ nguyên layout mobile của V1.0.2.
 - Desktop từ 900px dùng workspace 2 cột: Sub-task bên trái, Logwork nhanh bên phải.
@@ -23,13 +39,3 @@ Giữ nguyên toàn bộ Environment Variables của V1.0.1 và deploy source l�
 - Settings trên PC hiển thị dạng modal giữa màn hình thay vì bottom-sheet.
 - Bulk items có thể chia 2 cột trên desktop.
 - Không thay đổi Jira API, scheduler, transition workflow hay quy tắc logwork.
-
-
-## V1.0.4 – Desktop Layout Balance Fix
-
-- Cân lại toàn bộ layout desktop theo 2 cột đồng đều.
-- Sub-task và Logwork nhanh cùng hàng, cùng chiều cao thị giác.
-- Danh sách Sub-task > 5 dòng scroll trong card thay vì kéo dài trang.
-- Fix Bulk mode: checkbox + nội dung issue không bị dạt sang phải; Bulk editor hiển thị ở cột phải thay cho Logwork nhanh.
-- Settings giữ dạng modal giữa màn hình và chặn tràn ngang.
-- Mobile giữ nguyên layout V1.0.3.

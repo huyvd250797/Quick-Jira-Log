@@ -23,4 +23,7 @@
 
 Ưu tiên patch `V1.0.x` nếu có lỗi production; chỉ nâng `V1.1.0` khi có nhóm nhu cầu thực tế đủ rõ.
 
-- ✅ V1.0.4 – Desktop UI/UX Polish (To Do → In Progress → Done)
+- ✅ V1.0.3 – Desktop UI/UX Polish (To Do → In Progress → Done)
+
+- ↩️ V1.0.4 – Desktop Layout Balance Fix: rollback theo yêu cầu, không dùng layout này.
+- ✅ V1.0.5 – Desktop Control Consistency Fix: nền V1.0.3, chỉ đồng nhất chiều cao textbox/combobox/datepicker/timepicker trên desktop.
