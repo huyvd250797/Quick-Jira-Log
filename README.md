@@ -1,4 +1,4 @@
-# Quick Jira Log V1.0.2 – Workflow Transition Hotfix
+# Quick Jira Log V1.0.3 – Desktop UI/UX Polish
 
 Hotfix trên nền V1.0.1.
 
@@ -13,3 +13,13 @@ Hotfix trên nền V1.0.1.
 
 ## Deploy
 Giữ nguyên toàn bộ Environment Variables của V1.0.1 và deploy source lên Vercel. Không cần thay đổi database hay cấu hình Jira.
+
+## V1.0.3 – Desktop UI/UX Polish
+
+- Giữ nguyên layout mobile của V1.0.2.
+- Desktop từ 900px dùng workspace 2 cột: Sub-task bên trái, Logwork nhanh bên phải.
+- Form Logwork sticky trên PC để luôn sẵn thao tác khi cuộn danh sách.
+- Header/status chạy full-width, khoảng trắng và kích thước card được cân lại cho màn hình lớn.
+- Settings trên PC hiển thị dạng modal giữa màn hình thay vì bottom-sheet.
+- Bulk items có thể chia 2 cột trên desktop.
+- Không thay đổi Jira API, scheduler, transition workflow hay quy tắc logwork.

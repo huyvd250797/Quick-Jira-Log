@@ -682,3 +682,142 @@ html[data-theme="dark"] .issue-list.is-scrollable::-webkit-scrollbar-thumb { bac
   .work-hours-pill { font-size: 8.5px; }
   .quick-panel { padding: 9px 10px; }
 }
+
+/* V1.0.3 – Desktop UI/UX Polish
+   Mobile layout intentionally unchanged; desktop gets a balanced two-column workspace. */
+@media (min-width: 900px) {
+  body {
+    background:
+      radial-gradient(circle at 92% -10%, rgba(35, 118, 239, .12), transparent 28%),
+      radial-gradient(circle at 2% 18%, rgba(106, 163, 244, .075), transparent 25%),
+      var(--bg);
+  }
+
+  .shell {
+    width: min(100%, 1180px);
+    margin: 0 auto;
+    padding: 30px 28px 46px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.16fr) minmax(360px, .84fr);
+    column-gap: 22px;
+    row-gap: 16px;
+    align-items: start;
+    overflow: visible;
+  }
+
+  .brand {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 2px 2px 4px;
+    min-height: 62px;
+  }
+  .brand-icon { width: 54px; height: 54px; border-radius: 17px; }
+  .brand-title-row h1 { font-size: 25px; letter-spacing: -.65px; }
+  .version-badge { padding: 5px 9px; font-size: 10px; }
+  .brand-actions { gap: 9px; }
+  .header-icon-btn { width: 42px; height: 42px; flex-basis: 42px; border-radius: 13px; }
+
+  .status-card {
+    grid-column: 1 / -1;
+    margin: 0;
+    min-height: 58px;
+    padding: 11px 15px;
+    border-radius: 16px;
+    box-shadow: 0 7px 22px rgba(24, 46, 78, .055);
+  }
+  .status-left small { max-width: 460px; }
+
+  #loginCard {
+    grid-column: 1 / -1;
+    width: min(100%, 520px);
+    justify-self: center;
+    margin: 28px 0 0;
+  }
+
+  #filterCard {
+    grid-column: 1;
+    margin: 0;
+    min-width: 0;
+    min-height: 520px;
+  }
+
+  #worklogCard {
+    grid-column: 2;
+    margin: 0;
+    min-width: 0;
+    position: sticky;
+    top: 24px;
+  }
+
+  #bulkCard,
+  #resultCard,
+  .app-footer {
+    grid-column: 1 / -1;
+  }
+  #bulkCard, #resultCard { margin: 0; }
+  .app-footer { padding: 8px 0 0; }
+
+  .card {
+    margin-bottom: 0;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(29, 49, 78, .065);
+  }
+  .card-title { min-height: 30px; margin-bottom: 14px; }
+  .card-title h2 { font-size: 17px; }
+
+  .filter-heading { min-height: 38px; margin-bottom: 12px; }
+  .filter-tools { gap: 9px; margin-bottom: 11px; }
+  .search-wrap input { min-height: 44px; }
+  .count-pill { height: 38px; min-width: 42px; }
+  .issue-list { gap: 8px; }
+  .issue-row {
+    padding: 11px 12px;
+    border-radius: 12px;
+    transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .issue-row:hover {
+    transform: translateY(-1px);
+    border-color: #a8c8f0;
+    box-shadow: 0 6px 18px rgba(25, 75, 140, .065);
+  }
+  .issue-summary { -webkit-line-clamp: 1; }
+  .issue-meta { max-width: 520px; }
+
+  .worklog-title { margin-bottom: 14px; }
+  .work-hours-pill { font-size: 9px; padding: 5px 9px; }
+  #worklogCard form { gap: 13px; }
+  #worklogCard .grid-2 { gap: 10px; }
+  #worklogCard input, #worklogCard textarea { padding: 11px 12px; }
+  #worklogCard textarea { min-height: 112px; }
+  #worklogCard .primary { min-height: 48px; margin-top: 2px; }
+  .quick-panel { margin-bottom: 12px; }
+
+  .bulk-items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bulk-item { height: 100%; }
+
+  .settings-overlay { align-items: center; padding: 28px; }
+  .settings-sheet {
+    width: min(100%, 760px);
+    max-width: 760px;
+    max-height: min(84vh, 820px);
+    border-radius: 22px;
+    padding: 20px 22px 24px;
+    box-shadow: 0 28px 80px rgba(7, 20, 39, .28);
+  }
+  .settings-head {
+    top: -20px;
+    margin: -20px -22px 0;
+    padding: 20px 22px 15px;
+    border-radius: 22px 22px 0 0;
+  }
+  .settings-section { padding: 17px 0; }
+  .audit-fields, .history-toolbar { grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .toast { width: min(calc(100% - 48px), 560px); }
+}
+
+@media (min-width: 1180px) {
+  .shell { grid-template-columns: minmax(0, 1.22fr) minmax(390px, .78fr); column-gap: 26px; }
+}
+
