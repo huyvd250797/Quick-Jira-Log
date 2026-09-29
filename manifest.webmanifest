@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.1.1 – Focused Logwork UX: logwork Jira nhanh, tự né giờ đã log, chuyển Done và quản lý lịch sử.",
+  "description": "Quick Jira Log V1.2.0 – Streamlined Navigation & Bulk Selection: logwork Jira nhanh, Log tất cả linh hoạt, Planner và History truy cập trực tiếp.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

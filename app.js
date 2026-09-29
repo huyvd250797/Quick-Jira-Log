@@ -1,10 +1,9 @@
 'use strict';
 
-const APP_VERSION = '1.1.1';
+const APP_VERSION = '1.2.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
-  templates: 'quick-jira-log:templates:v1',
   lastLog: 'quick-jira-log:last-log:v1',
   audit: 'quick-jira-log:audit:v1',
   theme: 'quick-jira-log:theme:v1'
@@ -26,7 +25,6 @@ const state = {
   currentIssueSummary: '',
   prefs: { lastProject: '', lastTimeSpent: '' },
   recentIssues: [],
-  templates: [],
   lastLog: null,
   auditHistory: [],
   settingsScrollY: 0,
@@ -143,8 +141,6 @@ function loadQuickData() {
   };
   const recent = readStorage(STORAGE.recent, []);
   state.recentIssues = Array.isArray(recent) ? recent.slice(0, 8) : [];
-  const templates = readStorage(STORAGE.templates, []);
-  state.templates = Array.isArray(templates) ? templates.filter(t => t?.id && t?.name && typeof t?.content === 'string').slice(0, 30) : [];
   const lastLog = readStorage(STORAGE.lastLog, null);
   state.lastLog = lastLog && typeof lastLog === 'object' ? lastLog : null;
   const audit = readStorage(STORAGE.audit, []);
@@ -163,6 +159,10 @@ function setLoggedIn(user) {
   $('worklogCard').classList.add('hidden');
   $('statusCard').classList.remove('hidden');
   $('settingsBtn')?.classList.remove('hidden');
+  $('plannerBtn')?.classList.remove('hidden');
+  $('historyBtn')?.classList.remove('hidden');
+  $('mobileTaskbar')?.classList.remove('hidden');
+  document.body.classList.add('has-mobile-taskbar');
   $('userLabel').textContent = user?.displayName || user?.username || '';
   hydrateQuickInputs();
   if (!state.filterLoaded && !state.filterLoading) loadFilterIssues();
@@ -181,6 +181,11 @@ function setLoggedOut() {
   state.bulkDrafts.clear();
   $('statusCard').classList.add('hidden');
   $('settingsBtn')?.classList.add('hidden');
+  $('plannerBtn')?.classList.add('hidden');
+  $('historyBtn')?.classList.add('hidden');
+  $('mobileTaskbar')?.classList.add('hidden');
+  document.body.classList.remove('has-mobile-taskbar');
+  closeAllToolOverlays({ restore: false });
   $('filterCard').classList.add('hidden');
   $('worklogCard').classList.add('hidden');
   $('bulkCard').classList.add('hidden');
@@ -505,96 +510,6 @@ function addRecentIssue(issue) {
 function updateQuickPanelVisibility() {}
 
 function renderRecentIssues() {}
-function renderTemplates() {
-  const select = $('templateSelect');
-  const selected = select.value;
-  select.innerHTML = '<option value="">Mẫu Description...</option>' + state.templates.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
-  if (state.templates.some(t => t.id === selected)) select.value = selected;
-
-  const list = $('templateList');
-  if (!state.templates.length) {
-    list.innerHTML = '<div class="template-empty">Chưa có mẫu nào. Bạn có thể lưu Description hiện tại thành mẫu.</div>';
-    return;
-  }
-  list.innerHTML = state.templates.map(t => `
-    <div class="template-item" data-id="${escapeHtml(t.id)}">
-      <div><strong>${escapeHtml(t.name)}</strong><small>${escapeHtml(t.content)}</small></div>
-      <div class="template-item-actions">
-        <button type="button" class="template-use">Dùng</button>
-        <button type="button" class="template-delete" aria-label="Xóa mẫu">×</button>
-      </div>
-    </div>
-  `).join('');
-  list.querySelectorAll('.template-item').forEach(row => {
-    const id = row.dataset.id;
-    row.querySelector('.template-use').addEventListener('click', () => applyTemplateById(id));
-    row.querySelector('.template-delete').addEventListener('click', () => deleteTemplate(id));
-  });
-}
-
-function templateContext() {
-  return {
-    summary: state.currentIssueSummary || $('description').value.trim(),
-    key: $('key').value.trim().toUpperCase(),
-    project: $('project').value.trim().toUpperCase(),
-    date: $('date').value || todayLocal()
-  };
-}
-
-function expandTemplate(content) {
-  const ctx = templateContext();
-  return String(content || '').replace(/\{(summary|key|project|date)\}/gi, (_, name) => ctx[String(name).toLowerCase()] || '');
-}
-
-function applyTemplateById(id) {
-  const template = state.templates.find(t => t.id === id);
-  if (!template) {
-    showToast('Hãy chọn một mẫu Description.');
-    return;
-  }
-  $('templateSelect').value = id;
-  $('description').value = expandTemplate(template.content);
-  showToast(`Đã áp dụng mẫu “${template.name}”.`);
-  closeSettings();
-  $('description').focus();
-}
-
-function saveTemplate(name, content) {
-  const cleanName = String(name || '').trim();
-  const cleanContent = String(content || '').trim();
-  if (!cleanContent) {
-    showToast('Nội dung mẫu không được để trống.');
-    return false;
-  }
-  const finalName = cleanName || `Mẫu ${state.templates.length + 1}`;
-  const existing = state.templates.find(t => t.name.toLocaleLowerCase('vi') === finalName.toLocaleLowerCase('vi'));
-  if (existing) {
-    existing.content = cleanContent;
-    existing.updatedAt = new Date().toISOString();
-  } else {
-    state.templates.unshift({
-      id: `tpl_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      name: finalName,
-      content: cleanContent,
-      createdAt: new Date().toISOString()
-    });
-  }
-  state.templates = state.templates.slice(0, 30);
-  writeStorage(STORAGE.templates, state.templates);
-  renderTemplates();
-  return true;
-}
-
-function deleteTemplate(id) {
-  const template = state.templates.find(t => t.id === id);
-  if (!template) return;
-  if (!confirm(`Xóa mẫu “${template.name}”?`)) return;
-  state.templates = state.templates.filter(t => t.id !== id);
-  writeStorage(STORAGE.templates, state.templates);
-  renderTemplates();
-  showToast('Đã xóa mẫu.');
-}
-
 function setLastLog(payload, issueSummary = '') {
   state.lastLog = {
     key: payload.key,
@@ -621,35 +536,81 @@ function hydrateQuickInputs() {
   $('date').value = todayLocal();
   $('bulkDate').value = todayLocal();
   if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
-  renderTemplates();
   renderAuditHistory();
 }
-function openSettings() {
-  const overlay = $('settingsOverlay');
-  if (!overlay || !overlay.classList.contains('hidden')) return;
+function lockOverlayBody() {
+  if (document.body.classList.contains('settings-open')) return;
   state.settingsScrollY = window.scrollY || document.documentElement.scrollTop || 0;
   document.body.style.top = `-${state.settingsScrollY}px`;
   document.body.classList.add('settings-open');
   document.documentElement.classList.add('settings-open-root');
-  overlay.classList.remove('hidden');
-  overlay.setAttribute('aria-hidden', 'false');
-  $('auditDate').value = $('date').value || todayLocal();
-  $('auditKey').value = $('key').value.trim().toUpperCase();
-  renderTemplates();
-  renderAuditHistory();
-  updatePwaUi();
-  requestAnimationFrame(() => $('closeSettingsBtn')?.focus({ preventScroll: true }));
 }
 
-function closeSettings() {
-  const overlay = $('settingsOverlay');
-  if (!overlay || overlay.classList.contains('hidden')) return;
-  overlay.classList.add('hidden');
-  overlay.setAttribute('aria-hidden', 'true');
+function unlockOverlayBody() {
+  const overlays = ['settingsOverlay', 'plannerOverlay', 'historyOverlay']
+    .map(id => $(id))
+    .filter(Boolean);
+  if (overlays.some(overlay => !overlay.classList.contains('hidden'))) return;
   document.body.classList.remove('settings-open');
   document.documentElement.classList.remove('settings-open-root');
   document.body.style.top = '';
   window.scrollTo(0, state.settingsScrollY || 0);
+}
+
+function closeOverlay(id, { restore = true } = {}) {
+  const overlay = $(id);
+  if (!overlay || overlay.classList.contains('hidden')) return;
+  overlay.classList.add('hidden');
+  overlay.setAttribute('aria-hidden', 'true');
+  if (restore) unlockOverlayBody();
+}
+
+function closeAllToolOverlays({ restore = true } = {}) {
+  closeOverlay('plannerOverlay', { restore: false });
+  closeOverlay('historyOverlay', { restore: false });
+  if (restore) unlockOverlayBody();
+}
+
+function openOverlay(id, focusId) {
+  const overlay = $(id);
+  if (!overlay || !overlay.classList.contains('hidden')) return;
+  closeOverlay('settingsOverlay', { restore: false });
+  closeAllToolOverlays({ restore: false });
+  lockOverlayBody();
+  overlay.classList.remove('hidden');
+  overlay.setAttribute('aria-hidden', 'false');
+  requestAnimationFrame(() => $(focusId)?.focus({ preventScroll: true }));
+}
+
+function openSettings() {
+  renderAuditHistory();
+  updatePwaUi();
+  openOverlay('settingsOverlay', 'closeSettingsBtn');
+}
+
+function closeSettings() {
+  closeOverlay('settingsOverlay');
+}
+
+function openPlanner() {
+  $('auditDate').value = $('date').value || $('bulkDate').value || todayLocal();
+  $('auditKey').value = $('key').value.trim().toUpperCase();
+  openOverlay('plannerOverlay', 'closePlannerBtn');
+}
+
+function closePlanner() {
+  closeOverlay('plannerOverlay');
+}
+
+function openHistory() {
+  if (!$('historyDate').value) $('historyDate').value = $('date').value || $('bulkDate').value || todayLocal();
+  renderWorklogHistory();
+  openOverlay('historyOverlay', 'closeHistoryBtn');
+}
+
+function closeHistory() {
+  closeCorrection();
+  closeOverlay('historyOverlay');
 }
 
 function addAuditEntry(entry) {
@@ -895,9 +856,11 @@ function bulkDraftList() {
 }
 
 function updateBulkTotal() {
-  const total = bulkDraftList().reduce((sum, item) => sum + parseTimeSpentClient(item.timeSpent), 0);
+  const items = bulkDraftList();
+  const total = items.reduce((sum, item) => sum + parseTimeSpentClient(item.timeSpent), 0);
   $('bulkTotal').textContent = minutesLabel(total);
-  $('bulkLogBtn').disabled = !bulkDraftList().length || total <= 0;
+  if ($('bulkSelectionCount')) $('bulkSelectionCount').textContent = `${items.length}/${state.filterIssues.length} Sub-task`;
+  $('bulkLogBtn').disabled = !items.length || total <= 0;
 }
 
 function renderBulkItems() {
@@ -916,6 +879,7 @@ function renderBulkItems() {
           <span>${escapeHtml(item.summary || 'Không có summary')}</span>
           <small>${escapeHtml(item.project)}</small>
         </div>
+        <button class="bulk-remove-btn" type="button" aria-label="Bỏ ${escapeHtml(item.key)} khỏi danh sách log" title="Bỏ Sub-task này">×</button>
       </div>
       <div class="bulk-item-fields">
         <label>TimeSpent<input class="bulk-time" value="${escapeHtml(item.timeSpent || '1h')}" placeholder="1h" inputmode="text" required /></label>
@@ -933,6 +897,12 @@ function renderBulkItems() {
     });
     row.querySelector('.bulk-description').addEventListener('input', event => {
       if (draft) draft.description = event.target.value;
+    });
+    row.querySelector('.bulk-remove-btn')?.addEventListener('click', () => {
+      state.bulkSelectedKeys.delete(key);
+      state.bulkDrafts.delete(key);
+      renderBulkItems();
+      showToast(`Đã bỏ ${key} khỏi lần Log tất cả này.`);
     });
   });
   updateBulkTotal();
@@ -1078,41 +1048,26 @@ document.querySelectorAll('.preset-btn').forEach(button => {
   });
 });
 
-$('applyTemplateBtn').addEventListener('click', () => applyTemplateById($('templateSelect').value));
-$('templateSelect').addEventListener('change', () => {
-  if ($('templateSelect').value) applyTemplateById($('templateSelect').value);
-});
-
-$('saveCurrentTemplateBtn').addEventListener('click', () => {
-  const content = $('description').value.trim();
-  if (!content) {
-    showToast('Description đang trống, chưa thể lưu mẫu.');
-    return;
-  }
-  $('templateContent').value = content;
-  $('templateManager').open = true;
-  $('templateName').focus();
-});
-
-$('saveTemplateBtn').addEventListener('click', () => {
-  if (saveTemplate($('templateName').value, $('templateContent').value)) {
-    $('templateName').value = '';
-    $('templateContent').value = '';
-    showToast('Đã lưu mẫu Description.');
-  }
-});
-
-
 $('themeBtn')?.addEventListener('click', toggleTheme);
+$('plannerBtn')?.addEventListener('click', openPlanner);
+$('historyBtn')?.addEventListener('click', openHistory);
+$('mobilePlannerBtn')?.addEventListener('click', openPlanner);
+$('mobileHistoryBtn')?.addEventListener('click', openHistory);
 $('lightThemeBtn')?.addEventListener('click', () => applyTheme('light'));
 $('darkThemeBtn')?.addEventListener('click', () => applyTheme('dark'));
 $('settingsBtn').addEventListener('click', openSettings);
 $('closeSettingsBtn').addEventListener('click', closeSettings);
 document.querySelectorAll('[data-close-settings]').forEach(el => el.addEventListener('click', closeSettings));
+$('closePlannerBtn')?.addEventListener('click', closePlanner);
+$('closeHistoryBtn')?.addEventListener('click', closeHistory);
+document.querySelectorAll('[data-close-planner]').forEach(el => el.addEventListener('click', closePlanner));
+document.querySelectorAll('[data-close-history]').forEach(el => el.addEventListener('click', closeHistory));
 $('installPwaBtn')?.addEventListener('click', installPwa);
-$('settingsOverlay')?.addEventListener('touchmove', event => {
-  if (!event.target.closest('.settings-sheet')) event.preventDefault();
-}, { passive: false });
+['settingsOverlay', 'plannerOverlay', 'historyOverlay'].forEach(id => {
+  $(id)?.addEventListener('touchmove', event => {
+    if (!event.target.closest('.settings-sheet')) event.preventDefault();
+  }, { passive: false });
+});
 $('runAuditBtn').addEventListener('click', runDayAudit);
 $('refreshWorklogHistoryBtn').addEventListener('click', () => loadWorklogHistory());
 $('cancelCorrectionBtn').addEventListener('click', closeCorrection);
@@ -1126,7 +1081,10 @@ $('clearAuditHistoryBtn').addEventListener('click', () => {
   renderAuditHistory();
 });
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && !$('settingsOverlay').classList.contains('hidden')) closeSettings();
+  if (event.key !== 'Escape') return;
+  if (!$('plannerOverlay')?.classList.contains('hidden')) return closePlanner();
+  if (!$('historyOverlay')?.classList.contains('hidden')) return closeHistory();
+  if (!$('settingsOverlay')?.classList.contains('hidden')) closeSettings();
 });
 
 $('worklogForm').addEventListener('submit', async event => {

@@ -20,9 +20,14 @@
 - ✅ V1.0.5 – Desktop Control Consistency Fix
 - ✅ V1.0.6 – Desktop Alignment & Stable Columns Fix
 - ✅ V1.1.0 – Focused Logwork UX
-- ✅ V1.1.1 – Editable Log Date Hotfix
+- ✅ V1.2.0 – Editable Log Date Hotfix
   - click Sub-task mới mở form logwork;
   - chỉ nhập TimeSpent và Description;
   - một nút Log tất cả;
   - Planner/History gom thành nhóm thu gọn;
   - History diễn đạt rõ chức năng tìm/sửa/xóa worklog.
+
+- ✅ V1.2.0 – Streamlined Navigation & Bulk Selection
+  - Log tất cả chọn sẵn toàn bộ và cho bỏ từng Sub-task.
+  - Bỏ Description Templates.
+  - Planner/History tách khỏi Settings; desktop dùng header actions, mobile dùng taskbar.

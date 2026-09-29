@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.1.1</title>
+  <title>Quick Jira Log · V1.2.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -20,7 +20,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.1.1</div>
+      <div class="boot-version">V1.2.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -29,12 +29,18 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.1.1</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.2.0</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
           <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8 8.7 8.7 0 1 0 20.2 15.2Z"/></svg>
           <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <button id="plannerBtn" class="header-tool-btn hidden" type="button" aria-label="Kiểm tra và lập kế hoạch" title="Kiểm tra & lập kế hoạch">
+          <span class="header-tool-icon">✓</span><span>Kiểm tra & lập kế hoạch</span>
+        </button>
+        <button id="historyBtn" class="header-tool-btn hidden" type="button" aria-label="Worklog đã log" title="Tìm và chỉnh sửa worklog đã log">
+          <span class="header-tool-icon history">↺</span><span>Worklog đã log</span>
         </button>
         <button id="settingsBtn" class="header-icon-btn hidden" type="button" aria-label="Cài đặt" title="Cài đặt">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.42 1.42-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20h-2v-.48A1.7 1.7 0 0 0 12.38 18a1.7 1.7 0 0 0-1.88.34l-.06.06-1.42-1.42.06-.06A1.7 1.7 0 0 0 9.42 15a1.7 1.7 0 0 0-1.56-1.03H7.4v-2h.46A1.7 1.7 0 0 0 9.42 11a1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.42-1.42.06.06A1.7 1.7 0 0 0 12.38 8a1.7 1.7 0 0 0 1.03-1.56V6h2v.44A1.7 1.7 0 0 0 16.44 8a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.42 1.42-.06.06A1.7 1.7 0 0 0 19.4 11a1.7 1.7 0 0 0 1.56 1.03h.44v2h-.44A1.7 1.7 0 0 0 19.4 15Z"/></svg>
@@ -85,8 +91,8 @@
 
     <section id="bulkCard" class="card hidden">
       <div class="card-title bulk-title">
-        <div><h2>Log tất cả Sub-task</h2><p class="card-subtitle">Chỉnh Ngày logwork, TimeSpent và Description trước khi log.</p></div>
-        <span class="work-hours-pill">08:00–12:00 · 13:30–17:30</span>
+        <div><h2>Log tất cả Sub-task</h2><p class="card-subtitle">Mặc định chọn toàn bộ. Bấm × ở Sub-task chưa cần log để loại khỏi lần này.</p></div>
+        <div class="bulk-title-meta"><span id="bulkSelectionCount" class="bulk-selection-count">0 Sub-task</span><span class="work-hours-pill">08:00–12:00 · 13:30–17:30</span></div>
       </div>
       <form id="bulkForm">
         <div class="bulk-global-fields">
@@ -166,85 +172,72 @@
         </div>
 
         <div class="settings-section">
-          <h3>Mẫu Description</h3>
-          <div class="template-quick settings-template-quick">
-            <select id="templateSelect" aria-label="Chọn mẫu Description"><option value="">Chọn mẫu...</option></select>
-            <button id="applyTemplateBtn" class="soft-btn" type="button">Dùng mẫu</button>
-            <button id="saveCurrentTemplateBtn" class="soft-btn" type="button">+ Lưu Description hiện tại</button>
-          </div>
-          <details id="templateManager" class="template-manager">
-            <summary>Quản lý mẫu</summary>
-            <div class="template-manager-body">
-              <div class="grid-2">
-                <label>Tên mẫu<input id="templateName" placeholder="VD: Fix bug" maxlength="60" /></label>
-                <div class="template-helper">Biến hỗ trợ <code>{summary}</code>, <code>{key}</code>, <code>{project}</code>, <code>{date}</code>.</div>
-              </div>
-              <label>Nội dung mẫu<textarea id="templateContent" rows="3" placeholder="VD: {summary}"></textarea></label>
-              <button id="saveTemplateBtn" class="secondary" type="button">LƯU MẪU</button>
-              <div id="templateList" class="template-list"></div>
-            </div>
-          </details>
-        </div>
-
-        <div class="settings-section settings-tools-section">
-          <h3>Công cụ Worklog</h3>
-          <div class="settings-tool-groups">
-            <details class="settings-tool-group">
-              <summary>
-                <span class="tool-group-icon">✓</span>
-                <span><strong>Kiểm tra & lập kế hoạch</strong><small>Xem thời gian đã logwork và khoảng giờ còn trống trong ngày.</small></span>
-                <span class="tool-group-chevron">⌄</span>
-              </summary>
-              <div class="tool-group-body">
-                <div class="audit-fields">
-                  <label>Ngày<input id="auditDate" type="date" /></label>
-                  <label>KEY (không bắt buộc)<input id="auditKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
-                </div>
-                <button id="runAuditBtn" class="secondary" type="button">KIỂM TRA & LẬP KẾ HOẠCH</button>
-                <div id="auditResult" class="audit-result hidden"></div>
-              </div>
-            </details>
-
-            <details class="settings-tool-group">
-              <summary>
-                <span class="tool-group-icon history">↺</span>
-                <span><strong>Tìm & chỉnh sửa worklog đã log</strong><small>Tìm lại Sub-task đã logwork trên Jira để xem, sửa hoặc xóa worklog.</small></span>
-                <span class="tool-group-chevron">⌄</span>
-              </summary>
-              <div class="tool-group-body">
-                <div class="history-toolbar">
-                  <label>Ngày<input id="historyDate" type="date" /></label>
-                  <label>KEY (không bắt buộc)<input id="historyKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
-                </div>
-                <button id="refreshWorklogHistoryBtn" class="secondary history-search-btn" type="button">TÌM WORKLOG ĐÃ LOG</button>
-                <div id="worklogHistoryState" class="history-state">Chọn ngày hoặc nhập KEY, sau đó bấm “Tìm worklog đã log”.</div>
-                <div id="worklogHistoryList" class="worklog-history-list"></div>
-                <div id="worklogCorrectionPanel" class="worklog-correction-panel hidden">
-                  <div class="correction-head"><div><strong id="correctionTitle">Sửa worklog</strong><small id="correctionMeta"></small></div><button id="cancelCorrectionBtn" class="text-btn" type="button">Đóng</button></div>
-                  <input id="correctionWorklogId" type="hidden" />
-                  <input id="correctionKey" type="hidden" />
-                  <div class="correction-grid">
-                    <label>Date<input id="correctionDate" type="date" /></label>
-                    <label>Start<input id="correctionStart" type="time" step="60" /></label>
-                    <label>TimeSpent<input id="correctionTimeSpent" placeholder="1h" /></label>
-                  </div>
-                  <label>Description<textarea id="correctionDescription" rows="3"></textarea></label>
-                  <div class="correction-actions"><button id="deleteCorrectionBtn" class="danger-btn" type="button">XÓA WORKLOG</button><button id="saveCorrectionBtn" class="primary" type="button">LƯU CHỈNH SỬA</button></div>
-                </div>
-              </div>
-            </details>
-          </div>
-        </div>
-
-        <div class="settings-section">
           <div class="settings-section-title"><h3>Lịch sử thao tác</h3><button id="clearAuditHistoryBtn" class="text-btn" type="button">Xóa lịch sử</button></div>
           <div id="auditHistory" class="audit-history"></div>
         </div>
       </section>
     </div>
 
+    <div id="plannerOverlay" class="settings-overlay tool-overlay hidden" aria-hidden="true">
+      <div class="settings-backdrop" data-close-planner></div>
+      <section class="settings-sheet tool-sheet" role="dialog" aria-modal="true" aria-labelledby="plannerTitle">
+        <div class="settings-head">
+          <div><h2 id="plannerTitle">Kiểm tra & lập kế hoạch</h2><p>Xem thời gian đã logwork và khoảng giờ còn trống trong ngày.</p></div>
+          <button id="closePlannerBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
+        </div>
+        <div class="tool-modal-body">
+          <div class="audit-fields">
+            <label>Ngày<input id="auditDate" type="date" /></label>
+            <label>KEY (không bắt buộc)<input id="auditKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
+          </div>
+          <button id="runAuditBtn" class="secondary tool-primary-action" type="button">KIỂM TRA & LẬP KẾ HOẠCH</button>
+          <div id="auditResult" class="audit-result hidden"></div>
+        </div>
+      </section>
+    </div>
+
+    <div id="historyOverlay" class="settings-overlay tool-overlay hidden" aria-hidden="true">
+      <div class="settings-backdrop" data-close-history></div>
+      <section class="settings-sheet tool-sheet history-tool-sheet" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+        <div class="settings-head">
+          <div><h2 id="historyTitle">Worklog đã log</h2><p>Tìm lại Sub-task đã log trên Jira để xem, sửa hoặc xóa worklog.</p></div>
+          <button id="closeHistoryBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
+        </div>
+        <div class="tool-modal-body">
+          <div class="history-toolbar">
+            <label>Ngày<input id="historyDate" type="date" /></label>
+            <label>KEY (không bắt buộc)<input id="historyKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
+          </div>
+          <button id="refreshWorklogHistoryBtn" class="secondary history-search-btn" type="button">TÌM WORKLOG ĐÃ LOG</button>
+          <div id="worklogHistoryState" class="history-state">Chọn ngày hoặc nhập KEY, sau đó bấm “Tìm worklog đã log”.</div>
+          <div id="worklogHistoryList" class="worklog-history-list"></div>
+          <div id="worklogCorrectionPanel" class="worklog-correction-panel hidden">
+            <div class="correction-head"><div><strong id="correctionTitle">Sửa worklog</strong><small id="correctionMeta"></small></div><button id="cancelCorrectionBtn" class="text-btn" type="button">Đóng</button></div>
+            <input id="correctionWorklogId" type="hidden" />
+            <input id="correctionKey" type="hidden" />
+            <div class="correction-grid">
+              <label>Date<input id="correctionDate" type="date" /></label>
+              <label>Start<input id="correctionStart" type="time" step="60" /></label>
+              <label>TimeSpent<input id="correctionTimeSpent" placeholder="1h" /></label>
+            </div>
+            <label>Description<textarea id="correctionDescription" rows="3"></textarea></label>
+            <div class="correction-actions"><button id="deleteCorrectionBtn" class="danger-btn" type="button">XÓA WORKLOG</button><button id="saveCorrectionBtn" class="primary" type="button">LƯU CHỈNH SỬA</button></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <nav id="mobileTaskbar" class="mobile-taskbar hidden" aria-label="Công cụ Worklog">
+      <button id="mobilePlannerBtn" class="mobile-taskbar-btn" type="button">
+        <span class="mobile-taskbar-icon">✓</span><span>Kiểm tra</span>
+      </button>
+      <button id="mobileHistoryBtn" class="mobile-taskbar-btn" type="button">
+        <span class="mobile-taskbar-icon history">↺</span><span>Worklog đã log</span>
+      </button>
+    </nav>
+
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.1.1</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.2.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

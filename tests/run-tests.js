@@ -107,8 +107,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.1.1');
-console.log('V1.1.1 editable log date version test passed.');
+assert.equal(packageJson.version, '1.2.0');
+console.log('V1.2.0 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -132,6 +132,20 @@ assert(indexHtml.includes('TÌM WORKLOG ĐÃ LOG'));
 assert(appJs.includes('<small>Đã logwork</small>'));
 assert(appJs.includes("$('logAllBtn').addEventListener('click', openBulkAll)"));
 console.log('V1.1.1 focused logwork UX + editable date tests passed.');
+
+// V1.2.0 - streamlined navigation, no description templates, flexible Log All selection.
+assert(!indexHtml.includes('Mẫu Description'));
+assert(!indexHtml.includes('id=\"templateSelect\"'));
+assert(indexHtml.includes('id=\"plannerBtn\"'));
+assert(indexHtml.includes('id=\"historyBtn\"'));
+assert(indexHtml.includes('id=\"mobileTaskbar\"'));
+assert(indexHtml.includes('id=\"plannerOverlay\"'));
+assert(indexHtml.includes('id=\"historyOverlay\"'));
+assert(appJs.includes('bulk-remove-btn'));
+assert(appJs.includes('state.bulkSelectedKeys.delete(key)'));
+assert(appJs.includes('openPlanner'));
+assert(appJs.includes('openHistory'));
+console.log('V1.2.0 streamlined navigation & bulk selection tests passed.');
 
 
 // V1.0.3 - To Do phải tìm transition sang In Progress trước, sau đó mới Done.

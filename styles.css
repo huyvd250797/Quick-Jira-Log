@@ -1065,3 +1065,151 @@ html[data-theme="dark"] .tool-group-icon.history { background: #172c49; color: #
   .worklog-primary-fields { grid-template-columns: 1fr; }
   .bulk-global-fields { grid-template-columns: 1fr; }
 }
+
+/* V1.2.0 – Streamlined Navigation & Bulk Selection */
+.header-tool-btn {
+  display: none;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 5px 18px rgba(26, 47, 79, .06);
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+.header-tool-btn:hover { border-color: #a9c7ee; background: #f8fbff; }
+.header-tool-btn:active { transform: scale(.97); }
+.header-tool-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #eaf8f1;
+  color: var(--ok);
+  font-size: 12px;
+  font-weight: 950;
+}
+.header-tool-icon.history { background: #eaf2ff; color: var(--primary); }
+
+.bulk-title-meta { display: flex; align-items: flex-end; flex-direction: column; gap: 6px; }
+.bulk-selection-count {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.bulk-item-head { display: flex; align-items: flex-start; gap: 10px; }
+.bulk-remove-btn {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border: 1px solid rgba(213, 62, 85, .22);
+  border-radius: 10px;
+  background: #fff4f6;
+  color: var(--danger);
+  font-size: 19px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.bulk-remove-btn:hover { background: #ffe9ed; border-color: rgba(213, 62, 85, .38); }
+.bulk-remove-btn:active { transform: scale(.95); }
+
+.tool-modal-body { padding-top: 16px; display: grid; gap: 10px; min-width: 0; }
+.tool-primary-action { width: 100%; }
+.tool-overlay .audit-result { margin-top: 0; }
+.history-tool-sheet .worklog-history-list { max-height: 42vh; overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+
+.mobile-taskbar { display: none; }
+.mobile-taskbar-btn {
+  min-width: 0;
+  border: 0;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--muted);
+  min-height: 54px;
+  padding: 7px 8px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.mobile-taskbar-btn:active { background: var(--primary-soft); color: var(--primary); }
+.mobile-taskbar-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: #eaf8f1;
+  color: var(--ok);
+  font-size: 13px;
+  font-weight: 950;
+}
+.mobile-taskbar-icon.history { background: #eaf2ff; color: var(--primary); }
+
+html[data-theme="dark"] .header-tool-btn { background: #0d1929; border-color: #2a3a51; color: var(--text); }
+html[data-theme="dark"] .header-tool-btn:hover { background: #112139; border-color: #3c5e89; }
+html[data-theme="dark"] .header-tool-icon { background: #123326; color: #6bdaa3; }
+html[data-theme="dark"] .header-tool-icon.history { background: #172c49; color: #78aef8; }
+html[data-theme="dark"] .bulk-remove-btn { background: #2e1720; border-color: #573140; color: #ff8496; }
+html[data-theme="dark"] .bulk-selection-count { background: #172f52; color: #7bb7ff; }
+html[data-theme="dark"] .mobile-taskbar { background: rgba(13, 25, 41, .96); border-color: #2a3a51; }
+html[data-theme="dark"] .mobile-taskbar-btn { color: #a7b5c9; }
+html[data-theme="dark"] .mobile-taskbar-btn:active { background: #163356; color: #82bcff; }
+html[data-theme="dark"] .mobile-taskbar-icon { background: #123326; color: #6bdaa3; }
+html[data-theme="dark"] .mobile-taskbar-icon.history { background: #172c49; color: #78aef8; }
+
+@media (min-width: 900px) {
+  .header-tool-btn { display: flex; }
+  .tool-sheet { width: min(100%, 760px); max-width: 760px; }
+  .history-tool-sheet { width: min(100%, 900px); max-width: 900px; }
+  .history-tool-sheet .worklog-history-list { max-height: 46vh; }
+}
+
+@media (min-width: 900px) and (max-width: 1080px) {
+  .header-tool-btn { padding: 0 9px; font-size: 10px; }
+  .header-tool-icon { display: none; }
+}
+
+@media (max-width: 899px) {
+  body.has-mobile-taskbar .shell {
+    padding-bottom: max(108px, calc(env(safe-area-inset-bottom) + 88px));
+  }
+  .mobile-taskbar {
+    position: fixed;
+    left: 50%;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 88;
+    width: min(calc(100% - 24px), 520px);
+    padding: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+    border: 1px solid rgba(219, 228, 241, .96);
+    border-radius: 17px;
+    background: rgba(255,255,255,.96);
+    backdrop-filter: blur(18px);
+    box-shadow: 0 15px 38px rgba(16, 34, 62, .18);
+  }
+  .bulk-title { flex-direction: column; align-items: stretch !important; gap: 9px; }
+  .bulk-title-meta { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
+  .tool-sheet { width: min(calc(100vw - 16px), 620px); }
+  .history-tool-sheet .worklog-history-list { max-height: 38vh; }
+}

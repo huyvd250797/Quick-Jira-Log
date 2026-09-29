@@ -1,6 +1,6 @@
-# Quick Jira Log V1.1.1 – Editable Log Date Hotfix
+# Quick Jira Log V1.2.0 – Editable Log Date Hotfix
 
-V1.1.1 giữ nguyên Focused Logwork UX của V1.1.0 và bổ sung lại quyền chọn/cập nhật Ngày logwork. KEY, Project và Summary tiếp tục lấy từ Jira; người dùng chỉ chỉnh Ngày logwork, TimeSpent và Description.
+V1.2.0 giữ nguyên Focused Logwork UX của V1.1.0 và bổ sung lại quyền chọn/cập nhật Ngày logwork. KEY, Project và Summary tiếp tục lấy từ Jira; người dùng chỉ chỉnh Ngày logwork, TimeSpent và Description.
 
 ## Luồng Logwork cá nhân
 
@@ -52,3 +52,11 @@ Hai nghiệp vụ phụ được gom thành nhóm thu gọn để giao diện b�
 ## Deploy
 
 Giữ nguyên Environment Variables của bản trước và deploy source lên Vercel. Không cần thay đổi database.
+
+## V1.2.0 – Streamlined Navigation & Bulk Selection
+
+- `LOG TẤT CẢ` mặc định đưa toàn bộ Sub-task chưa logwork vào batch; có thể bấm `×` để loại từng Sub-task chưa cần log.
+- Bỏ hoàn toàn Mẫu Description và Quản lý mẫu.
+- Desktop: `Kiểm tra & lập kế hoạch` và `Worklog đã log` là hai nút truy cập trực tiếp cạnh Dark/Light mode.
+- Mobile: hai chức năng trên nằm ở taskbar cố định phía dưới.
+- Settings chỉ giữ các cấu hình ứng dụng/PWA, giao diện và lịch sử thao tác.
