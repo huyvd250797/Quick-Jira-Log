@@ -1,94 +1,52 @@
-# Quick Jira Log V0.7.0 – Mobile PWA & Quick Actions
+# Quick Jira Log V0.8.0 – Worklog History & Correction
 
-Web app cá nhân để đăng nhập Jira bằng ID/Password và log work nhanh với 5 trường:
+Web app cá nhân để logwork nhanh vào `https://task.ascvn.com.vn`.
 
-- KEY
-- PROJECT
-- TimeSpent
-- Date
-- Description
+## Điểm mới V0.8.0
 
-Jira cố định: `https://task.ascvn.com.vn`.
+- Splash/loading khi mở app.
+  - Nếu app session còn hạn: splash kiểm tra session rồi vào thẳng app, không flash màn hình login.
+  - Session status dùng thông tin đã mã hóa trong app cookie để mở nhanh hơn; Jira vẫn kiểm tra thật ở API kế tiếp.
+- Sau khi logwork thành công, app tự tìm transition phù hợp để chuyển issue sang `Done`.
+  - Nếu issue đã Done: bỏ qua.
+  - Nếu workflow không có transition Done hoặc user không có quyền transition: worklog vẫn được giữ và app báo cảnh báo.
+- Worklog History & Correction trong `⚙ Cài đặt`.
+  - Xem worklog thật của chính user trên Jira theo ngày.
+  - Sửa Date / Start / TimeSpent / Description.
+  - Xóa worklog.
+  - Khi sửa, backend vẫn kiểm tra overlap và chỉ cho phép trong `08:00–12:00` / `13:30–17:30`.
+- Logo/icon mới: clock + check, dùng thống nhất cho header, splash, favicon, Apple Touch Icon và PWA.
+- Tối ưu thời gian logwork:
+  - tái sử dụng identity trong encrypted session, giảm một Jira round-trip;
+  - giảm stabilization wait từ 1.2s xuống 250ms;
+  - một lần stable Worklog Guard tạo kế hoạch đầy đủ, không quét toàn bộ Jira lại trước từng segment;
+  - Bulk dùng một kế hoạch chung thay vì rescan trước từng segment.
+- Version hiển thị: `V0.8.0`.
 
-## Quy tắc thời gian giữ nguyên
+## Quy tắc thời gian
 
-App chỉ được phép tạo worklog trong:
+App chỉ được tạo/sửa worklog trong:
 
 - 08:00–12:00
 - 13:30–17:30
 
-Worklog Guard của V0.6.2 vẫn được giữ nguyên: đọc worklog Jira, quy đổi timestamp về `Asia/Ho_Chi_Minh`, né toàn bộ giờ đã bận và re-validation trước khi tạo segment.
+Không được overlap với worklog hiện có của user trong ngày.
 
-## V0.7.0 có gì mới
+## Deploy Vercel
 
-### 1. PWA cho mobile
-
-- Có `manifest.webmanifest`.
-- Có Service Worker cache app shell.
-- Có icon 192×192, 512×512 và Apple Touch Icon.
-- Cài lên Home Screen và chạy `standalone` như app.
-- Shortcut `Logwork nhanh` mở app với `/?quick=1` và focus thẳng vào form khi Jira session còn hiệu lực.
-- API Jira không được cache bởi Service Worker.
-
-### 2. Quick Actions
-
-Giữ và tối ưu các thao tác nhanh đã có:
-
-- preset `30m / 1h / 2h / 4h`;
-- Recent KEY;
-- Lặp lại logwork gần nhất;
-- nhớ PROJECT / TimeSpent / filter gần nhất;
-- chọn issue từ Jira Filter và tự lấy Summary làm Description.
-
-### 3. Giao diện mobile chuyên nghiệp hơn
-
-- card, spacing, màu sắc và hierarchy được tinh chỉnh lại;
-- tối ưu safe-area iPhone;
-- trạng thái Online/Offline hiển thị cạnh Jira session;
-- toàn bộ input/select/date có `min-width:0` và `max-width:100%` để không tràn container;
-- `select` dùng arrow riêng, phù hợp khung mobile;
-- datepicker được ép đúng chiều rộng card;
-- input mobile giữ font-size 16px để Safari không tự zoom khi focus.
-
-### 4. Modal Settings khóa background triệt để
-
-Khi mở `⚙ Cài đặt`:
-
-- body được khóa bằng `position: fixed` tại đúng scroll position hiện tại;
-- background không thể scroll;
-- đóng modal sẽ trả trang về đúng vị trí trước khi mở;
-- chỉ `.settings-sheet` được phép scroll dọc;
-- modal `overflow-x:hidden` và `touch-action:pan-y`, không kéo ngang;
-- backdrop không nhận gesture scroll;
-- header modal sticky để nút đóng luôn truy cập được;
-- combobox/datepicker bên trong modal không được phép vượt chiều rộng màn hình.
-
-### 5. PWA Settings
-
-Trong `⚙ Cài đặt → Ứng dụng trên điện thoại`:
-
-- browser hỗ trợ install prompt: có nút `CÀI ỨNG DỤNG`;
-- iPhone/iPad: hướng dẫn `Safari → Chia sẻ → Thêm vào Màn hình chính`;
-- khi chạy standalone, app hiển thị trạng thái `Đã cài`.
-
-## Environment Variable
-
-Deploy Vercel cần:
+Environment Variables giữ nguyên:
 
 ```env
-APP_SESSION_SECRET=<chuỗi ngẫu nhiên tối thiểu 32 ký tự>
+APP_SESSION_SECRET=<random-secret-tối-thiểu-32-ký-tự>
+SESSION_MAX_AGE_SECONDS=43200
 ```
 
-Ví dụ:
+Jira URL được cố định trong app:
 
-```bash
-openssl rand -hex 32
-```
+`https://task.ascvn.com.vn`
 
-## Test
+## Lưu ý Auto Done
 
-```bash
-npm test
-```
+Jira workflow phải có transition mà app nhận diện được là `Done`, `Hoàn thành`, `Complete/Completed`, `Close/Closed` hoặc `Resolve/Resolved`, hoặc target status thuộc status category `done`.
 
-Version `V0.7.0` được hiển thị ở Header, Footer và `package.json`.
+Nếu workflow không cho phép transition trực tiếp từ trạng thái hiện tại sang Done, logwork vẫn thành công nhưng trạng thái sẽ không thay đổi.

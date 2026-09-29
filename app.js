@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '0.7.0';
+const APP_VERSION = '0.8.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -33,7 +33,10 @@ const state = {
   auditHistory: [],
   settingsScrollY: 0,
   deferredInstallPrompt: null,
-  quickHandled: false
+  quickHandled: false,
+  bootFinished: false,
+  historyItems: [],
+  historyLoading: false
 };
 
 function todayLocal() {
@@ -56,6 +59,22 @@ function showToast(message) {
   el.classList.remove('hidden');
   clearTimeout(state.toastTimer);
   state.toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+}
+
+
+function finishBoot(message = '') {
+  if (state.bootFinished) return;
+  state.bootFinished = true;
+  if (message && $('bootMessage')) $('bootMessage').textContent = message;
+  const splash = $('bootSplash');
+  document.body.classList.remove('booting');
+  if (!splash) return;
+  splash.classList.add('leaving');
+  setTimeout(() => splash.remove(), 260);
+}
+
+function setBootMessage(message) {
+  if ($('bootMessage')) $('bootMessage').textContent = message;
 }
 
 function readStorage(key, fallback) {
@@ -208,13 +227,21 @@ async function api(path, options = {}) {
 }
 
 async function checkStatus() {
+  setBootMessage('Đang kiểm tra phiên Jira...');
   try {
     const response = await fetch('/api/status', { credentials: 'same-origin', cache: 'no-store' });
     const data = await response.json();
-    if (data?.authenticated) setLoggedIn(data.user);
-    else setLoggedOut();
+    if (data?.authenticated) {
+      setBootMessage('Phiên Jira hợp lệ · đang mở ứng dụng...');
+      setLoggedIn(data.user);
+    } else {
+      setBootMessage('Cần đăng nhập Jira...');
+      setLoggedOut();
+    }
   } catch {
     setLoggedOut();
+  } finally {
+    finishBoot();
   }
 }
 
@@ -664,6 +691,134 @@ function renderAuditHistory() {
   }).join('');
 }
 
+
+function formatHistoryTimeSpent(minutes) {
+  const h = Math.floor(Number(minutes || 0) / 60);
+  const m = Number(minutes || 0) % 60;
+  return `${h ? `${h}h` : ''}${m ? `${m}m` : ''}` || '0m';
+}
+
+function renderWorklogHistory() {
+  const wrap = $('worklogHistoryList');
+  const stateEl = $('worklogHistoryState');
+  if (!wrap || !stateEl) return;
+  if (state.historyLoading) {
+    stateEl.textContent = 'Đang tải worklog thật từ Jira...';
+    stateEl.classList.remove('hidden');
+    wrap.innerHTML = '';
+    return;
+  }
+  if (!state.historyItems.length) {
+    stateEl.textContent = 'Không có worklog của bạn trong ngày này.';
+    stateEl.classList.remove('hidden');
+    wrap.innerHTML = '';
+    return;
+  }
+  stateEl.classList.add('hidden');
+  wrap.innerHTML = state.historyItems.map(item => `
+    <div class="worklog-history-item" data-worklog-id="${escapeHtml(item.id)}" data-key="${escapeHtml(item.key)}">
+      <div class="worklog-history-main">
+        <div class="worklog-history-time"><strong>${escapeHtml(item.start)}–${escapeHtml(item.end)}</strong><span>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</span></div>
+        <div class="worklog-history-key"><strong>${escapeHtml(item.key)}</strong><small>${escapeHtml(item.summary || '')}</small></div>
+        <div class="worklog-history-desc">${escapeHtml(item.description || 'Không có Description')}</div>
+      </div>
+      <div class="worklog-history-actions">
+        <button class="soft-btn history-edit-btn" type="button">Sửa</button>
+        <button class="history-delete-btn" type="button">Xóa</button>
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('.worklog-history-item').forEach(row => {
+    const id = row.dataset.worklogId || '';
+    const key = row.dataset.key || '';
+    const item = state.historyItems.find(x => x.id === id && x.key === key);
+    row.querySelector('.history-edit-btn')?.addEventListener('click', () => openCorrection(item));
+    row.querySelector('.history-delete-btn')?.addEventListener('click', () => deleteHistoryItem(item));
+  });
+}
+
+async function loadWorklogHistory({ quiet = false } = {}) {
+  if (!state.user || state.historyLoading) return;
+  const date = $('historyDate').value || todayLocal();
+  const key = $('historyKey').value.trim().toUpperCase();
+  state.historyLoading = true;
+  renderWorklogHistory();
+  try {
+    const data = await api(`/api/worklog-history?date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
+    state.historyItems = Array.isArray(data.items) ? data.items : [];
+    if (!quiet) showToast(`Đã tải ${state.historyItems.length} worklog.`);
+  } catch (error) {
+    state.historyItems = [];
+    if ($('worklogHistoryState')) $('worklogHistoryState').textContent = error.message;
+    if (!quiet) showToast(error.message);
+  } finally {
+    state.historyLoading = false;
+    renderWorklogHistory();
+  }
+}
+
+function openCorrection(item) {
+  if (!item) return;
+  $('correctionWorklogId').value = item.id;
+  $('correctionKey').value = item.key;
+  $('correctionDate').value = item.date;
+  $('correctionStart').value = item.start;
+  $('correctionTimeSpent').value = formatHistoryTimeSpent(item.minutes);
+  $('correctionDescription').value = item.description || item.summary || '';
+  $('correctionTitle').textContent = `Sửa ${item.key}`;
+  $('correctionMeta').textContent = `${item.start}–${item.end} · ${formatHistoryTimeSpent(item.minutes)}`;
+  $('worklogCorrectionPanel').classList.remove('hidden');
+  $('worklogCorrectionPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeCorrection() {
+  $('worklogCorrectionPanel').classList.add('hidden');
+}
+
+async function saveCorrection() {
+  const payload = {
+    key: $('correctionKey').value,
+    worklogId: $('correctionWorklogId').value,
+    date: $('correctionDate').value,
+    start: $('correctionStart').value,
+    timeSpent: $('correctionTimeSpent').value.trim(),
+    description: $('correctionDescription').value.trim()
+  };
+  if (!payload.description) return showToast('Description không được để trống.');
+  const btn = $('saveCorrectionBtn');
+  btn.disabled = true;
+  btn.textContent = 'ĐANG LƯU...';
+  try {
+    await api('/api/worklog-correction', { method: 'PATCH', body: JSON.stringify(payload) });
+    showToast('Đã cập nhật worklog trên Jira.');
+    closeCorrection();
+    await loadWorklogHistory({ quiet: true });
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'LƯU CHỈNH SỬA';
+  }
+}
+
+async function deleteHistoryItem(item) {
+  if (!item) return;
+  if (!confirm(`Xóa worklog ${item.key} ${item.start}–${item.end}?`)) return;
+  try {
+    await api('/api/worklog-correction', { method: 'DELETE', body: JSON.stringify({ key: item.key, worklogId: item.id }) });
+    showToast('Đã xóa worklog trên Jira.');
+    if ($('correctionWorklogId').value === item.id) closeCorrection();
+    await loadWorklogHistory({ quiet: true });
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function deleteCurrentCorrection() {
+  const item = state.historyItems.find(x => x.id === $('correctionWorklogId').value && x.key === $('correctionKey').value);
+  await deleteHistoryItem(item);
+}
+
 async function runDayAudit() {
   const date = $('auditDate').value || todayLocal();
   const key = $('auditKey').value.trim().toUpperCase();
@@ -805,6 +960,7 @@ function renderBulkSuccess(data) {
       <div class="bulk-result-item">
         <div class="bulk-result-head"><strong>${escapeHtml(item.key)}</strong><span>${minutesLabel(item.minutes)}</span></div>
         ${item.segments.map(segment => `<div class="segment"><span>${escapeHtml(segment.start)} → ${escapeHtml(segment.end)}</span><span>${minutesLabel(segment.minutes)}</span></div>`).join('')}
+        ${(() => { const t = (data.transitions || []).find(x => x.key === item.key); return t ? `<div class="transition-note ${t.ok ? 'ok' : 'warn'}">${t.ok ? '✓ Đã chuyển sang Done' : `⚠ ${escapeHtml(t.message || 'Chưa chuyển được sang Done')}`}</div>` : ''; })()}
       </div>
     `).join('')}
   `;
@@ -1012,6 +1168,12 @@ $('settingsOverlay')?.addEventListener('touchmove', event => {
   if (!event.target.closest('.settings-sheet')) event.preventDefault();
 }, { passive: false });
 $('runAuditBtn').addEventListener('click', runDayAudit);
+$('refreshWorklogHistoryBtn').addEventListener('click', () => loadWorklogHistory());
+$('historyDate').addEventListener('change', () => loadWorklogHistory({ quiet: true }));
+$('historyKey').addEventListener('change', () => loadWorklogHistory({ quiet: true }));
+$('cancelCorrectionBtn').addEventListener('click', closeCorrection);
+$('saveCorrectionBtn').addEventListener('click', saveCorrection);
+$('deleteCorrectionBtn').addEventListener('click', deleteCurrentCorrection);
 $('clearAuditHistoryBtn').addEventListener('click', () => {
   if (!state.auditHistory.length) return;
   if (!confirm('Xóa toàn bộ lịch sử thao tác trên thiết bị này?')) return;
@@ -1051,12 +1213,13 @@ $('worklogForm').addEventListener('submit', async event => {
       <h3>✓ Logwork thành công</h3>
       <div class="meta"><strong>${escapeHtml(data.issue.key)}</strong>${data.issue.summary ? ` · ${escapeHtml(data.issue.summary)}` : ''}<br>${escapeHtml(data.date)} · Tổng ${minutesLabel(data.totalMinutes)}</div>
       ${data.segments.map(s => `<div class="segment"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('')}
+      <div class="transition-note ${data.transition?.ok ? 'ok' : 'warn'}">${data.transition?.ok ? `✓ Trạng thái: ${escapeHtml(data.transition.status || 'Done')}` : `⚠ ${escapeHtml(data.transition?.message || 'Worklog đã tạo nhưng chưa chuyển được sang Done.')}`}</div>
       <button id="resultRepeatBtn" class="secondary result-action" type="button">↻ Lặp lại KEY này</button>
     `;
     result.classList.remove('hidden');
     $('resultRepeatBtn').addEventListener('click', applyLastLog);
     addAuditEntry({ ok: true, key: data.issue.key, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: data.segments });
-    showToast('Đã log work lên Jira.');
+    showToast(data.transition?.ok ? 'Đã log work và chuyển Done.' : 'Đã log work lên Jira.');
     $('key').select();
     setTimeout(() => loadFilterIssues({ quiet: true }), 1200);
   } catch (error) {
@@ -1079,6 +1242,7 @@ function escapeHtml(value) {
 loadQuickData();
 $('date').value = todayLocal();
 $('bulkDate').value = todayLocal();
+$('historyDate').value = todayLocal();
 hydrateQuickInputs();
 renderBulkSelection();
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(name => {

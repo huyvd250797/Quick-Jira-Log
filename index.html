@@ -9,18 +9,27 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V0.7.0</title>
+  <title>Quick Jira Log · V0.8.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="icon" href="/icons/icon-192.png" />
+  <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body>
+<body class="booting">
+  <div id="bootSplash" class="boot-splash" role="status" aria-live="polite">
+    <div class="boot-card">
+      <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
+      <div class="boot-title">Quick Jira Log</div>
+      <div class="boot-version">V0.8.0</div>
+      <div class="boot-spinner" aria-hidden="true"></div>
+      <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
+    </div>
+  </div>
   <main class="shell">
     <section class="brand">
-      <div class="brand-icon">QJ</div>
+      <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.7.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.8.0</span></div>
         <p>Chọn KEY, nhập thời lượng, còn giờ logwork để app tự xử lý.</p>
       </div>
     </section>
@@ -36,7 +45,7 @@
       </div>
     </section>
 
-    <section id="loginCard" class="card">
+    <section id="loginCard" class="card hidden">
       <div class="card-title"><span class="step">1</span><div><h2>Đăng nhập Jira</h2><p>Chỉ cần ID và mật khẩu.</p></div></div>
       <form id="loginForm" autocomplete="on">
         <label>ID Jira<input id="username" name="username" autocomplete="username" autocapitalize="none" required /></label>
@@ -189,6 +198,29 @@
         </div>
 
         <div class="settings-section">
+          <div class="settings-section-title"><h3>Worklog History & Correction</h3><button id="refreshWorklogHistoryBtn" class="text-btn" type="button">Tải lại</button></div>
+          <p class="settings-help">Xem worklog thật trên Jira theo ngày. Có thể sửa hoặc xóa worklog của chính bạn mà không cần mở Jira.</p>
+          <div class="history-toolbar">
+            <label>Ngày<input id="historyDate" type="date" /></label>
+            <label>KEY (không bắt buộc)<input id="historyKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
+          </div>
+          <div id="worklogHistoryState" class="history-state">Chọn ngày rồi bấm Tải lại.</div>
+          <div id="worklogHistoryList" class="worklog-history-list"></div>
+          <div id="worklogCorrectionPanel" class="worklog-correction-panel hidden">
+            <div class="correction-head"><div><strong id="correctionTitle">Sửa worklog</strong><small id="correctionMeta"></small></div><button id="cancelCorrectionBtn" class="text-btn" type="button">Đóng</button></div>
+            <input id="correctionWorklogId" type="hidden" />
+            <input id="correctionKey" type="hidden" />
+            <div class="correction-grid">
+              <label>Date<input id="correctionDate" type="date" /></label>
+              <label>Start<input id="correctionStart" type="time" step="60" /></label>
+              <label>TimeSpent<input id="correctionTimeSpent" placeholder="1h" /></label>
+            </div>
+            <label>Description<textarea id="correctionDescription" rows="3"></textarea></label>
+            <div class="correction-actions"><button id="deleteCorrectionBtn" class="danger-btn" type="button">XÓA WORKLOG</button><button id="saveCorrectionBtn" class="primary" type="button">LƯU CHỈNH SỬA</button></div>
+          </div>
+        </div>
+
+        <div class="settings-section">
           <div class="settings-section-title"><h3>Lịch sử thao tác</h3><button id="clearAuditHistoryBtn" class="text-btn" type="button">Xóa lịch sử</button></div>
           <div id="auditHistory" class="audit-history"></div>
         </div>
@@ -196,7 +228,7 @@
     </div>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 0.7.0</footer>
+    <footer class="app-footer">Quick Jira Log · Version 0.8.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

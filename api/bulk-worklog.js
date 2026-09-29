@@ -3,7 +3,7 @@
 const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
 const { BULK_MAX_ITEMS } = require('../lib/config');
-const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog } = require('../lib/jira');
+const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog, transitionIssueToDone } = require('../lib/jira');
 const { parseTimeSpent, schedule, jiraStarted, displaySegments, validateScheduledSegments } = require('../lib/scheduler');
 const { loadOccupiedRanges, loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { planBulkItems } = require('../lib/bulk');
@@ -69,8 +69,9 @@ module.exports = async function handler(req, res) {
     if (!validDate(date)) return sendJson(res, 400, { ok: false, error: 'Ngày Bulk Logwork không hợp lệ.' });
 
     const items = normalizeItems(body.items);
-    const me = await getMyself(session);
-    const issueDetails = await Promise.all(items.map(item => getIssue(item.key, session)));
+    const mePromise = session.me ? Promise.resolve(session.me) : getMyself(session);
+    const issueDetailsPromise = Promise.all(items.map(item => getIssue(item.key, session)));
+    const [me, issueDetails] = await Promise.all([mePromise, issueDetailsPromise]);
 
     const verified = items.map((item, index) => {
       const issue = issueDetails[index];
@@ -89,26 +90,16 @@ module.exports = async function handler(req, res) {
     try { planBulkItems(verified, initialGuard.occupied); }
     catch (error) { throw planningError(error, error.bulkItem || verified[0]); }
 
+    // V0.8.0: one stable exhaustive guard + one deterministic bulk plan.
+    // Avoids rescanning the entire Jira day before every single worklog segment.
+    const planned = planBulkItems(verified, initialGuard.occupied).plans;
     const created = [];
     const actualPlans = [];
     try {
-      for (const item of verified) {
-        let remaining = item.minutes;
+      for (const plan of planned) {
+        const item = verified.find(x => x.key === plan.key) || plan;
         const itemSegments = [];
-
-        while (remaining > 0) {
-          // Guard lại Jira trước từng segment để né cả worklog vừa phát sinh từ bên ngoài.
-          const liveGuard = await loadOccupiedRanges(date, targetKeys, me, session);
-          let livePlan;
-          try {
-            livePlan = schedule(remaining, liveGuard.occupied);
-            validateScheduledSegments(livePlan, liveGuard.occupied);
-          } catch (error) {
-            throw planningError(error, item);
-          }
-
-          const segment = livePlan[0];
-          if (!segment) throw new JiraError(`Không tìm được khoảng giờ hợp lệ cho ${item.key}.`, 409);
+        for (const segment of plan.segments) {
           const worklog = await createWorklog(item.key, {
             started: jiraStarted(date, segment.start),
             seconds: segment.minutes * 60,
@@ -116,14 +107,23 @@ module.exports = async function handler(req, res) {
           }, session);
           created.push({ key: item.key, id: worklog?.id, segment });
           itemSegments.push(segment);
-          remaining -= segment.minutes;
         }
-
         actualPlans.push({ ...item, segments: itemSegments });
       }
     } catch (error) {
       await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(x.key, x.id, session)));
       throw error;
+    }
+
+    const transitions = [];
+    for (let index = 0; index < verified.length; index++) {
+      const item = verified[index];
+      try {
+        transitions.push({ key: item.key, ...(await transitionIssueToDone(item.key, session, issueDetails[index])) });
+      } catch (error) {
+        if (error instanceof JiraError && error.status === 401) throw error;
+        transitions.push({ key: item.key, ok: false, message: error?.message || 'Chưa chuyển được sang Done.' });
+      }
     }
 
     return sendJson(res, 200, {
@@ -136,6 +136,7 @@ module.exports = async function handler(req, res) {
         occupiedBefore: displaySegments(initialGuard.occupied.map(r => ({ ...r, minutes: r.end - r.start }))),
         sources: initialGuard.sources
       },
+      transitions,
       items: actualPlans.map(item => ({
         key: item.key,
         project: item.project,

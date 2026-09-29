@@ -15,7 +15,8 @@ module.exports = async function handler(req, res) {
     if (!username || !password) return sendJson(res, 400, { ok: false, error: 'Vui lòng nhập ID và mật khẩu Jira.' });
 
     const { auth, me } = await loginWithPassword(username, password);
-    res.setHeader('Set-Cookie', createSessionCookie(auth));
+    const sessionPayload = { ...auth, me: { displayName: me?.displayName || me?.name || username, name: me?.name || username, key: me?.key || '', accountId: me?.accountId || '', emailAddress: me?.emailAddress || '' } };
+    res.setHeader('Set-Cookie', createSessionCookie(sessionPayload));
     return sendJson(res, 200, {
       ok: true,
       user: {

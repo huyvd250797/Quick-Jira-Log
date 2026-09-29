@@ -10,21 +10,16 @@
 - ✅ V0.6.1 – Auth/Permission Compatibility Fix
 - ✅ V0.6.2 – Worklog Timezone & Exhaustive Guard Fix
 - ✅ V0.7.0 – Mobile PWA & Quick Actions
-- ⏭️ V0.8.0 – Worklog History & Correction
-- V0.9.0 – Production Hardening
+- ✅ V0.8.0 – Worklog History & Correction
+- ⏭️ V0.9.0 – Production Hardening
 - V1.0.0 – Stable Personal Release
 
-## V0.8.0 – Worklog History & Correction
+## V0.9.0 – Production Hardening
 
-Mục tiêu: quản lý các worklog mà app đã tạo mà không làm dashboard chính dày hơn.
-
-Dự kiến:
-
-- lịch sử worklog nằm trong Settings/History;
-- lưu Jira Worklog ID sau khi log thành công;
-- lọc theo ngày / KEY / Project;
-- mở nhanh issue Jira;
-- sửa Description/TimeSpent khi Jira cho phép;
-- xóa/rollback worklog do app tạo với bước xác nhận;
-- audit rõ worklog cũ và giá trị sau chỉnh sửa;
-- vẫn giữ Worklog Guard trước mọi thao tác ảnh hưởng giờ.
+- retry/backoff có kiểm soát với Jira;
+- request idempotency để hạn chế double submit;
+- logging lỗi backend gọn hơn;
+- health/diagnostics cho các Jira endpoint đang dùng;
+- hardening session/cookie;
+- kiểm tra transition workflow rõ hơn;
+- tối ưu filter/worklog cache ngắn hạn nhưng không làm mất tính chính xác của Worklog Guard.

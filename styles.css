@@ -512,3 +512,58 @@ body.settings-open {
   .audit-fields { grid-template-columns: 1fr; }
   .app-footer { padding-bottom: max(4px, env(safe-area-inset-bottom)); }
 }
+
+/* V0.8.0 - Splash, professional branding, Worklog History & Correction */
+body.booting { overflow: hidden; }
+.boot-splash {
+  position: fixed; inset: 0; z-index: 9999;
+  display: grid; place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 50% 24%, rgba(70,164,255,.24), transparent 34%),
+    linear-gradient(160deg, #061b40 0%, #082c69 52%, #0753b8 100%);
+  opacity: 1; transition: opacity .24s ease;
+}
+.boot-splash.leaving { opacity: 0; pointer-events: none; }
+.boot-card { width: min(100%, 330px); text-align: center; color: #fff; display: grid; justify-items: center; }
+.boot-logo { width: 108px; height: 108px; border-radius: 28px; box-shadow: 0 24px 55px rgba(0,0,0,.28); }
+.boot-title { margin-top: 20px; font-size: 27px; line-height: 1.05; font-weight: 950; letter-spacing: -.8px; }
+.boot-version { margin-top: 8px; color: #83c8ff; font-size: 13px; font-weight: 900; letter-spacing: .08em; }
+.boot-spinner { width: 30px; height: 30px; margin-top: 34px; border: 3px solid rgba(255,255,255,.22); border-top-color: #65d4ff; border-radius: 50%; animation: qjl-spin .85s linear infinite; }
+.boot-message { margin-top: 13px; color: rgba(255,255,255,.78); font-size: 12px; font-weight: 750; }
+@keyframes qjl-spin { to { transform: rotate(360deg); } }
+
+.brand-logo { object-fit: cover; padding: 0; border: 0; }
+.brand-icon.brand-logo { background: none; box-shadow: 0 12px 28px rgba(15,99,230,.24); }
+
+.transition-note { margin-top: 10px; border-radius: 11px; padding: 9px 11px; font-size: 10px; font-weight: 850; line-height: 1.4; }
+.transition-note.ok { background: #eaf8f1; color: #14764a; border: 1px solid rgba(22,148,90,.16); }
+.transition-note.warn { background: #fff8e8; color: #8b6412; border: 1px solid rgba(197,144,23,.18); }
+
+.history-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 10px; }
+.history-state { padding: 11px 12px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 10px; background: #fafcff; }
+.worklog-history-list { display: grid; gap: 8px; }
+.worklog-history-item { border: 1px solid var(--line); border-radius: 14px; background: #fbfcff; padding: 11px; display: grid; gap: 10px; }
+.worklog-history-main { min-width: 0; display: grid; gap: 5px; }
+.worklog-history-time { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.worklog-history-time strong { font-size: 12px; color: var(--text); }
+.worklog-history-time span { padding: 3px 7px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-size: 9px; font-weight: 900; }
+.worklog-history-key { display: grid; gap: 2px; }
+.worklog-history-key strong { color: var(--primary); font-size: 11px; }
+.worklog-history-key small { color: var(--muted); font-size: 9px; line-height: 1.35; }
+.worklog-history-desc { color: var(--text); font-size: 10px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.worklog-history-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.history-delete-btn, .danger-btn { border: 1px solid rgba(213,62,85,.22); background: #fff2f4; color: var(--danger); border-radius: 11px; padding: 9px 11px; font-size: 10px; font-weight: 900; cursor: pointer; }
+.worklog-correction-panel { margin-top: 12px; border: 1px solid #cfe1fb; border-radius: 16px; background: #f7fbff; padding: 12px; display: grid; gap: 10px; }
+.correction-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.correction-head > div { min-width: 0; display: grid; gap: 2px; }
+.correction-head strong { font-size: 13px; }
+.correction-head small { color: var(--muted); font-size: 9px; }
+.correction-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.correction-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+
+@media (max-width: 480px) {
+  .history-toolbar, .correction-grid { grid-template-columns: 1fr; }
+  .correction-actions { grid-template-columns: 1fr; }
+  .correction-actions .primary { order: -1; }
+}

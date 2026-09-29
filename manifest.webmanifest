@@ -1,16 +1,32 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Logwork Jira nhanh theo khung giờ làm việc và tự né worklog đã có.",
+  "description": "Logwork Jira nhanh, tự né giờ đã log, chuyển Done và sửa/xóa lịch sử worklog.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f4f7fb",
-  "theme_color": "#0f5bd8",
+  "background_color": "#061b40",
+  "theme_color": "#0f63e6",
   "orientation": "portrait-primary",
   "icons": [
-    {"src":"/icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"/icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ],
   "shortcuts": [
     {
@@ -18,7 +34,13 @@
       "short_name": "Logwork",
       "description": "Mở nhanh form Log Work",
       "url": "/?quick=1",
-      "icons": [{"src":"/icons/icon-192.png","sizes":"192x192","type":"image/png"}]
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

@@ -2,9 +2,9 @@
 
 const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
-const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog } = require('../lib/jira');
+const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog, transitionIssueToDone } = require('../lib/jira');
 const { parseTimeSpent, schedule, jiraStarted, displaySegments, validateScheduledSegments } = require('../lib/scheduler');
-const { loadOccupiedRanges, loadOccupiedRangesStable } = require('../lib/worklog-guard');
+const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
@@ -62,76 +62,68 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 400, { ok: false, error: msg });
     }
 
-    const [me, issue] = await Promise.all([getMyself(session), getIssue(key, session)]);
+    // V0.8.0: reuse encrypted identity from the app session to remove one Jira round-trip.
+    const mePromise = session.me ? Promise.resolve(session.me) : getMyself(session);
+    const issuePromise = getIssue(key, session);
+    const [me, issue] = await Promise.all([mePromise, issuePromise]);
+
     const actualProject = String(issue?.fields?.project?.key || '').toUpperCase();
     if (actualProject !== project) {
       return sendJson(res, 400, { ok: false, error: `Issue ${key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${project}.` });
     }
 
-    // Guard lần 1: phải nhìn thấy toàn bộ worklog hiện tại trước khi bắt đầu.
-    const initialGuard = await loadOccupiedRangesStable(date, [key], me, session);
+    // Guard V0.8: two fast exhaustive scans, then commit the full deterministic plan.
+    // This keeps the anti-overlap rules but removes the expensive full-day scan before every segment.
+    const guard = await loadOccupiedRangesStable(date, [key], me, session);
+    let plan;
     try {
-      const initialPlan = schedule(minutes, initialGuard.occupied);
-      validateScheduledSegments(initialPlan, initialGuard.occupied);
+      plan = schedule(minutes, guard.occupied);
+      validateScheduledSegments(plan, guard.occupied);
     } catch (error) {
       const response = planningResponse(res, error);
       if (response) return response;
       throw error;
     }
 
-    // Reliability guard: trước TỪNG segment đều đọc Jira lại và tính slot lại.
-    // Nhờ vậy nếu 08:00–09:00 / 09:00–09:30 đã tồn tại hoặc vừa được tạo từ nơi khác,
-    // segment mới sẽ tự né thay vì tiếp tục dùng kế hoạch cũ.
-    let remaining = minutes;
     const created = [];
-    const actualSegments = [];
     try {
-      while (remaining > 0) {
-        const liveGuard = await loadOccupiedRanges(date, [key], me, session);
-        let livePlan;
-        try {
-          livePlan = schedule(remaining, liveGuard.occupied);
-          validateScheduledSegments(livePlan, liveGuard.occupied);
-        } catch (error) {
-          const mapped = planningResponse(res, error);
-          if (mapped) {
-            // Response đã được gửi, rollback trước khi thoát bằng sentinel.
-            const sent = new Error('RESPONSE_ALREADY_SENT');
-            sent.responseAlreadySent = true;
-            throw sent;
-          }
-          throw error;
-        }
-
-        const seg = livePlan[0];
-        if (!seg) throw new JiraError('Không tìm được khoảng giờ hợp lệ để logwork.', 409);
+      for (const seg of plan) {
         const worklog = await createWorklog(key, {
           started: jiraStarted(date, seg.start),
           seconds: seg.minutes * 60,
           description
         }, session);
         created.push({ id: worklog?.id, segment: seg });
-        actualSegments.push(seg);
-        remaining -= seg.minutes;
       }
     } catch (error) {
       await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(key, x.id, session)));
-      if (error.responseAlreadySent) return;
       throw error;
+    }
+
+    // Worklog is authoritative. Status transition is best-effort and must never delete a successful worklog.
+    let transition = { ok: false, message: 'Chưa kiểm tra transition.' };
+    try {
+      transition = await transitionIssueToDone(key, session, issue);
+    } catch (error) {
+      if (error instanceof JiraError && error.status === 401) throw error;
+      transition = { ok: false, message: error?.message || 'Worklog đã tạo nhưng chưa chuyển được sang Done.' };
     }
 
     return sendJson(res, 200, {
       ok: true,
-      issue: { key, summary: issue?.fields?.summary || '' },
+      issue: { key, summary: issue?.fields?.summary || '', previousStatus: issue?.fields?.status?.name || '' },
       project,
       date,
       totalMinutes: minutes,
-      segments: displaySegments(actualSegments),
+      segments: displaySegments(plan),
+      worklogIds: created.map(x => String(x.id || '')).filter(Boolean),
+      transition,
       audit: {
-        checkedIssues: initialGuard.issueKeys.length,
-        checkedWorklogs: initialGuard.checkedWorklogs,
-        occupiedBefore: displaySegments(initialGuard.occupied.map(r => ({ ...r, minutes: r.end - r.start }))),
-        sources: initialGuard.sources
+        checkedIssues: guard.issueKeys.length,
+        checkedWorklogs: guard.checkedWorklogs,
+        occupiedBefore: displaySegments(guard.occupied.map(r => ({ ...r, minutes: r.end - r.start }))),
+        sources: guard.sources,
+        optimizedGuard: true
       }
     });
   } catch (error) {
