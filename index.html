@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V0.8.0</title>
+  <title>Quick Jira Log · V0.9.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -20,7 +20,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V0.8.0</div>
+      <div class="boot-version">V0.9.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -29,7 +29,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.8.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V0.9.0</span></div>
         <p>Chọn KEY, nhập thời lượng, còn giờ logwork để app tự xử lý.</p>
       </div>
     </section>
@@ -56,22 +56,15 @@
 
     <section id="filterCard" class="card hidden">
       <div class="filter-heading">
-        <div class="card-title compact-title"><span class="step">2</span><div><h2>KEY từ Jira Filter</h2><p id="filterName">Chọn Jira Filter</p></div></div>
+        <div class="card-title compact-title"><span class="step">2</span><div><h2>Sub-task chưa logwork</h2><p id="filterName">Tự động theo tài khoản hiện tại</p></div></div>
         <div class="filter-head-actions">
           <button id="bulkModeBtn" class="soft-btn" type="button">Chọn nhiều</button>
-          <button id="refreshFilterBtn" class="icon-btn" type="button" aria-label="Tải lại issue" title="Tải lại issue">↻</button>
+          <button id="refreshFilterBtn" class="icon-btn" type="button" aria-label="Tải lại Sub-task" title="Tải lại Sub-task">↻</button>
         </div>
       </div>
 
-      <div class="filter-selector-row">
-        <label class="filter-select-label">Jira Filter
-          <select id="filterSelect" aria-label="Chọn Jira Filter"><option value="">Đang tải filter...</option></select>
-        </label>
-        <button id="refreshFilterListBtn" class="soft-btn filter-list-refresh" type="button">↻ Danh sách</button>
-      </div>
-
       <div class="filter-tools">
-        <div class="search-wrap"><span class="search-icon">⌕</span><input id="filterIssueSearch" type="search" placeholder="Tìm KEY hoặc nội dung..." autocomplete="off" /></div>
+        <div class="search-wrap"><span class="search-icon">⌕</span><input id="filterIssueSearch" type="search" placeholder="Tìm KEY hoặc Summary..." autocomplete="off" /></div>
         <span id="filterCount" class="count-pill">0</span>
       </div>
 
@@ -83,11 +76,11 @@
         </div>
       </div>
 
-      <div id="filterLoading" class="filter-state">Đang tải danh sách issue...</div>
+      <div id="filterLoading" class="filter-state">Đang tải Sub-task chưa logwork...</div>
       <div id="filterError" class="filter-state error-text hidden"></div>
-      <div id="filterEmpty" class="filter-state hidden">Không có issue phù hợp trong filter.</div>
+      <div id="filterEmpty" class="filter-state hidden">Không còn Sub-task chưa logwork phù hợp.</div>
       <div id="filterIssueList" class="issue-list hidden"></div>
-      <div class="hint filter-hint">Chọn filter Jira bất kỳ của bạn. Chạm issue để log đơn, hoặc bật “Chọn nhiều” để tạo Bulk Logwork.</div>
+      <div class="hint filter-hint">Tự động áp dụng: Sub-task · assignee = tài khoản hiện tại · tạo sau 19/10/2025 · Time Spent rỗng hoặc bằng 0. Không cần tạo Saved Filter trên Jira.</div>
     </section>
 
     <section id="bulkCard" class="card hidden">
@@ -228,7 +221,7 @@
     </div>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 0.8.0</footer>
+    <footer class="app-footer">Quick Jira Log · Version 0.9.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

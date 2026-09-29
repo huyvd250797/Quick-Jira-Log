@@ -4,9 +4,10 @@ const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../l
 const { getSession, clearSessionCookie } = require('../lib/session');
 const { BULK_MAX_ITEMS } = require('../lib/config');
 const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog, transitionIssueToDone } = require('../lib/jira');
-const { parseTimeSpent, schedule, jiraStarted, displaySegments, validateScheduledSegments } = require('../lib/scheduler');
-const { loadOccupiedRanges, loadOccupiedRangesStable } = require('../lib/worklog-guard');
+const { parseTimeSpent, jiraStarted, displaySegments } = require('../lib/scheduler');
+const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { planBulkItems } = require('../lib/bulk');
+const { normalizeRequestId, runIdempotent } = require('../lib/idempotency');
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
@@ -34,10 +35,9 @@ function normalizeItems(rawItems) {
     let minutes;
     try { minutes = parseTimeSpent(timeSpent); }
     catch (error) {
-      const message = error.message === 'TIME_SPENT_TOO_LARGE'
+      throw new JiraError(error.message === 'TIME_SPENT_TOO_LARGE'
         ? `Dòng ${index + 1}: TimeSpent tối đa 8h/ngày.`
-        : `Dòng ${index + 1}: TimeSpent không hợp lệ. Ví dụ 30m, 1h, 1h30m.`;
-      throw new JiraError(message, 400);
+        : `Dòng ${index + 1}: TimeSpent không hợp lệ. Ví dụ 30m, 1h, 1h30m.`, 400);
     }
     return { key, project, timeSpent, description, minutes, order: index };
   });
@@ -56,6 +56,87 @@ function planningError(error, item) {
   return error;
 }
 
+async function performBulk(body, session) {
+  const date = String(body.date || '').trim();
+  if (!validDate(date)) throw new JiraError('Ngày Bulk Logwork không hợp lệ.', 400);
+
+  const items = normalizeItems(body.items);
+  const mePromise = session.me ? Promise.resolve(session.me) : getMyself(session);
+  const issueDetailsPromise = Promise.all(items.map(item => getIssue(item.key, session)));
+  const [me, issueDetails] = await Promise.all([mePromise, issueDetailsPromise]);
+
+  const verified = items.map((item, index) => {
+    const issue = issueDetails[index];
+    const actualProject = String(issue?.fields?.project?.key || '').toUpperCase();
+    if (actualProject !== item.project) {
+      throw new JiraError(`Issue ${item.key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${item.project}.`, 400);
+    }
+    const summary = String(issue?.fields?.summary || '');
+    return { ...item, summary, description: item.description || summary };
+  });
+  if (verified.some(item => !item.description)) throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
+
+  const targetKeys = verified.map(item => item.key);
+  const initialGuard = await loadOccupiedRangesStable(date, targetKeys, me, session);
+  let planned;
+  try { planned = planBulkItems(verified, initialGuard.occupied).plans; }
+  catch (error) { throw planningError(error, error.bulkItem || verified[0]); }
+
+  const created = [];
+  const actualPlans = [];
+  try {
+    for (const plan of planned) {
+      const item = verified.find(x => x.key === plan.key) || plan;
+      const itemSegments = [];
+      for (const segment of plan.segments) {
+        const worklog = await createWorklog(item.key, {
+          started: jiraStarted(date, segment.start),
+          seconds: segment.minutes * 60,
+          description: item.description
+        }, session);
+        created.push({ key: item.key, id: worklog?.id, segment });
+        itemSegments.push(segment);
+      }
+      actualPlans.push({ ...item, segments: itemSegments });
+    }
+  } catch (error) {
+    await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(x.key, x.id, session)));
+    throw error;
+  }
+
+  const transitions = [];
+  for (let index = 0; index < verified.length; index++) {
+    const item = verified[index];
+    try {
+      transitions.push({ key: item.key, ...(await transitionIssueToDone(item.key, session, issueDetails[index])) });
+    } catch (error) {
+      if (error instanceof JiraError && error.status === 401) throw error;
+      transitions.push({ key: item.key, ok: false, message: error?.message || 'Chưa chuyển được sang Done.' });
+    }
+  }
+
+  return {
+    ok: true,
+    date,
+    totalMinutes: verified.reduce((sum, item) => sum + item.minutes, 0),
+    audit: {
+      checkedIssues: initialGuard.issueKeys.length,
+      checkedWorklogs: initialGuard.checkedWorklogs,
+      occupiedBefore: displaySegments(initialGuard.occupied.map(r => ({ ...r, minutes: r.end - r.start }))),
+      sources: initialGuard.sources
+    },
+    transitions,
+    items: actualPlans.map(item => ({
+      key: item.key,
+      project: item.project,
+      summary: item.summary,
+      description: item.description,
+      minutes: item.minutes,
+      segments: displaySegments(item.segments)
+    }))
+  };
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return methodNotAllowed(res, ['POST']);
   if (!assertSameOrigin(req)) return sendJson(res, 403, { ok: false, error: 'INVALID_ORIGIN' });
@@ -65,88 +146,12 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = await readJson(req, 96 * 1024);
-    const date = String(body.date || '').trim();
-    if (!validDate(date)) return sendJson(res, 400, { ok: false, error: 'Ngày Bulk Logwork không hợp lệ.' });
-
-    const items = normalizeItems(body.items);
-    const mePromise = session.me ? Promise.resolve(session.me) : getMyself(session);
-    const issueDetailsPromise = Promise.all(items.map(item => getIssue(item.key, session)));
-    const [me, issueDetails] = await Promise.all([mePromise, issueDetailsPromise]);
-
-    const verified = items.map((item, index) => {
-      const issue = issueDetails[index];
-      const actualProject = String(issue?.fields?.project?.key || '').toUpperCase();
-      if (actualProject !== item.project) {
-        throw new JiraError(`Issue ${item.key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${item.project}.`, 400);
-      }
-      const summary = String(issue?.fields?.summary || '');
-      return { ...item, summary, description: item.description || summary };
-    });
-
-    if (verified.some(item => !item.description)) throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
-
-    const targetKeys = verified.map(item => item.key);
-    const initialGuard = await loadOccupiedRangesStable(date, targetKeys, me, session);
-    try { planBulkItems(verified, initialGuard.occupied); }
-    catch (error) { throw planningError(error, error.bulkItem || verified[0]); }
-
-    // V0.8.0: one stable exhaustive guard + one deterministic bulk plan.
-    // Avoids rescanning the entire Jira day before every single worklog segment.
-    const planned = planBulkItems(verified, initialGuard.occupied).plans;
-    const created = [];
-    const actualPlans = [];
-    try {
-      for (const plan of planned) {
-        const item = verified.find(x => x.key === plan.key) || plan;
-        const itemSegments = [];
-        for (const segment of plan.segments) {
-          const worklog = await createWorklog(item.key, {
-            started: jiraStarted(date, segment.start),
-            seconds: segment.minutes * 60,
-            description: item.description
-          }, session);
-          created.push({ key: item.key, id: worklog?.id, segment });
-          itemSegments.push(segment);
-        }
-        actualPlans.push({ ...item, segments: itemSegments });
-      }
-    } catch (error) {
-      await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(x.key, x.id, session)));
-      throw error;
-    }
-
-    const transitions = [];
-    for (let index = 0; index < verified.length; index++) {
-      const item = verified[index];
-      try {
-        transitions.push({ key: item.key, ...(await transitionIssueToDone(item.key, session, issueDetails[index])) });
-      } catch (error) {
-        if (error instanceof JiraError && error.status === 401) throw error;
-        transitions.push({ key: item.key, ok: false, message: error?.message || 'Chưa chuyển được sang Done.' });
-      }
-    }
-
-    return sendJson(res, 200, {
-      ok: true,
-      date,
-      totalMinutes: verified.reduce((sum, item) => sum + item.minutes, 0),
-      audit: {
-        checkedIssues: initialGuard.issueKeys.length,
-        checkedWorklogs: initialGuard.checkedWorklogs,
-        occupiedBefore: displaySegments(initialGuard.occupied.map(r => ({ ...r, minutes: r.end - r.start }))),
-        sources: initialGuard.sources
-      },
-      transitions,
-      items: actualPlans.map(item => ({
-        key: item.key,
-        project: item.project,
-        summary: item.summary,
-        description: item.description,
-        minutes: item.minutes,
-        segments: displaySegments(item.segments)
-      }))
-    });
+    const requestId = normalizeRequestId(body.requestId || req.headers['x-request-id']);
+    const result = await runIdempotent('bulk-worklog', requestId, () => performBulk(body, session));
+    return sendJson(res, 200, { ...result.value, requestId: result.requestId || undefined, replayed: result.replayed || undefined });
   } catch (error) {
+    if (error?.message === 'PAYLOAD_TOO_LARGE') return sendJson(res, 413, { ok: false, error: 'Dữ liệu Bulk quá lớn.' });
+    if (error?.message === 'INVALID_JSON') return sendJson(res, 400, { ok: false, error: 'Dữ liệu Bulk không hợp lệ.' });
     if (error instanceof JiraError) {
       if (error.status === 401) res.setHeader('Set-Cookie', clearSessionCookie());
       return sendJson(res, error.status || 500, { ok: false, error: error.message, details: error.details || undefined });

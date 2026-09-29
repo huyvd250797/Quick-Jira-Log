@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Logwork Jira nhanh, tự né giờ đã log, chuyển Done và sửa/xóa lịch sử worklog.",
+  "description": "Logwork Jira nhanh cho Sub-task được giao, tự né giờ đã log, chuyển Done và quản lý lịch sử worklog.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

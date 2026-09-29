@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '0.8.0';
+const APP_VERSION = '0.9.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -13,9 +13,6 @@ const $ = id => document.getElementById(id);
 const state = {
   user: null,
   toastTimer: null,
-  filters: [],
-  filtersLoading: false,
-  selectedFilterId: '',
   filterIssues: [],
   filterLoaded: false,
   filterLoading: false,
@@ -26,7 +23,7 @@ const state = {
   issueLookupSeq: 0,
   lastAutoIssueKey: '',
   currentIssueSummary: '',
-  prefs: { lastProject: '', lastTimeSpent: '', selectedFilterId: '' },
+  prefs: { lastProject: '', lastTimeSpent: '' },
   recentIssues: [],
   templates: [],
   lastLog: null,
@@ -36,8 +33,16 @@ const state = {
   quickHandled: false,
   bootFinished: false,
   historyItems: [],
-  historyLoading: false
+  historyLoading: false,
+  submitInFlight: false,
+  bulkSubmitInFlight: false
 };
+
+
+function createRequestId(prefix = 'qjl') {
+  if (globalThis.crypto?.randomUUID) return `${prefix}-${globalThis.crypto.randomUUID()}`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+}
 
 function todayLocal() {
   const d = new Date();
@@ -94,8 +99,7 @@ function loadQuickData() {
   const prefs = readStorage(STORAGE.prefs, {});
   state.prefs = {
     lastProject: typeof prefs?.lastProject === 'string' ? prefs.lastProject : '',
-    lastTimeSpent: typeof prefs?.lastTimeSpent === 'string' ? prefs.lastTimeSpent : '',
-    selectedFilterId: typeof prefs?.selectedFilterId === 'string' ? prefs.selectedFilterId : ''
+    lastTimeSpent: typeof prefs?.lastTimeSpent === 'string' ? prefs.lastTimeSpent : ''
   };
   const recent = readStorage(STORAGE.recent, []);
   state.recentIssues = Array.isArray(recent) ? recent.slice(0, 8) : [];
@@ -119,16 +123,13 @@ function setLoggedIn(user) {
   $('statusCard').classList.remove('hidden');
   $('userLabel').textContent = user?.displayName || user?.username || '';
   hydrateQuickInputs();
-  if (!state.filters.length && !state.filtersLoading) loadFilters();
+  if (!state.filterLoaded && !state.filterLoading) loadFilterIssues();
   updateConnectionState();
   handleQuickLaunch();
 }
 
 function setLoggedOut() {
   state.user = null;
-  state.filters = [];
-  state.filtersLoading = false;
-  state.selectedFilterId = '';
   state.filterIssues = [];
   state.filterLoaded = false;
   state.filterLoading = false;
@@ -209,10 +210,16 @@ async function installPwa() {
 }
 
 async function api(path, options = {}) {
+  const { requestId, ...fetchOptions } = options;
   const response = await fetch(path, {
     credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options
+    cache: fetchOptions.cache || 'no-store',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(requestId ? { 'X-Request-ID': requestId } : {}),
+      ...(fetchOptions.headers || {})
+    },
+    ...fetchOptions
   });
   let data = null;
   try { data = await response.json(); }
@@ -251,53 +258,6 @@ function setFilterUi(mode, message = '') {
   $('filterEmpty').classList.toggle('hidden', mode !== 'empty');
   $('filterIssueList').classList.toggle('hidden', mode !== 'list');
   if (mode === 'error') $('filterError').textContent = message;
-}
-
-function renderFilterOptions() {
-  const select = $('filterSelect');
-  const selected = state.selectedFilterId || state.prefs.selectedFilterId || '';
-  select.innerHTML = state.filters.length
-    ? state.filters.map(filter => `<option value="${escapeHtml(filter.id)}">${escapeHtml(filter.name)}${filter.favourite ? ' ★' : ''}</option>`).join('')
-    : '<option value="">Không có filter</option>';
-  if (state.filters.some(filter => filter.id === selected)) select.value = selected;
-  else if (state.filters[0]) select.value = state.filters[0].id;
-  state.selectedFilterId = select.value || '';
-  const active = state.filters.find(filter => filter.id === state.selectedFilterId);
-  $('filterName').textContent = active?.name || 'Chọn Jira Filter';
-}
-
-async function loadFilters({ quiet = false } = {}) {
-  if (!state.user || state.filtersLoading) return;
-  state.filtersLoading = true;
-  const refreshListBtn = $('refreshFilterListBtn');
-  const select = $('filterSelect');
-  refreshListBtn.disabled = true;
-  select.disabled = true;
-  if (!quiet) setFilterUi('loading');
-
-  try {
-    const data = await api('/api/filters', { method: 'GET', cache: 'no-store' });
-    state.filters = Array.isArray(data.filters) ? data.filters : [];
-    const remembered = state.prefs.selectedFilterId;
-    const preferred = state.filters.find(filter => filter.id === remembered)
-      || state.filters.find(filter => filter.favourite)
-      || state.filters[0];
-    state.selectedFilterId = preferred?.id || '';
-    state.prefs.selectedFilterId = state.selectedFilterId;
-    savePrefs();
-    renderFilterOptions();
-    if (state.selectedFilterId) await loadFilterIssues({ quiet });
-    else setFilterUi('empty');
-  } catch (error) {
-    state.filters = [];
-    state.selectedFilterId = '';
-    renderFilterOptions();
-    setFilterUi('error', error.message);
-  } finally {
-    state.filtersLoading = false;
-    refreshListBtn.disabled = false;
-    select.disabled = false;
-  }
 }
 
 function filteredIssues() {
@@ -396,7 +356,7 @@ function renderFilterIssues() {
 }
 
 async function loadFilterIssues({ quiet = false } = {}) {
-  if (!state.user || state.filterLoading || !state.selectedFilterId) return;
+  if (!state.user || state.filterLoading) return;
   state.filterLoading = true;
   const btn = $('refreshFilterBtn');
   btn.disabled = true;
@@ -404,12 +364,12 @@ async function loadFilterIssues({ quiet = false } = {}) {
   if (!quiet) setFilterUi('loading');
 
   try {
-    const data = await api(`/api/filter-issues?filterId=${encodeURIComponent(state.selectedFilterId)}`, { method: 'GET', cache: 'no-store' });
+    const data = await api('/api/subtasks', { method: 'GET', cache: 'no-store' });
     state.filterIssues = Array.isArray(data.issues) ? data.issues : [];
     state.filterLoaded = true;
-    $('filterName').textContent = data.filter?.name || 'Jira Filter';
+    $('filterName').textContent = 'Tự động theo tài khoản hiện tại';
     renderFilterIssues();
-    if (data.truncated) showToast(`Filter có ${data.total} issue, app đang hiển thị 500 issue đầu.`);
+    if (data.truncated) showToast(`Có ${data.total} Sub-task phù hợp, app đang hiển thị ${data.count} mục đầu.`);
   } catch (error) {
     state.filterLoaded = false;
     state.filterIssues = [];
@@ -969,6 +929,7 @@ function renderBulkSuccess(data) {
 
 async function submitBulkWorklog(event) {
   event.preventDefault();
+  if (state.bulkSubmitInFlight) return;
   const items = bulkDraftList().map(item => ({
     key: item.key,
     project: item.project,
@@ -978,6 +939,8 @@ async function submitBulkWorklog(event) {
   if (!items.length) return showToast('Chưa có issue để Bulk Logwork.');
   if (items.some(item => !item.timeSpent || !item.description)) return showToast('Vui lòng nhập đủ TimeSpent và Description cho từng issue.');
 
+  state.bulkSubmitInFlight = true;
+  const requestId = createRequestId('bulk');
   const btn = $('bulkLogBtn');
   btn.disabled = true;
   btn.textContent = 'ĐANG LOG BULK...';
@@ -986,7 +949,8 @@ async function submitBulkWorklog(event) {
     const date = $('bulkDate').value;
     const data = await api('/api/bulk-worklog', {
       method: 'POST',
-      body: JSON.stringify({ date, items })
+      body: JSON.stringify({ date, items, requestId }),
+      requestId
     });
     for (const item of data.items || []) {
       addRecentIssue({ key: item.key, project: item.project, summary: item.summary });
@@ -1016,6 +980,7 @@ async function submitBulkWorklog(event) {
     addAuditEntry({ ok: false, type: 'Bulk', message: error.message });
     showToast(error.message);
   } finally {
+    state.bulkSubmitInFlight = false;
     btn.disabled = false;
     btn.textContent = 'LOG BULK';
   }
@@ -1033,7 +998,7 @@ $('loginForm').addEventListener('submit', async event => {
     });
     $('password').value = '';
     setLoggedIn(data.user);
-    showToast('Đăng nhập Jira thành công. Đang tải danh sách filter...');
+    showToast('Đăng nhập Jira thành công. Đang tải Sub-task chưa logwork...');
   } catch (error) {
     showToast(error.message);
   } finally {
@@ -1048,23 +1013,6 @@ $('logoutBtn').addEventListener('click', async () => {
 });
 
 $('refreshFilterBtn').addEventListener('click', () => loadFilterIssues());
-$('refreshFilterListBtn').addEventListener('click', () => loadFilters());
-$('filterSelect').addEventListener('change', () => {
-  state.selectedFilterId = $('filterSelect').value || '';
-  state.prefs.selectedFilterId = state.selectedFilterId;
-  savePrefs();
-  const active = state.filters.find(filter => filter.id === state.selectedFilterId);
-  $('filterName').textContent = active?.name || 'Jira Filter';
-  state.filterIssues = [];
-  state.filterLoaded = false;
-  state.bulkSelectedKeys.clear();
-  state.bulkDrafts.clear();
-  state.bulkMode = false;
-  $('bulkCard').classList.add('hidden');
-  renderBulkSelection();
-  renderFilterIssues();
-  loadFilterIssues();
-});
 $('filterIssueSearch').addEventListener('input', renderFilterIssues);
 $('bulkModeBtn').addEventListener('click', () => setBulkMode(!state.bulkMode));
 $('selectVisibleBtn').addEventListener('click', () => {
@@ -1187,6 +1135,9 @@ document.addEventListener('keydown', event => {
 
 $('worklogForm').addEventListener('submit', async event => {
   event.preventDefault();
+  if (state.submitInFlight) return;
+  state.submitInFlight = true;
+  const requestId = createRequestId('worklog');
   const btn = $('logBtn');
   btn.disabled = true;
   btn.textContent = 'ĐANG LOG WORK...';
@@ -1199,7 +1150,7 @@ $('worklogForm').addEventListener('submit', async event => {
       date: $('date').value,
       description: $('description').value.trim()
     };
-    const data = await api('/api/worklog', { method: 'POST', body: JSON.stringify(payload) });
+    const data = await api('/api/worklog', { method: 'POST', body: JSON.stringify({ ...payload, requestId }), requestId });
 
     state.prefs.lastProject = payload.project;
     state.prefs.lastTimeSpent = payload.timeSpent;
@@ -1230,6 +1181,7 @@ $('worklogForm').addEventListener('submit', async event => {
     addAuditEntry({ ok: false, key: $('key').value.trim().toUpperCase(), message: error.message });
     showToast(error.message);
   } finally {
+    state.submitInFlight = false;
     btn.disabled = false;
     btn.textContent = 'LOG WORK';
   }

@@ -94,3 +94,11 @@ assert.deepStrictEqual(displaySegments(schedule(60, normalizedUtc)), [
   { start: '09:30', end: '10:30', minutes: 60 }
 ]);
 console.log('V0.6.2 timezone guard tests passed.');
+
+// V0.9.0 - danh sách Sub-task phải dùng JQL cố định, không phụ thuộc Saved Filter.
+const { WORKLOG_SUBTASK_JQL } = require('../lib/config');
+assert(WORKLOG_SUBTASK_JQL.includes('issuetype = Sub-task'));
+assert(WORKLOG_SUBTASK_JQL.includes('assignee = currentUser()'));
+assert(WORKLOG_SUBTASK_JQL.includes('createdDate > "2025-10-19"'));
+assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
+console.log('V0.9.0 fixed Sub-task JQL tests passed.');

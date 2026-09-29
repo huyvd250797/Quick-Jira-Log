@@ -11,15 +11,15 @@
 - ✅ V0.6.2 – Worklog Timezone & Exhaustive Guard Fix
 - ✅ V0.7.0 – Mobile PWA & Quick Actions
 - ✅ V0.8.0 – Worklog History & Correction
-- ⏭️ V0.9.0 – Production Hardening
-- V1.0.0 – Stable Personal Release
-
-## V0.9.0 – Production Hardening
-
-- retry/backoff có kiểm soát với Jira;
-- request idempotency để hạn chế double submit;
-- logging lỗi backend gọn hơn;
-- health/diagnostics cho các Jira endpoint đang dùng;
-- hardening session/cookie;
-- kiểm tra transition workflow rõ hơn;
-- tối ưu filter/worklog cache ngắn hạn nhưng không làm mất tính chính xác của Worklog Guard.
+- ✅ V0.9.0 – Production Hardening
+  - fixed JQL cho Sub-task chưa logwork;
+  - bỏ Saved Filter;
+  - idempotency/double-submit guard;
+  - Jira read retry/backoff;
+  - login rate limit;
+  - session/security headers hardening.
+- ⏭️ V1.0.0 – Stable Personal Release
+  - khóa scope tính năng;
+  - regression test toàn bộ flow login → chọn Sub-task → log → Done → history/correction;
+  - tối ưu lỗi/telemetry cục bộ;
+  - checklist deploy production và release ổn định.
