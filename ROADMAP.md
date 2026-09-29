@@ -14,16 +14,14 @@
 - ✅ V0.9.0 – Production Hardening
 - ✅ V1.0.0 – Stable Personal Release
 - ✅ V1.0.1 – Compact UI/UX Polish
-  - Dark mode / Light mode;
-  - Settings ở góc header;
-  - Logout dạng icon + confirm;
-  - khóa scope tính năng và ổn định cho sử dụng hằng ngày.
-
-## Sau V1.0.0
-
-Ưu tiên patch `V1.0.x` nếu có lỗi production; chỉ nâng `V1.1.0` khi có nhóm nhu cầu thực tế đủ rõ.
-
-- ✅ V1.0.3 – Desktop UI/UX Polish (To Do → In Progress → Done)
-
-- ↩️ V1.0.4 – Desktop Layout Balance Fix: rollback theo yêu cầu, không dùng layout này.
-- ✅ V1.0.6 – Desktop Control Consistency Fix: nền V1.0.3, chỉ đồng nhất chiều cao textbox/combobox/datepicker/timepicker trên desktop.
+- ✅ V1.0.2 – Workflow Transition Hotfix
+- ✅ V1.0.3 – Desktop UI/UX Polish
+- ↩️ V1.0.4 – Desktop Layout Balance Fix (rollback)
+- ✅ V1.0.5 – Desktop Control Consistency Fix
+- ✅ V1.0.6 – Desktop Alignment & Stable Columns Fix
+- ✅ V1.1.0 – Focused Logwork UX
+  - click Sub-task mới mở form logwork;
+  - chỉ nhập TimeSpent và Description;
+  - một nút Log tất cả;
+  - Planner/History gom thành nhóm thu gọn;
+  - History diễn đạt rõ chức năng tìm/sửa/xóa worklog.

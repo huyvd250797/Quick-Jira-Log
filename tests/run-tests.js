@@ -107,8 +107,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.0.6');
-console.log('V1.0.6 desktop alignment version test passed.');
+assert.equal(packageJson.version, '1.1.0');
+console.log('V1.1.0 focused UX version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -116,6 +116,20 @@ assert.match(styles, /#worklogCard\s*\{[^}]*grid-column:\s*2;[^}]*grid-row:\s*3;
 assert.match(styles, /#bulkCard\s*\{[^}]*grid-column:\s*1 \/ -1;[^}]*grid-row:\s*4;/s);
 assert.match(styles, /\.issue-main\s*\{[^}]*flex:\s*1 1 auto;/s);
 console.log('V1.0.6 stable desktop grid/alignment tests passed.');
+
+const indexHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const appJs = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+assert(indexHtml.includes('id="logAllBtn"'));
+assert(!indexHtml.includes('id="bulkModeBtn"'));
+assert(!indexHtml.includes('id="selectVisibleBtn"'));
+assert(!indexHtml.includes('id="openBulkBtn"'));
+assert(indexHtml.includes('id="key" type="hidden"'));
+assert(indexHtml.includes('id="project" type="hidden"'));
+assert(indexHtml.includes('id="date" type="hidden"'));
+assert(indexHtml.includes('TÌM WORKLOG ĐÃ LOG'));
+assert(appJs.includes('<small>Đã logwork</small>'));
+assert(appJs.includes("$('logAllBtn').addEventListener('click', openBulkAll)"));
+console.log('V1.1.0 focused logwork UX tests passed.');
 
 
 // V1.0.3 - To Do phải tìm transition sang In Progress trước, sau đó mới Done.

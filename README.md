@@ -1,41 +1,54 @@
-# Quick Jira Log V1.0.6 – Desktop Control Consistency Fix
+# Quick Jira Log V1.1.0 – Focused Logwork UX
 
-V1.0.6 **rollback bố cục về đúng V1.0.3 – Desktop UI/UX Polish**. Không sử dụng layout V1.0.4.
+V1.1.0 tập trung rút gọn luồng thao tác hằng ngày, giữ nguyên engine Jira, Worklog Guard, scheduler, workflow transition và Production Hardening của các bản trước.
 
-## Thay đổi V1.0.6
+## Luồng Logwork cá nhân
 
-- Giữ nguyên vị trí Bulk Logwork / danh sách ISSUE đang chọn **ở phía dưới như V1.0.3**.
-- Không chuyển Bulk editor sang cột phải.
-- Chỉ chuẩn hóa chiều cao control trên desktop:
-  - textbox
-  - combobox / select
-  - datepicker
-  - timepicker
-- Tất cả control một dòng trên desktop dùng chiều cao chuẩn **46px**.
-- Áp dụng cả form Logwork, Bulk và Settings.
-- Textarea vẫn giữ chiều cao nhiều dòng riêng.
-- Mobile không thay đổi layout.
+- Không hiển thị form nhập KEY/PROJECT/Date thủ công trên dashboard.
+- Màn hình chính ưu tiên danh sách **Sub-task chưa logwork**.
+- Chỉ khi bấm một Sub-task, form **Logwork Sub-task** mới xuất hiện.
+- KEY, Project, Summary và ngày logwork được nạp tự động và khóa chỉnh sửa.
+- Người dùng chỉ nhập/chỉnh:
+  - `TimeSpent`
+  - `Description`
+- Description mặc định lấy theo Summary của Jira.
+- Ngày logwork mặc định là ngày hiện tại.
 
-Hotfix trên nền V1.0.1.
+## Log tất cả
 
-## Thay đổi chính
-- Sau khi logwork thành công, issue ở **To Do** được chuyển tuần tự **To Do → In Progress → Done**.
-- Issue đã **In Progress** chỉ thực hiện **In Progress → Done**.
-- Issue đã **Done** được giữ nguyên.
-- Mỗi bước transition được đọc lại từ workflow Jira, không hard-code transition ID.
-- Nếu Jira không có transition To Do → In Progress hoặc In Progress → Done, worklog vẫn được giữ và app hiển thị cảnh báo rõ ràng.
-- Bulk Logwork dùng cùng cơ chế transition tuần tự.
-- UI kết quả hiển thị đường đi trạng thái thực tế, ví dụ `To Do → In Progress → Done`.
+- Bỏ luồng `Chọn nhiều → Chọn đang hiện → Tiếp tục`.
+- Thay bằng một nút **LOG TẤT CẢ**.
+- Một lần bấm sẽ tự chọn toàn bộ Sub-task chưa logwork và mở ngay Bulk editor.
+- Trong Bulk editor chỉ chỉnh `TimeSpent` và `Description` cho từng Sub-task.
+- Ngày Bulk tự lấy ngày hiện tại và không cho nhập thủ công.
+
+## Settings / Worklog tools
+
+Hai nghiệp vụ phụ được gom thành nhóm thu gọn để giao diện bớt dày:
+
+1. **Kiểm tra & lập kế hoạch**
+   - xem giờ đã logwork;
+   - xem giờ còn trống;
+   - `Đã bận` đổi thành `Đã logwork`.
+
+2. **Tìm & chỉnh sửa worklog đã log**
+   - tìm lại Sub-task đã log trên Jira theo ngày/KEY;
+   - xem chi tiết worklog;
+   - sửa hoặc xóa worklog;
+   - nút hành động đổi thành `TÌM WORKLOG ĐÃ LOG` để rõ nghĩa.
+
+## Giữ nguyên
+
+- Jira fixed JQL Sub-task chưa logwork.
+- Chống log trùng giờ.
+- Chỉ xếp giờ trong `08:00–12:00` và `13:30–17:30`.
+- To Do → In Progress → Done.
+- Dark/Light mode.
+- PWA.
+- Worklog History & Correction.
+- Desktop/mobile responsive.
+- Idempotency, retry/backoff và session hardening.
 
 ## Deploy
-Giữ nguyên toàn bộ Environment Variables của V1.0.1 và deploy source lên Vercel. Không cần thay đổi database hay cấu hình Jira.
 
-## V1.0.3 – Desktop UI/UX Polish
-
-- Giữ nguyên layout mobile của V1.0.2.
-- Desktop từ 900px dùng workspace 2 cột: Sub-task bên trái, Logwork nhanh bên phải.
-- Form Logwork sticky trên PC để luôn sẵn thao tác khi cuộn danh sách.
-- Header/status chạy full-width, khoảng trắng và kích thước card được cân lại cho màn hình lớn.
-- Settings trên PC hiển thị dạng modal giữa màn hình thay vì bottom-sheet.
-- Bulk items có thể chia 2 cột trên desktop.
-- Không thay đổi Jira API, scheduler, transition workflow hay quy tắc logwork.
+Giữ nguyên Environment Variables của bản trước và deploy source lên Vercel. Không cần thay đổi database.

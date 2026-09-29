@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.0.6';
+const APP_VERSION = '1.1.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -157,9 +157,10 @@ function savePrefs() {
 
 function setLoggedIn(user) {
   state.user = user;
+  document.body.classList.remove('single-log-open');
   $('loginCard').classList.add('hidden');
   $('filterCard').classList.remove('hidden');
-  $('worklogCard').classList.remove('hidden');
+  $('worklogCard').classList.add('hidden');
   $('statusCard').classList.remove('hidden');
   $('settingsBtn')?.classList.remove('hidden');
   $('userLabel').textContent = user?.displayName || user?.username || '';
@@ -171,6 +172,7 @@ function setLoggedIn(user) {
 
 function setLoggedOut() {
   state.user = null;
+  document.body.classList.remove('single-log-open');
   state.filterIssues = [];
   state.filterLoaded = false;
   state.filterLoading = false;
@@ -203,8 +205,8 @@ function handleQuickLaunch() {
   if (params.get('quick') !== '1') return;
   state.quickHandled = true;
   setTimeout(() => {
-    $('worklogCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(() => $('key')?.focus(), 320);
+    $('filterCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => $('filterIssueSearch')?.focus(), 320);
   }, 180);
 }
 
@@ -314,16 +316,27 @@ function filteredIssues() {
 function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime = true } = {}) {
   const normalizedKey = String(key || '').trim().toUpperCase();
   if (!normalizedKey) return;
+  const normalizedProject = project || normalizedKey.split('-')[0] || state.prefs.lastProject || '';
+  const logDate = todayLocal();
   $('key').value = normalizedKey;
-  $('project').value = project || normalizedKey.split('-')[0] || state.prefs.lastProject || '';
+  $('project').value = normalizedProject;
+  $('date').value = logDate;
   $('description').value = summary || '';
+  $('selectedIssueKey').textContent = normalizedKey;
+  $('selectedIssueProject').textContent = normalizedProject || '—';
+  $('selectedIssueSummary').textContent = summary || 'Issue không có Summary.';
+  $('selectedIssueDate').textContent = logDate.split('-').reverse().join('/');
   state.currentIssueSummary = summary || '';
   state.lastAutoIssueKey = normalizedKey;
   setIssueLookupState(summary ? `Summary: ${summary}` : 'Issue không có Summary.', 'ok');
+  resetBulkState();
+  $('resultCard').classList.add('hidden');
+  $('worklogCard').classList.remove('hidden');
+  document.body.classList.add('single-log-open');
+  if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
   if (scroll) $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  if (focusTime) setTimeout(() => $('timeSpent').focus(), 300);
+  if (focusTime) setTimeout(() => $('timeSpent').focus(), 260);
 }
-
 function toggleBulkIssue(issue) {
   const key = String(issue?.key || '').trim().toUpperCase();
   if (!key) return;
@@ -371,6 +384,7 @@ function renderFilterIssues() {
   $('filterCount').textContent = state.filterLoaded
     ? (issues.length === state.filterIssues.length ? String(issues.length) : `${issues.length}/${state.filterIssues.length}`)
     : '0';
+  if ($('logAllBtn')) $('logAllBtn').disabled = !state.filterLoaded || state.filterIssues.length === 0;
 
   if (!state.filterLoaded) {
     list.innerHTML = '';
@@ -383,16 +397,14 @@ function renderFilterIssues() {
   }
 
   list.innerHTML = issues.map(issue => {
-    const selected = state.bulkSelectedKeys.has(issue.key);
     return `
-      <button class="issue-row${selected ? ' bulk-selected' : ''}" type="button" data-key="${escapeHtml(issue.key)}" data-project="${escapeHtml(issue.project)}" data-summary="${escapeHtml(issue.summary || '')}">
-        ${state.bulkMode ? `<span class="issue-check" aria-hidden="true">${selected ? '✓' : ''}</span>` : ''}
+      <button class="issue-row" type="button" data-key="${escapeHtml(issue.key)}" data-project="${escapeHtml(issue.project)}" data-summary="${escapeHtml(issue.summary || '')}">
         <div class="issue-main">
           <div class="issue-key-line"><strong>${escapeHtml(issue.key)}</strong>${issue.status ? `<span class="status-pill">${escapeHtml(issue.status)}</span>` : ''}</div>
           <div class="issue-summary">${escapeHtml(issue.summary || 'Không có summary')}</div>
           <div class="issue-meta">${escapeHtml([issue.project, issue.issueType, issue.priority].filter(Boolean).join(' · '))}</div>
         </div>
-        ${state.bulkMode ? '' : '<span class="issue-chevron" aria-hidden="true">›</span>'}
+        <span class="issue-chevron" aria-hidden="true">›</span>
       </button>`;
   }).join('');
   setFilterUi('list');
@@ -405,10 +417,6 @@ function renderFilterIssues() {
         project: button.dataset.project || '',
         summary: button.dataset.summary || ''
       };
-      if (state.bulkMode) {
-        toggleBulkIssue(issue);
-        return;
-      }
       selectIssue(issue);
       showToast(`Đã chọn ${issue.key} và tự điền Description theo Summary.`);
     });
@@ -495,40 +503,9 @@ function addRecentIssue(issue) {
   renderRecentIssues();
 }
 
-function updateQuickPanelVisibility() {
-  const hasRecent = state.recentIssues.length > 0;
-  const hasRepeat = Boolean(state.lastLog?.key);
-  $('quickInputPanel').classList.toggle('hidden', !hasRecent && !hasRepeat);
-}
+function updateQuickPanelVisibility() {}
 
-function renderRecentIssues() {
-  const wrap = $('recentWrap');
-  const list = $('recentIssues');
-  if (!state.recentIssues.length) {
-    wrap.classList.add('hidden');
-    list.innerHTML = '';
-    updateQuickPanelVisibility();
-    return;
-  }
-  wrap.classList.remove('hidden');
-  list.innerHTML = state.recentIssues.map(issue => `
-    <button type="button" class="recent-chip" data-key="${escapeHtml(issue.key)}" title="${escapeHtml(issue.summary || issue.key)}">
-      <strong>${escapeHtml(issue.key)}</strong>${issue.summary ? `<span>${escapeHtml(issue.summary)}</span>` : ''}
-    </button>
-  `).join('');
-  updateQuickPanelVisibility();
-  list.querySelectorAll('.recent-chip').forEach(button => {
-    button.addEventListener('click', async () => {
-      const key = button.dataset.key || '';
-      const cached = state.recentIssues.find(x => x.key === key) || { key };
-      selectIssue(cached, { focusTime: false });
-      try { await loadIssueByKey(key); } catch {}
-      $('timeSpent').focus();
-      showToast(`Đã chọn KEY gần đây ${key}.`);
-    });
-  });
-}
-
+function renderRecentIssues() {}
 function renderTemplates() {
   const select = $('templateSelect');
   const selected = select.value;
@@ -629,40 +606,27 @@ function setLastLog(payload, issueSummary = '') {
     loggedAt: new Date().toISOString()
   };
   writeStorage(STORAGE.lastLog, state.lastLog);
-  $('repeatLastBtn').classList.remove('hidden');
   updateQuickPanelVisibility();
 }
 
 function applyLastLog() {
-  if (!state.lastLog?.key) {
-    showToast('Chưa có logwork gần nhất để lặp lại.');
+  const key = String(state.lastLog?.key || '').toUpperCase();
+  const issue = state.filterIssues.find(item => String(item.key || '').toUpperCase() === key);
+  if (!issue) {
+    showToast('Sub-task gần nhất không còn trong danh sách chưa logwork.');
     return;
   }
-  $('key').value = state.lastLog.key;
-  $('project').value = state.lastLog.project || String(state.lastLog.key).split('-')[0] || '';
-  $('timeSpent').value = state.lastLog.timeSpent || state.prefs.lastTimeSpent || '';
-  $('date').value = todayLocal();
-  $('description').value = state.lastLog.description || state.lastLog.summary || '';
-  state.currentIssueSummary = state.lastLog.summary || '';
-  state.lastAutoIssueKey = state.lastLog.key;
-  setIssueLookupState(state.lastLog.summary ? `Summary: ${state.lastLog.summary}` : 'Đã nạp logwork gần nhất.', 'ok');
-  $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  setTimeout(() => $('timeSpent').focus(), 250);
-  showToast(`Đã nạp lại ${state.lastLog.key} cho ngày hôm nay.`);
+  selectIssue(issue);
 }
-
 function hydrateQuickInputs() {
-  if (!$('date').value) $('date').value = todayLocal();
-  if (!$('bulkDate').value) $('bulkDate').value = $('date').value || todayLocal();
-  if (!$('timeSpent').value && state.prefs.lastTimeSpent) $('timeSpent').value = state.prefs.lastTimeSpent;
-  if (!$('project').value && state.prefs.lastProject) $('project').value = state.prefs.lastProject;
-  $('repeatLastBtn').classList.toggle('hidden', !state.lastLog?.key);
-  renderRecentIssues();
-  updateQuickPanelVisibility();
+  $('date').value = todayLocal();
+  $('bulkDate').value = todayLocal();
+  $('selectedIssueDate').textContent = todayLocal().split('-').reverse().join('/');
+  $('bulkDateLabel').textContent = `Ngày ${todayLocal().split('-').reverse().join('/')}`;
+  if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
   renderTemplates();
   renderAuditHistory();
 }
-
 function openSettings() {
   const overlay = $('settingsOverlay');
   if (!overlay || !overlay.classList.contains('hidden')) return;
@@ -866,7 +830,7 @@ async function runDayAudit() {
     if (data.sources?.recentIssues?.ok) sourceBits.push(`Recent: ${data.sources.recentIssues.issues}`);
     if (data.sources?.worklogDelta?.supported) sourceBits.push(`Delta: ${data.sources.worklogDelta.worklogs}`);
     out.innerHTML = `<div class="audit-summary"><strong>${escapeHtml(date)}</strong><span>Quét ${data.checkedIssues} issue · ${data.checkedWorklogs} worklog</span></div>
-      <div class="planner-kpis"><div><small>Đã bận</small><strong>${minutesLabel(data.occupiedMinutes || 0)}</strong></div><div><small>Còn trống</small><strong>${minutesLabel(data.freeMinutes || 0)}</strong></div></div>
+      <div class="planner-kpis"><div><small>Đã logwork</small><strong>${minutesLabel(data.occupiedMinutes || 0)}</strong></div><div><small>Còn trống</small><strong>${minutesLabel(data.freeMinutes || 0)}</strong></div></div>
       <div class="planner-group"><strong>Giờ đã log</strong>${data.occupied?.length ? data.occupied.map(s => `<div class="segment busy"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('') : '<div class="template-empty">Chưa thấy worklog của bạn trong ngày này.</div>'}</div>
       <div class="planner-group"><strong>Giờ còn trống</strong>${data.available?.length ? data.available.map(s => `<div class="segment free"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('') : '<div class="template-empty">Không còn thời gian trống trong 2 khung giờ cho phép.</div>'}</div>
       <div class="planner-source">Nguồn kiểm tra: ${escapeHtml(sourceBits.join(' · ') || 'Jira')}</div>`;
@@ -891,27 +855,45 @@ function parseTimeSpentClient(value) {
   return 0;
 }
 
-function renderBulkSelection() {
-  const bar = $('bulkSelectionBar');
-  const count = state.bulkSelectedKeys.size;
-  $('bulkSelectedCount').textContent = `${count} issue`;
-  bar.classList.toggle('hidden', !state.bulkMode);
-  $('openBulkBtn').disabled = count === 0;
-  $('bulkModeBtn').textContent = state.bulkMode ? 'Thoát chọn' : 'Chọn nhiều';
-  $('bulkModeBtn').classList.toggle('active', state.bulkMode);
+function renderBulkSelection() {}
+
+function resetBulkState() {
+  state.bulkMode = false;
+  state.bulkSelectedKeys.clear();
+  state.bulkDrafts.clear();
+  $('bulkCard').classList.add('hidden');
 }
 
-function setBulkMode(enabled) {
-  state.bulkMode = Boolean(enabled);
-  if (!state.bulkMode) {
-    state.bulkSelectedKeys.clear();
-    state.bulkDrafts.clear();
-    $('bulkCard').classList.add('hidden');
+function openBulkAll() {
+  const issues = state.filterIssues;
+  if (!issues.length) {
+    showToast('Không có Sub-task chưa logwork để Log tất cả.');
+    return;
   }
-  renderBulkSelection();
-  renderFilterIssues();
+  state.bulkSelectedKeys.clear();
+  state.bulkDrafts.clear();
+  for (const issue of issues) {
+    const key = String(issue.key || '').trim().toUpperCase();
+    if (!key) continue;
+    state.bulkSelectedKeys.add(key);
+    state.bulkDrafts.set(key, {
+      key,
+      project: issue.project || key.split('-')[0] || '',
+      summary: issue.summary || '',
+      timeSpent: state.prefs.lastTimeSpent || '1h',
+      description: issue.summary || ''
+    });
+  }
+  const date = todayLocal();
+  $('bulkDate').value = date;
+  $('bulkDateLabel').textContent = `Ngày ${date.split('-').reverse().join('/')}`;
+  $('worklogCard').classList.add('hidden');
+  document.body.classList.remove('single-log-open');
+  $('resultCard').classList.add('hidden');
+  renderBulkItems();
+  $('bulkCard').classList.remove('hidden');
+  $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-
 function bulkDraftList() {
   return [...state.bulkSelectedKeys].map(key => state.bulkDrafts.get(key)).filter(Boolean);
 }
@@ -938,7 +920,6 @@ function renderBulkItems() {
           <span>${escapeHtml(item.summary || 'Không có summary')}</span>
           <small>${escapeHtml(item.project)}</small>
         </div>
-        <button class="bulk-remove" type="button" aria-label="Bỏ ${escapeHtml(item.key)}">×</button>
       </div>
       <div class="bulk-item-fields">
         <label>TimeSpent<input class="bulk-time" value="${escapeHtml(item.timeSpent || '1h')}" placeholder="1h" inputmode="text" required /></label>
@@ -957,28 +938,11 @@ function renderBulkItems() {
     row.querySelector('.bulk-description').addEventListener('input', event => {
       if (draft) draft.description = event.target.value;
     });
-    row.querySelector('.bulk-remove').addEventListener('click', () => {
-      state.bulkSelectedKeys.delete(key);
-      state.bulkDrafts.delete(key);
-      renderBulkItems();
-      renderBulkSelection();
-      renderFilterIssues();
-      if (!state.bulkSelectedKeys.size) $('bulkCard').classList.add('hidden');
-    });
   });
   updateBulkTotal();
 }
 
-function openBulkEditor() {
-  if (!state.bulkSelectedKeys.size) {
-    showToast('Hãy chọn ít nhất một issue.');
-    return;
-  }
-  if (!$('bulkDate').value) $('bulkDate').value = $('date').value || todayLocal();
-  renderBulkItems();
-  $('bulkCard').classList.remove('hidden');
-  $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+function openBulkEditor() { openBulkAll(); }
 
 function renderBulkSuccess(data) {
   const result = $('resultCard');
@@ -1013,7 +977,7 @@ async function submitBulkWorklog(event) {
   const requestId = createRequestId('bulk');
   const btn = $('bulkLogBtn');
   btn.disabled = true;
-  btn.textContent = 'ĐANG LOG BULK...';
+  btn.textContent = 'ĐANG LOG TẤT CẢ...';
   $('resultCard').classList.add('hidden');
   try {
     const date = $('bulkDate').value;
@@ -1035,11 +999,7 @@ async function submitBulkWorklog(event) {
     renderBulkSuccess(data);
     addAuditEntry({ ok: true, type: 'Bulk', key: `${data.items.length} issue`, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: (data.items || []).flatMap(x => x.segments || []) });
     showToast(`Đã log ${data.items.length} issue lên Jira.`);
-    state.bulkSelectedKeys.clear();
-    state.bulkDrafts.clear();
-    state.bulkMode = false;
-    $('bulkCard').classList.add('hidden');
-    renderBulkSelection();
+    resetBulkState();
     renderFilterIssues();
     setTimeout(() => loadFilterIssues({ quiet: true }), 1200);
   } catch (error) {
@@ -1052,7 +1012,7 @@ async function submitBulkWorklog(event) {
   } finally {
     state.bulkSubmitInFlight = false;
     btn.disabled = false;
-    btn.textContent = 'LOG BULK';
+    btn.textContent = 'LOG TẤT CẢ';
   }
 }
 
@@ -1087,53 +1047,13 @@ $('logoutBtn').addEventListener('click', async () => {
 
 $('refreshFilterBtn').addEventListener('click', () => loadFilterIssues());
 $('filterIssueSearch').addEventListener('input', renderFilterIssues);
-$('bulkModeBtn').addEventListener('click', () => setBulkMode(!state.bulkMode));
-$('selectVisibleBtn').addEventListener('click', () => {
-  const visible = filteredIssues();
-  for (const issue of visible) {
-    if (state.bulkSelectedKeys.size >= 20) break;
-    if (!state.bulkSelectedKeys.has(issue.key)) {
-      state.bulkSelectedKeys.add(issue.key);
-      state.bulkDrafts.set(issue.key, {
-        key: issue.key,
-        project: issue.project || issue.key.split('-')[0] || '',
-        summary: issue.summary || '',
-        timeSpent: state.prefs.lastTimeSpent || '1h',
-        description: issue.summary || ''
-      });
-    }
-  }
-  renderFilterIssues();
-  renderBulkSelection();
-  showToast(`Đã chọn ${state.bulkSelectedKeys.size} issue.`);
-});
-$('openBulkBtn').addEventListener('click', openBulkEditor);
-$('cancelBulkBtn').addEventListener('click', () => setBulkMode(false));
+$('logAllBtn').addEventListener('click', openBulkAll);
+$('cancelBulkBtn').addEventListener('click', resetBulkState);
 $('bulkForm').addEventListener('submit', submitBulkWorklog);
-
-$('key').addEventListener('input', () => {
-  clearTimeout(state.issueLookupTimer);
-  const key = $('key').value.trim().toUpperCase();
-  if (!validIssueKey(key)) {
-    ++state.issueLookupSeq;
-    state.currentIssueSummary = '';
-    setIssueLookupState('');
-    return;
-  }
-  state.issueLookupTimer = setTimeout(() => loadIssueByKey(key).catch(() => {}), 450);
-});
-
-$('key').addEventListener('blur', () => {
-  const key = $('key').value.trim().toUpperCase();
-  if (validIssueKey(key) && key !== state.lastAutoIssueKey) loadIssueByKey(key).catch(() => {});
-});
-
-$('project').addEventListener('change', () => {
-  const project = $('project').value.trim().toUpperCase();
-  if (project) {
-    state.prefs.lastProject = project;
-    savePrefs();
-  }
+$('closeWorklogBtn').addEventListener('click', () => {
+  $('worklogCard').classList.add('hidden');
+  document.body.classList.remove('single-log-open');
+  $('resultCard').classList.add('hidden');
 });
 
 $('timeSpent').addEventListener('change', () => {
@@ -1151,11 +1071,10 @@ document.querySelectorAll('.preset-btn').forEach(button => {
     state.prefs.lastTimeSpent = value;
     savePrefs();
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b === button));
-    $('date').focus();
+    $('description').focus();
   });
 });
 
-$('repeatLastBtn').addEventListener('click', applyLastLog);
 $('applyTemplateBtn').addEventListener('click', () => applyTemplateById($('templateSelect').value));
 $('templateSelect').addEventListener('change', () => {
   if ($('templateSelect').value) applyTemplateById($('templateSelect').value);
@@ -1193,8 +1112,6 @@ $('settingsOverlay')?.addEventListener('touchmove', event => {
 }, { passive: false });
 $('runAuditBtn').addEventListener('click', runDayAudit);
 $('refreshWorklogHistoryBtn').addEventListener('click', () => loadWorklogHistory());
-$('historyDate').addEventListener('change', () => loadWorklogHistory({ quiet: true }));
-$('historyKey').addEventListener('change', () => loadWorklogHistory({ quiet: true }));
 $('cancelCorrectionBtn').addEventListener('click', closeCorrection);
 $('saveCorrectionBtn').addEventListener('click', saveCorrection);
 $('deleteCorrectionBtn').addEventListener('click', deleteCurrentCorrection);
@@ -1241,14 +1158,17 @@ $('worklogForm').addEventListener('submit', async event => {
       <div class="meta"><strong>${escapeHtml(data.issue.key)}</strong>${data.issue.summary ? ` · ${escapeHtml(data.issue.summary)}` : ''}<br>${escapeHtml(data.date)} · Tổng ${minutesLabel(data.totalMinutes)}</div>
       ${data.segments.map(s => `<div class="segment"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('')}
       <div class="transition-note ${data.transition?.ok ? 'ok' : 'warn'}">${data.transition?.ok ? `✓ Trạng thái: ${escapeHtml(transitionPathLabel(data.transition))}` : `⚠ ${escapeHtml(data.transition?.message || 'Worklog đã tạo nhưng chưa chuyển được trạng thái.')}`}</div>
-      <button id="resultRepeatBtn" class="secondary result-action" type="button">↻ Lặp lại KEY này</button>
     `;
     result.classList.remove('hidden');
-    $('resultRepeatBtn').addEventListener('click', applyLastLog);
     addAuditEntry({ ok: true, key: data.issue.key, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: data.segments });
     showToast(data.transition?.ok ? `Đã log work · ${transitionPathLabel(data.transition)}` : 'Đã log work lên Jira.');
-    $('key').select();
-    setTimeout(() => loadFilterIssues({ quiet: true }), 1200);
+    $('worklogCard').classList.add('hidden');
+    document.body.classList.remove('single-log-open');
+    $('key').value = '';
+    $('project').value = '';
+    $('description').value = '';
+    state.currentIssueSummary = '';
+    setTimeout(() => loadFilterIssues({ quiet: true }), 700);
   } catch (error) {
     const result = $('resultCard');
     result.className = 'result error';
