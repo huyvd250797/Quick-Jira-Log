@@ -1,18 +1,28 @@
-# Quick Jira Log V1.3.4 – Mobile Bottom Sheet UX & Preview
+# Quick Jira Log V1.4.0 – Zero-Friction UX & Visual System
 
-Bản này được nâng trực tiếp từ **V1.3.3 – Vercel Hobby Function Consolidation** theo yêu cầu rollback, không lấy các thay đổi của V1.3.5.
+Nâng cấp trực tiếp từ **V1.3.4 – Mobile Bottom Sheet UX & Preview**.
 
 ## Thay đổi chính
 
-- Bottom sheet trên mobile có thanh kéo thật; kéo xuống đủ ngưỡng để đóng. Nếu kéo chưa đủ, sheet tự snap về vị trí cũ.
-- Khi bấm preset `30m / 1h / 2h / 4h`, app chỉ cập nhật TimeSpent + Dự kiến, không tự chuyển focus xuống Description.
-- Khi nhập TimeSpent hợp lệ như `1h 30m`, app gọi preview engine và hiển thị `Dự kiến: 08:00 → 09:30` nếu khung giờ trống; nếu đã có worklog, Dự kiến tự né khoảng đã log.
-- Bổ sung thông tin tác giả trong Cài đặt: Quick Jira Log được xây dựng từ ý tưởng của HuyVo với sự hỗ trợ của AI; `© 2026 HuyVo. All rights reserved.`
-- Giữ nguyên khung giờ Normal `08:00–12:00` và `13:30–17:30`; OT Thứ 2–6 từ `17:30`, OT Thứ 7/CN dùng khung giờ ban ngày.
-- Giữ kiến trúc Vercel Hobby chỉ có `api/index.js` là Serverless Function; các handler còn lại là module nội bộ.
+- Bỏ hoàn toàn tính **Dự kiến giờ logwork trước khi gửi** để không phát sinh request Jira khi đang nhập TimeSpent.
+- Scheduler/guard vẫn chạy **khi bấm Log** để né worklog đã có và đảm bảo khung giờ an toàn.
+- Sau khi Jira tạo worklog thành công, app hiển thị rõ **Sub-task + ngày + từng khung giờ đã log + thời lượng**.
+- Toast thành công của log đơn hiển thị ngay `KEY · HH:mm–HH:mm`.
+- Chuẩn hóa visual system: control height, focus state, button state, selected issue state, success result, card elevation và mobile bottom-sheet action.
+- Sub-task đang chọn được highlight rõ trên desktop.
+- Mobile bottom sheet giữ thao tác kéo xuống để đóng và nút Log luôn dễ chạm.
+- Giữ nguyên khung giờ thường `08:00–12:00` và `13:30–17:30`, OT và toàn bộ engine chống overlap.
+- Backend vẫn chỉ có **01 Vercel Serverless Function** (`api/index.js`).
 
-## Jira / Worklog
+## Luồng log mới
 
-- Danh sách chính: Sub-task được assign cho `currentUser()` và chưa có time spent.
-- Preview, log đơn và bulk cùng dùng scheduler nên Dự kiến và thời gian ghi lên Jira thống nhất.
-- Field **Overtime** cần tồn tại trên Jira và tài khoản hiện tại phải có quyền Edit Issue.
+1. Chọn Sub-task.
+2. Nhập/chọn TimeSpent, ngày, Description và OT nếu cần.
+3. Không gọi API để tính Dự kiến trong lúc nhập.
+4. Bấm Log → engine mới kiểm tra worklog hiện có, xếp giờ, tạo worklog và chuyển trạng thái.
+5. Thành công → hiện chính xác Sub-task đã log vào thời gian nào.
+
+## Tác giả
+
+Quick Jira Log được xây dựng từ ý tưởng của **HuyVo** với sự hỗ trợ của AI.  
+**© 2026 HuyVo. All rights reserved.**

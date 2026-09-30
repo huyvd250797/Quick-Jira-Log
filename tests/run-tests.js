@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.3.4');
-console.log('V1.3.4 version test passed.');
+assert.equal(packageJson.version, '1.4.0');
+console.log('V1.4.0 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -255,26 +255,31 @@ console.log('V1.0.3 sequential workflow transition selector tests passed.');
 });
 
 
-// V1.3.2 - đúng khung 13:30, mobile bottom sheet và preview dự kiến.
+// V1.4.0 - đúng khung 13:30, mobile bottom sheet và zero-friction (không preview trước log).
 assert.deepStrictEqual(displaySegments(schedule(90, [])), [
   { start: '08:00', end: '09:30', minutes: 90 }
 ]);
-assert(indexHtml.includes('id="worklogPreview"'));
 assert(indexHtml.includes('id="mobileEditorBackdrop"'));
-assert(appJs.includes("api('/api?action=worklog-preview'"));
+assert(!indexHtml.includes('id="worklogPreview"'));
+assert(!indexHtml.includes('id="bulkPreviewState"'));
+assert(!appJs.includes('worklog-preview'));
+assert(!fs.existsSync(path.join(root, 'handlers', 'worklog-preview.js')));
 assert(styles.includes('#worklogCard.mobile-bottom-sheet'));
 assert(styles.includes('#bulkCard.mobile-bottom-sheet'));
-console.log('V1.3.2 worktime + mobile bottom sheet + preview tests passed.');
+console.log('V1.4.0 zero-friction no-preview tests passed.');
 
-
-// V1.3.4 - Bottom sheet gesture, preset focus, preview and credits.
+// V1.4.0 - Bottom sheet gesture, preset focus, credits và visual system.
 assert(indexHtml.includes('class="bottom-sheet-drag-handle"'));
 assert(appJs.includes("setupBottomSheetDrag('worklogCard')"));
 assert(appJs.includes("setupBottomSheetDrag('bulkCard')"));
 assert(appJs.includes('drag.delta >= 110'));
 assert(!/document\.querySelectorAll\('\.preset-btn'\)[\s\S]{0,900}\$\('description'\)\.focus\(\)/.test(appJs));
-assert(appJs.includes('<strong>Dự kiến:</strong>'));
 assert(indexHtml.includes('© 2026 HuyVo. All rights reserved.'));
 assert(indexHtml.includes('được xây dựng từ ý tưởng của <strong>HuyVo</strong> với sự hỗ trợ của AI'));
+assert(styles.includes('.issue-row.is-selected'));
+assert(styles.includes('.filter-skeleton'));
+assert(styles.includes('.log-submit-btn'));
+assert(appJs.includes('Đã log ${data.issue.key}'));
+assert(appJs.includes('segment.start'));
 assert.equal(fs.readdirSync(path.join(root, 'api')).filter(name => name.endsWith('.js')).length, 1);
-console.log('V1.3.4 mobile gesture + preview + author credit tests passed.');
+console.log('V1.4.0 visual system + post-log result tests passed.');

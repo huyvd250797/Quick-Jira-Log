@@ -1281,32 +1281,7 @@ html[data-theme="dark"] .overtime-control { background: #334257; }
   .bulk-description-field { grid-column: 1 / -1; }
 }
 
-/* V1.3.2 – Worktime & Mobile Bottom Sheet Fix */
-.worklog-preview,
-.bulk-item-preview,
-.bulk-preview-summary {
-  border: 1px solid #cfe0f7;
-  background: #f5f9ff;
-  color: var(--text);
-  border-radius: 12px;
-  font-size: 11px;
-  line-height: 1.45;
-}
-.worklog-preview { margin: 0 0 12px; padding: 10px 12px; font-weight: 750; }
-.worklog-preview strong,
-.bulk-item-preview strong { color: var(--primary); }
-.worklog-preview.preview-error,
-.bulk-preview-summary.preview-error,
-.bulk-item-preview.preview-error { border-color: rgba(213,62,85,.25); background: #fff4f6; color: #b52b42; }
-.bulk-preview-summary { margin: -2px 0 12px; padding: 9px 11px; color: var(--muted); }
-.bulk-item-preview { grid-column: 1 / -1; padding: 8px 10px; color: var(--muted); }
-.bulk-item-preview:not(.hidden) { display: block; }
-html[data-theme="dark"] .worklog-preview,
-html[data-theme="dark"] .bulk-item-preview,
-html[data-theme="dark"] .bulk-preview-summary { background: #0d1929; border-color: #263a57; }
-html[data-theme="dark"] .worklog-preview.preview-error,
-html[data-theme="dark"] .bulk-preview-summary.preview-error,
-html[data-theme="dark"] .bulk-item-preview.preview-error { background: #2b151c; border-color: #59303c; color: #ff8ca0; }
+/* Mobile bottom sheet base */
 .mobile-editor-backdrop { display: none; }
 
 @media (max-width: 899px) {
@@ -1418,4 +1393,125 @@ html[data-theme="dark"] .app-copyright { background: #0d1929; border-color: #263
   #worklogCard.mobile-bottom-sheet.is-dragging,
   #bulkCard.mobile-bottom-sheet.is-dragging { user-select: none; -webkit-user-select: none; }
   .mobile-editor-backdrop { transition: opacity 180ms ease; }
+}
+
+
+/* V1.4.0 – Zero-Friction UX & Visual System */
+:root {
+  --qjl-control-height: 46px;
+  --qjl-radius-control: 13px;
+  --qjl-radius-card: 20px;
+  --qjl-focus-ring: 0 0 0 4px rgba(23,105,224,.11);
+  --qjl-transition: 160ms ease;
+  --qjl-success-soft: #effaf4;
+}
+body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+.card, .status-card, .result { border-radius: var(--qjl-radius-card); }
+input, select { min-height: var(--qjl-control-height); }
+input, textarea, select { border-radius: var(--qjl-radius-control); }
+button, input, textarea, select { transition: border-color var(--qjl-transition), background var(--qjl-transition), box-shadow var(--qjl-transition), transform var(--qjl-transition), opacity var(--qjl-transition); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--qjl-focus-ring);
+}
+.primary { min-height: var(--qjl-control-height); border-radius: var(--qjl-radius-control); }
+.secondary, .icon-btn, .header-icon-btn, .header-tool-btn, .preset-btn { transition: transform var(--qjl-transition), border-color var(--qjl-transition), background var(--qjl-transition), color var(--qjl-transition); }
+.primary:not(:disabled):active, .secondary:not(:disabled):active, .header-tool-btn:not(:disabled):active { transform: translateY(1px) scale(.99); }
+
+.issue-row { border-radius: 13px; }
+.issue-row.is-selected {
+  border-color: #75aaf0;
+  background: linear-gradient(180deg, #f2f7ff, #edf5ff);
+  box-shadow: 0 0 0 3px rgba(23,105,224,.08);
+}
+.issue-row.is-selected::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+html[data-theme="dark"] .issue-row.is-selected {
+  border-color: #427dcc;
+  background: linear-gradient(180deg, #122642, #10223a);
+  box-shadow: 0 0 0 3px rgba(102,168,255,.08);
+}
+
+.filter-skeleton {
+  display: grid;
+  grid-template-columns: 86px minmax(0,1fr);
+  gap: 8px 12px;
+  padding: 15px;
+  text-align: left;
+  overflow: hidden;
+}
+.skeleton-line {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #edf1f6 20%, #f8fafc 45%, #edf1f6 70%);
+  background-size: 220% 100%;
+  animation: qjl-skeleton 1.25s linear infinite;
+}
+.skeleton-key { width: 72px; }
+.skeleton-summary { width: 88%; }
+.skeleton-meta { width: 52px; height: 8px; margin-bottom: 8px; }
+.filter-skeleton .skeleton-meta:nth-of-type(3n) { grid-column: 1 / -1; width: 38%; }
+@keyframes qjl-skeleton { to { background-position: -220% 0; } }
+html[data-theme="dark"] .skeleton-line { background: linear-gradient(90deg, #162338 20%, #22324a 45%, #162338 70%); background-size: 220% 100%; }
+
+.result.ok {
+  border-color: rgba(30,158,97,.28);
+  background: linear-gradient(180deg, #ffffff, var(--qjl-success-soft));
+  box-shadow: 0 14px 36px rgba(20,119,73,.09);
+}
+.result.ok h3 { color: #17784d; }
+.result .segment { min-height: 44px; }
+.bulk-result-item { border-radius: 14px; }
+html[data-theme="dark"] .result.ok {
+  background: linear-gradient(180deg, #101b2c, #0e231c);
+  border-color: #24543f;
+}
+html[data-theme="dark"] .result.ok h3 { color: #72daa6; }
+
+#worklogCard .selected-issue-card { box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }
+.bulk-item { border-radius: 15px; }
+.bulk-remove-btn { min-width: 34px; min-height: 34px; }
+
+@media (min-width: 900px) {
+  .shell { row-gap: 14px; }
+  #filterCard, #worklogCard { border-radius: 20px; }
+  #worklogCard .log-submit-btn { width: 100%; }
+  .filter-tools { position: sticky; top: 8px; z-index: 2; padding: 3px 0 7px; background: var(--card); }
+}
+
+@media (max-width: 899px) {
+  #worklogCard.mobile-bottom-sheet,
+  #bulkCard.mobile-bottom-sheet { border-radius: 24px 24px 0 0; }
+  #worklogCard.mobile-bottom-sheet form,
+  #bulkCard.mobile-bottom-sheet form { padding-bottom: 4px; }
+  #worklogCard.mobile-bottom-sheet .log-submit-btn {
+    position: sticky;
+    bottom: max(0px, env(safe-area-inset-bottom));
+    z-index: 4;
+    width: 100%;
+    box-shadow: 0 -8px 22px rgba(255,255,255,.82), 0 10px 24px rgba(23,105,224,.22);
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-actions {
+    position: sticky;
+    bottom: max(0px, env(safe-area-inset-bottom));
+    z-index: 4;
+    margin: 2px -2px -2px;
+    padding: 10px 2px 2px;
+    background: linear-gradient(180deg, rgba(255,255,255,0), var(--card) 24%);
+  }
+  html[data-theme="dark"] #worklogCard.mobile-bottom-sheet .log-submit-btn { box-shadow: 0 -8px 22px rgba(16,27,44,.82), 0 10px 24px rgba(0,0,0,.28); }
+  html[data-theme="dark"] #bulkCard.mobile-bottom-sheet .bulk-actions { background: linear-gradient(180deg, rgba(16,27,44,0), var(--card) 24%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

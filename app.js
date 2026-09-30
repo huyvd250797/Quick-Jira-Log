@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.3.4';
+const APP_VERSION = '1.4.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -35,10 +35,6 @@ const state = {
   historyLoading: false,
   submitInFlight: false,
   bulkSubmitInFlight: false,
-  previewTimer: null,
-  previewSeq: 0,
-  bulkPreviewTimer: null,
-  bulkPreviewSeq: 0,
   mobileEditorScrollY: 0,
   mobileSheetDrag: null,
   theme: 'light'
@@ -487,6 +483,15 @@ function filteredIssues() {
   });
 }
 
+function markSelectedIssue(key = '') {
+  const selectedKey = String(key || '').trim().toUpperCase();
+  document.querySelectorAll('#filterIssueList .issue-row').forEach(row => {
+    const active = String(row.dataset.key || '').trim().toUpperCase() === selectedKey;
+    row.classList.toggle('is-selected', active);
+    row.setAttribute('aria-current', active ? 'true' : 'false');
+  });
+}
+
 function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime = true } = {}) {
   const normalizedKey = String(key || '').trim().toUpperCase();
   if (!normalizedKey) return;
@@ -503,6 +508,7 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   $('selectedIssueSummary').textContent = summary || 'Issue không có Summary.';
   state.currentIssueSummary = summary || '';
   state.lastAutoIssueKey = normalizedKey;
+  markSelectedIssue(normalizedKey);
   setIssueLookupState(summary ? `Summary: ${summary}` : 'Issue không có Summary.', 'ok');
   resetBulkState();
   $('resultCard').classList.add('hidden');
@@ -511,7 +517,6 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
   const openedAsSheet = openMobileEditor('worklogCard');
   if (scroll && !openedAsSheet) $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  scheduleSinglePreview();
   if (focusTime) setTimeout(() => $('timeSpent').focus({ preventScroll: openedAsSheet }), 260);
 }
 function toggleBulkIssue(issue) {
@@ -576,7 +581,7 @@ function renderFilterIssues() {
 
   list.innerHTML = issues.map(issue => {
     return `
-      <button class="issue-row" type="button" data-key="${escapeHtml(issue.key)}" data-project="${escapeHtml(issue.project)}" data-summary="${escapeHtml(issue.summary || '')}">
+      <button class="issue-row${String($('key')?.value || '').toUpperCase() === String(issue.key || '').toUpperCase() ? ' is-selected' : ''}" type="button" data-key="${escapeHtml(issue.key)}" data-project="${escapeHtml(issue.project)}" data-summary="${escapeHtml(issue.summary || '')}">
         <div class="issue-main">
           <div class="issue-key-line"><strong>${escapeHtml(issue.key)}</strong>${issue.status ? `<span class="status-pill">${escapeHtml(issue.status)}</span>` : ''}</div>
           <div class="issue-summary">${escapeHtml(issue.summary || 'Không có summary')}</div>
@@ -987,111 +992,6 @@ function parseTimeSpentClient(value) {
   return 0;
 }
 
-function previewSegmentsHtml(item) {
-  const segments = Array.isArray(item?.segments) ? item.segments : [];
-  if (!segments.length) return 'Chưa xác định được giờ.';
-  return segments.map(segment => `${escapeHtml(segment.start)} → ${escapeHtml(segment.end)}`).join(' · ');
-}
-
-function setSinglePreview(message = '', { error = false, loading = false } = {}) {
-  const el = $('worklogPreview');
-  if (!el) return;
-  if (!message) {
-    el.classList.add('hidden');
-    el.classList.remove('preview-error');
-    el.innerHTML = '';
-    return;
-  }
-  el.classList.remove('hidden');
-  el.classList.toggle('preview-error', error);
-  el.innerHTML = loading ? escapeHtml(message) : message;
-}
-
-function scheduleSinglePreview() {
-  clearTimeout(state.previewTimer);
-  const key = $('key')?.value.trim().toUpperCase();
-  const date = $('date')?.value || '';
-  const timeSpent = $('timeSpent')?.value.trim() || '';
-  const overtime = $('overtime')?.checked === true;
-  if (!state.user || !key || !date || parseTimeSpentClient(timeSpent) <= 0) {
-    setSinglePreview('');
-    return;
-  }
-  setSinglePreview('Đang tính giờ dự kiến theo worklog hiện có trên Jira...', { loading: true });
-  const seq = ++state.previewSeq;
-  state.previewTimer = setTimeout(async () => {
-    try {
-      const data = await api('/api?action=worklog-preview', {
-        method: 'POST',
-        body: JSON.stringify({ date, items: [{ key, timeSpent, overtime }] })
-      });
-      if (seq !== state.previewSeq) return;
-      const item = data.items?.[0];
-      setSinglePreview(`<strong>Dự kiến:</strong> ${previewSegmentsHtml(item)}${item?.overtime ? ' · OT' : ''}`);
-    } catch (error) {
-      if (seq !== state.previewSeq) return;
-      setSinglePreview(`<strong>Chưa thể xếp giờ:</strong> ${escapeHtml(error.message)}`, { error: true });
-    }
-  }, 520);
-}
-
-function setBulkItemPreview(key, html, { error = false } = {}) {
-  const row = [...($('bulkItems')?.querySelectorAll('.bulk-item') || [])].find(item => item.dataset.key === key);
-  const el = row?.querySelector('.bulk-item-preview');
-  if (!el) return;
-  el.classList.toggle('preview-error', error);
-  el.innerHTML = html;
-}
-
-function scheduleBulkPreview() {
-  clearTimeout(state.bulkPreviewTimer);
-  const stateEl = $('bulkPreviewState');
-  if (!$('bulkCard') || $('bulkCard').classList.contains('hidden')) return;
-  const date = $('bulkDate')?.value || '';
-  const items = bulkDraftList().map(item => ({
-    key: item.key,
-    timeSpent: String(item.timeSpent || '').trim(),
-    overtime: item.overtime === true
-  }));
-  if (!date || !items.length) {
-    if (stateEl) stateEl.textContent = 'Chưa có Sub-task để lập dự kiến.';
-    return;
-  }
-  if (items.some(item => parseTimeSpentClient(item.timeSpent) <= 0)) {
-    if (stateEl) {
-      stateEl.textContent = 'Nhập TimeSpent hợp lệ để xem giờ dự kiến.';
-      stateEl.classList.add('preview-error');
-    }
-    return;
-  }
-  if (stateEl) {
-    stateEl.textContent = 'Đang tính giờ dự kiến theo worklog hiện có trên Jira...';
-    stateEl.classList.remove('preview-error');
-  }
-  for (const item of items) setBulkItemPreview(item.key, 'Dự kiến: đang tính...');
-  const seq = ++state.bulkPreviewSeq;
-  state.bulkPreviewTimer = setTimeout(async () => {
-    try {
-      const data = await api('/api?action=worklog-preview', { method: 'POST', body: JSON.stringify({ date, items }) });
-      if (seq !== state.bulkPreviewSeq) return;
-      if (stateEl) {
-        stateEl.textContent = 'Dự kiến đã được xếp theo các khoảng giờ còn trống trên Jira.';
-        stateEl.classList.remove('preview-error');
-      }
-      for (const item of data.items || []) {
-        setBulkItemPreview(item.key, `<strong>Dự kiến:</strong> ${previewSegmentsHtml(item)}${item.overtime ? ' · OT' : ''}`);
-      }
-    } catch (error) {
-      if (seq !== state.bulkPreviewSeq) return;
-      if (stateEl) {
-        stateEl.textContent = error.message;
-        stateEl.classList.add('preview-error');
-      }
-      for (const item of items) setBulkItemPreview(item.key, `<strong>Chưa thể xếp giờ:</strong> ${escapeHtml(error.message)}`, { error: true });
-    }
-  }, 620);
-}
-
 function renderBulkSelection() {}
 
 function resetBulkState() {
@@ -1099,7 +999,6 @@ function resetBulkState() {
   state.bulkMode = false;
   state.bulkSelectedKeys.clear();
   state.bulkDrafts.clear();
-  clearTimeout(state.bulkPreviewTimer);
   $('bulkCard').classList.add('hidden');
   if (wasOpen) closeMobileEditor();
 }
@@ -1134,7 +1033,6 @@ function openBulkAll() {
   $('bulkCard').classList.remove('hidden');
   const openedAsSheet = openMobileEditor('bulkCard');
   if (!openedAsSheet) $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  scheduleBulkPreview();
 }
 function bulkDraftList() {
   return [...state.bulkSelectedKeys].map(key => state.bulkDrafts.get(key)).filter(Boolean);
@@ -1174,7 +1072,6 @@ function renderBulkItems() {
           <span class="overtime-copy"><strong>Overtime (OT)</strong><small>${escapeHtml(overtimeWindowLabel($('bulkDate')?.value || todayLocal()))}</small></span>
         </label>
         <label class="bulk-description-field">Description<textarea class="bulk-description" rows="2" required>${escapeHtml(item.description || item.summary || '')}</textarea></label>
-        <div class="bulk-item-preview" data-preview-key="${escapeHtml(item.key)}">Dự kiến: đang tính...</div>
       </div>
     </div>
   `).join('');
@@ -1185,7 +1082,6 @@ function renderBulkItems() {
     row.querySelector('.bulk-time').addEventListener('input', event => {
       if (draft) draft.timeSpent = event.target.value;
       updateBulkTotal();
-      scheduleBulkPreview();
     });
     row.querySelector('.bulk-description').addEventListener('input', event => {
       if (draft) draft.description = event.target.value;
@@ -1193,18 +1089,15 @@ function renderBulkItems() {
     row.querySelector('.bulk-overtime')?.addEventListener('change', event => {
       if (draft) draft.overtime = event.target.checked;
       updateBulkTotal();
-      scheduleBulkPreview();
     });
     row.querySelector('.bulk-remove-btn')?.addEventListener('click', () => {
       state.bulkSelectedKeys.delete(key);
       state.bulkDrafts.delete(key);
       renderBulkItems();
-      scheduleBulkPreview();
       showToast(`Đã bỏ ${key} khỏi lần Log tất cả này.`);
     });
   });
   updateBulkTotal();
-  scheduleBulkPreview();
 }
 
 function openBulkEditor() { openBulkAll(); }
@@ -1224,6 +1117,7 @@ function renderBulkSuccess(data) {
     `).join('')}
   `;
   result.classList.remove('hidden');
+  requestAnimationFrame(() => result.scrollIntoView({ behavior: 'smooth', block: 'center' }));
 }
 
 async function submitBulkWorklog(event) {
@@ -1264,7 +1158,8 @@ async function submitBulkWorklog(event) {
     }
     renderBulkSuccess(data);
     addAuditEntry({ ok: true, type: 'Bulk', key: `${data.items.length} issue`, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: (data.items || []).flatMap(x => x.segments || []) });
-    showToast(`Đã log ${data.items.length} issue lên Jira.`);
+    const firstRange = data.items?.[0]?.segments?.map(segment => `${segment.start}–${segment.end}`).join(' · ') || '';
+    showToast(data.items.length === 1 ? `Đã log ${data.items[0].key}${firstRange ? ` · ${firstRange}` : ''}` : `Đã log ${data.items.length} Sub-task lên Jira.`);
     resetBulkState();
     renderFilterIssues();
     setTimeout(() => loadFilterIssues({ quiet: true }), 1200);
@@ -1334,18 +1229,14 @@ $('mobileEditorBackdrop')?.addEventListener('click', () => {
 $('date').addEventListener('change', () => {
   if (!$('date').value) $('date').value = todayLocal();
   updateSingleOvertimeHint();
-  scheduleSinglePreview();
 });
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = todayLocal();
   renderBulkItems();
-  scheduleBulkPreview();
 });
 
-$('timeSpent').addEventListener('input', scheduleSinglePreview);
 $('overtime')?.addEventListener('change', () => {
   updateSingleOvertimeHint();
-  scheduleSinglePreview();
 });
 
 $('timeSpent').addEventListener('change', () => {
@@ -1363,7 +1254,6 @@ document.querySelectorAll('.preset-btn').forEach(button => {
     state.prefs.lastTimeSpent = value;
     savePrefs();
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b === button));
-    scheduleSinglePreview();
   });
 });
 
@@ -1441,8 +1331,10 @@ $('worklogForm').addEventListener('submit', async event => {
       <div class="transition-note ${data.transition?.ok ? 'ok' : 'warn'}">${data.transition?.ok ? `✓ Trạng thái: ${escapeHtml(transitionPathLabel(data.transition))}` : `⚠ ${escapeHtml(data.transition?.message || 'Worklog đã tạo nhưng chưa chuyển được trạng thái.')}`}</div>
     `;
     result.classList.remove('hidden');
+    result.dataset.lastSuccess = data.issue.key;
     addAuditEntry({ ok: true, key: data.issue.key, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: data.segments });
-    showToast(data.transition?.ok ? `Đã log work · ${transitionPathLabel(data.transition)}` : 'Đã log work lên Jira.');
+    const loggedRange = (data.segments || []).map(segment => `${segment.start}–${segment.end}`).join(' · ');
+    showToast(`Đã log ${data.issue.key}${loggedRange ? ` · ${loggedRange}` : ''}`);
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
     closeMobileEditor();
@@ -1452,6 +1344,8 @@ $('worklogForm').addEventListener('submit', async event => {
     if ($('overtime')) $('overtime').checked = false;
     updateSingleOvertimeHint();
     state.currentIssueSummary = '';
+    markSelectedIssue('');
+    requestAnimationFrame(() => result.scrollIntoView({ behavior: 'smooth', block: 'center' }));
     setTimeout(() => loadFilterIssues({ quiet: true }), 700);
   } catch (error) {
     const result = $('resultCard');

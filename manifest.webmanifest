@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.3.2 – Vercel Node 24 Runtime Fix.",
+  "description": "Quick Jira Log V1.4.0 – Zero-Friction UX & Visual System.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

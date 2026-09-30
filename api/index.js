@@ -10,8 +10,7 @@ const handlers = Object.freeze({
   'bulk-worklog': require('../handlers/bulk-worklog'),
   'day-audit': require('../handlers/day-audit'),
   'worklog-history': require('../handlers/worklog-history'),
-  'worklog-correction': require('../handlers/worklog-correction'),
-  'worklog-preview': require('../handlers/worklog-preview')
+  'worklog-correction': require('../handlers/worklog-correction')
 });
 
 module.exports = async function handler(req, res) {
