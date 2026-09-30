@@ -1,4 +1,4 @@
-# Quick Jira Log V1.3.2 – Vercel Node 24 Runtime Fix
+# Quick Jira Log V1.3.3 – Vercel Node 24 Runtime Fix
 
 ## Thay đổi chính
 
@@ -15,7 +15,14 @@
 Field **Overtime** cần tồn tại trên Jira và tài khoản hiện tại phải có quyền Edit Issue. Với checkbox/select, app ưu tiên option `Overtime`, `OT`, `Yes/True/Có`, hoặc option duy nhất của field.
 
 
-## V1.3.2 – Vercel Node 24 Runtime Fix
+## V1.3.3 – Vercel Node 24 Runtime Fix
 - Pin Vercel runtime to Node.js `24.x` instead of `>=20`.
 - Prevent automatic major-version jumps and remove the Vercel engine warning.
 - No Jira/worklog business logic changed from V1.3.1.
+
+## V1.3.3 – Vercel Hobby Function Consolidation
+
+- Gom toàn bộ API backend vào **01 Serverless Function** (`api/index.js`).
+- Các handler nghiệp vụ được chuyển sang `handlers/` và không còn bị Vercel tính là Serverless Functions riêng.
+- Giữ nguyên URL nghiệp vụ ở frontend thông qua `action` query trên `/api`.
+- Mục tiêu: deploy được trên Vercel Hobby, không vượt giới hạn 12 Serverless Functions.

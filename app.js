@@ -342,7 +342,7 @@ async function api(path, options = {}) {
 async function checkStatus() {
   setBootMessage('Đang kiểm tra phiên Jira...');
   try {
-    const response = await fetch('/api/status', { credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch('/api?action=status', { credentials: 'same-origin', cache: 'no-store' });
     const data = await response.json();
     if (data?.authenticated) {
       setBootMessage('Phiên Jira hợp lệ · đang mở ứng dụng...');
@@ -498,7 +498,7 @@ async function loadFilterIssues({ quiet = false } = {}) {
   if (!quiet) setFilterUi('loading');
 
   try {
-    const data = await api('/api/subtasks', { method: 'GET', cache: 'no-store' });
+    const data = await api('/api?action=subtasks', { method: 'GET', cache: 'no-store' });
     state.filterIssues = Array.isArray(data.issues) ? data.issues : [];
     state.filterLoaded = true;
     $('filterName').textContent = 'Tự động theo tài khoản hiện tại';
@@ -536,7 +536,7 @@ async function loadIssueByKey(rawKey, { preserveDescription = false } = {}) {
   const seq = ++state.issueLookupSeq;
   setIssueLookupState('Đang lấy Summary từ Jira...', 'loading');
   try {
-    const data = await api(`/api/issue-info?key=${encodeURIComponent(key)}`, { method: 'GET', cache: 'no-store' });
+    const data = await api(`/api?action=issue-info&key=${encodeURIComponent(key)}`, { method: 'GET', cache: 'no-store' });
     if (seq !== state.issueLookupSeq) return;
     if ($('key').value.trim().toUpperCase() !== key) return;
 
@@ -758,7 +758,7 @@ async function loadWorklogHistory({ quiet = false } = {}) {
   state.historyLoading = true;
   renderWorklogHistory();
   try {
-    const data = await api(`/api/worklog-history?date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
+    const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
     state.historyItems = Array.isArray(data.items) ? data.items : [];
     if (!quiet) showToast(`Đã tải ${state.historyItems.length} worklog.`);
   } catch (error) {
@@ -803,7 +803,7 @@ async function saveCorrection() {
   btn.disabled = true;
   btn.textContent = 'ĐANG LƯU...';
   try {
-    await api('/api/worklog-correction', { method: 'PATCH', body: JSON.stringify(payload) });
+    await api('/api?action=worklog-correction', { method: 'PATCH', body: JSON.stringify(payload) });
     showToast('Đã cập nhật worklog trên Jira.');
     closeCorrection();
     await loadWorklogHistory({ quiet: true });
@@ -819,7 +819,7 @@ async function deleteHistoryItem(item) {
   if (!item) return;
   if (!confirm(`Xóa worklog ${item.key} ${item.start}–${item.end}?`)) return;
   try {
-    await api('/api/worklog-correction', { method: 'DELETE', body: JSON.stringify({ key: item.key, worklogId: item.id }) });
+    await api('/api?action=worklog-correction', { method: 'DELETE', body: JSON.stringify({ key: item.key, worklogId: item.id }) });
     showToast('Đã xóa worklog trên Jira.');
     if ($('correctionWorklogId').value === item.id) closeCorrection();
     await loadWorklogHistory({ quiet: true });
@@ -843,7 +843,7 @@ async function runDayAudit() {
   out.classList.remove('hidden');
   out.innerHTML = 'Đang quét worklog trong ngày từ nhiều nguồn Jira...';
   try {
-    const data = await api(`/api/day-audit?date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
+    const data = await api(`/api?action=day-audit&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
     const sourceBits = [];
     if (data.sources?.authorDay?.ok) sourceBits.push(`JQL user: ${data.sources.authorDay.issues}`);
     if (data.sources?.anyDay?.ok) sourceBits.push(`JQL ngày: ${data.sources.anyDay.issues}`);
@@ -909,7 +909,7 @@ function scheduleSinglePreview() {
   const seq = ++state.previewSeq;
   state.previewTimer = setTimeout(async () => {
     try {
-      const data = await api('/api/worklog-preview', {
+      const data = await api('/api?action=worklog-preview', {
         method: 'POST',
         body: JSON.stringify({ date, items: [{ key, timeSpent, overtime }] })
       });
@@ -960,7 +960,7 @@ function scheduleBulkPreview() {
   const seq = ++state.bulkPreviewSeq;
   state.bulkPreviewTimer = setTimeout(async () => {
     try {
-      const data = await api('/api/worklog-preview', { method: 'POST', body: JSON.stringify({ date, items }) });
+      const data = await api('/api?action=worklog-preview', { method: 'POST', body: JSON.stringify({ date, items }) });
       if (seq !== state.bulkPreviewSeq) return;
       if (stateEl) {
         stateEl.textContent = 'Dự kiến đã được xếp theo các khoảng giờ còn trống trên Jira.';
@@ -1135,7 +1135,7 @@ async function submitBulkWorklog(event) {
   $('resultCard').classList.add('hidden');
   try {
     const date = $('bulkDate').value;
-    const data = await api('/api/bulk-worklog', {
+    const data = await api('/api?action=bulk-worklog', {
       method: 'POST',
       body: JSON.stringify({ date, items, requestId }),
       requestId
@@ -1176,7 +1176,7 @@ $('loginForm').addEventListener('submit', async event => {
   btn.disabled = true;
   btn.textContent = 'ĐANG ĐĂNG NHẬP...';
   try {
-    const data = await api('/api/login', {
+    const data = await api('/api?action=login', {
       method: 'POST',
       body: JSON.stringify({ username: $('username').value.trim(), password: $('password').value })
     });
@@ -1194,7 +1194,7 @@ $('loginForm').addEventListener('submit', async event => {
 $('logoutBtn').addEventListener('click', async () => {
   if (!confirm('Đăng xuất khỏi Jira?')) return;
   $('logoutBtn').disabled = true;
-  try { await api('/api/logout', { method: 'POST', body: '{}' }); } catch {}
+  try { await api('/api?action=logout', { method: 'POST', body: '{}' }); } catch {}
   finally { $('logoutBtn').disabled = false; }
   setLoggedOut();
 });
@@ -1313,7 +1313,7 @@ $('worklogForm').addEventListener('submit', async event => {
       description: $('description').value.trim(),
       overtime: $('overtime')?.checked === true
     };
-    const data = await api('/api/worklog', { method: 'POST', body: JSON.stringify({ ...payload, requestId }), requestId });
+    const data = await api('/api?action=worklog', { method: 'POST', body: JSON.stringify({ ...payload, requestId }), requestId });
 
     state.prefs.lastProject = payload.project;
     state.prefs.lastTimeSpent = payload.timeSpent;

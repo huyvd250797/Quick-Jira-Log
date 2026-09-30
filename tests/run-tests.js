@@ -125,8 +125,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.3.2');
-console.log('V1.3.2 version test passed.');
+assert.equal(packageJson.version, '1.3.3');
+console.log('V1.3.3 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -260,7 +260,7 @@ assert.deepStrictEqual(displaySegments(schedule(90, [])), [
 ]);
 assert(indexHtml.includes('id="worklogPreview"'));
 assert(indexHtml.includes('id="mobileEditorBackdrop"'));
-assert(appJs.includes("api('/api/worklog-preview'"));
+assert(appJs.includes("api('/api?action=worklog-preview'"));
 assert(styles.includes('#worklogCard.mobile-bottom-sheet'));
 assert(styles.includes('#bulkCard.mobile-bottom-sheet'));
 console.log('V1.3.2 worktime + mobile bottom sheet + preview tests passed.');

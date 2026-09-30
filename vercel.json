@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/*.js": {
+    "api/index.js": {
       "maxDuration": 60
     }
   },
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "source": "/api/(.*)",
+      "source": "/api",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }
       ]
