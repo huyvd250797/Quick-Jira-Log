@@ -2,8 +2,28 @@
 
 const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
-const { JiraError, getMyself, getIssue, createWorklog, deleteWorklog, transitionIssueToDone } = require('../lib/jira');
-const { parseTimeSpent, schedule, jiraStarted, displaySegments, validateScheduledSegments } = require('../lib/scheduler');
+const { MAX_REGULAR_MINUTES } = require('../lib/config');
+const {
+  JiraError,
+  getMyself,
+  getIssue,
+  createWorklog,
+  deleteWorklog,
+  transitionIssueToDone,
+  prepareOvertimeUpdate,
+  applyOvertimeUpdate,
+  restoreOvertimeUpdate
+} = require('../lib/jira');
+const {
+  parseTimeSpent,
+  scheduleForDate,
+  jiraStarted,
+  displaySegments,
+  validateScheduledSegments,
+  workWindowsFor,
+  windowsLabel,
+  minutesInsideWindows
+} = require('../lib/scheduler');
 const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { normalizeRequestId, runIdempotent } = require('../lib/idempotency');
 
@@ -15,12 +35,16 @@ function fmtMinutes(minutes) {
   return `${Math.floor(minutes / 60)}h${minutes % 60 ? `${minutes % 60}m` : ''}`;
 }
 
-function planningError(error) {
+function toBoolean(value) {
+  return value === true || value === 1 || String(value || '').toLowerCase() === 'true';
+}
+
+function planningError(error, date, overtime) {
   if (error.message === 'NOT_ENOUGH_TIME') {
-    return new JiraError(`Không đủ thời gian trống trong 2 khung giờ làm việc. Còn ${fmtMinutes(error.availableMinutes)}, cần ${fmtMinutes(error.requiredMinutes)}.`, 409);
+    return new JiraError(`Không đủ thời gian trống trong khung ${windowsLabel(date, overtime)}. Còn ${fmtMinutes(error.availableMinutes)}, cần ${fmtMinutes(error.requiredMinutes)}.`, 409);
   }
   if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') {
-    return new JiraError('Hệ thống phát hiện giờ log nằm ngoài 08:00–12:00 hoặc 13:30–17:30 nên đã chặn thao tác.', 409);
+    return new JiraError(`Hệ thống phát hiện giờ log nằm ngoài khung ${windowsLabel(date, overtime)} nên đã chặn thao tác.`, 409);
   }
   if (error.message === 'SEGMENT_OVERLAP') {
     return new JiraError('Hệ thống phát hiện khoảng giờ bị trùng worklog hiện có nên đã chặn thao tác.', 409);
@@ -34,6 +58,7 @@ async function performWorklog(body, session) {
   const timeSpent = String(body.timeSpent || '').trim();
   const date = String(body.date || '').trim();
   const description = String(body.description || '').trim();
+  const overtime = toBoolean(body.overtime);
 
   if (!key || !project || !timeSpent || !date || !description) {
     throw new JiraError('Vui lòng nhập đủ KEY, PROJECT, TimeSpent, Date và Description.', 400);
@@ -45,8 +70,11 @@ async function performWorklog(body, session) {
   try { minutes = parseTimeSpent(timeSpent); }
   catch (error) {
     throw new JiraError(error.message === 'TIME_SPENT_TOO_LARGE'
-      ? 'TimeSpent tối đa 8h/ngày.'
+      ? 'TimeSpent quá lớn.'
       : 'TimeSpent không hợp lệ. Ví dụ: 30m, 1h, 1h30m, 2.5h.', 400);
+  }
+  if (!overtime && minutes > MAX_REGULAR_MINUTES) {
+    throw new JiraError('Worklog thường tối đa 8h. Nếu cần log ngoài giờ, hãy bật Overtime cho Sub-task.', 400);
   }
 
   const mePromise = session.me ? Promise.resolve(session.me) : getMyself(session);
@@ -58,17 +86,27 @@ async function performWorklog(body, session) {
     throw new JiraError(`Issue ${key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${project}.`, 400);
   }
 
-  // Production guard: quét worklog thật trong ngày, rồi mới tạo deterministic plan.
+  // Preflight field Overtime trước khi tạo worklog để tránh log thành công nhưng không đánh dấu OT được trên Jira.
+  const overtimePrepared = overtime ? await prepareOvertimeUpdate(key, session) : null;
+
   const guard = await loadOccupiedRangesStable(date, [key], me, session);
+  const windows = workWindowsFor(date, overtime);
+  if (!overtime) {
+    const alreadyRegular = minutesInsideWindows(guard.occupied, workWindowsFor(date, false));
+    if (alreadyRegular + minutes > MAX_REGULAR_MINUTES) {
+      throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường không được vượt 8h; hãy bật Overtime cho phần ngoài giờ.`, 409);
+    }
+  }
   let plan;
   try {
-    plan = schedule(minutes, guard.occupied);
-    validateScheduledSegments(plan, guard.occupied);
+    plan = scheduleForDate(minutes, guard.occupied, date, overtime);
+    validateScheduledSegments(plan, guard.occupied, windows);
   } catch (error) {
-    throw planningError(error);
+    throw planningError(error, date, overtime);
   }
 
   const created = [];
+  let overtimeApplied = false;
   try {
     for (const seg of plan) {
       const worklog = await createWorklog(key, {
@@ -78,8 +116,13 @@ async function performWorklog(body, session) {
       }, session);
       created.push({ id: worklog?.id, segment: seg });
     }
+    if (overtimePrepared) {
+      await applyOvertimeUpdate(overtimePrepared, session);
+      overtimeApplied = true;
+    }
   } catch (error) {
     await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(key, x.id, session)));
+    if (overtimeApplied && overtimePrepared) await restoreOvertimeUpdate(overtimePrepared, session);
     throw error;
   }
 
@@ -96,6 +139,9 @@ async function performWorklog(body, session) {
     issue: { key, summary: issue?.fields?.summary || '', previousStatus: issue?.fields?.status?.name || '' },
     project,
     date,
+    overtime,
+    overtimeField: overtimePrepared ? { fieldId: overtimePrepared.fieldId, fieldName: overtimePrepared.fieldName } : null,
+    workWindow: windowsLabel(date, overtime),
     totalMinutes: minutes,
     segments: displaySegments(plan),
     worklogIds: created.map(x => String(x.id || '')).filter(Boolean),

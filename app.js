@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -50,6 +50,26 @@ function todayLocal() {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+function isWeekendDateClient(date) {
+  const match = String(date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+  const day = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))).getUTCDay();
+  return day === 0 || day === 6;
+}
+
+function overtimeWindowLabel(date) {
+  return isWeekendDateClient(date) ? '08:00–12:00 · 13:00–17:30' : '17:30–23:59';
+}
+
+function updateSingleOvertimeHint() {
+  const hint = $('overtimeHint');
+  if (!hint) return;
+  const date = $('date')?.value || todayLocal();
+  hint.textContent = isWeekendDateClient(date)
+    ? 'OT cuối tuần: log trong 08:00–12:00 và 13:00–17:30; Jira sẽ đánh dấu Overtime.'
+    : 'OT ngày thường: log từ 17:30 trở đi; Jira sẽ đánh dấu Overtime.';
 }
 
 function minutesLabel(minutes) {
@@ -327,6 +347,8 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   $('project').value = normalizedProject;
   $('date').value = logDate;
   $('description').value = summary || '';
+  if ($('overtime')) $('overtime').checked = false;
+  updateSingleOvertimeHint();
   $('selectedIssueKey').textContent = normalizedKey;
   $('selectedIssueProject').textContent = normalizedProject || '—';
   $('selectedIssueSummary').textContent = summary || 'Issue không có Summary.';
@@ -358,7 +380,8 @@ function toggleBulkIssue(issue) {
       project: issue.project || key.split('-')[0] || '',
       summary: issue.summary || '',
       timeSpent: state.prefs.lastTimeSpent || '1h',
-      description: issue.summary || ''
+      description: issue.summary || '',
+      overtime: false
     });
   }
   renderFilterIssues();
@@ -839,7 +862,8 @@ function openBulkAll() {
       project: issue.project || key.split('-')[0] || '',
       summary: issue.summary || '',
       timeSpent: state.prefs.lastTimeSpent || '1h',
-      description: issue.summary || ''
+      description: issue.summary || '',
+      overtime: false
     });
   }
   const date = $('date').value || todayLocal();
@@ -883,7 +907,12 @@ function renderBulkItems() {
       </div>
       <div class="bulk-item-fields">
         <label>TimeSpent<input class="bulk-time" value="${escapeHtml(item.timeSpent || '1h')}" placeholder="1h" inputmode="text" required /></label>
-        <label>Description<textarea class="bulk-description" rows="2" required>${escapeHtml(item.description || item.summary || '')}</textarea></label>
+        <label class="bulk-overtime-toggle">
+          <input class="bulk-overtime" type="checkbox" ${item.overtime ? 'checked' : ''} />
+          <span class="overtime-control" aria-hidden="true"></span>
+          <span class="overtime-copy"><strong>Overtime (OT)</strong><small>${escapeHtml(overtimeWindowLabel($('bulkDate')?.value || todayLocal()))}</small></span>
+        </label>
+        <label class="bulk-description-field">Description<textarea class="bulk-description" rows="2" required>${escapeHtml(item.description || item.summary || '')}</textarea></label>
       </div>
     </div>
   `).join('');
@@ -897,6 +926,10 @@ function renderBulkItems() {
     });
     row.querySelector('.bulk-description').addEventListener('input', event => {
       if (draft) draft.description = event.target.value;
+    });
+    row.querySelector('.bulk-overtime')?.addEventListener('change', event => {
+      if (draft) draft.overtime = event.target.checked;
+      updateBulkTotal();
     });
     row.querySelector('.bulk-remove-btn')?.addEventListener('click', () => {
       state.bulkSelectedKeys.delete(key);
@@ -918,7 +951,7 @@ function renderBulkSuccess(data) {
     <div class="meta">${escapeHtml(data.date)} · ${data.items.length} issue · Tổng ${minutesLabel(data.totalMinutes)}</div>
     ${data.items.map(item => `
       <div class="bulk-result-item">
-        <div class="bulk-result-head"><strong>${escapeHtml(item.key)}</strong><span>${minutesLabel(item.minutes)}</span></div>
+        <div class="bulk-result-head"><strong>${escapeHtml(item.key)}${item.overtime ? ' · OT' : ''}</strong><span>${minutesLabel(item.minutes)}</span></div>
         ${item.segments.map(segment => `<div class="segment"><span>${escapeHtml(segment.start)} → ${escapeHtml(segment.end)}</span><span>${minutesLabel(segment.minutes)}</span></div>`).join('')}
         ${(() => { const t = (data.transitions || []).find(x => x.key === item.key); return t ? `<div class="transition-note ${t.ok ? 'ok' : 'warn'}">${t.ok ? `✓ ${escapeHtml(transitionPathLabel(t))}` : `⚠ ${escapeHtml(t.message || 'Chưa chuyển được trạng thái')}`}</div>` : ''; })()}
       </div>
@@ -934,7 +967,8 @@ async function submitBulkWorklog(event) {
     key: item.key,
     project: item.project,
     timeSpent: String(item.timeSpent || '').trim(),
-    description: String(item.description || item.summary || '').trim()
+    description: String(item.description || item.summary || '').trim(),
+    overtime: item.overtime === true
   }));
   if (!items.length) return showToast('Chưa có issue để Bulk Logwork.');
   if (items.some(item => !item.timeSpent || !item.description)) return showToast('Vui lòng nhập đủ TimeSpent và Description cho từng issue.');
@@ -1024,9 +1058,11 @@ $('closeWorklogBtn').addEventListener('click', () => {
 
 $('date').addEventListener('change', () => {
   if (!$('date').value) $('date').value = todayLocal();
+  updateSingleOvertimeHint();
 });
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = todayLocal();
+  renderBulkItems();
 });
 
 $('timeSpent').addEventListener('change', () => {
@@ -1102,7 +1138,8 @@ $('worklogForm').addEventListener('submit', async event => {
       project: $('project').value.trim(),
       timeSpent: $('timeSpent').value.trim(),
       date: $('date').value,
-      description: $('description').value.trim()
+      description: $('description').value.trim(),
+      overtime: $('overtime')?.checked === true
     };
     const data = await api('/api/worklog', { method: 'POST', body: JSON.stringify({ ...payload, requestId }), requestId });
 
@@ -1116,7 +1153,7 @@ $('worklogForm').addEventListener('submit', async event => {
     result.className = 'result ok';
     result.innerHTML = `
       <h3>✓ Logwork thành công</h3>
-      <div class="meta"><strong>${escapeHtml(data.issue.key)}</strong>${data.issue.summary ? ` · ${escapeHtml(data.issue.summary)}` : ''}<br>${escapeHtml(data.date)} · Tổng ${minutesLabel(data.totalMinutes)}</div>
+      <div class="meta"><strong>${escapeHtml(data.issue.key)}</strong>${data.issue.summary ? ` · ${escapeHtml(data.issue.summary)}` : ''}${data.overtime ? ' · <b>OT</b>' : ''}<br>${escapeHtml(data.date)} · Tổng ${minutesLabel(data.totalMinutes)}${data.workWindow ? ` · ${escapeHtml(data.workWindow)}` : ''}</div>
       ${data.segments.map(s => `<div class="segment"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('')}
       <div class="transition-note ${data.transition?.ok ? 'ok' : 'warn'}">${data.transition?.ok ? `✓ Trạng thái: ${escapeHtml(transitionPathLabel(data.transition))}` : `⚠ ${escapeHtml(data.transition?.message || 'Worklog đã tạo nhưng chưa chuyển được trạng thái.')}`}</div>
     `;
@@ -1128,6 +1165,8 @@ $('worklogForm').addEventListener('submit', async event => {
     $('key').value = '';
     $('project').value = '';
     $('description').value = '';
+    if ($('overtime')) $('overtime').checked = false;
+    updateSingleOvertimeHint();
     state.currentIssueSummary = '';
     setTimeout(() => loadFilterIssues({ quiet: true }), 700);
   } catch (error) {
@@ -1152,6 +1191,7 @@ applyTheme(readThemePreference(), { persist: false });
 loadQuickData();
 $('date').value = todayLocal();
 $('bulkDate').value = todayLocal();
+updateSingleOvertimeHint();
 $('historyDate').value = todayLocal();
 hydrateQuickInputs();
 renderBulkSelection();

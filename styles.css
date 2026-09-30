@@ -1213,3 +1213,70 @@ html[data-theme="dark"] .mobile-taskbar-icon.history { background: #172c49; colo
   .tool-sheet { width: min(calc(100vw - 16px), 620px); }
   .history-tool-sheet .worklog-history-list { max-height: 38vh; }
 }
+
+/* V1.3.0 – Overtime & Mobile Navigation Fix */
+.overtime-toggle,
+.bulk-overtime-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft, rgba(245,248,252,.72));
+  cursor: pointer;
+  user-select: none;
+}
+.overtime-toggle { margin: 2px 0 12px; }
+.overtime-toggle input,
+.bulk-overtime-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.overtime-control {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  flex: 0 0 38px;
+  border-radius: 999px;
+  background: #cad5e5;
+  box-shadow: inset 0 0 0 1px rgba(37,61,96,.08);
+  transition: background .18s ease;
+}
+.overtime-control::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(16,34,62,.22);
+  transition: transform .18s ease;
+}
+.overtime-toggle input:checked + .overtime-control,
+.bulk-overtime-toggle input:checked + .overtime-control { background: #f59e0b; }
+.overtime-toggle input:checked + .overtime-control::after,
+.bulk-overtime-toggle input:checked + .overtime-control::after { transform: translateX(16px); }
+.overtime-copy { min-width: 0; display: grid; gap: 2px; }
+.overtime-copy strong { font-size: 12px; color: var(--text); }
+.overtime-copy small { font-size: 10px; line-height: 1.35; color: var(--muted); font-weight: 650; }
+.bulk-overtime-toggle { align-self: stretch; min-height: 48px; }
+.bulk-item-fields { align-items: start; }
+
+html[data-theme="dark"] .overtime-toggle,
+html[data-theme="dark"] .bulk-overtime-toggle { background: #0d1929; border-color: #2a3a51; }
+html[data-theme="dark"] .overtime-control { background: #334257; }
+
+@media (max-width: 899px) {
+  .mobile-taskbar:not(.hidden) { display: grid; }
+  .mobile-taskbar { bottom: max(8px, env(safe-area-inset-bottom)); }
+  .bulk-item-fields { grid-template-columns: 1fr; }
+  .bulk-overtime-toggle { width: 100%; }
+}
+@media (min-width: 481px) {
+  .bulk-description-field { grid-column: 1 / -1; }
+}

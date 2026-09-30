@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.2.0 – Streamlined Navigation & Bulk Selection: logwork Jira nhanh, Log tất cả linh hoạt, Planner và History truy cập trực tiếp.",
+  "description": "Quick Jira Log V1.3.0 – Overtime & Mobile Navigation Fix: taskbar mobile, OT theo từng Sub-task, đánh dấu Overtime trên Jira.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

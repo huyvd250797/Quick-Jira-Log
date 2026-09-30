@@ -9,7 +9,9 @@ const {
   hhmmToMinute,
   validateScheduledSegments,
   authorMatches,
-  parseJiraStartedAtWorkTimezone
+  parseJiraStartedAtWorkTimezone,
+  workWindowsFor,
+  isWeekendDate
 } = require('../lib/scheduler');
 const { loadOccupiedRanges } = require('../lib/worklog-guard');
 
@@ -55,10 +57,13 @@ module.exports = async function handler(req, res) {
     const startMinute = hhmmToMinute(start);
     const segment = { start: startMinute, end: startMinute + minutes, minutes };
     const guard = await loadOccupiedRanges(date, [key], me, session, { excludeWorklogIds: [worklogId] });
-    try { validateScheduledSegments([segment], guard.occupied); }
+    const allowedWindows = isWeekendDate(date)
+      ? workWindowsFor(date, false)
+      : [...workWindowsFor(date, false), ...workWindowsFor(date, true)];
+    try { validateScheduledSegments([segment], guard.occupied, allowedWindows); }
     catch (error) {
       if (error.message === 'SEGMENT_OVERLAP') return sendJson(res, 409, { ok: false, error: 'Khoảng giờ sửa bị trùng với worklog khác trong ngày.' });
-      if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') return sendJson(res, 409, { ok: false, error: 'Worklog phải nằm trong 08:00–12:00 hoặc 13:30–17:30.' });
+      if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') return sendJson(res, 409, { ok: false, error: 'Worklog phải nằm trong 08:00–12:00, 13:00–17:30; ngày Thứ 2–Thứ 6 cho phép OT từ 17:30–23:59.' });
       throw error;
     }
 

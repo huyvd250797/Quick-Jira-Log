@@ -1,33 +1,7 @@
 # Quick Jira Log Roadmap
 
-- ✅ V0.1.0 – Simple Login & Core Quick Log
-- ✅ V0.2.0 – Saved Filter Quick Pick
-- ✅ V0.2.1 – Worklog Guard & Summary Autofill
-- ✅ V0.3.0 – Quick Input & Templates
-- ✅ V0.4.0 – Bulk Logwork & Flexible Filters
-- ✅ V0.5.0 – Jira Reliability & Audit
-- ✅ V0.6.0 – Daily Worklog Planner & Validation
-- ✅ V0.6.1 – Auth/Permission Compatibility Fix
-- ✅ V0.6.2 – Worklog Timezone & Exhaustive Guard Fix
-- ✅ V0.7.0 – Mobile PWA & Quick Actions
-- ✅ V0.8.0 – Worklog History & Correction
-- ✅ V0.9.0 – Production Hardening
-- ✅ V1.0.0 – Stable Personal Release
-- ✅ V1.0.1 – Compact UI/UX Polish
-- ✅ V1.0.2 – Workflow Transition Hotfix
-- ✅ V1.0.3 – Desktop UI/UX Polish
-- ↩️ V1.0.4 – Desktop Layout Balance Fix (rollback)
-- ✅ V1.0.5 – Desktop Control Consistency Fix
 - ✅ V1.0.6 – Desktop Alignment & Stable Columns Fix
 - ✅ V1.1.0 – Focused Logwork UX
-- ✅ V1.2.0 – Editable Log Date Hotfix
-  - click Sub-task mới mở form logwork;
-  - chỉ nhập TimeSpent và Description;
-  - một nút Log tất cả;
-  - Planner/History gom thành nhóm thu gọn;
-  - History diễn đạt rõ chức năng tìm/sửa/xóa worklog.
-
+- ✅ V1.1.1 – Editable Log Date Hotfix
 - ✅ V1.2.0 – Streamlined Navigation & Bulk Selection
-  - Log tất cả chọn sẵn toàn bộ và cho bỏ từng Sub-task.
-  - Bỏ Description Templates.
-  - Planner/History tách khỏi Settings; desktop dùng header actions, mobile dùng taskbar.
+- ✅ **V1.3.0 – Overtime & Mobile Navigation Fix**

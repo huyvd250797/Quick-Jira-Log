@@ -7,18 +7,8 @@ const { displaySegments, availableSlots, hhmmToMinute } = require('../lib/schedu
 const { WORK_WINDOWS } = require('../lib/config');
 const { loadOccupiedRanges, loadOccupiedRangesStable } = require('../lib/worklog-guard');
 
-function minutesInsideWorkWindows(ranges) {
-  let total = 0;
-  for (const r of ranges || []) {
-    for (const w of WORK_WINDOWS) {
-      const ws = hhmmToMinute(w.start);
-      const we = hhmmToMinute(w.end);
-      const start = Math.max(r.start, ws);
-      const end = Math.min(r.end, we);
-      if (end > start) total += end - start;
-    }
-  }
-  return total;
+function totalLoggedMinutes(ranges) {
+  return (ranges || []).reduce((sum, r) => sum + Math.max(0, Number(r.end || 0) - Number(r.start || 0)), 0);
 }
 
 module.exports = async function handler(req, res) {
@@ -36,7 +26,7 @@ module.exports = async function handler(req, res) {
     const guard = await loadOccupiedRangesStable(date, key ? [key] : [], me, session);
     const occupiedRaw = guard.occupied.map(r => ({ ...r, minutes: r.end - r.start }));
     const freeRaw = availableSlots(guard.occupied).map(r => ({ ...r, minutes: r.end - r.start }));
-    const occupiedMinutes = minutesInsideWorkWindows(guard.occupied);
+    const occupiedMinutes = totalLoggedMinutes(guard.occupied);
     const freeMinutes = freeRaw.reduce((sum, r) => sum + r.minutes, 0);
 
     return sendJson(res, 200, {
