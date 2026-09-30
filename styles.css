@@ -1515,3 +1515,13 @@ html[data-theme="dark"] .result.ok h3 { color: #72daa6; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+
+/* V1.5.0 – One-Tap Daily Workflow */
+.log-submit-actions { display: grid; grid-template-columns: 1.35fr 1fr; gap: 8px; align-items: stretch; }
+.log-next-btn { min-height: 44px; font-weight: 900; }
+@media (max-width: 720px) {
+  .log-submit-actions { position: sticky; bottom: 0; z-index: 8; padding-top: 12px; background: linear-gradient(180deg, rgba(255,255,255,0), var(--card) 30%); }
+  .log-submit-actions .primary, .log-submit-actions .secondary { min-height: 48px; }
+}
+html[data-theme="dark"] .log-submit-actions { background: linear-gradient(180deg, rgba(16,27,44,0), var(--card) 30%); }

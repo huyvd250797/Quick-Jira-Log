@@ -1,12 +1,13 @@
 'use strict';
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
   lastLog: 'quick-jira-log:last-log:v1',
   audit: 'quick-jira-log:audit:v1',
-  theme: 'quick-jira-log:theme:v1'
+  theme: 'quick-jira-log:theme:v1',
+  sessionDate: 'quick-jira-log:session-log-date:v1'
 };
 
 const $ = id => document.getElementById(id);
@@ -37,7 +38,8 @@ const state = {
   bulkSubmitInFlight: false,
   mobileEditorScrollY: 0,
   mobileSheetDrag: null,
-  theme: 'light'
+  theme: 'light',
+  logAndNextRequested: false
 };
 
 
@@ -52,6 +54,26 @@ function todayLocal() {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+
+function validLocalDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
+}
+
+function getSessionLogDate() {
+  try {
+    const value = sessionStorage.getItem(STORAGE.sessionDate);
+    return validLocalDate(value) ? value : todayLocal();
+  } catch {
+    return todayLocal();
+  }
+}
+
+function setSessionLogDate(value) {
+  const date = validLocalDate(value) ? value : todayLocal();
+  try { sessionStorage.setItem(STORAGE.sessionDate, date); } catch {}
+  return date;
 }
 
 function isWeekendDateClient(date) {
@@ -496,7 +518,7 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   const normalizedKey = String(key || '').trim().toUpperCase();
   if (!normalizedKey) return;
   const normalizedProject = project || normalizedKey.split('-')[0] || state.prefs.lastProject || '';
-  const logDate = todayLocal();
+  const logDate = getSessionLogDate();
   $('key').value = normalizedKey;
   $('project').value = normalizedProject;
   $('date').value = logDate;
@@ -601,7 +623,6 @@ function renderFilterIssues() {
         summary: button.dataset.summary || ''
       };
       selectIssue(issue);
-      showToast(`Đã chọn ${issue.key} và tự điền Description theo Summary.`);
     });
   });
 }
@@ -712,8 +733,9 @@ function applyLastLog() {
   selectIssue(issue);
 }
 function hydrateQuickInputs() {
-  $('date').value = todayLocal();
-  $('bulkDate').value = todayLocal();
+  const sessionDate = getSessionLogDate();
+  $('date').value = sessionDate;
+  $('bulkDate').value = sessionDate;
   if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
   renderAuditHistory();
 }
@@ -1024,7 +1046,7 @@ function openBulkAll() {
       overtime: false
     });
   }
-  const date = $('date').value || todayLocal();
+  const date = setSessionLogDate($('date').value || getSessionLogDate());
   $('bulkDate').value = date;
   $('worklogCard').classList.add('hidden');
   document.body.classList.remove('single-log-open');
@@ -1160,9 +1182,12 @@ async function submitBulkWorklog(event) {
     addAuditEntry({ ok: true, type: 'Bulk', key: `${data.items.length} issue`, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: (data.items || []).flatMap(x => x.segments || []) });
     const firstRange = data.items?.[0]?.segments?.map(segment => `${segment.start}–${segment.end}`).join(' · ') || '';
     showToast(data.items.length === 1 ? `Đã log ${data.items[0].key}${firstRange ? ` · ${firstRange}` : ''}` : `Đã log ${data.items.length} Sub-task lên Jira.`);
+    const loggedKeys = new Set((data.items || []).map(item => String(item.key || '').toUpperCase()));
+    state.filterIssues = state.filterIssues.filter(item => !loggedKeys.has(String(item.key || '').toUpperCase()));
+    state.filterLoaded = true;
     resetBulkState();
     renderFilterIssues();
-    setTimeout(() => loadFilterIssues({ quiet: true }), 1200);
+    setTimeout(() => loadFilterIssues({ quiet: true }), 850);
   } catch (error) {
     const result = $('resultCard');
     result.className = 'result error';
@@ -1227,11 +1252,13 @@ $('mobileEditorBackdrop')?.addEventListener('click', () => {
 });
 
 $('date').addEventListener('change', () => {
-  if (!$('date').value) $('date').value = todayLocal();
+  if (!$('date').value) $('date').value = getSessionLogDate();
+  setSessionLogDate($('date').value);
   updateSingleOvertimeHint();
 });
 $('bulkDate').addEventListener('change', () => {
-  if (!$('bulkDate').value) $('bulkDate').value = todayLocal();
+  if (!$('bulkDate').value) $('bulkDate').value = getSessionLogDate();
+  setSessionLogDate($('bulkDate').value);
   renderBulkItems();
 });
 
@@ -1296,14 +1323,50 @@ document.addEventListener('keydown', event => {
   if (!$('settingsOverlay')?.classList.contains('hidden')) closeSettings();
 });
 
+$('logBtn')?.addEventListener('click', () => { state.logAndNextRequested = false; });
+$('logNextBtn')?.addEventListener('click', () => { state.logAndNextRequested = true; });
+
+
+document.addEventListener('keydown', event => {
+  const active = document.activeElement;
+  const typing = active && ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName);
+  if (event.key === '/' && !typing && state.user) {
+    event.preventDefault();
+    $('filterIssueSearch')?.focus();
+    return;
+  }
+  if (event.key === 'Enter' && active === $('filterIssueSearch') && !event.ctrlKey && !event.metaKey) {
+    const first = filteredIssues()[0];
+    if (first) { event.preventDefault(); selectIssue(first); }
+    return;
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && state.user) {
+    if (!$('worklogCard')?.classList.contains('hidden')) {
+      event.preventDefault();
+      state.logAndNextRequested = false;
+      $('worklogForm')?.requestSubmit($('logBtn'));
+    } else if (!$('bulkCard')?.classList.contains('hidden')) {
+      event.preventDefault();
+      $('bulkForm')?.requestSubmit($('bulkLogBtn'));
+    }
+  }
+});
+
 $('worklogForm').addEventListener('submit', async event => {
   event.preventDefault();
   if (state.submitInFlight) return;
   state.submitInFlight = true;
+  const logAndNext = state.logAndNextRequested === true;
+  state.logAndNextRequested = false;
+  const currentKeyBeforeLog = $('key').value.trim().toUpperCase();
+  const currentIndexBeforeLog = state.filterIssues.findIndex(item => String(item.key || '').toUpperCase() === currentKeyBeforeLog);
   const requestId = createRequestId('worklog');
   const btn = $('logBtn');
+  const nextBtn = $('logNextBtn');
   btn.disabled = true;
+  if (nextBtn) nextBtn.disabled = true;
   btn.textContent = 'ĐANG LOG WORK...';
+  if (nextBtn && logAndNext) nextBtn.textContent = 'ĐANG LOG...';
   $('resultCard').classList.add('hidden');
   try {
     const payload = {
@@ -1345,8 +1408,26 @@ $('worklogForm').addEventListener('submit', async event => {
     updateSingleOvertimeHint();
     state.currentIssueSummary = '';
     markSelectedIssue('');
-    requestAnimationFrame(() => result.scrollIntoView({ behavior: 'smooth', block: 'center' }));
-    setTimeout(() => loadFilterIssues({ quiet: true }), 700);
+
+    state.filterIssues = state.filterIssues.filter(item => String(item.key || '').toUpperCase() !== currentKeyBeforeLog);
+    state.filterLoaded = true;
+    renderFilterIssues();
+
+    if (logAndNext) {
+      const nextIndex = currentIndexBeforeLog >= 0 ? Math.min(currentIndexBeforeLog, Math.max(0, state.filterIssues.length - 1)) : 0;
+      const nextIssue = state.filterIssues[nextIndex] || state.filterIssues[0];
+      if (nextIssue) {
+        selectIssue(nextIssue, { scroll: false, focusTime: true });
+        showToast(`Đã log ${data.issue.key}. Tiếp theo: ${nextIssue.key}`);
+      } else {
+        showToast(`Đã log ${data.issue.key}. Không còn Sub-task chưa logwork.`);
+        requestAnimationFrame(() => result.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      }
+      setTimeout(() => loadFilterIssues({ quiet: true }), 650);
+    } else {
+      requestAnimationFrame(() => result.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      setTimeout(() => loadFilterIssues({ quiet: true }), 650);
+    }
   } catch (error) {
     const result = $('resultCard');
     result.className = 'result error';
@@ -1358,6 +1439,7 @@ $('worklogForm').addEventListener('submit', async event => {
     state.submitInFlight = false;
     btn.disabled = false;
     btn.textContent = 'LOG WORK';
+    if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = 'LOG & NEXT'; }
   }
 });
 
@@ -1369,12 +1451,12 @@ applyTheme(readThemePreference(), { persist: false });
 setupBottomSheetDrag('worklogCard');
 setupBottomSheetDrag('bulkCard');
 loadQuickData();
-$('date').value = todayLocal();
+$('date').value = getSessionLogDate();
 window.addEventListener('resize', () => {
   if (!isMobileEditorMode() && document.body.classList.contains('mobile-editor-open')) closeMobileEditor();
 });
 
-$('bulkDate').value = todayLocal();
+$('bulkDate').value = getSessionLogDate();
 updateSingleOvertimeHint();
 $('historyDate').value = todayLocal();
 hydrateQuickInputs();

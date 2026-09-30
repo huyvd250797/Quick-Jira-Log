@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.4.0');
-console.log('V1.4.0 version test passed.');
+assert.equal(packageJson.version, '1.5.0');
+console.log('V1.5.0 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -275,7 +275,7 @@ assert(appJs.includes("setupBottomSheetDrag('bulkCard')"));
 assert(appJs.includes('drag.delta >= 110'));
 assert(!/document\.querySelectorAll\('\.preset-btn'\)[\s\S]{0,900}\$\('description'\)\.focus\(\)/.test(appJs));
 assert(indexHtml.includes('© 2026 HuyVo. All rights reserved.'));
-assert(indexHtml.includes('được xây dựng từ ý tưởng của <strong>HuyVo</strong> với sự hỗ trợ của AI'));
+assert(!indexHtml.includes('được xây dựng từ ý tưởng của <strong>HuyVo</strong> với sự hỗ trợ của AI'));
 assert(styles.includes('.issue-row.is-selected'));
 assert(styles.includes('.filter-skeleton'));
 assert(styles.includes('.log-submit-btn'));
@@ -283,3 +283,17 @@ assert(appJs.includes('Đã log ${data.issue.key}'));
 assert(appJs.includes('segment.start'));
 assert.equal(fs.readdirSync(path.join(root, 'api')).filter(name => name.endsWith('.js')).length, 1);
 console.log('V1.4.0 visual system + post-log result tests passed.');
+
+
+// V1.5.0 - One-Tap Daily Workflow UX guards.
+const indexV150 = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const appV150 = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
+assert(indexV150.includes('id="logNextBtn"'));
+assert(indexV150.includes('data-time="15m"'));
+assert(!indexV150.includes('Quick Jira Log được xây dựng từ ý tưởng của'));
+assert(indexV150.includes('© 2026 HuyVo. All rights reserved.'));
+assert(appV150.includes("sessionDate: 'quick-jira-log:session-log-date:v1'"));
+assert(appV150.includes('getSessionLogDate()'));
+assert(appV150.includes("event.key === '/'"));
+assert(appV150.includes("event.ctrlKey || event.metaKey"));
+console.log('V1.5.0 one-tap workflow tests passed.');
