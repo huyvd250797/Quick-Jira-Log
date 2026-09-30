@@ -1214,7 +1214,7 @@ html[data-theme="dark"] .mobile-taskbar-icon.history { background: #172c49; colo
   .history-tool-sheet .worklog-history-list { max-height: 38vh; }
 }
 
-/* V1.3.1 – Overtime & Mobile Navigation Fix */
+/* V1.3.2 – Overtime & Mobile Navigation Fix */
 .overtime-toggle,
 .bulk-overtime-toggle {
   display: flex;
@@ -1281,7 +1281,7 @@ html[data-theme="dark"] .overtime-control { background: #334257; }
   .bulk-description-field { grid-column: 1 / -1; }
 }
 
-/* V1.3.1 – Worktime & Mobile Bottom Sheet Fix */
+/* V1.3.2 – Worktime & Mobile Bottom Sheet Fix */
 .worklog-preview,
 .bulk-item-preview,
 .bulk-preview-summary {

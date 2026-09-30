@@ -1,4 +1,4 @@
-# Quick Jira Log V1.3.1 – Worktime & Mobile Bottom Sheet Fix
+# Quick Jira Log V1.3.2 – Vercel Node 24 Runtime Fix
 
 ## Thay đổi chính
 
@@ -13,3 +13,9 @@
 ## Lưu ý Jira
 
 Field **Overtime** cần tồn tại trên Jira và tài khoản hiện tại phải có quyền Edit Issue. Với checkbox/select, app ưu tiên option `Overtime`, `OT`, `Yes/True/Có`, hoặc option duy nhất của field.
+
+
+## V1.3.2 – Vercel Node 24 Runtime Fix
+- Pin Vercel runtime to Node.js `24.x` instead of `>=20`.
+- Prevent automatic major-version jumps and remove the Vercel engine warning.
+- No Jira/worklog business logic changed from V1.3.1.

@@ -99,7 +99,7 @@ assert.deepStrictEqual(displaySegments(schedule(60, normalizedUtc)), [
 console.log('V0.6.2 timezone guard tests passed.');
 
 
-// V1.3.1 - OT ngày thường chỉ xếp từ 17:30 trở đi.
+// V1.3.2 - OT ngày thường chỉ xếp từ 17:30 trở đi.
 assert.deepStrictEqual(displaySegments(scheduleForDate(120, [], '2026-09-30', true)), [
   { start: '17:30', end: '19:30', minutes: 120 }
 ]);
@@ -114,7 +114,7 @@ assert.deepStrictEqual(displaySegments(scheduleForDate(300, [], '2026-10-03', tr
   { start: '08:00', end: '12:00', minutes: 240 },
   { start: '13:30', end: '14:30', minutes: 60 }
 ]);
-console.log('V1.3.1 overtime scheduling tests passed.');
+console.log('V1.3.2 overtime scheduling tests passed.');
 
 // V1.0.1 - danh sách Sub-task vẫn dùng JQL cố định, không phụ thuộc Saved Filter.
 const { WORKLOG_SUBTASK_JQL } = require('../lib/config');
@@ -125,8 +125,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.3.1');
-console.log('V1.3.1 version test passed.');
+assert.equal(packageJson.version, '1.3.2');
+console.log('V1.3.2 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -165,14 +165,14 @@ assert(appJs.includes('openPlanner'));
 assert(appJs.includes('openHistory'));
 console.log('V1.2.0 streamlined navigation & bulk selection tests passed.');
 
-// V1.3.1 - mobile taskbar visible, login labels, OT controls.
+// V1.3.2 - mobile taskbar visible, login labels, OT controls.
 assert(indexHtml.includes('<label>Username'));
 assert(indexHtml.includes('<label>Password'));
 assert(indexHtml.includes('id="overtime"'));
 assert(appJs.includes('overtime: $(\'overtime\')?.checked === true'));
 assert(appJs.includes('bulk-overtime'));
 assert(styles.includes('.mobile-taskbar:not(.hidden) { display: grid; }'));
-console.log('V1.3.1 mobile taskbar + overtime UI tests passed.');
+console.log('V1.3.2 mobile taskbar + overtime UI tests passed.');
 
 
 
@@ -254,7 +254,7 @@ console.log('V1.0.3 sequential workflow transition selector tests passed.');
 });
 
 
-// V1.3.1 - đúng khung 13:30, mobile bottom sheet và preview dự kiến.
+// V1.3.2 - đúng khung 13:30, mobile bottom sheet và preview dự kiến.
 assert.deepStrictEqual(displaySegments(schedule(90, [])), [
   { start: '08:00', end: '09:30', minutes: 90 }
 ]);
@@ -263,4 +263,4 @@ assert(indexHtml.includes('id="mobileEditorBackdrop"'));
 assert(appJs.includes("api('/api/worklog-preview'"));
 assert(styles.includes('#worklogCard.mobile-bottom-sheet'));
 assert(styles.includes('#bulkCard.mobile-bottom-sheet'));
-console.log('V1.3.1 worktime + mobile bottom sheet + preview tests passed.');
+console.log('V1.3.2 worktime + mobile bottom sheet + preview tests passed.');
