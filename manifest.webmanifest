@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.3.0 – Overtime & Mobile Navigation Fix: taskbar mobile, OT theo từng Sub-task, đánh dấu Overtime trên Jira.",
+  "description": "Quick Jira Log V1.3.1 – Worktime & Mobile Bottom Sheet Fix: đúng giờ nghỉ trưa 12:00–13:30, bottom sheet mobile và dự kiến giờ logwork.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

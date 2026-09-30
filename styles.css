@@ -1214,7 +1214,7 @@ html[data-theme="dark"] .mobile-taskbar-icon.history { background: #172c49; colo
   .history-tool-sheet .worklog-history-list { max-height: 38vh; }
 }
 
-/* V1.3.0 – Overtime & Mobile Navigation Fix */
+/* V1.3.1 – Overtime & Mobile Navigation Fix */
 .overtime-toggle,
 .bulk-overtime-toggle {
   display: flex;
@@ -1279,4 +1279,96 @@ html[data-theme="dark"] .overtime-control { background: #334257; }
 }
 @media (min-width: 481px) {
   .bulk-description-field { grid-column: 1 / -1; }
+}
+
+/* V1.3.1 – Worktime & Mobile Bottom Sheet Fix */
+.worklog-preview,
+.bulk-item-preview,
+.bulk-preview-summary {
+  border: 1px solid #cfe0f7;
+  background: #f5f9ff;
+  color: var(--text);
+  border-radius: 12px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.worklog-preview { margin: 0 0 12px; padding: 10px 12px; font-weight: 750; }
+.worklog-preview strong,
+.bulk-item-preview strong { color: var(--primary); }
+.worklog-preview.preview-error,
+.bulk-preview-summary.preview-error,
+.bulk-item-preview.preview-error { border-color: rgba(213,62,85,.25); background: #fff4f6; color: #b52b42; }
+.bulk-preview-summary { margin: -2px 0 12px; padding: 9px 11px; color: var(--muted); }
+.bulk-item-preview { grid-column: 1 / -1; padding: 8px 10px; color: var(--muted); }
+.bulk-item-preview:not(.hidden) { display: block; }
+html[data-theme="dark"] .worklog-preview,
+html[data-theme="dark"] .bulk-item-preview,
+html[data-theme="dark"] .bulk-preview-summary { background: #0d1929; border-color: #263a57; }
+html[data-theme="dark"] .worklog-preview.preview-error,
+html[data-theme="dark"] .bulk-preview-summary.preview-error,
+html[data-theme="dark"] .bulk-item-preview.preview-error { background: #2b151c; border-color: #59303c; color: #ff8ca0; }
+.mobile-editor-backdrop { display: none; }
+
+@media (max-width: 899px) {
+  .mobile-editor-backdrop:not(.hidden) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 124;
+    background: rgba(4, 13, 26, .52);
+    backdrop-filter: blur(2px);
+  }
+  body.mobile-editor-open {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+  body.mobile-editor-open .mobile-taskbar { opacity: 0; pointer-events: none; transform: translate(-50%, 130%); }
+  #worklogCard.mobile-bottom-sheet,
+  #bulkCard.mobile-bottom-sheet {
+    position: fixed !important;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 130;
+    width: 100%;
+    max-width: none;
+    max-height: min(88dvh, 820px);
+    margin: 0 !important;
+    padding: 18px 15px max(22px, calc(env(safe-area-inset-bottom) + 14px));
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    border-radius: 24px 24px 0 0;
+    border-bottom: 0;
+    box-shadow: 0 -20px 55px rgba(3, 15, 32, .28);
+    touch-action: pan-y;
+  }
+  #worklogCard.mobile-bottom-sheet::before,
+  #bulkCard.mobile-bottom-sheet::before {
+    content: '';
+    display: block;
+    width: 44px;
+    height: 5px;
+    margin: -5px auto 12px;
+    border-radius: 999px;
+    background: #c9d5e6;
+  }
+  #worklogCard.mobile-bottom-sheet .card-title,
+  #bulkCard.mobile-bottom-sheet .card-title {
+    position: sticky;
+    top: -18px;
+    z-index: 3;
+    margin-left: -15px;
+    margin-right: -15px;
+    padding: 13px 15px 12px;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-items { grid-template-columns: 1fr; }
+  #bulkCard.mobile-bottom-sheet .bulk-item { scroll-margin-top: 76px; }
+  html[data-theme="dark"] #worklogCard.mobile-bottom-sheet::before,
+  html[data-theme="dark"] #bulkCard.mobile-bottom-sheet::before { background: #41526a; }
 }

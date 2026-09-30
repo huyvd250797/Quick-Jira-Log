@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -35,6 +35,11 @@ const state = {
   historyLoading: false,
   submitInFlight: false,
   bulkSubmitInFlight: false,
+  previewTimer: null,
+  previewSeq: 0,
+  bulkPreviewTimer: null,
+  bulkPreviewSeq: 0,
+  mobileEditorScrollY: 0,
   theme: 'light'
 };
 
@@ -60,7 +65,7 @@ function isWeekendDateClient(date) {
 }
 
 function overtimeWindowLabel(date) {
-  return isWeekendDateClient(date) ? '08:00–12:00 · 13:00–17:30' : '17:30–23:59';
+  return isWeekendDateClient(date) ? '08:00–12:00 · 13:30–17:30' : '17:30–23:59';
 }
 
 function updateSingleOvertimeHint() {
@@ -68,7 +73,7 @@ function updateSingleOvertimeHint() {
   if (!hint) return;
   const date = $('date')?.value || todayLocal();
   hint.textContent = isWeekendDateClient(date)
-    ? 'OT cuối tuần: log trong 08:00–12:00 và 13:00–17:30; Jira sẽ đánh dấu Overtime.'
+    ? 'OT cuối tuần: log trong 08:00–12:00 và 13:30–17:30; Jira sẽ đánh dấu Overtime.'
     : 'OT ngày thường: log từ 17:30 trở đi; Jira sẽ đánh dấu Overtime.';
 }
 
@@ -90,6 +95,37 @@ function showToast(message) {
   el.classList.remove('hidden');
   clearTimeout(state.toastTimer);
   state.toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+}
+
+function isMobileEditorMode() {
+  return window.matchMedia?.('(max-width: 899px)').matches === true;
+}
+
+function openMobileEditor(cardId) {
+  const card = $(cardId);
+  if (!card || !isMobileEditorMode()) return false;
+  if (!document.body.classList.contains('mobile-editor-open')) {
+    state.mobileEditorScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.top = `-${state.mobileEditorScrollY}px`;
+    document.body.classList.add('mobile-editor-open');
+  }
+  $('mobileEditorBackdrop')?.classList.remove('hidden');
+  $('mobileEditorBackdrop')?.setAttribute('aria-hidden', 'false');
+  $('worklogCard')?.classList.toggle('mobile-bottom-sheet', cardId === 'worklogCard');
+  $('bulkCard')?.classList.toggle('mobile-bottom-sheet', cardId === 'bulkCard');
+  requestAnimationFrame(() => { card.scrollTop = 0; });
+  return true;
+}
+
+function closeMobileEditor() {
+  $('worklogCard')?.classList.remove('mobile-bottom-sheet');
+  $('bulkCard')?.classList.remove('mobile-bottom-sheet');
+  $('mobileEditorBackdrop')?.classList.add('hidden');
+  $('mobileEditorBackdrop')?.setAttribute('aria-hidden', 'true');
+  if (!document.body.classList.contains('mobile-editor-open')) return;
+  document.body.classList.remove('mobile-editor-open');
+  document.body.style.top = '';
+  window.scrollTo(0, state.mobileEditorScrollY || 0);
 }
 
 
@@ -191,6 +227,7 @@ function setLoggedIn(user) {
 }
 
 function setLoggedOut() {
+  closeMobileEditor();
   state.user = null;
   document.body.classList.remove('single-log-open');
   state.filterIssues = [];
@@ -360,8 +397,10 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   $('worklogCard').classList.remove('hidden');
   document.body.classList.add('single-log-open');
   if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
-  if (scroll) $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  if (focusTime) setTimeout(() => $('timeSpent').focus(), 260);
+  const openedAsSheet = openMobileEditor('worklogCard');
+  if (scroll && !openedAsSheet) $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  scheduleSinglePreview();
+  if (focusTime) setTimeout(() => $('timeSpent').focus({ preventScroll: openedAsSheet }), 260);
 }
 function toggleBulkIssue(issue) {
   const key = String(issue?.key || '').trim().toUpperCase();
@@ -836,13 +875,121 @@ function parseTimeSpentClient(value) {
   return 0;
 }
 
+function previewSegmentsHtml(item) {
+  const segments = Array.isArray(item?.segments) ? item.segments : [];
+  if (!segments.length) return 'Chưa xác định được giờ.';
+  return segments.map(segment => `${escapeHtml(segment.start)} → ${escapeHtml(segment.end)}`).join(' · ');
+}
+
+function setSinglePreview(message = '', { error = false, loading = false } = {}) {
+  const el = $('worklogPreview');
+  if (!el) return;
+  if (!message) {
+    el.classList.add('hidden');
+    el.classList.remove('preview-error');
+    el.innerHTML = '';
+    return;
+  }
+  el.classList.remove('hidden');
+  el.classList.toggle('preview-error', error);
+  el.innerHTML = loading ? escapeHtml(message) : message;
+}
+
+function scheduleSinglePreview() {
+  clearTimeout(state.previewTimer);
+  const key = $('key')?.value.trim().toUpperCase();
+  const date = $('date')?.value || '';
+  const timeSpent = $('timeSpent')?.value.trim() || '';
+  const overtime = $('overtime')?.checked === true;
+  if (!state.user || !key || !date || parseTimeSpentClient(timeSpent) <= 0) {
+    setSinglePreview('');
+    return;
+  }
+  setSinglePreview('Đang tính giờ dự kiến theo worklog hiện có trên Jira...', { loading: true });
+  const seq = ++state.previewSeq;
+  state.previewTimer = setTimeout(async () => {
+    try {
+      const data = await api('/api/worklog-preview', {
+        method: 'POST',
+        body: JSON.stringify({ date, items: [{ key, timeSpent, overtime }] })
+      });
+      if (seq !== state.previewSeq) return;
+      const item = data.items?.[0];
+      setSinglePreview(`<strong>Dự kiến:</strong> ${previewSegmentsHtml(item)}${item?.overtime ? ' · OT' : ''}`);
+    } catch (error) {
+      if (seq !== state.previewSeq) return;
+      setSinglePreview(`<strong>Chưa thể xếp giờ:</strong> ${escapeHtml(error.message)}`, { error: true });
+    }
+  }, 520);
+}
+
+function setBulkItemPreview(key, html, { error = false } = {}) {
+  const row = [...($('bulkItems')?.querySelectorAll('.bulk-item') || [])].find(item => item.dataset.key === key);
+  const el = row?.querySelector('.bulk-item-preview');
+  if (!el) return;
+  el.classList.toggle('preview-error', error);
+  el.innerHTML = html;
+}
+
+function scheduleBulkPreview() {
+  clearTimeout(state.bulkPreviewTimer);
+  const stateEl = $('bulkPreviewState');
+  if (!$('bulkCard') || $('bulkCard').classList.contains('hidden')) return;
+  const date = $('bulkDate')?.value || '';
+  const items = bulkDraftList().map(item => ({
+    key: item.key,
+    timeSpent: String(item.timeSpent || '').trim(),
+    overtime: item.overtime === true
+  }));
+  if (!date || !items.length) {
+    if (stateEl) stateEl.textContent = 'Chưa có Sub-task để lập dự kiến.';
+    return;
+  }
+  if (items.some(item => parseTimeSpentClient(item.timeSpent) <= 0)) {
+    if (stateEl) {
+      stateEl.textContent = 'Nhập TimeSpent hợp lệ để xem giờ dự kiến.';
+      stateEl.classList.add('preview-error');
+    }
+    return;
+  }
+  if (stateEl) {
+    stateEl.textContent = 'Đang tính giờ dự kiến theo worklog hiện có trên Jira...';
+    stateEl.classList.remove('preview-error');
+  }
+  for (const item of items) setBulkItemPreview(item.key, 'Dự kiến: đang tính...');
+  const seq = ++state.bulkPreviewSeq;
+  state.bulkPreviewTimer = setTimeout(async () => {
+    try {
+      const data = await api('/api/worklog-preview', { method: 'POST', body: JSON.stringify({ date, items }) });
+      if (seq !== state.bulkPreviewSeq) return;
+      if (stateEl) {
+        stateEl.textContent = 'Dự kiến đã được xếp theo các khoảng giờ còn trống trên Jira.';
+        stateEl.classList.remove('preview-error');
+      }
+      for (const item of data.items || []) {
+        setBulkItemPreview(item.key, `<strong>Dự kiến:</strong> ${previewSegmentsHtml(item)}${item.overtime ? ' · OT' : ''}`);
+      }
+    } catch (error) {
+      if (seq !== state.bulkPreviewSeq) return;
+      if (stateEl) {
+        stateEl.textContent = error.message;
+        stateEl.classList.add('preview-error');
+      }
+      for (const item of items) setBulkItemPreview(item.key, `<strong>Chưa thể xếp giờ:</strong> ${escapeHtml(error.message)}`, { error: true });
+    }
+  }, 620);
+}
+
 function renderBulkSelection() {}
 
 function resetBulkState() {
+  const wasOpen = !$('bulkCard').classList.contains('hidden');
   state.bulkMode = false;
   state.bulkSelectedKeys.clear();
   state.bulkDrafts.clear();
+  clearTimeout(state.bulkPreviewTimer);
   $('bulkCard').classList.add('hidden');
+  if (wasOpen) closeMobileEditor();
 }
 
 function openBulkAll() {
@@ -873,7 +1020,9 @@ function openBulkAll() {
   $('resultCard').classList.add('hidden');
   renderBulkItems();
   $('bulkCard').classList.remove('hidden');
-  $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const openedAsSheet = openMobileEditor('bulkCard');
+  if (!openedAsSheet) $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  scheduleBulkPreview();
 }
 function bulkDraftList() {
   return [...state.bulkSelectedKeys].map(key => state.bulkDrafts.get(key)).filter(Boolean);
@@ -913,6 +1062,7 @@ function renderBulkItems() {
           <span class="overtime-copy"><strong>Overtime (OT)</strong><small>${escapeHtml(overtimeWindowLabel($('bulkDate')?.value || todayLocal()))}</small></span>
         </label>
         <label class="bulk-description-field">Description<textarea class="bulk-description" rows="2" required>${escapeHtml(item.description || item.summary || '')}</textarea></label>
+        <div class="bulk-item-preview" data-preview-key="${escapeHtml(item.key)}">Dự kiến: đang tính...</div>
       </div>
     </div>
   `).join('');
@@ -923,6 +1073,7 @@ function renderBulkItems() {
     row.querySelector('.bulk-time').addEventListener('input', event => {
       if (draft) draft.timeSpent = event.target.value;
       updateBulkTotal();
+      scheduleBulkPreview();
     });
     row.querySelector('.bulk-description').addEventListener('input', event => {
       if (draft) draft.description = event.target.value;
@@ -930,15 +1081,18 @@ function renderBulkItems() {
     row.querySelector('.bulk-overtime')?.addEventListener('change', event => {
       if (draft) draft.overtime = event.target.checked;
       updateBulkTotal();
+      scheduleBulkPreview();
     });
     row.querySelector('.bulk-remove-btn')?.addEventListener('click', () => {
       state.bulkSelectedKeys.delete(key);
       state.bulkDrafts.delete(key);
       renderBulkItems();
+      scheduleBulkPreview();
       showToast(`Đã bỏ ${key} khỏi lần Log tất cả này.`);
     });
   });
   updateBulkTotal();
+  scheduleBulkPreview();
 }
 
 function openBulkEditor() { openBulkAll(); }
@@ -1054,15 +1208,32 @@ $('closeWorklogBtn').addEventListener('click', () => {
   $('worklogCard').classList.add('hidden');
   document.body.classList.remove('single-log-open');
   $('resultCard').classList.add('hidden');
+  closeMobileEditor();
+});
+$('mobileEditorBackdrop')?.addEventListener('click', () => {
+  if (!$('bulkCard').classList.contains('hidden')) return resetBulkState();
+  if (!$('worklogCard').classList.contains('hidden')) {
+    $('worklogCard').classList.add('hidden');
+    document.body.classList.remove('single-log-open');
+    closeMobileEditor();
+  }
 });
 
 $('date').addEventListener('change', () => {
   if (!$('date').value) $('date').value = todayLocal();
   updateSingleOvertimeHint();
+  scheduleSinglePreview();
 });
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = todayLocal();
   renderBulkItems();
+  scheduleBulkPreview();
+});
+
+$('timeSpent').addEventListener('input', scheduleSinglePreview);
+$('overtime')?.addEventListener('change', () => {
+  updateSingleOvertimeHint();
+  scheduleSinglePreview();
 });
 
 $('timeSpent').addEventListener('change', () => {
@@ -1080,6 +1251,7 @@ document.querySelectorAll('.preset-btn').forEach(button => {
     state.prefs.lastTimeSpent = value;
     savePrefs();
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b === button));
+    scheduleSinglePreview();
     $('description').focus();
   });
 });
@@ -1162,6 +1334,7 @@ $('worklogForm').addEventListener('submit', async event => {
     showToast(data.transition?.ok ? `Đã log work · ${transitionPathLabel(data.transition)}` : 'Đã log work lên Jira.');
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
+    closeMobileEditor();
     $('key').value = '';
     $('project').value = '';
     $('description').value = '';
@@ -1190,6 +1363,10 @@ function escapeHtml(value) {
 applyTheme(readThemePreference(), { persist: false });
 loadQuickData();
 $('date').value = todayLocal();
+window.addEventListener('resize', () => {
+  if (!isMobileEditorMode() && document.body.classList.contains('mobile-editor-open')) closeMobileEditor();
+});
+
 $('bulkDate').value = todayLocal();
 updateSingleOvertimeHint();
 $('historyDate').value = todayLocal();

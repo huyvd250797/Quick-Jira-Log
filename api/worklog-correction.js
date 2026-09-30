@@ -63,7 +63,7 @@ module.exports = async function handler(req, res) {
     try { validateScheduledSegments([segment], guard.occupied, allowedWindows); }
     catch (error) {
       if (error.message === 'SEGMENT_OVERLAP') return sendJson(res, 409, { ok: false, error: 'Khoảng giờ sửa bị trùng với worklog khác trong ngày.' });
-      if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') return sendJson(res, 409, { ok: false, error: 'Worklog phải nằm trong 08:00–12:00, 13:00–17:30; ngày Thứ 2–Thứ 6 cho phép OT từ 17:30–23:59.' });
+      if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') return sendJson(res, 409, { ok: false, error: 'Worklog phải nằm trong 08:00–12:00, 13:30–17:30; ngày Thứ 2–Thứ 6 cho phép OT từ 17:30–23:59.' });
       throw error;
     }
 
