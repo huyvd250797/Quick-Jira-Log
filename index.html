@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.3.3</title>
+  <title>Quick Jira Log · V1.3.4</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -20,7 +20,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.3.3</div>
+      <div class="boot-version">V1.3.4</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -29,7 +29,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.3.3</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.3.4</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -92,6 +92,7 @@
     </section>
 
     <section id="bulkCard" class="card hidden">
+      <button class="bottom-sheet-drag-handle" type="button" aria-label="Kéo xuống để đóng" title="Kéo xuống để đóng"><span></span></button>
       <div class="card-title bulk-title">
         <div><h2>Log tất cả Sub-task</h2><p class="card-subtitle">Mặc định chọn toàn bộ. Bấm × ở Sub-task chưa cần log để loại khỏi lần này.</p></div>
         <div class="bulk-title-meta"><span id="bulkSelectionCount" class="bulk-selection-count">0 Sub-task</span><span class="work-hours-pill">08:00–12:00 · 13:30–17:30</span></div>
@@ -113,6 +114,7 @@
     </section>
 
     <section id="worklogCard" class="card hidden">
+      <button class="bottom-sheet-drag-handle" type="button" aria-label="Kéo xuống để đóng" title="Kéo xuống để đóng"><span></span></button>
       <div class="card-title worklog-title">
         <div><h2>Logwork Sub-task</h2><p class="card-subtitle">KEY/Project/Summary lấy từ Jira. Bạn chỉ cần chọn Ngày logwork, nhập TimeSpent và Description.</p></div>
         <button id="closeWorklogBtn" class="icon-btn compact-close" type="button" aria-label="Đóng form logwork" title="Đóng">×</button>
@@ -186,6 +188,12 @@
           <div class="settings-section-title"><h3>Lịch sử thao tác</h3><button id="clearAuditHistoryBtn" class="text-btn" type="button">Xóa lịch sử</button></div>
           <div id="auditHistory" class="audit-history"></div>
         </div>
+
+        <div class="settings-section app-credit-section">
+          <div class="settings-section-title"><h3>Thông tin ứng dụng</h3></div>
+          <p class="app-credit-copy">Quick Jira Log được xây dựng từ ý tưởng của <strong>HuyVo</strong> với sự hỗ trợ của AI.</p>
+          <div class="app-copyright">© 2026 HuyVo. All rights reserved.</div>
+        </div>
       </section>
     </div>
 
@@ -248,7 +256,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.3.3</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.3.4</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

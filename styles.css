@@ -1372,3 +1372,50 @@ html[data-theme="dark"] .bulk-item-preview.preview-error { background: #2b151c; 
   html[data-theme="dark"] #worklogCard.mobile-bottom-sheet::before,
   html[data-theme="dark"] #bulkCard.mobile-bottom-sheet::before { background: #41526a; }
 }
+
+
+/* V1.3.4 – Mobile Bottom Sheet Gesture & App Credit */
+.bottom-sheet-drag-handle { display: none; }
+.app-credit-section { text-align: left; }
+.app-credit-copy { margin: 0 0 8px; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.app-credit-copy strong { color: var(--text); }
+.app-copyright { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #f8fbff; color: var(--text); font-size: 10.5px; font-weight: 800; text-align: center; }
+html[data-theme="dark"] .app-copyright { background: #0d1929; border-color: #26364d; }
+
+@media (max-width: 899px) {
+  #worklogCard.mobile-bottom-sheet::before,
+  #bulkCard.mobile-bottom-sheet::before { content: none; }
+  #worklogCard.mobile-bottom-sheet .bottom-sheet-drag-handle,
+  #bulkCard.mobile-bottom-sheet .bottom-sheet-drag-handle {
+    display: flex;
+    position: sticky;
+    top: -18px;
+    z-index: 5;
+    width: 100%;
+    height: 28px;
+    margin: -18px 0 0;
+    padding: 8px 0 7px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: var(--card);
+    cursor: grab;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #worklogCard.mobile-bottom-sheet .bottom-sheet-drag-handle:active,
+  #bulkCard.mobile-bottom-sheet .bottom-sheet-drag-handle:active { cursor: grabbing; }
+  .bottom-sheet-drag-handle > span {
+    display: block;
+    width: 46px;
+    height: 5px;
+    border-radius: 999px;
+    background: #c9d5e6;
+  }
+  html[data-theme="dark"] .bottom-sheet-drag-handle > span { background: #41526a; }
+  #worklogCard.mobile-bottom-sheet .card-title,
+  #bulkCard.mobile-bottom-sheet .card-title { top: 10px; }
+  #worklogCard.mobile-bottom-sheet.is-dragging,
+  #bulkCard.mobile-bottom-sheet.is-dragging { user-select: none; -webkit-user-select: none; }
+  .mobile-editor-backdrop { transition: opacity 180ms ease; }
+}

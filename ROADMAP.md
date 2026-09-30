@@ -8,3 +8,4 @@
 - ✅ **V1.3.3 – Vercel Node 24 Runtime Fix**
 
 - ✅ V1.3.3 – Vercel Hobby Function Consolidation: gom backend còn 1 Serverless Function để phù hợp Vercel Hobby.
+- ✅ V1.3.4 – Mobile Bottom Sheet UX & Preview: kéo xuống để đóng sheet, preset không nhảy focus, preview giờ rõ ràng, bổ sung thông tin tác giả.

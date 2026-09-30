@@ -1,28 +1,18 @@
-# Quick Jira Log V1.3.3 – Vercel Node 24 Runtime Fix
+# Quick Jira Log V1.3.4 – Mobile Bottom Sheet UX & Preview
+
+Bản này được nâng trực tiếp từ **V1.3.3 – Vercel Hobby Function Consolidation** theo yêu cầu rollback, không lấy các thay đổi của V1.3.5.
 
 ## Thay đổi chính
 
-- Khung giờ logwork thường được sửa đúng về `08:00–12:00` và `13:30–17:30`.
-- OT Thứ 2–Thứ 6: tự xếp từ `17:30–23:59`.
-- OT Thứ 7/CN: tự xếp trong `08:00–12:00` và `13:30–17:30`.
-- Trên mobile, chọn một Sub-task hoặc bấm **Log tất cả** sẽ mở editor dạng **bottom sheet**; nền phía sau bị khóa scroll để giao diện gọn hơn.
-- Khi nhập/chỉnh `TimeSpent`, ngày hoặc OT, app gọi Jira để lập **Dự kiến** theo các worklog thực tế đã có trong ngày và hiển thị khoảng giờ sẽ log.
-- Bulk Logwork cũng hiển thị Dự kiến riêng cho từng Sub-task theo đúng thứ tự xếp lịch của batch.
-- Giữ Username / Password, taskbar mobile, field Jira **Overtime**, chống trùng giờ, To Do → In Progress → Done, History/Correction, Planner và PWA.
+- Bottom sheet trên mobile có thanh kéo thật; kéo xuống đủ ngưỡng để đóng. Nếu kéo chưa đủ, sheet tự snap về vị trí cũ.
+- Khi bấm preset `30m / 1h / 2h / 4h`, app chỉ cập nhật TimeSpent + Dự kiến, không tự chuyển focus xuống Description.
+- Khi nhập TimeSpent hợp lệ như `1h 30m`, app gọi preview engine và hiển thị `Dự kiến: 08:00 → 09:30` nếu khung giờ trống; nếu đã có worklog, Dự kiến tự né khoảng đã log.
+- Bổ sung thông tin tác giả trong Cài đặt: Quick Jira Log được xây dựng từ ý tưởng của HuyVo với sự hỗ trợ của AI; `© 2026 HuyVo. All rights reserved.`
+- Giữ nguyên khung giờ Normal `08:00–12:00` và `13:30–17:30`; OT Thứ 2–6 từ `17:30`, OT Thứ 7/CN dùng khung giờ ban ngày.
+- Giữ kiến trúc Vercel Hobby chỉ có `api/index.js` là Serverless Function; các handler còn lại là module nội bộ.
 
-## Lưu ý Jira
+## Jira / Worklog
 
-Field **Overtime** cần tồn tại trên Jira và tài khoản hiện tại phải có quyền Edit Issue. Với checkbox/select, app ưu tiên option `Overtime`, `OT`, `Yes/True/Có`, hoặc option duy nhất của field.
-
-
-## V1.3.3 – Vercel Node 24 Runtime Fix
-- Pin Vercel runtime to Node.js `24.x` instead of `>=20`.
-- Prevent automatic major-version jumps and remove the Vercel engine warning.
-- No Jira/worklog business logic changed from V1.3.1.
-
-## V1.3.3 – Vercel Hobby Function Consolidation
-
-- Gom toàn bộ API backend vào **01 Serverless Function** (`api/index.js`).
-- Các handler nghiệp vụ được chuyển sang `handlers/` và không còn bị Vercel tính là Serverless Functions riêng.
-- Giữ nguyên URL nghiệp vụ ở frontend thông qua `action` query trên `/api`.
-- Mục tiêu: deploy được trên Vercel Hobby, không vượt giới hạn 12 Serverless Functions.
+- Danh sách chính: Sub-task được assign cho `currentUser()` và chưa có time spent.
+- Preview, log đơn và bulk cùng dùng scheduler nên Dự kiến và thời gian ghi lên Jira thống nhất.
+- Field **Overtime** cần tồn tại trên Jira và tài khoản hiện tại phải có quyền Edit Issue.

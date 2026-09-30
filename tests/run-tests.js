@@ -10,6 +10,7 @@ const { planBulkItems } = require('../lib/bulk');
 assert.equal(parseTimeSpent('30m'), 30);
 assert.equal(parseTimeSpent('1h'), 60);
 assert.equal(parseTimeSpent('1h30m'), 90);
+assert.equal(parseTimeSpent('1h 30m'), 90);
 assert.equal(parseTimeSpent('2.5h'), 150);
 assert.equal(parseTimeSpent('2'), 120);
 
@@ -125,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.3.3');
-console.log('V1.3.3 version test passed.');
+assert.equal(packageJson.version, '1.3.4');
+console.log('V1.3.4 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -264,3 +265,16 @@ assert(appJs.includes("api('/api?action=worklog-preview'"));
 assert(styles.includes('#worklogCard.mobile-bottom-sheet'));
 assert(styles.includes('#bulkCard.mobile-bottom-sheet'));
 console.log('V1.3.2 worktime + mobile bottom sheet + preview tests passed.');
+
+
+// V1.3.4 - Bottom sheet gesture, preset focus, preview and credits.
+assert(indexHtml.includes('class="bottom-sheet-drag-handle"'));
+assert(appJs.includes("setupBottomSheetDrag('worklogCard')"));
+assert(appJs.includes("setupBottomSheetDrag('bulkCard')"));
+assert(appJs.includes('drag.delta >= 110'));
+assert(!/document\.querySelectorAll\('\.preset-btn'\)[\s\S]{0,900}\$\('description'\)\.focus\(\)/.test(appJs));
+assert(appJs.includes('<strong>Dự kiến:</strong>'));
+assert(indexHtml.includes('© 2026 HuyVo. All rights reserved.'));
+assert(indexHtml.includes('được xây dựng từ ý tưởng của <strong>HuyVo</strong> với sự hỗ trợ của AI'));
+assert.equal(fs.readdirSync(path.join(root, 'api')).filter(name => name.endsWith('.js')).length, 1);
+console.log('V1.3.4 mobile gesture + preview + author credit tests passed.');

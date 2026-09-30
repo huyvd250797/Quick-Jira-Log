@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.3.4';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -40,6 +40,7 @@ const state = {
   bulkPreviewTimer: null,
   bulkPreviewSeq: 0,
   mobileEditorScrollY: 0,
+  mobileSheetDrag: null,
   theme: 'light'
 };
 
@@ -120,12 +121,123 @@ function openMobileEditor(cardId) {
 function closeMobileEditor() {
   $('worklogCard')?.classList.remove('mobile-bottom-sheet');
   $('bulkCard')?.classList.remove('mobile-bottom-sheet');
-  $('mobileEditorBackdrop')?.classList.add('hidden');
-  $('mobileEditorBackdrop')?.setAttribute('aria-hidden', 'true');
+  for (const card of [$('worklogCard'), $('bulkCard')]) {
+    if (!card) continue;
+    card.classList.remove('is-dragging', 'is-snapping');
+    card.style.transform = '';
+    card.style.transition = '';
+  }
+  const backdrop = $('mobileEditorBackdrop');
+  if (backdrop) {
+    backdrop.style.opacity = '';
+    backdrop.classList.add('hidden');
+    backdrop.setAttribute('aria-hidden', 'true');
+  }
+  state.mobileSheetDrag = null;
   if (!document.body.classList.contains('mobile-editor-open')) return;
   document.body.classList.remove('mobile-editor-open');
   document.body.style.top = '';
   window.scrollTo(0, state.mobileEditorScrollY || 0);
+}
+
+function dismissMobileEditorCard(cardId) {
+  if (cardId === 'bulkCard') {
+    resetBulkState();
+    return;
+  }
+  if (cardId === 'worklogCard') {
+    $('worklogCard')?.classList.add('hidden');
+    document.body.classList.remove('single-log-open');
+    $('resultCard')?.classList.add('hidden');
+    closeMobileEditor();
+  }
+}
+
+function settleMobileSheet(card, shouldClose, cardId) {
+  if (!card) return;
+  card.classList.remove('is-dragging');
+  card.classList.add('is-snapping');
+  card.style.transition = 'transform 190ms cubic-bezier(.2,.8,.2,1)';
+  if (shouldClose) {
+    card.style.transform = 'translateY(105%)';
+    const backdrop = $('mobileEditorBackdrop');
+    if (backdrop) backdrop.style.opacity = '0';
+    setTimeout(() => dismissMobileEditorCard(cardId), 190);
+  } else {
+    card.style.transform = 'translateY(0)';
+    const backdrop = $('mobileEditorBackdrop');
+    if (backdrop) backdrop.style.opacity = '';
+    setTimeout(() => {
+      card.classList.remove('is-snapping');
+      card.style.transform = '';
+      card.style.transition = '';
+    }, 190);
+  }
+}
+
+function setupBottomSheetDrag(cardId) {
+  const card = $(cardId);
+  const handle = card?.querySelector('.bottom-sheet-drag-handle');
+  if (!card || !handle) return;
+
+  handle.addEventListener('pointerdown', event => {
+    if (!isMobileEditorMode() || !card.classList.contains('mobile-bottom-sheet')) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.preventDefault();
+    const startedAt = performance.now();
+    state.mobileSheetDrag = {
+      cardId,
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      lastY: event.clientY,
+      lastAt: startedAt,
+      velocity: 0,
+      delta: 0
+    };
+    card.classList.add('is-dragging');
+    card.classList.remove('is-snapping');
+    card.style.transition = 'none';
+    try { handle.setPointerCapture(event.pointerId); } catch {}
+  });
+
+  handle.addEventListener('pointermove', event => {
+    const drag = state.mobileSheetDrag;
+    if (!drag || drag.cardId !== cardId || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    const now = performance.now();
+    const delta = Math.max(0, event.clientY - drag.startY);
+    const elapsed = Math.max(1, now - drag.lastAt);
+    drag.velocity = (event.clientY - drag.lastY) / elapsed;
+    drag.lastY = event.clientY;
+    drag.lastAt = now;
+    drag.delta = delta;
+    card.style.transform = `translateY(${delta}px)`;
+    const backdrop = $('mobileEditorBackdrop');
+    if (backdrop) backdrop.style.opacity = String(Math.max(.08, 1 - delta / 420));
+  });
+
+  const finish = event => {
+    const drag = state.mobileSheetDrag;
+    if (!drag || drag.cardId !== cardId || drag.pointerId !== event.pointerId) return;
+    const shouldClose = drag.delta >= 110 || (drag.delta >= 45 && drag.velocity >= 0.65);
+    state.mobileSheetDrag = null;
+    try { handle.releasePointerCapture(event.pointerId); } catch {}
+    settleMobileSheet(card, shouldClose, cardId);
+  };
+
+  handle.addEventListener('pointerup', finish);
+  handle.addEventListener('pointercancel', event => {
+    const drag = state.mobileSheetDrag;
+    if (!drag || drag.cardId !== cardId || drag.pointerId !== event.pointerId) return;
+    state.mobileSheetDrag = null;
+    settleMobileSheet(card, false, cardId);
+  });
+
+  handle.addEventListener('click', event => {
+    if (!isMobileEditorMode() || !card.classList.contains('mobile-bottom-sheet')) return;
+    // Chỉ là vùng kéo; tránh click vô tình đóng sheet.
+    event.preventDefault();
+  });
 }
 
 
@@ -1252,7 +1364,6 @@ document.querySelectorAll('.preset-btn').forEach(button => {
     savePrefs();
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b === button));
     scheduleSinglePreview();
-    $('description').focus();
   });
 });
 
@@ -1361,6 +1472,8 @@ function escapeHtml(value) {
 }
 
 applyTheme(readThemePreference(), { persist: false });
+setupBottomSheetDrag('worklogCard');
+setupBottomSheetDrag('bulkCard');
 loadQuickData();
 $('date').value = todayLocal();
 window.addEventListener('resize', () => {
