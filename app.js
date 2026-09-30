@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.5.1';
+const APP_VERSION = '1.5.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -537,6 +537,7 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   $('worklogCard').classList.remove('hidden');
   document.body.classList.add('single-log-open');
   if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
+  syncSinglePresetState();
   const openedAsSheet = openMobileEditor('worklogCard');
   if (scroll && !openedAsSheet) $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (focusTime) setTimeout(() => $('timeSpent').focus({ preventScroll: openedAsSheet }), 260);
@@ -737,6 +738,7 @@ function hydrateQuickInputs() {
   $('date').value = sessionDate;
   $('bulkDate').value = sessionDate;
   if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
+  syncSinglePresetState();
   renderAuditHistory();
 }
 function lockOverlayBody() {
@@ -1290,12 +1292,21 @@ $('overtime')?.addEventListener('change', () => {
   updateSingleOvertimeHint();
 });
 
+function syncSinglePresetState() {
+  const current = String($('timeSpent')?.value || '').trim();
+  document.querySelectorAll('.preset-btn').forEach(button => {
+    button.classList.toggle('active', button.dataset.time === current);
+  });
+}
+
+$('timeSpent').addEventListener('input', syncSinglePresetState);
 $('timeSpent').addEventListener('change', () => {
   const value = $('timeSpent').value.trim();
   if (value) {
     state.prefs.lastTimeSpent = value;
     savePrefs();
   }
+  syncSinglePresetState();
 });
 
 document.querySelectorAll('.preset-btn').forEach(button => {
@@ -1304,7 +1315,7 @@ document.querySelectorAll('.preset-btn').forEach(button => {
     $('timeSpent').value = value;
     state.prefs.lastTimeSpent = value;
     savePrefs();
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b === button));
+    syncSinglePresetState();
   });
 });
 

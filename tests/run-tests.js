@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.5.1');
-console.log('V1.5.1 version test passed.');
+assert.equal(packageJson.version, '1.5.2');
+console.log('V1.5.2 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -289,14 +289,19 @@ console.log('V1.4.0 visual system + post-log result tests passed.');
 const indexV150 = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const appV150 = fs.readFileSync(path.join(root, 'app.js'), 'utf8');
 assert(indexV150.includes('id="logNextBtn"'));
-assert(indexV150.includes('data-time="15m"'));
+assert(!indexV150.includes('data-time="15m"'));
+assert(indexV150.includes('data-time="30m"'));
+assert(indexV150.includes('data-time="1h"'));
+assert(indexV150.includes('data-time="2h"'));
+assert(indexV150.includes('data-time="3h"'));
+assert(indexV150.includes('data-time="4h"'));
 assert(!indexV150.includes('Quick Jira Log được xây dựng từ ý tưởng của'));
 assert(indexV150.includes('© 2026 HuyVo. All rights reserved.'));
 assert(appV150.includes("sessionDate: 'quick-jira-log:session-log-date:v1'"));
 assert(appV150.includes('getSessionLogDate()'));
 assert(appV150.includes("event.key === '/'"));
 assert(appV150.includes("event.ctrlKey || event.metaKey"));
-console.log('V1.5.0 one-tap workflow tests passed.');
+console.log('V1.5.0/V1.5.2 one-tap workflow preset tests passed.');
 
 
 // V1.5.1 - Bulk Logwork có Preset TimeSpent riêng cho từng Sub-task.
@@ -308,3 +313,13 @@ assert(appJs.includes('if (draft) draft.timeSpent = value'));
 assert(styles.includes('.bulk-preset-row'));
 assert(styles.includes('.bulk-preset-btn'));
 console.log('V1.5.1 bulk TimeSpent presets tests passed.');
+
+
+// V1.5.2 - Single/Bulk TimeSpent presets phải đồng nhất format/màu sắc.
+assert(indexHtml.includes('data-time="30m"'));
+assert(indexHtml.includes('data-time="3h"'));
+assert(!indexHtml.includes('data-time="15m"'));
+assert(styles.includes('.preset-btn, .bulk-preset-btn'));
+assert(styles.includes('html[data-theme="dark"] .preset-btn, html[data-theme="dark"] .bulk-preset-btn'));
+assert(appJs.includes('syncSinglePresetState'));
+console.log('V1.5.2 unified TimeSpent preset UI tests passed.');
