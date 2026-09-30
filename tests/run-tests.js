@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.5.0');
-console.log('V1.5.0 version test passed.');
+assert.equal(packageJson.version, '1.5.1');
+console.log('V1.5.1 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -297,3 +297,14 @@ assert(appV150.includes('getSessionLogDate()'));
 assert(appV150.includes("event.key === '/'"));
 assert(appV150.includes("event.ctrlKey || event.metaKey"));
 console.log('V1.5.0 one-tap workflow tests passed.');
+
+
+// V1.5.1 - Bulk Logwork có Preset TimeSpent riêng cho từng Sub-task.
+assert(appJs.includes("['30m', '1h', '2h', '3h', '4h']"));
+assert(appJs.includes('bulk-preset-btn'));
+assert(appJs.includes('data-time="${value}"'));
+assert(appJs.includes("row.querySelectorAll('.bulk-preset-btn')"));
+assert(appJs.includes('if (draft) draft.timeSpent = value'));
+assert(styles.includes('.bulk-preset-row'));
+assert(styles.includes('.bulk-preset-btn'));
+console.log('V1.5.1 bulk TimeSpent presets tests passed.');

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.5.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1087,7 +1087,13 @@ function renderBulkItems() {
         <button class="bulk-remove-btn" type="button" aria-label="Bỏ ${escapeHtml(item.key)} khỏi danh sách log" title="Bỏ Sub-task này">×</button>
       </div>
       <div class="bulk-item-fields">
-        <label>TimeSpent<input class="bulk-time" value="${escapeHtml(item.timeSpent || '1h')}" placeholder="1h" inputmode="text" required /></label>
+        <label class="bulk-time-field">
+          <span>TimeSpent</span>
+          <input class="bulk-time" value="${escapeHtml(item.timeSpent || '1h')}" placeholder="1h" inputmode="text" required />
+          <span class="bulk-preset-row" aria-label="Preset TimeSpent">
+            ${['30m', '1h', '2h', '3h', '4h'].map(value => `<button class="bulk-preset-btn${String(item.timeSpent || '') === value ? ' active' : ''}" type="button" data-time="${value}">${value}</button>`).join('')}
+          </span>
+        </label>
         <label class="bulk-overtime-toggle">
           <input class="bulk-overtime" type="checkbox" ${item.overtime ? 'checked' : ''} />
           <span class="overtime-control" aria-hidden="true"></span>
@@ -1101,9 +1107,27 @@ function renderBulkItems() {
   wrap.querySelectorAll('.bulk-item').forEach(row => {
     const key = row.dataset.key || '';
     const draft = state.bulkDrafts.get(key);
-    row.querySelector('.bulk-time').addEventListener('input', event => {
+    const bulkTimeInput = row.querySelector('.bulk-time');
+    const syncBulkPresetState = () => {
+      const current = String(bulkTimeInput?.value || '').trim();
+      row.querySelectorAll('.bulk-preset-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.time === current);
+      });
+    };
+    bulkTimeInput?.addEventListener('input', event => {
       if (draft) draft.timeSpent = event.target.value;
+      syncBulkPresetState();
       updateBulkTotal();
+    });
+    row.querySelectorAll('.bulk-preset-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const value = button.dataset.time || '';
+        if (!value || !bulkTimeInput) return;
+        bulkTimeInput.value = value;
+        if (draft) draft.timeSpent = value;
+        syncBulkPresetState();
+        updateBulkTotal();
+      });
     });
     row.querySelector('.bulk-description').addEventListener('input', event => {
       if (draft) draft.description = event.target.value;

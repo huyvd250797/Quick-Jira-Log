@@ -12,3 +12,4 @@
 - ✅ **V1.4.0 – Zero-Friction UX & Visual System**: bỏ preview trước log để giảm request Jira, chuẩn hóa visual system, highlight Sub-task đang chọn, skeleton loading, sticky action trên mobile và hiển thị chính xác khung giờ sau khi log thành công.
 
 - ✅ **V1.5.0 – One-Tap Daily Workflow**: Log & Next, preset 15m/30m/1h/2h/4h, nhớ ngày log trong phiên, refresh ngay sau log, keyboard shortcuts và giảm thao tác thừa.
+- ✅ **V1.5.1 – Bulk Time Presets**: bổ sung preset **30m / 1h / 2h / 3h / 4h** cho từng Sub-task trong Log tất cả.

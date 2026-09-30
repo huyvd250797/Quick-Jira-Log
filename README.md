@@ -1,6 +1,6 @@
-# Quick Jira Log V1.5.0 – One-Tap Daily Workflow
+# Quick Jira Log V1.5.1 – Bulk Time Presets
 
-Nâng cấp trực tiếp từ **V1.4.0 – Zero-Friction UX & Visual System**.
+Nâng cấp trực tiếp từ **V1.5.0 – One-Tap Daily Workflow**.
 
 ## Thay đổi chính
 
@@ -9,6 +9,7 @@ Nâng cấp trực tiếp từ **V1.4.0 – Zero-Friction UX & Visual System**.
 - Nhớ **Ngày logwork trong phiên làm việc** cho cả log đơn và Log tất cả.
 - Sau khi log thành công, Sub-task được loại khỏi danh sách ngay rồi đồng bộ lại Jira nền.
 - Giữ **Log tất cả** mặc định chọn toàn bộ và cho phép bỏ từng Sub-task bằng ×.
+- Bổ sung **Preset TimeSpent riêng cho từng Sub-task trong Log tất cả**: **30m / 1h / 2h / 3h / 4h**.
 - Giữ tổng TimeSpent trong Bulk, không tính trước khung giờ để tránh request chậm.
 - Keyboard desktop: `/` focus tìm kiếm, `Enter` chọn kết quả đầu, `Ctrl/Cmd + Enter` gửi log.
 - Giảm toast không cần thiết khi chỉ chọn Sub-task.

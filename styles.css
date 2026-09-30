@@ -178,6 +178,30 @@ select { font: inherit; color: var(--text); }
 .bulk-remove { width: 32px; height: 32px; border: 0; border-radius: 9px; background: #fff0f2; color: var(--danger); font-size: 18px; font-weight: 900; cursor: pointer; flex: 0 0 32px; }
 .bulk-item-fields { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 9px; align-items: start; }
 .bulk-item-fields textarea { min-height: 72px; }
+.bulk-time-field { display: grid; gap: 6px; }
+.bulk-time-field > span:first-child { font-size: 11px; font-weight: 800; color: var(--text); }
+.bulk-preset-row { display: flex; flex-wrap: wrap; gap: 5px; }
+.bulk-preset-btn {
+  min-width: 38px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border: 1px solid #d9e3f1;
+  border-radius: 999px;
+  background: #f7faff;
+  color: #4e5b72;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color .14s ease, background .14s ease, color .14s ease, transform .14s ease;
+}
+.bulk-preset-btn:hover,
+.bulk-preset-btn.active {
+  border-color: #9abff0;
+  background: #eaf2ff;
+  color: var(--primary);
+}
+.bulk-preset-btn:active { transform: scale(.96); }
 .bulk-summary { padding: 12px 13px; border-radius: 13px; background: #f1f5fa; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; font-weight: 800; }
 .bulk-summary strong { color: var(--primary); font-size: 14px; }
 .bulk-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px; }
