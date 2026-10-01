@@ -1547,3 +1547,56 @@ html[data-theme="dark"] .result.ok h3 { color: #72daa6; }
   .log-submit-actions .primary, .log-submit-actions .secondary { min-height: 48px; }
 }
 html[data-theme="dark"] .log-submit-actions { background: linear-gradient(180deg, rgba(16,27,44,0), var(--card) 30%); }
+
+
+/* V1.6.0 – Daily Capacity & Fast Logwork */
+.bulk-capacity-card {
+  display: grid;
+  gap: 9px;
+  padding: 12px 13px;
+  border: 1px solid #cfe0f6;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f8fbff, #f3f8ff);
+}
+.bulk-capacity-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.bulk-capacity-head > span { color: var(--muted); font-size: 10px; font-weight: 850; }
+.bulk-capacity-head strong { color: var(--primary); font-size: 15px; }
+.bulk-capacity-meter { height: 7px; overflow: hidden; border-radius: 999px; background: #dfe9f6; }
+.bulk-capacity-meter > span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--primary); transition: width .2s ease, background .2s ease; }
+.bulk-capacity-breakdown { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 14px; color: var(--muted); font-size: 9.5px; font-weight: 750; }
+.bulk-capacity-breakdown strong { color: var(--text); }
+.bulk-capacity-status { color: var(--muted); font-size: 9.5px; line-height: 1.4; font-weight: 750; }
+.bulk-capacity-ot { color: #a45f00; font-size: 9.5px; font-weight: 850; }
+.bulk-capacity-card.is-loading .bulk-capacity-meter > span { width: 30% !important; opacity: .45; }
+.bulk-capacity-card.is-complete { border-color: rgba(30,158,97,.35); background: #f1fbf6; }
+.bulk-capacity-card.is-complete .bulk-capacity-head strong,
+.bulk-capacity-card.is-complete .bulk-capacity-status { color: #17784d; }
+.bulk-capacity-card.is-complete .bulk-capacity-meter > span { background: var(--ok); }
+.bulk-capacity-card.is-over { border-color: rgba(213,62,85,.34); background: #fff5f7; }
+.bulk-capacity-card.is-over .bulk-capacity-head strong,
+.bulk-capacity-card.is-over .bulk-capacity-status { color: var(--danger); }
+.bulk-capacity-card.is-over .bulk-capacity-meter > span { background: var(--danger); }
+html[data-theme="dark"] .bulk-capacity-card { background: #0d1a2c; border-color: #2b4567; }
+html[data-theme="dark"] .bulk-capacity-meter { background: #26364d; }
+html[data-theme="dark"] .bulk-capacity-card.is-complete { background: #0d251c; border-color: #24543f; }
+html[data-theme="dark"] .bulk-capacity-card.is-over { background: #2d1720; border-color: #573140; }
+
+@media (max-width: 899px) {
+  #bulkCard.mobile-bottom-sheet {
+    max-height: min(95dvh, 920px);
+    padding-bottom: 0;
+  }
+  #bulkCard.mobile-bottom-sheet form { padding-bottom: 0; }
+  #bulkCard.mobile-bottom-sheet .bulk-actions {
+    bottom: 0;
+    margin: 4px -15px 0;
+    padding: 10px 15px max(10px, env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(255,255,255,0), var(--card) 20%);
+    box-shadow: 0 -8px 18px rgba(16,34,62,.06);
+  }
+  html[data-theme="dark"] #bulkCard.mobile-bottom-sheet .bulk-actions {
+    background: linear-gradient(180deg, rgba(16,27,44,0), var(--card) 20%);
+    box-shadow: 0 -8px 18px rgba(0,0,0,.12);
+  }
+  .bulk-capacity-card { gap: 8px; }
+}

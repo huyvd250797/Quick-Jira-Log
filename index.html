@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.5.2</title>
+  <title>Quick Jira Log · V1.6.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -20,7 +20,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.5.2</div>
+      <div class="boot-version">V1.6.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -29,7 +29,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.5.2</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.6.0</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -106,8 +106,18 @@
           <label>Ngày logwork<input id="bulkDate" type="date" required /></label>
         </div>
         <div id="bulkItems" class="bulk-items"></div>
+        <div id="bulkCapacityCard" class="bulk-capacity-card is-loading" aria-live="polite">
+          <div class="bulk-capacity-head"><span>Tiến độ giờ thường</span><strong id="bulkCapacityProjected">Đang kiểm tra...</strong></div>
+          <div class="bulk-capacity-meter" aria-hidden="true"><span id="bulkCapacityBar"></span></div>
+          <div class="bulk-capacity-breakdown">
+            <span>Đã log trước đó <strong id="bulkAlreadyLogged">...</strong></span>
+            <span>Đang nhập <strong id="bulkRegularDraft">0m</strong></span>
+          </div>
+          <div id="bulkCapacityStatus" class="bulk-capacity-status">Đang đọc số giờ đã log trên Jira...</div>
+          <div id="bulkOvertimeDraft" class="bulk-capacity-ot hidden"></div>
+        </div>
         <div class="bulk-summary">
-          <span>Tổng yêu cầu</span><strong id="bulkTotal">0m</strong>
+          <span>Tổng yêu cầu lần này</span><strong id="bulkTotal">0m</strong>
         </div>
         <div class="bulk-actions">
           <button id="cancelBulkBtn" type="button" class="secondary">HỦY</button>
@@ -260,7 +270,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.5.2</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.6.0</footer>
     <div id="toast" class="toast hidden" role="status"></div>
   </main>
   <script src="/app.js" defer></script>

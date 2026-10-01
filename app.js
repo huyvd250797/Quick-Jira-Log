@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.5.2';
+const APP_VERSION = '1.6.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -36,6 +36,8 @@ const state = {
   historyLoading: false,
   submitInFlight: false,
   bulkSubmitInFlight: false,
+  bulkCapacitySeq: 0,
+  bulkCapacity: { date: '', regularLoggedMinutes: 0, loading: false, error: '' },
   mobileEditorScrollY: 0,
   mobileSheetDrag: null,
   theme: 'light',
@@ -1023,6 +1025,8 @@ function resetBulkState() {
   state.bulkMode = false;
   state.bulkSelectedKeys.clear();
   state.bulkDrafts.clear();
+  state.bulkCapacitySeq += 1;
+  state.bulkCapacity = { date: '', regularLoggedMinutes: 0, loading: false, error: '' };
   $('bulkCard').classList.add('hidden');
   if (wasOpen) closeMobileEditor();
 }
@@ -1055,6 +1059,7 @@ function openBulkAll() {
   $('resultCard').classList.add('hidden');
   renderBulkItems();
   $('bulkCard').classList.remove('hidden');
+  void loadBulkCapacity();
   const openedAsSheet = openMobileEditor('bulkCard');
   if (!openedAsSheet) $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -1065,9 +1070,63 @@ function bulkDraftList() {
 function updateBulkTotal() {
   const items = bulkDraftList();
   const total = items.reduce((sum, item) => sum + parseTimeSpentClient(item.timeSpent), 0);
+  const regularDraft = items.filter(item => item.overtime !== true).reduce((sum, item) => sum + parseTimeSpentClient(item.timeSpent), 0);
+  const overtimeDraft = Math.max(0, total - regularDraft);
+  const date = $('bulkDate')?.value || '';
+  const capacityReady = state.bulkCapacity.date === date && !state.bulkCapacity.loading && !state.bulkCapacity.error;
+  const alreadyRegular = capacityReady ? Number(state.bulkCapacity.regularLoggedMinutes || 0) : 0;
+  const projected = alreadyRegular + regularDraft;
+
   $('bulkTotal').textContent = minutesLabel(total);
   if ($('bulkSelectionCount')) $('bulkSelectionCount').textContent = `${items.length}/${state.filterIssues.length} Sub-task`;
-  $('bulkLogBtn').disabled = !items.length || total <= 0;
+  if ($('bulkRegularDraft')) $('bulkRegularDraft').textContent = minutesLabel(regularDraft);
+  if ($('bulkAlreadyLogged')) $('bulkAlreadyLogged').textContent = capacityReady ? minutesLabel(alreadyRegular) : (state.bulkCapacity.loading ? '...' : '—');
+  if ($('bulkCapacityProjected')) $('bulkCapacityProjected').textContent = capacityReady ? `${minutesLabel(projected)} / 8h` : 'Đang kiểm tra...';
+
+  const bar = $('bulkCapacityBar');
+  if (bar) bar.style.width = `${capacityReady ? Math.min(100, Math.max(0, projected / 480 * 100)) : 0}%`;
+  const capacityCard = $('bulkCapacityCard');
+  const status = $('bulkCapacityStatus');
+  if (capacityCard) capacityCard.classList.toggle('is-loading', state.bulkCapacity.loading || !capacityReady);
+  if (capacityCard) capacityCard.classList.toggle('is-complete', capacityReady && projected === 480);
+  if (capacityCard) capacityCard.classList.toggle('is-over', capacityReady && projected > 480);
+  if (status) {
+    if (state.bulkCapacity.loading) status.textContent = 'Đang đọc số giờ đã log trên Jira...';
+    else if (state.bulkCapacity.error) status.textContent = 'Chưa đọc được giờ đã log; hệ thống vẫn kiểm tra lại khi bấm Log.';
+    else if (!capacityReady) status.textContent = 'Chưa có dữ liệu giờ đã log.';
+    else if (projected < 480) status.textContent = `Còn thiếu ${minutesLabel(480 - projected)} để đủ 8h.`;
+    else if (projected === 480) status.textContent = 'Đã đủ 8h giờ làm việc.';
+    else status.textContent = `Vượt ${minutesLabel(projected - 480)} so với 8h. Hãy giảm giờ thường hoặc bật OT.`;
+  }
+  const overtimeEl = $('bulkOvertimeDraft');
+  if (overtimeEl) {
+    overtimeEl.textContent = overtimeDraft > 0 ? `OT đang nhập: ${minutesLabel(overtimeDraft)} (không tính vào mốc 8h).` : '';
+    overtimeEl.classList.toggle('hidden', overtimeDraft <= 0);
+  }
+
+  $('bulkLogBtn').disabled = state.bulkSubmitInFlight || !items.length || total <= 0 || (capacityReady && projected > 480);
+}
+
+async function loadBulkCapacity() {
+  const date = $('bulkDate')?.value || getSessionLogDate();
+  if (!validLocalDate(date)) return;
+  const seq = ++state.bulkCapacitySeq;
+  state.bulkCapacity = { date, regularLoggedMinutes: 0, loading: true, error: '' };
+  updateBulkTotal();
+  try {
+    const data = await api(`/api?action=day-audit&date=${encodeURIComponent(date)}`, { method: 'GET', cache: 'no-store' });
+    if (seq !== state.bulkCapacitySeq || $('bulkDate')?.value !== date) return;
+    state.bulkCapacity = {
+      date,
+      regularLoggedMinutes: Number(data.regularOccupiedMinutes ?? data.occupiedMinutes ?? 0),
+      loading: false,
+      error: ''
+    };
+  } catch (error) {
+    if (seq !== state.bulkCapacitySeq || $('bulkDate')?.value !== date) return;
+    state.bulkCapacity = { date, regularLoggedMinutes: 0, loading: false, error: error?.message || 'Không đọc được giờ đã log.' };
+  }
+  updateBulkTotal();
 }
 
 function renderBulkItems() {
@@ -1223,8 +1282,8 @@ async function submitBulkWorklog(event) {
     showToast(error.message);
   } finally {
     state.bulkSubmitInFlight = false;
-    btn.disabled = false;
     btn.textContent = 'LOG TẤT CẢ';
+    updateBulkTotal();
   }
 }
 
@@ -1286,6 +1345,7 @@ $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = getSessionLogDate();
   setSessionLogDate($('bulkDate').value);
   renderBulkItems();
+  void loadBulkCapacity();
 });
 
 $('overtime')?.addEventListener('change', () => {

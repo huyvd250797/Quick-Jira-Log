@@ -18,6 +18,7 @@ const { parseTimeSpent, jiraStarted, displaySegments, windowsLabel, minutesInsid
 const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { planBulkItems } = require('../lib/bulk');
 const { normalizeRequestId, runIdempotent } = require('../lib/idempotency');
+const { mapWithConcurrency, settleMapWithConcurrency } = require('../lib/async');
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
@@ -81,7 +82,7 @@ async function performBulk(body, session) {
 
   const items = normalizeItems(body.items);
   const mePromise = session.me ? Promise.resolve(session.me) : getMyself(session);
-  const issueDetailsPromise = Promise.all(items.map(item => getIssue(item.key, session)));
+  const issueDetailsPromise = mapWithConcurrency(items, 8, item => getIssue(item.key, session));
   const [me, issueDetails] = await Promise.all([mePromise, issueDetailsPromise]);
 
   const verified = items.map((item, index) => {
@@ -95,11 +96,11 @@ async function performBulk(body, session) {
   });
   if (verified.some(item => !item.description)) throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
 
-  // Preflight toàn bộ field OT trước khi tạo bất kỳ worklog nào.
+  // Preflight toàn bộ field OT song song có giới hạn trước khi tạo bất kỳ worklog nào.
   const overtimePrepared = new Map();
-  for (const item of verified.filter(item => item.overtime)) {
-    overtimePrepared.set(item.key, await prepareOvertimeUpdate(item.key, session));
-  }
+  const overtimeItems = verified.filter(item => item.overtime);
+  const preparedOvertime = await mapWithConcurrency(overtimeItems, 5, item => prepareOvertimeUpdate(item.key, session));
+  overtimeItems.forEach((item, index) => overtimePrepared.set(item.key, preparedOvertime[index]));
 
   const targetKeys = verified.map(item => item.key);
   const initialGuard = await loadOccupiedRangesStable(date, targetKeys, me, session);
@@ -113,45 +114,48 @@ async function performBulk(body, session) {
   catch (error) { throw planningError(error, error.bulkItem || verified[0], date); }
 
   const created = [];
-  const actualPlans = [];
+  const actualPlans = planned.map(plan => {
+    const item = verified.find(x => x.key === plan.key) || plan;
+    return { ...item, segments: plan.segments };
+  });
   const appliedOvertime = [];
   try {
-    for (const plan of planned) {
-      const item = verified.find(x => x.key === plan.key) || plan;
-      const itemSegments = [];
-      for (const segment of plan.segments) {
-        const worklog = await createWorklog(item.key, {
-          started: jiraStarted(date, segment.start),
-          seconds: segment.minutes * 60,
-          description: item.description
-        }, session);
-        created.push({ key: item.key, id: worklog?.id, segment });
-        itemSegments.push(segment);
-      }
-      actualPlans.push({ ...item, segments: itemSegments });
-    }
+    const creationJobs = actualPlans.flatMap(item => item.segments.map(segment => ({ item, segment })));
+    const creationResults = await settleMapWithConcurrency(creationJobs, 4, async ({ item, segment }) => {
+      const worklog = await createWorklog(item.key, {
+        started: jiraStarted(date, segment.start),
+        seconds: segment.minutes * 60,
+        description: item.description
+      }, session);
+      return { key: item.key, id: worklog?.id, segment };
+    });
+    created.push(...creationResults.filter(x => x.status === 'fulfilled').map(x => x.value));
+    const failedCreation = creationResults.find(x => x.status === 'rejected');
+    if (failedCreation) throw failedCreation.reason;
 
-    for (const item of verified.filter(item => item.overtime)) {
+    const otApplyResults = await settleMapWithConcurrency(overtimeItems, 4, async item => {
       const prepared = overtimePrepared.get(item.key);
       await applyOvertimeUpdate(prepared, session);
-      appliedOvertime.push(prepared);
-    }
+      return prepared;
+    });
+    appliedOvertime.push(...otApplyResults.filter(x => x.status === 'fulfilled').map(x => x.value));
+    const failedOt = otApplyResults.find(x => x.status === 'rejected');
+    if (failedOt) throw failedOt.reason;
   } catch (error) {
     await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(x.key, x.id, session)));
     await Promise.allSettled(appliedOvertime.map(prepared => restoreOvertimeUpdate(prepared, session)));
     throw error;
   }
 
-  const transitions = [];
-  for (let index = 0; index < verified.length; index++) {
-    const item = verified[index];
-    try {
-      transitions.push({ key: item.key, ...(await transitionIssueToDone(item.key, session, issueDetails[index])) });
-    } catch (error) {
-      if (error instanceof JiraError && error.status === 401) throw error;
-      transitions.push({ key: item.key, ok: false, message: error?.message || 'Chưa chuyển được sang Done.' });
-    }
-  }
+  const transitionResults = await settleMapWithConcurrency(verified, 4, async (item, index) => ({
+    key: item.key,
+    ...(await transitionIssueToDone(item.key, session, issueDetails[index]))
+  }));
+  const expiredSession = transitionResults.find(x => x.status === 'rejected' && x.reason instanceof JiraError && x.reason.status === 401);
+  if (expiredSession) throw expiredSession.reason;
+  const transitions = transitionResults.map((result, index) => result.status === 'fulfilled'
+    ? result.value
+    : { key: verified[index].key, ok: false, message: result.reason?.message || 'Chưa chuyển được sang Done.' });
 
   return {
     ok: true,

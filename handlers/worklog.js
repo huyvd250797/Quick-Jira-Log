@@ -26,6 +26,7 @@ const {
 } = require('../lib/scheduler');
 const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { normalizeRequestId, runIdempotent } = require('../lib/idempotency');
+const { settleMapWithConcurrency } = require('../lib/async');
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
@@ -86,10 +87,11 @@ async function performWorklog(body, session) {
     throw new JiraError(`Issue ${key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${project}.`, 400);
   }
 
-  // Preflight field Overtime trước khi tạo worklog để tránh log thành công nhưng không đánh dấu OT được trên Jira.
-  const overtimePrepared = overtime ? await prepareOvertimeUpdate(key, session) : null;
-
-  const guard = await loadOccupiedRangesStable(date, [key], me, session);
+  // Chạy kiểm tra timeline và preflight OT song song để giảm thời gian chờ Jira.
+  const [guard, overtimePrepared] = await Promise.all([
+    loadOccupiedRangesStable(date, [key], me, session),
+    overtime ? prepareOvertimeUpdate(key, session) : Promise.resolve(null)
+  ]);
   const windows = workWindowsFor(date, overtime);
   if (!overtime) {
     const alreadyRegular = minutesInsideWindows(guard.occupied, workWindowsFor(date, false));
@@ -108,14 +110,18 @@ async function performWorklog(body, session) {
   const created = [];
   let overtimeApplied = false;
   try {
-    for (const seg of plan) {
+    const creationResults = await settleMapWithConcurrency(plan, 2, async seg => {
       const worklog = await createWorklog(key, {
         started: jiraStarted(date, seg.start),
         seconds: seg.minutes * 60,
         description
       }, session);
-      created.push({ id: worklog?.id, segment: seg });
-    }
+      return { id: worklog?.id, segment: seg };
+    });
+    created.push(...creationResults.filter(x => x.status === 'fulfilled').map(x => x.value));
+    const failedCreation = creationResults.find(x => x.status === 'rejected');
+    if (failedCreation) throw failedCreation.reason;
+
     if (overtimePrepared) {
       await applyOvertimeUpdate(overtimePrepared, session);
       overtimeApplied = true;

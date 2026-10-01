@@ -3,9 +3,8 @@
 const { sendJson, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
 const { JiraError, getMyself } = require('../lib/jira');
-const { displaySegments, availableSlots, hhmmToMinute } = require('../lib/scheduler');
-const { WORK_WINDOWS } = require('../lib/config');
-const { loadOccupiedRanges, loadOccupiedRangesStable } = require('../lib/worklog-guard');
+const { displaySegments, availableSlots, minutesInsideWindows, workWindowsFor } = require('../lib/scheduler');
+const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 
 function totalLoggedMinutes(ranges) {
   return (ranges || []).reduce((sum, r) => sum + Math.max(0, Number(r.end || 0) - Number(r.start || 0)), 0);
@@ -22,11 +21,12 @@ module.exports = async function handler(req, res) {
     const key = String(url.searchParams.get('key') || '').trim().toUpperCase();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return sendJson(res, 400, { ok: false, error: 'Ngày planner không hợp lệ.' });
 
-    const me = await getMyself(session);
+    const me = session.me || await getMyself(session);
     const guard = await loadOccupiedRangesStable(date, key ? [key] : [], me, session);
     const occupiedRaw = guard.occupied.map(r => ({ ...r, minutes: r.end - r.start }));
     const freeRaw = availableSlots(guard.occupied).map(r => ({ ...r, minutes: r.end - r.start }));
     const occupiedMinutes = totalLoggedMinutes(guard.occupied);
+    const regularOccupiedMinutes = minutesInsideWindows(guard.occupied, workWindowsFor(date, false));
     const freeMinutes = freeRaw.reduce((sum, r) => sum + r.minutes, 0);
 
     return sendJson(res, 200, {
@@ -35,6 +35,7 @@ module.exports = async function handler(req, res) {
       checkedIssues: guard.issueKeys.length,
       checkedWorklogs: guard.checkedWorklogs,
       occupiedMinutes,
+      regularOccupiedMinutes,
       freeMinutes,
       occupied: displaySegments(occupiedRaw),
       available: displaySegments(freeRaw),

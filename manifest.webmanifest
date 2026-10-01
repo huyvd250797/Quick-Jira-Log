@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.5.2 – Unified Time Presets UI.",
+  "description": "Quick Jira Log V1.6.0 – Daily Capacity & Fast Logwork.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

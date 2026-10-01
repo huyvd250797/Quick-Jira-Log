@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.5.2');
-console.log('V1.5.2 version test passed.');
+assert.equal(packageJson.version, '1.6.0');
+console.log('V1.6.0 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -315,7 +315,7 @@ assert(styles.includes('.bulk-preset-btn'));
 console.log('V1.5.1 bulk TimeSpent presets tests passed.');
 
 
-// V1.5.2 - Single/Bulk TimeSpent presets phải đồng nhất format/màu sắc.
+// V1.6.0 - Single/Bulk TimeSpent presets phải đồng nhất format/màu sắc.
 assert(indexHtml.includes('data-time="30m"'));
 assert(indexHtml.includes('data-time="3h"'));
 assert(!indexHtml.includes('data-time="15m"'));
@@ -323,3 +323,27 @@ assert(styles.includes('.preset-btn, .bulk-preset-btn'));
 assert(styles.includes('html[data-theme="dark"] .preset-btn, html[data-theme="dark"] .bulk-preset-btn'));
 assert(appJs.includes('syncSinglePresetState'));
 console.log('V1.5.2 unified TimeSpent preset UI tests passed.');
+
+
+// V1.6.0 - Bulk Daily Capacity + taller mobile sheet + fast logwork pipeline.
+assert(indexHtml.includes('id="bulkCapacityCard"'));
+assert(indexHtml.includes('id="bulkAlreadyLogged"'));
+assert(indexHtml.includes('id="bulkRegularDraft"'));
+assert(indexHtml.includes('id="bulkCapacityProjected"'));
+assert(appJs.includes('regularOccupiedMinutes ?? data.occupiedMinutes'));
+assert(appJs.includes('Còn thiếu ${minutesLabel(480 - projected)} để đủ 8h.'));
+assert(appJs.includes('Vượt ${minutesLabel(projected - 480)} so với 8h.'));
+assert(styles.includes('max-height: min(95dvh, 920px)'));
+assert(styles.includes('.bulk-capacity-card'));
+const dayAuditJs = fs.readFileSync(path.join(root, 'handlers', 'day-audit.js'), 'utf8');
+const guardJs = fs.readFileSync(path.join(root, 'lib', 'worklog-guard.js'), 'utf8');
+const singleHandlerJs = fs.readFileSync(path.join(root, 'handlers', 'worklog.js'), 'utf8');
+const bulkHandlerJs = fs.readFileSync(path.join(root, 'handlers', 'bulk-worklog.js'), 'utf8');
+const jiraJs = fs.readFileSync(path.join(root, 'lib', 'jira.js'), 'utf8');
+assert(dayAuditJs.includes('regularOccupiedMinutes'));
+assert(guardJs.includes('fastStableGuard: true'));
+assert(singleHandlerJs.includes('settleMapWithConcurrency(plan, 2'));
+assert(bulkHandlerJs.includes('settleMapWithConcurrency(creationJobs, 4'));
+assert(bulkHandlerJs.includes('settleMapWithConcurrency(verified, 4'));
+assert(jiraJs.includes('POST transition đã xác nhận thành công'));
+console.log('V1.6.0 daily capacity + fast logwork tests passed.');
