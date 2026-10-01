@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.6.0');
-console.log('V1.6.0 version test passed.');
+assert.equal(packageJson.version, '1.6.1');
+console.log('V1.6.1 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -347,3 +347,17 @@ assert(bulkHandlerJs.includes('settleMapWithConcurrency(creationJobs, 4'));
 assert(bulkHandlerJs.includes('settleMapWithConcurrency(verified, 4'));
 assert(jiraJs.includes('POST transition đã xác nhận thành công'));
 console.log('V1.6.0 daily capacity + fast logwork tests passed.');
+
+// V1.6.1 - Sticky capacity header cho Bulk + Single Logwork.
+assert(indexHtml.includes('class="bulk-sticky-header"'));
+assert(indexHtml.includes('id="singleCapacityCard"'));
+assert(indexHtml.includes('id="singleCapacityProjected"'));
+assert(indexHtml.includes('id="singleAlreadyLogged"'));
+assert(indexHtml.includes('id="singleRegularDraft"'));
+assert(appJs.includes('function updateSingleCapacity()'));
+assert(appJs.includes('async function loadSingleCapacity()'));
+assert(appJs.includes('singleCapacityExceeded()'));
+assert(styles.includes('.bulk-sticky-header'));
+assert(styles.includes('.worklog-sticky-header'));
+assert(styles.includes('position: sticky'));
+console.log('V1.6.1 sticky capacity header tests passed.');

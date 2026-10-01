@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.6.0 – Daily Capacity & Fast Logwork.",
+  "description": "Quick Jira Log V1.6.1 – Sticky Capacity Header.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

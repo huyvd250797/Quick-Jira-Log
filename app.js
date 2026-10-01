@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -38,6 +38,8 @@ const state = {
   bulkSubmitInFlight: false,
   bulkCapacitySeq: 0,
   bulkCapacity: { date: '', regularLoggedMinutes: 0, loading: false, error: '' },
+  singleCapacitySeq: 0,
+  singleCapacity: { date: '', regularLoggedMinutes: 0, loading: false, error: '' },
   mobileEditorScrollY: 0,
   mobileSheetDrag: null,
   theme: 'light',
@@ -540,6 +542,8 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   document.body.classList.add('single-log-open');
   if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
   syncSinglePresetState();
+  updateSingleCapacity();
+  void loadSingleCapacity();
   const openedAsSheet = openMobileEditor('worklogCard');
   if (scroll && !openedAsSheet) $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   if (focusTime) setTimeout(() => $('timeSpent').focus({ preventScroll: openedAsSheet }), 260);
@@ -1018,6 +1022,73 @@ function parseTimeSpentClient(value) {
   return 0;
 }
 
+function updateSingleCapacity() {
+  const date = $('date')?.value || '';
+  const regularDraft = $('overtime')?.checked === true ? 0 : parseTimeSpentClient($('timeSpent')?.value || '');
+  const overtimeDraft = $('overtime')?.checked === true ? parseTimeSpentClient($('timeSpent')?.value || '') : 0;
+  const capacityReady = state.singleCapacity.date === date && !state.singleCapacity.loading && !state.singleCapacity.error;
+  const alreadyRegular = capacityReady ? Number(state.singleCapacity.regularLoggedMinutes || 0) : 0;
+  const projected = alreadyRegular + regularDraft;
+
+  if ($('singleRegularDraft')) $('singleRegularDraft').textContent = minutesLabel(regularDraft);
+  if ($('singleAlreadyLogged')) $('singleAlreadyLogged').textContent = capacityReady ? minutesLabel(alreadyRegular) : (state.singleCapacity.loading ? '...' : '—');
+  if ($('singleCapacityProjected')) $('singleCapacityProjected').textContent = capacityReady ? `${minutesLabel(projected)} / 8h` : 'Đang kiểm tra...';
+
+  const bar = $('singleCapacityBar');
+  if (bar) bar.style.width = `${capacityReady ? Math.min(100, Math.max(0, projected / 480 * 100)) : 0}%`;
+  const capacityCard = $('singleCapacityCard');
+  const status = $('singleCapacityStatus');
+  if (capacityCard) capacityCard.classList.toggle('is-loading', state.singleCapacity.loading || !capacityReady);
+  if (capacityCard) capacityCard.classList.toggle('is-complete', capacityReady && projected === 480);
+  if (capacityCard) capacityCard.classList.toggle('is-over', capacityReady && projected > 480);
+  if (status) {
+    if (state.singleCapacity.loading) status.textContent = 'Đang đọc số giờ đã log trên Jira...';
+    else if (state.singleCapacity.error) status.textContent = 'Chưa đọc được giờ đã log; hệ thống vẫn kiểm tra lại khi bấm Log.';
+    else if (!capacityReady) status.textContent = 'Chưa có dữ liệu giờ đã log.';
+    else if (projected < 480) status.textContent = `Còn thiếu ${minutesLabel(480 - projected)} để đủ 8h.`;
+    else if (projected === 480) status.textContent = 'Đã đủ 8h giờ làm việc.';
+    else status.textContent = `Vượt ${minutesLabel(projected - 480)} so với 8h. Hãy giảm giờ thường hoặc bật OT.`;
+  }
+  const overtimeEl = $('singleOvertimeDraft');
+  if (overtimeEl) {
+    overtimeEl.textContent = overtimeDraft > 0 ? `OT đang nhập: ${minutesLabel(overtimeDraft)} (không tính vào mốc 8h).` : '';
+    overtimeEl.classList.toggle('hidden', overtimeDraft <= 0);
+  }
+
+  const capacityOver = capacityReady && projected > 480;
+  if ($('logBtn')) $('logBtn').disabled = state.submitInFlight || capacityOver;
+  if ($('logNextBtn')) $('logNextBtn').disabled = state.submitInFlight || capacityOver;
+}
+
+async function loadSingleCapacity() {
+  const date = $('date')?.value || getSessionLogDate();
+  if (!validLocalDate(date) || $('worklogCard')?.classList.contains('hidden')) return;
+  const seq = ++state.singleCapacitySeq;
+  state.singleCapacity = { date, regularLoggedMinutes: 0, loading: true, error: '' };
+  updateSingleCapacity();
+  try {
+    const data = await api(`/api?action=day-audit&date=${encodeURIComponent(date)}`, { method: 'GET', cache: 'no-store' });
+    if (seq !== state.singleCapacitySeq || $('date')?.value !== date) return;
+    state.singleCapacity = {
+      date,
+      regularLoggedMinutes: Number(data.regularOccupiedMinutes ?? data.occupiedMinutes ?? 0),
+      loading: false,
+      error: ''
+    };
+  } catch (error) {
+    if (seq !== state.singleCapacitySeq || $('date')?.value !== date) return;
+    state.singleCapacity = { date, regularLoggedMinutes: 0, loading: false, error: error?.message || 'Không đọc được giờ đã log.' };
+  }
+  updateSingleCapacity();
+}
+
+function singleCapacityExceeded() {
+  const date = $('date')?.value || '';
+  const ready = state.singleCapacity.date === date && !state.singleCapacity.loading && !state.singleCapacity.error;
+  if (!ready || $('overtime')?.checked === true) return false;
+  return Number(state.singleCapacity.regularLoggedMinutes || 0) + parseTimeSpentClient($('timeSpent')?.value || '') > 480;
+}
+
 function renderBulkSelection() {}
 
 function resetBulkState() {
@@ -1322,6 +1393,7 @@ $('logAllBtn').addEventListener('click', openBulkAll);
 $('cancelBulkBtn').addEventListener('click', resetBulkState);
 $('bulkForm').addEventListener('submit', submitBulkWorklog);
 $('closeWorklogBtn').addEventListener('click', () => {
+  state.singleCapacitySeq += 1;
   $('worklogCard').classList.add('hidden');
   document.body.classList.remove('single-log-open');
   $('resultCard').classList.add('hidden');
@@ -1330,6 +1402,7 @@ $('closeWorklogBtn').addEventListener('click', () => {
 $('mobileEditorBackdrop')?.addEventListener('click', () => {
   if (!$('bulkCard').classList.contains('hidden')) return resetBulkState();
   if (!$('worklogCard').classList.contains('hidden')) {
+    state.singleCapacitySeq += 1;
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
     closeMobileEditor();
@@ -1340,6 +1413,8 @@ $('date').addEventListener('change', () => {
   if (!$('date').value) $('date').value = getSessionLogDate();
   setSessionLogDate($('date').value);
   updateSingleOvertimeHint();
+  updateSingleCapacity();
+  void loadSingleCapacity();
 });
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = getSessionLogDate();
@@ -1350,6 +1425,7 @@ $('bulkDate').addEventListener('change', () => {
 
 $('overtime')?.addEventListener('change', () => {
   updateSingleOvertimeHint();
+  updateSingleCapacity();
 });
 
 function syncSinglePresetState() {
@@ -1359,7 +1435,10 @@ function syncSinglePresetState() {
   });
 }
 
-$('timeSpent').addEventListener('input', syncSinglePresetState);
+$('timeSpent').addEventListener('input', () => {
+  syncSinglePresetState();
+  updateSingleCapacity();
+});
 $('timeSpent').addEventListener('change', () => {
   const value = $('timeSpent').value.trim();
   if (value) {
@@ -1367,6 +1446,7 @@ $('timeSpent').addEventListener('change', () => {
     savePrefs();
   }
   syncSinglePresetState();
+  updateSingleCapacity();
 });
 
 document.querySelectorAll('.preset-btn').forEach(button => {
@@ -1450,6 +1530,10 @@ document.addEventListener('keydown', event => {
 $('worklogForm').addEventListener('submit', async event => {
   event.preventDefault();
   if (state.submitInFlight) return;
+  if (singleCapacityExceeded()) {
+    updateSingleCapacity();
+    return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm TimeSpent hoặc bật OT.');
+  }
   state.submitInFlight = true;
   const logAndNext = state.logAndNextRequested === true;
   state.logAndNextRequested = false;
@@ -1493,6 +1577,7 @@ $('worklogForm').addEventListener('submit', async event => {
     addAuditEntry({ ok: true, key: data.issue.key, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: data.segments });
     const loggedRange = (data.segments || []).map(segment => `${segment.start}–${segment.end}`).join(' · ');
     showToast(`Đã log ${data.issue.key}${loggedRange ? ` · ${loggedRange}` : ''}`);
+    state.singleCapacitySeq += 1;
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
     closeMobileEditor();
@@ -1535,6 +1620,7 @@ $('worklogForm').addEventListener('submit', async event => {
     btn.disabled = false;
     btn.textContent = 'LOG WORK';
     if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = 'LOG & NEXT'; }
+    updateSingleCapacity();
   }
 });
 
