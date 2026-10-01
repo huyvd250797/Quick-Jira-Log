@@ -1,20 +1,17 @@
-# Quick Jira Log V1.6.2 – Desktop Modal & Capacity Sync
+# Quick Jira Log V1.6.3 – Jira Auth Reliability & CAPTCHA Guard
 
-Nâng cấp trực tiếp từ **V1.6.1 – Sticky Capacity Header**.
+Nâng cấp trực tiếp từ **V1.6.2 – Desktop Modal & Capacity Sync**.
 
 ## Thay đổi chính
 
-- Trên **PC**, Log tất cả và Log 1 Sub-task được mở trong **modal lớn**; trang nền được khóa cuộn và nội dung cuộn bên trong modal.
-- **Tiến độ giờ thường / 8h** nằm trong header sticky của modal, nên khi cuộn xuống nhiều Sub-task vẫn luôn nhìn thấy tiến độ.
-- Fix Log 1 Sub-task: bấm preset **30m / 1h / 2h / 3h / 4h** sẽ tính lại tiến độ ngay lập tức, giống Log tất cả.
-- Có thể bấm **Esc** để đóng modal PC.
-- Đưa **Tiến độ giờ thường / 8h** lên vùng header của **Log tất cả**, vì vậy khi cuộn qua nhiều Sub-task người dùng vẫn luôn nhìn thấy tổng giờ đã log và đang nhập.
-- Header tiến độ hoạt động dạng **sticky** trên cả mobile bottom sheet và desktop khi nội dung dài vượt viewport.
-- Bổ sung **Tiến độ giờ thường / 8h** tương tự cho **Log 1 Sub-task**: hiển thị **Đã log trước đó + Đang nhập = Tổng dự kiến / 8h** theo ngày đang chọn.
-- Khi thay đổi ngày, TimeSpent, preset hoặc bật/tắt OT, tiến độ của Log 1 được cập nhật tức thời.
-- Nếu tổng giờ thường dự kiến vượt 8h, giao diện cảnh báo và khóa **LOG WORK / LOG & NEXT**; OT được tách riêng và không cộng vào mốc 8h.
-- Giữ nguyên bottom sheet cao 95dvh, action bar sticky sát đáy và pipeline Fast Logwork của V1.6.0.
-- Giữ nguyên cơ chế chống overlap, idempotency, rollback và giới hạn 8h phía server.
+- Một lần bấm **Đăng nhập** chỉ tạo tối đa **01 failed authentication attempt** khi Jira trả 401/403; không còn tự động thử thêm Basic Auth sau lỗi xác thực.
+- Chỉ fallback sang HTTP Basic Auth nếu `/rest/auth/1/session` thực sự không được Jira hiện tại hỗ trợ (404/405/501).
+- Nhận diện `X-Seraph-LoginReason` để phân biệt **CAPTCHA/xác minh bảo mật**, sai tài khoản/mật khẩu và thiếu quyền REST.
+- Khi Jira yêu cầu CAPTCHA, hiển thị panel riêng với nút **MỞ JIRA ĐỂ XÁC MINH** dẫn trực tiếp đến `https://task.ascvn.com.vn/` và nút **TÔI ĐÃ XÁC MINH – THỬ LẠI**.
+- Không tự retry sau CAPTCHA. Người dùng chủ động xác minh trên Jira rồi mới yêu cầu app thử lại đúng 01 lần.
+- Chống spam Login: tối đa 2 lần thử thường trong 30 giây; sau 2 lần sai phía client tạm khóa 30 giây để giảm nguy cơ Jira kích hoạt CAPTCHA.
+- Username/password không được ghi vào log kỹ thuật. Auth diagnostic chỉ ghi phase, HTTP status, `X-Seraph-LoginReason`, category và duration.
+- Giữ nguyên toàn bộ luồng Log 1, Log tất cả, Daily Capacity, OT, Planner, History, rollback, chống overlap và desktop/mobile modal của V1.6.2.
 
 ## Thông tin
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.6.3';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -43,7 +43,12 @@ const state = {
   mobileEditorScrollY: 0,
   mobileSheetDrag: null,
   theme: 'light',
-  logAndNextRequested: false
+  logAndNextRequested: false,
+  loginInFlight: false,
+  invalidLoginCount: 0,
+  loginCooldownUntil: 0,
+  loginCooldownTimer: null,
+  captchaRequired: false
 };
 
 
@@ -118,6 +123,125 @@ function showToast(message) {
   el.classList.remove('hidden');
   clearTimeout(state.toastTimer);
   state.toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+}
+
+function setLoginError(message = '') {
+  const el = $('loginError');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.toggle('hidden', !message);
+}
+
+function setCaptchaPanel(show, message = '', jiraUrl = '') {
+  state.captchaRequired = show === true;
+  const panel = $('captchaPanel');
+  if (!panel) return;
+  panel.classList.toggle('hidden', !state.captchaRequired);
+  if (message && $('captchaMessage')) $('captchaMessage').textContent = message;
+  if (jiraUrl && $('jiraVerifyBtn')) $('jiraVerifyBtn').href = jiraUrl;
+  updateLoginButtonState();
+}
+
+function clearLoginCooldown() {
+  state.loginCooldownUntil = 0;
+  clearTimeout(state.loginCooldownTimer);
+  state.loginCooldownTimer = null;
+  updateLoginButtonState();
+}
+
+function startLoginCooldown(seconds, message = '') {
+  const durationMs = Math.max(0, Number(seconds) || 0) * 1000;
+  state.loginCooldownUntil = Date.now() + durationMs;
+  clearTimeout(state.loginCooldownTimer);
+  if (message) setLoginError(message);
+  const tick = () => {
+    if (Date.now() >= state.loginCooldownUntil) {
+      state.loginCooldownUntil = 0;
+      state.loginCooldownTimer = null;
+      updateLoginButtonState();
+      return;
+    }
+    updateLoginButtonState();
+    state.loginCooldownTimer = setTimeout(tick, 500);
+  };
+  tick();
+}
+
+function updateLoginButtonState() {
+  const btn = $('loginBtn');
+  const retryBtn = $('captchaRetryBtn');
+  const remaining = Math.max(0, Math.ceil((state.loginCooldownUntil - Date.now()) / 1000));
+  if (btn) {
+    btn.disabled = state.loginInFlight || remaining > 0 || state.captchaRequired;
+    btn.textContent = state.loginInFlight ? 'ĐANG ĐĂNG NHẬP...' : remaining > 0 ? `THỬ LẠI SAU ${remaining}s` : 'ĐĂNG NHẬP';
+  }
+  if (retryBtn) {
+    retryBtn.disabled = state.loginInFlight || remaining > 0;
+    retryBtn.textContent = state.loginInFlight ? 'ĐANG KIỂM TRA...' : remaining > 0 ? `THỬ LẠI SAU ${remaining}s` : 'TÔI ĐÃ XÁC MINH – THỬ LẠI';
+  }
+}
+
+async function performLogin({ captchaRetry = false } = {}) {
+  if (state.loginInFlight) return;
+  const remaining = Math.max(0, Math.ceil((state.loginCooldownUntil - Date.now()) / 1000));
+  if (remaining > 0) {
+    showToast(`Hãy chờ ${remaining}s trước khi thử đăng nhập lại.`);
+    return;
+  }
+
+  const username = $('username')?.value.trim() || '';
+  const password = $('password')?.value || '';
+  if (!username || !password) {
+    setLoginError('Vui lòng nhập ID và mật khẩu Jira.');
+    return;
+  }
+
+  state.loginInFlight = true;
+  setLoginError('');
+  updateLoginButtonState();
+  try {
+    const data = await api('/api?action=login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password, captchaRetry })
+    });
+    $('password').value = '';
+    state.invalidLoginCount = 0;
+    clearLoginCooldown();
+    setCaptchaPanel(false);
+    setLoggedIn(data.user);
+    showToast('Đăng nhập Jira thành công. Đang tải Sub-task chưa logwork...');
+  } catch (error) {
+    const code = String(error.code || '');
+    setLoginError(error.message);
+
+    if (code === 'JIRA_CAPTCHA_REQUIRED') {
+      setCaptchaPanel(true, error.message, error.jiraUrl || error.details?.jiraUrl || 'https://task.ascvn.com.vn/');
+      showToast('Jira đang yêu cầu xác minh bảo mật. Hãy mở Jira để xác minh.');
+      return;
+    }
+
+    if (code === 'JIRA_INVALID_CREDENTIALS') {
+      state.invalidLoginCount += 1;
+      const cooldownSeconds = state.invalidLoginCount >= 2 ? 30 : 3;
+      const warning = state.invalidLoginCount >= 2
+        ? `${error.message} Bạn đã nhập sai ${state.invalidLoginCount} lần; tạm dừng 30s để tránh Jira kích hoạt CAPTCHA.`
+        : `${error.message} Hãy kiểm tra lại trước khi thử tiếp để tránh Jira kích hoạt CAPTCHA.`;
+      startLoginCooldown(cooldownSeconds, warning);
+      showToast(warning);
+      return;
+    }
+
+    if (code === 'LOGIN_COOLDOWN' || code === 'LOGIN_RATE_LIMITED') {
+      startLoginCooldown(Number(error.retryAfterSeconds || error.details?.retryAfterSeconds || 30), error.message);
+      showToast(error.message);
+      return;
+    }
+
+    showToast(error.message);
+  } finally {
+    state.loginInFlight = false;
+    updateLoginButtonState();
+  }
 }
 
 function isMobileEditorMode() {
@@ -361,6 +485,10 @@ function savePrefs() {
 
 function setLoggedIn(user) {
   closeDesktopEditor();
+  setCaptchaPanel(false);
+  setLoginError('');
+  state.invalidLoginCount = 0;
+  clearLoginCooldown();
   state.user = user;
   document.body.classList.remove('single-log-open');
   $('loginCard').classList.add('hidden');
@@ -381,6 +509,8 @@ function setLoggedIn(user) {
 
 function setLoggedOut() {
   closeMobileEditor();
+  setCaptchaPanel(false);
+  setLoginError('');
   closeDesktopEditor();
   state.user = null;
   document.body.classList.remove('single-log-open');
@@ -488,6 +618,10 @@ async function api(path, options = {}) {
   if (!response.ok || !data?.ok) {
     const error = new Error(data?.error || 'Có lỗi xảy ra.');
     error.details = data?.details;
+    error.code = data?.code || '';
+    error.jiraUrl = data?.jiraUrl || '';
+    error.retryAfterSeconds = Number(data?.retryAfterSeconds || response.headers.get('retry-after') || 0) || 0;
+    error.status = response.status;
     throw error;
   }
   return data;
@@ -1383,26 +1517,21 @@ async function submitBulkWorklog(event) {
   }
 }
 
-$('loginForm').addEventListener('submit', async event => {
+$('loginForm').addEventListener('submit', event => {
   event.preventDefault();
-  const btn = $('loginBtn');
-  btn.disabled = true;
-  btn.textContent = 'ĐANG ĐĂNG NHẬP...';
-  try {
-    const data = await api('/api?action=login', {
-      method: 'POST',
-      body: JSON.stringify({ username: $('username').value.trim(), password: $('password').value })
-    });
-    $('password').value = '';
-    setLoggedIn(data.user);
-    showToast('Đăng nhập Jira thành công. Đang tải Sub-task chưa logwork...');
-  } catch (error) {
-    showToast(error.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'ĐĂNG NHẬP';
-  }
+  performLogin({ captchaRetry: false });
 });
+
+$('captchaRetryBtn')?.addEventListener('click', () => performLogin({ captchaRetry: true }));
+$('jiraVerifyBtn')?.addEventListener('click', () => {
+  showToast('Hoàn tất xác minh trên Jira rồi quay lại và bấm “Tôi đã xác minh – Thử lại”.');
+});
+for (const id of ['username', 'password']) {
+  $(id)?.addEventListener('input', () => {
+    if (state.captchaRequired) setCaptchaPanel(false);
+    setLoginError('');
+  });
+}
 
 $('logoutBtn').addEventListener('click', async () => {
   if (!confirm('Đăng xuất khỏi Jira?')) return;

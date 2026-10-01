@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.6.2');
-console.log('V1.6.2 version test passed.');
+assert.equal(packageJson.version, '1.6.3');
+console.log('V1.6.3 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -370,3 +370,21 @@ assert.match(appJs, /openDesktopEditor\('bulkCard'\)/);
 assert.match(appJs, /openDesktopEditor\('worklogCard'\)/);
 assert.match(appJs, /syncSinglePresetState\(\);\s*updateSingleCapacity\(\);/);
 console.log('V1.6.2 desktop modal and single capacity sync tests passed.');
+
+
+// V1.6.3 - Jira Auth Reliability & CAPTCHA Guard.
+const loginHandlerJs = fs.readFileSync(path.join(root, 'handlers', 'login.js'), 'utf8');
+const jiraAuthJs = fs.readFileSync(path.join(root, 'lib', 'jira.js'), 'utf8');
+assert(indexHtml.includes('id="captchaPanel"'));
+assert(indexHtml.includes('id="jiraVerifyBtn"'));
+assert(indexHtml.includes('https://task.ascvn.com.vn/'));
+assert(indexHtml.includes('id="captchaRetryBtn"'));
+assert(appJs.includes("code === 'JIRA_CAPTCHA_REQUIRED'"));
+assert(appJs.includes("code === 'JIRA_INVALID_CREDENTIALS'"));
+assert(appJs.includes('captchaRetry: true'));
+assert(loginHandlerJs.includes("limit: captchaRetry ? 1 : 2"));
+assert(jiraAuthJs.includes("if (![404, 405, 501].includes(sessionStatus))"));
+assert(jiraAuthJs.includes("'JIRA_CAPTCHA_REQUIRED'"));
+assert(jiraAuthJs.includes("'JIRA_INVALID_CREDENTIALS'"));
+assert(styles.includes('.captcha-panel'));
+console.log('V1.6.3 auth UI + guard static tests passed.');

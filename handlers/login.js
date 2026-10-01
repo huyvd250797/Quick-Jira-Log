@@ -13,16 +13,37 @@ module.exports = async function handler(req, res) {
     const body = await readJson(req, 8 * 1024);
     const username = String(body.username || '').trim();
     const password = String(body.password || '');
-    if (!username || !password) return sendJson(res, 400, { ok: false, error: 'Vui lòng nhập ID và mật khẩu Jira.' });
+    const captchaRetry = body.captchaRetry === true;
+    if (!username || !password) return sendJson(res, 400, { ok: false, error: 'Vui lòng nhập ID và mật khẩu Jira.', code: 'LOGIN_FIELDS_REQUIRED' });
 
-    const gate = hit(req, 'login', username, { limit: 8, windowMs: 5 * 60 * 1000 });
-    if (!gate.allowed) {
-      res.setHeader('Retry-After', String(gate.retryAfterSeconds));
-      return sendJson(res, 429, { ok: false, error: `Đăng nhập quá nhiều lần. Hãy thử lại sau ${gate.retryAfterSeconds}s.` });
+    // Hai lớp bảo vệ: burst guard giúp tránh đẩy Jira vào CAPTCHA; broad guard chặn spam dài hơn.
+    // Nút "Tôi đã xác minh – Thử lại" có một scope riêng để người dùng không bị kẹt bởi burst guard cũ.
+    const burstGate = hit(req, captchaRetry ? 'login-captcha-retry' : 'login-burst', username, { limit: captchaRetry ? 1 : 2, windowMs: captchaRetry ? 15 * 1000 : 30 * 1000 });
+    if (!burstGate.allowed) {
+      res.setHeader('Retry-After', String(burstGate.retryAfterSeconds));
+      return sendJson(res, 429, {
+        ok: false,
+        error: `Đăng nhập đang được tạm khóa để tránh Jira kích hoạt CAPTCHA. Hãy thử lại sau ${burstGate.retryAfterSeconds}s.`,
+        code: 'LOGIN_COOLDOWN',
+        retryAfterSeconds: burstGate.retryAfterSeconds
+      });
+    }
+
+    const broadGate = hit(req, 'login', username, { limit: 6, windowMs: 5 * 60 * 1000 });
+    if (!broadGate.allowed) {
+      res.setHeader('Retry-After', String(broadGate.retryAfterSeconds));
+      return sendJson(res, 429, {
+        ok: false,
+        error: `Đăng nhập quá nhiều lần. Hãy thử lại sau ${broadGate.retryAfterSeconds}s.`,
+        code: 'LOGIN_RATE_LIMITED',
+        retryAfterSeconds: broadGate.retryAfterSeconds
+      });
     }
 
     const { auth, me } = await loginWithPassword(username, password);
     reset(req, 'login', username);
+    reset(req, 'login-burst', username);
+    reset(req, 'login-captcha-retry', username);
     const sessionPayload = {
       ...auth,
       me: {
@@ -44,7 +65,16 @@ module.exports = async function handler(req, res) {
     if (error?.code === 'APP_SESSION_SECRET_MISSING') {
       return sendJson(res, 500, { ok: false, error: 'Server chưa cấu hình APP_SESSION_SECRET.' });
     }
-    if (error instanceof JiraError) return sendJson(res, error.status || 500, { ok: false, error: error.message });
+    if (error instanceof JiraError) {
+      const details = error.details && typeof error.details === 'object' ? error.details : null;
+      return sendJson(res, error.status || 500, {
+        ok: false,
+        error: error.message,
+        code: error.code || 'JIRA_ERROR',
+        jiraUrl: details?.jiraUrl || null,
+        details
+      });
+    }
     return sendJson(res, 500, { ok: false, error: 'Đăng nhập thất bại.' });
   }
 };

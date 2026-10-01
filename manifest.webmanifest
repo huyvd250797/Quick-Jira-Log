@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.6.2 – Desktop Modal & Capacity Sync.",
+  "description": "Quick Jira Log V1.6.3 – Jira Auth Reliability & CAPTCHA Guard.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
