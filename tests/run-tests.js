@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.6.3');
-console.log('V1.6.3 version test passed.');
+assert.equal(packageJson.version, '1.6.4');
+console.log('V1.6.4 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -388,3 +388,25 @@ assert(jiraAuthJs.includes("'JIRA_CAPTCHA_REQUIRED'"));
 assert(jiraAuthJs.includes("'JIRA_INVALID_CREDENTIALS'"));
 assert(styles.includes('.captcha-panel'));
 console.log('V1.6.3 auth UI + guard static tests passed.');
+
+// V1.6.4 - Late Worklog Friendly Warning: N-1 vẫn bình thường; N-2 trở về trước mới cảnh báo.
+const lateWarning = require('../lib/late-log-warning');
+assert.equal(lateWarning.MESSAGES.length, 10);
+assert.equal(lateWarning.shouldWarn('2026-10-01', '2026-10-01'), false);
+assert.equal(lateWarning.shouldWarn('2026-09-30', '2026-10-01'), false);
+assert.equal(lateWarning.shouldWarn('2026-09-29', '2026-10-01'), true);
+assert.equal(lateWarning.shouldWarn('2026-09-28', '2026-10-01'), true);
+assert.equal(lateWarning.shouldWarn('2026-10-02', '2026-10-01'), false);
+assert.equal(lateWarning.shouldWarn('bad-date', '2026-10-01'), false);
+const picker = lateWarning.createWarningPicker(() => 0.314159);
+const firstCycle = Array.from({ length: 10 }, () => picker());
+assert.equal(new Set(firstCycle).size, 10);
+const eleventh = picker();
+assert.notEqual(eleventh, firstCycle[9]);
+assert(indexHtml.includes('id="warningToast"'));
+assert(indexHtml.includes('/lib/late-log-warning.js'));
+assert(appJs.includes('showLateLogWarning(date);'));
+assert(appJs.includes('showLateLogWarning(payload.date);'));
+assert(styles.includes('.warning-toast'));
+console.log('V1.6.4 late-worklog warning tests passed.');
+

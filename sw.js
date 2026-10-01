@@ -1,5 +1,5 @@
-const CACHE = 'quick-jira-log-v1.6.3-shell';
-const APP_SHELL = ['/', '/index.html', '/styles.css', '/app.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png', '/icons/favicon-64.png'];
+const CACHE = 'quick-jira-log-v1.6.4-shell';
+const APP_SHELL = ['/', '/index.html', '/styles.css', '/app.js', '/lib/late-log-warning.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png', '/icons/favicon-64.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting()));
 });

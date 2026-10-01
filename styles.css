@@ -1838,3 +1838,19 @@ html[data-theme="dark"] .auth-verify-secondary {
 @media (min-width: 900px) {
   #loginCard .captcha-actions { grid-template-columns: 1fr 1fr; }
 }
+/* V1.6.4 – cảnh báo nhẹ khi log từ N-2 trở về trước; hiển thị song song, không thay toast thành công. */
+.warning-toast {
+  bottom: max(82px, calc(env(safe-area-inset-bottom) + 74px));
+  background: #fff7dc;
+  color: #765000;
+  border: 1px solid #f0d582;
+  box-shadow: 0 16px 38px rgba(102, 74, 0, .16);
+  line-height: 1.45;
+  z-index: 141;
+}
+html[data-theme="dark"] .warning-toast {
+  background: #3a2f14;
+  color: #ffe19a;
+  border-color: #6b5726;
+}
+

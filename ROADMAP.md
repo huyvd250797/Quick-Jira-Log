@@ -20,3 +20,5 @@
 - ✅ **V1.6.2 – Desktop Modal & Capacity Sync**: Log tất cả/Log 1 trên PC dùng modal lớn, header tiến độ fixed trong vùng cuộn; preset Log 1 cập nhật tiến độ 8h ngay khi bấm.
 
 - ✅ **V1.6.3 – Jira Auth Reliability & CAPTCHA Guard**: chống double-auth khi sai mật khẩu, nhận diện CAPTCHA qua X-Seraph-LoginReason, mở Jira để xác minh trực tiếp, retry chủ động 1 lần và bảo vệ chống spam Login.
+
+- ✅ **V1.6.4 – Late Worklog Friendly Warning**: cảnh báo bổ sung khi log từ N-2 trở về trước, giữ nguyên báo thành công, 10 câu vui luân phiên không lặp trong một vòng và áp dụng cho cả Log 1/Bulk.

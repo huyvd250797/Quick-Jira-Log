@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.6.3 – Jira Auth Reliability & CAPTCHA Guard.",
+  "description": "Quick Jira Log V1.6.4 – Late Worklog Friendly Warning.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

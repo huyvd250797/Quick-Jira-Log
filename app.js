@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.6.3';
+const APP_VERSION = '1.6.4';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -14,6 +14,7 @@ const $ = id => document.getElementById(id);
 const state = {
   user: null,
   toastTimer: null,
+  warningToastTimer: null,
   filterIssues: [],
   filterLoaded: false,
   filterLoading: false,
@@ -123,6 +124,24 @@ function showToast(message) {
   el.classList.remove('hidden');
   clearTimeout(state.toastTimer);
   state.toastTimer = setTimeout(() => el.classList.add('hidden'), 3200);
+}
+
+const lateLogWarningPicker = globalThis.QJLLateLogWarning?.createWarningPicker?.();
+
+function showWarningToast(message) {
+  const el = $('warningToast');
+  if (!el || !message) return;
+  el.textContent = message;
+  el.classList.remove('hidden');
+  clearTimeout(state.warningToastTimer);
+  state.warningToastTimer = setTimeout(() => el.classList.add('hidden'), 6200);
+}
+
+function showLateLogWarning(date) {
+  const api = globalThis.QJLLateLogWarning;
+  if (!api?.shouldWarn?.(date, todayLocal())) return;
+  const message = lateLogWarningPicker?.() || api.MESSAGES?.[0];
+  if (message) showWarningToast(message);
 }
 
 function setLoginError(message = '') {
@@ -1497,6 +1516,7 @@ async function submitBulkWorklog(event) {
     addAuditEntry({ ok: true, type: 'Bulk', key: `${data.items.length} issue`, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: (data.items || []).flatMap(x => x.segments || []) });
     const firstRange = data.items?.[0]?.segments?.map(segment => `${segment.start}–${segment.end}`).join(' · ') || '';
     showToast(data.items.length === 1 ? `Đã log ${data.items[0].key}${firstRange ? ` · ${firstRange}` : ''}` : `Đã log ${data.items.length} Sub-task lên Jira.`);
+    showLateLogWarning(date);
     const loggedKeys = new Set((data.items || []).map(item => String(item.key || '').toUpperCase()));
     state.filterIssues = state.filterIssues.filter(item => !loggedKeys.has(String(item.key || '').toUpperCase()));
     state.filterLoaded = true;
@@ -1745,6 +1765,7 @@ $('worklogForm').addEventListener('submit', async event => {
     addAuditEntry({ ok: true, key: data.issue.key, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: data.segments });
     const loggedRange = (data.segments || []).map(segment => `${segment.start}–${segment.end}`).join(' · ');
     showToast(`Đã log ${data.issue.key}${loggedRange ? ` · ${loggedRange}` : ''}`);
+    showLateLogWarning(payload.date);
     state.singleCapacitySeq += 1;
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
