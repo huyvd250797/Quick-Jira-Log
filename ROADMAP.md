@@ -16,3 +16,5 @@
 - ✅ **V1.5.2 – Unified Time Presets UI**: đồng nhất preset log đơn/Bulk về **30m / 1h / 2h / 3h / 4h** và cùng format/màu sắc ở Light/Dark mode.
 - ✅ **V1.6.0 – Daily Capacity & Fast Logwork**: nâng bottom sheet Bulk trên mobile, sticky action sát đáy, hiển thị Đã log + Đang nhập / 8h và tối ưu pipeline Jira bằng kiểm tra/song song có giới hạn nhưng vẫn giữ rollback + chống overlap.
 - ✅ **V1.6.1 – Sticky Capacity Header**: đưa tiến độ giờ thường lên header sticky của Bulk trên mobile/desktop và bổ sung tiến độ 8h tương tự cho Log 1 Sub-task.
+
+- ✅ **V1.6.2 – Desktop Modal & Capacity Sync**: Log tất cả/Log 1 trên PC dùng modal lớn, header tiến độ fixed trong vùng cuộn; preset Log 1 cập nhật tiến độ 8h ngay khi bấm.

@@ -1672,3 +1672,75 @@ html[data-theme="dark"] .bulk-capacity-card.is-over { background: #2d1720; borde
 
 html[data-theme="dark"] .bulk-sticky-header,
 html[data-theme="dark"] .worklog-sticky-header { background: var(--card); }
+
+
+/* V1.6.2 – Desktop Modal Worklog + Fixed Capacity Header */
+@media (min-width: 900px) {
+  body.desktop-editor-open {
+    overflow: hidden;
+  }
+  body.desktop-editor-open::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 118;
+    background: rgba(4, 13, 26, .58);
+    backdrop-filter: blur(3px);
+  }
+  body.desktop-editor-open #bulkCard:not(.hidden),
+  body.desktop-editor-open #worklogCard:not(.hidden) {
+    position: fixed !important;
+    top: 3dvh;
+    left: 50%;
+    z-index: 120;
+    transform: translateX(-50%);
+    grid-column: auto !important;
+    grid-row: auto !important;
+    align-self: auto !important;
+    margin: 0 !important;
+    max-height: 94dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    border-radius: 22px;
+    box-shadow: 0 28px 80px rgba(0,0,0,.34);
+  }
+  body.desktop-editor-open #bulkCard:not(.hidden) {
+    width: min(94vw, 1500px) !important;
+    padding: 22px 24px 24px;
+  }
+  body.desktop-editor-open #worklogCard:not(.hidden) {
+    width: min(92vw, 980px) !important;
+    padding: 22px 24px 24px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-sticky-header,
+  body.desktop-editor-open #worklogCard .worklog-sticky-header {
+    top: -22px !important;
+    z-index: 30;
+    margin: -22px -24px 16px;
+    padding: 20px 24px 14px;
+    border-radius: 22px 22px 0 0;
+    background: var(--card);
+    box-shadow: 0 10px 24px rgba(18,47,84,.10);
+  }
+  body.desktop-editor-open #bulkCard .bulk-sticky-header::after,
+  body.desktop-editor-open #worklogCard .worklog-sticky-header::after {
+    left: 24px;
+    right: 24px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-capacity-card,
+  body.desktop-editor-open #worklogCard .bulk-capacity-card {
+    padding: 12px 14px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-item {
+    scroll-margin-top: 210px;
+  }
+}
+
+html[data-theme="dark"] body.desktop-editor-open::before {
+  background: rgba(0, 7, 18, .68);
+}

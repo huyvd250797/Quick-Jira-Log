@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -122,6 +122,24 @@ function showToast(message) {
 
 function isMobileEditorMode() {
   return window.matchMedia?.('(max-width: 899px)').matches === true;
+}
+
+function isDesktopEditorMode() {
+  return window.matchMedia?.('(min-width: 900px)').matches === true;
+}
+
+function openDesktopEditor(cardId) {
+  const card = $(cardId);
+  if (!card || !isDesktopEditorMode()) return false;
+  document.body.classList.add('desktop-editor-open');
+  document.body.dataset.desktopEditor = cardId;
+  requestAnimationFrame(() => { card.scrollTop = 0; });
+  return true;
+}
+
+function closeDesktopEditor() {
+  document.body.classList.remove('desktop-editor-open');
+  delete document.body.dataset.desktopEditor;
 }
 
 function openMobileEditor(cardId) {
@@ -342,6 +360,7 @@ function savePrefs() {
 }
 
 function setLoggedIn(user) {
+  closeDesktopEditor();
   state.user = user;
   document.body.classList.remove('single-log-open');
   $('loginCard').classList.add('hidden');
@@ -362,6 +381,7 @@ function setLoggedIn(user) {
 
 function setLoggedOut() {
   closeMobileEditor();
+  closeDesktopEditor();
   state.user = null;
   document.body.classList.remove('single-log-open');
   state.filterIssues = [];
@@ -545,8 +565,9 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   updateSingleCapacity();
   void loadSingleCapacity();
   const openedAsSheet = openMobileEditor('worklogCard');
-  if (scroll && !openedAsSheet) $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  if (focusTime) setTimeout(() => $('timeSpent').focus({ preventScroll: openedAsSheet }), 260);
+  const openedAsDesktopModal = openDesktopEditor('worklogCard');
+  if (scroll && !openedAsSheet && !openedAsDesktopModal) $('worklogCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (focusTime) setTimeout(() => $('timeSpent').focus({ preventScroll: openedAsSheet || openedAsDesktopModal }), 260);
 }
 function toggleBulkIssue(issue) {
   const key = String(issue?.key || '').trim().toUpperCase();
@@ -1099,7 +1120,10 @@ function resetBulkState() {
   state.bulkCapacitySeq += 1;
   state.bulkCapacity = { date: '', regularLoggedMinutes: 0, loading: false, error: '' };
   $('bulkCard').classList.add('hidden');
-  if (wasOpen) closeMobileEditor();
+  if (wasOpen) {
+    closeMobileEditor();
+    closeDesktopEditor();
+  }
 }
 
 function openBulkAll() {
@@ -1132,7 +1156,8 @@ function openBulkAll() {
   $('bulkCard').classList.remove('hidden');
   void loadBulkCapacity();
   const openedAsSheet = openMobileEditor('bulkCard');
-  if (!openedAsSheet) $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const openedAsDesktopModal = openDesktopEditor('bulkCard');
+  if (!openedAsSheet && !openedAsDesktopModal) $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function bulkDraftList() {
   return [...state.bulkSelectedKeys].map(key => state.bulkDrafts.get(key)).filter(Boolean);
@@ -1398,6 +1423,7 @@ $('closeWorklogBtn').addEventListener('click', () => {
   document.body.classList.remove('single-log-open');
   $('resultCard').classList.add('hidden');
   closeMobileEditor();
+  closeDesktopEditor();
 });
 $('mobileEditorBackdrop')?.addEventListener('click', () => {
   if (!$('bulkCard').classList.contains('hidden')) return resetBulkState();
@@ -1406,6 +1432,7 @@ $('mobileEditorBackdrop')?.addEventListener('click', () => {
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
     closeMobileEditor();
+    closeDesktopEditor();
   }
 });
 
@@ -1456,6 +1483,7 @@ document.querySelectorAll('.preset-btn').forEach(button => {
     state.prefs.lastTimeSpent = value;
     savePrefs();
     syncSinglePresetState();
+    updateSingleCapacity();
   });
 });
 
@@ -1505,6 +1533,17 @@ $('logNextBtn')?.addEventListener('click', () => { state.logAndNextRequested = t
 document.addEventListener('keydown', event => {
   const active = document.activeElement;
   const typing = active && ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName);
+  if (event.key === 'Escape' && document.body.classList.contains('desktop-editor-open')) {
+    event.preventDefault();
+    if (!$('bulkCard')?.classList.contains('hidden')) resetBulkState();
+    else if (!$('worklogCard')?.classList.contains('hidden')) {
+      state.singleCapacitySeq += 1;
+      $('worklogCard').classList.add('hidden');
+      document.body.classList.remove('single-log-open');
+      closeDesktopEditor();
+    }
+    return;
+  }
   if (event.key === '/' && !typing && state.user) {
     event.preventDefault();
     $('filterIssueSearch')?.focus();
@@ -1581,6 +1620,7 @@ $('worklogForm').addEventListener('submit', async event => {
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
     closeMobileEditor();
+    closeDesktopEditor();
     $('key').value = '';
     $('project').value = '';
     $('description').value = '';
