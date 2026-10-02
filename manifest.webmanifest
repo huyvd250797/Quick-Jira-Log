@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.6.4 – Late Worklog Friendly Warning.",
+  "description": "Quick Jira Log V1.6.5 – Jira Auth Classification Fix.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

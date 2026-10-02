@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.6.4');
-console.log('V1.6.4 version test passed.');
+assert.equal(packageJson.version, '1.6.5');
+console.log('V1.6.5 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -409,4 +409,9 @@ assert(appJs.includes('showLateLogWarning(date);'));
 assert(appJs.includes('showLateLogWarning(payload.date);'));
 assert(styles.includes('.warning-toast'));
 console.log('V1.6.4 late-worklog warning tests passed.');
+
+// V1.6.5 - Jira Auth Classification Fix: chỉ AUTHENTICATION_DENIED mới là CAPTCHA.
+assert(jiraAuthJs.includes("return value === 'AUTHENTICATION_DENIED';"));
+assert(!jiraAuthJs.includes("value === 'AUTHENTICATED_FAILED' || value === 'AUTHENTICATION_FAILED'"));
+console.log('V1.6.5 Jira auth classification static tests passed.');
 
