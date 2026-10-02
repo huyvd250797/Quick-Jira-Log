@@ -27,3 +27,5 @@
 
 - ✅ **V1.7.0 – Fast Interaction & UX Polish**: Smart Bulk Time Allocation, thu gọn Description và compact Bulk UI trên mobile.
 - ✅ **V1.7.1 – Instant Bulk Defaults & Manual Smart Allocation**: Log tất cả mở ngay với mặc định 1h/Sub-task; không còn tự phân bổ lúc mở. Day-audit chạy nền, người dùng chủ động bấm Tự động phân bổ/Phân bổ lại khi cần.
+
+- ✅ **V1.7.2 – Bulk Log Layout Optimization**: compact Bulk cards, đưa Ngày logwork vào sticky header, bỏ mô tả dài và sắp xếp lại TimeSpent/preset/OT để xem được nhiều Sub-task hơn trên PC/mobile.

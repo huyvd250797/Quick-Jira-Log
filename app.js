@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.7.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1309,7 +1309,7 @@ function openBulkAll() {
     autoApplied: false,
     userEdited: false,
     remainingMinutes: 0,
-    message: 'Mặc định 1h cho mỗi Sub-task để có thể Log ngay. Bấm “TỰ ĐỘNG PHÂN BỔ” nếu muốn app chia phần giờ còn thiếu đến 8h.'
+    message: ''
   };
   const date = setSessionLogDate($('date').value || getSessionLogDate());
   $('bulkDate').value = date;
@@ -1330,7 +1330,7 @@ function bulkDraftList() {
 
 function markBulkUserEdited() {
   state.bulkAllocation.userEdited = true;
-  state.bulkAllocation.message = 'Đã chỉnh thủ công. Bấm “TỰ ĐỘNG PHÂN BỔ” nếu muốn app tự chia lại phần giờ còn thiếu đến 8h.';
+  state.bulkAllocation.message = '';
 }
 
 function bulkCapacityReady() {
@@ -1352,7 +1352,7 @@ function applyBulkSmartAllocation({ force = false } = {}) {
       autoApplied: false,
       userEdited: false,
       remainingMinutes: 0,
-      message: '✓ Ngày này đã đủ 8h giờ thường. App giữ nguyên TimeSpent hiện tại và không phân bổ thêm.'
+      message: ''
     };
     updateBulkTotal();
     return true;
@@ -1371,7 +1371,7 @@ function applyBulkSmartAllocation({ force = false } = {}) {
     autoApplied: true,
     userEdited: false,
     remainingMinutes: remaining,
-    message: `✨ Đã tự phân bổ ${minutesLabel(remaining)} còn thiếu cho ${targets.length} Sub-task. Bạn có thể chỉnh lại trước khi Log tất cả.`
+    message: 'Đã tự phân bổ'
   };
   renderBulkItems();
   return true;
@@ -1414,13 +1414,7 @@ function updateBulkTotal() {
     overtimeEl.classList.toggle('hidden', overtimeDraft <= 0);
   }
 
-  const allocationHint = $('bulkAllocationHint');
-  const allocationText = $('bulkAllocationText');
   const redistributeBtn = $('bulkRedistributeBtn');
-  if (allocationHint && allocationText) {
-    allocationText.textContent = state.bulkAllocation.message || '';
-    allocationHint.classList.toggle('hidden', !state.bulkAllocation.message);
-  }
   if (redistributeBtn) {
     redistributeBtn.disabled = state.bulkSubmitInFlight || !items.length || (capacityReady && alreadyRegular >= 480);
     if (!redistributeBtn.dataset.loading) {
@@ -1454,7 +1448,7 @@ async function loadBulkCapacity({ force = false } = {}) {
         loading: false,
         error: ''
       };
-      // V1.7.1: chỉ cập nhật tiến độ; tuyệt đối không tự thay TimeSpent khi mở Bulk.
+      // V1.7.2: chỉ cập nhật tiến độ; tuyệt đối không tự thay TimeSpent khi mở Bulk.
       updateBulkTotal();
       return true;
     } catch (error) {
@@ -1493,6 +1487,8 @@ async function requestBulkSmartAllocation() {
     state.bulkAllocation.autoApplied = false;
     if (!applyBulkSmartAllocation({ force: true })) {
       showToast('Chưa thể tự động phân bổ TimeSpent cho danh sách hiện tại.');
+    } else {
+      showToast('Đã tự động phân bổ TimeSpent.');
     }
   } finally {
     if (btn) {

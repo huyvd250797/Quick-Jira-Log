@@ -1943,3 +1943,212 @@ html[data-theme="dark"] .auto-time-badge { background: #173b61; color: #8bc4ff; 
 
 
 /* V1.7.1 – Instant Bulk Defaults & Manual Smart Allocation */
+
+/* V1.7.2 – Bulk Log Layout Optimization */
+.bulk-header-controls {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+.bulk-header-date {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  width: min(190px, 32vw);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 850;
+}
+.bulk-header-date > span { line-height: 1; }
+.bulk-header-date input {
+  min-height: 38px;
+  height: 38px;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 850;
+}
+.bulk-capacity-bottom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.bulk-capacity-bottom-row > div { min-width: 0; }
+.bulk-redistribute-btn {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid #b9d3f4;
+  border-radius: 10px;
+  background: #f7fbff;
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 900;
+}
+.bulk-redistribute-btn:hover { background: #edf6ff; border-color: #8bb8ec; }
+
+/* Compact nhưng vẫn giữ khoảng thở cho từng Sub-task */
+#bulkCard .bulk-items { gap: 9px; }
+#bulkCard .bulk-item {
+  padding: 10px 11px;
+  gap: 7px;
+}
+#bulkCard .bulk-item-head { gap: 8px; }
+#bulkCard .bulk-item-title { gap: 1px; }
+#bulkCard .bulk-item-title strong { font-size: 12px; line-height: 1.25; }
+#bulkCard .bulk-item-title span {
+  font-size: 10.5px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+#bulkCard .bulk-item-title small { font-size: 8px; }
+#bulkCard .bulk-remove-btn {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  flex-basis: 30px;
+}
+#bulkCard .bulk-item-fields {
+  grid-template-columns: minmax(285px, .92fr) minmax(175px, .58fr);
+  column-gap: 12px;
+  row-gap: 7px;
+  align-items: end;
+}
+#bulkCard .bulk-time-field {
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  grid-template-areas:
+    "label label"
+    "input presets";
+  gap: 4px 8px;
+  align-items: center;
+}
+#bulkCard .bulk-time-field > span:first-child { grid-area: label; line-height: 1; }
+#bulkCard .bulk-time-field > input {
+  grid-area: input;
+  min-height: 40px;
+  height: 40px;
+  padding: 8px 10px;
+}
+#bulkCard .bulk-time-field .bulk-preset-row {
+  grid-area: presets;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 5px;
+}
+#bulkCard .bulk-preset-btn {
+  min-width: 42px;
+  min-height: 32px;
+  padding: 5px 8px;
+}
+#bulkCard .bulk-overtime-toggle {
+  min-height: 40px;
+  padding: 7px 9px;
+  align-self: end;
+}
+#bulkCard .bulk-description-details {
+  padding-top: 6px;
+}
+#bulkCard .bulk-description-details > summary { min-height: 24px; }
+#bulkCard .bulk-description-details .bulk-description-field { margin-top: 6px; gap: 4px; }
+#bulkCard .bulk-description-details .bulk-description { min-height: 54px; }
+#bulkCard .bulk-summary {
+  padding: 9px 11px;
+  min-height: 40px;
+}
+#bulkCard .bulk-actions { margin-top: 0; }
+
+html[data-theme="dark"] .bulk-redistribute-btn {
+  background: #10243b;
+  border-color: #315276;
+  color: #8bc4ff;
+}
+html[data-theme="dark"] .bulk-redistribute-btn:hover { background: #15304e; }
+
+@media (min-width: 900px) {
+  body.desktop-editor-open #bulkCard:not(.hidden) {
+    padding: 18px 20px 20px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-sticky-header {
+    top: -18px !important;
+    margin: -18px -20px 12px;
+    padding: 14px 20px 11px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-sticky-header::after {
+    left: 20px;
+    right: 20px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-sticky-header .card-title { margin-bottom: 7px; }
+  body.desktop-editor-open #bulkCard .bulk-capacity-card {
+    padding: 9px 11px;
+    gap: 6px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-capacity-meter { height: 6px; }
+  body.desktop-editor-open #bulkCard .bulk-items { gap: 9px 10px; }
+  body.desktop-editor-open #bulkCard .bulk-item { scroll-margin-top: 170px; }
+}
+
+@media (max-width: 1100px) and (min-width: 900px) {
+  #bulkCard .bulk-item-fields { grid-template-columns: 1fr; }
+  #bulkCard .bulk-overtime-toggle { width: 100%; }
+}
+
+@media (max-width: 899px) {
+  #bulkCard.mobile-bottom-sheet .bulk-sticky-header {
+    margin-bottom: 9px;
+    padding-bottom: 9px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-title {
+    display: grid;
+    gap: 7px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-header-controls {
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-header-date {
+    width: min(168px, 48vw);
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-title-meta {
+    align-items: flex-end;
+    gap: 4px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-capacity-card {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-capacity-bottom-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-redistribute-btn {
+    min-height: 32px;
+    padding: 5px 8px;
+    font-size: 8px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-item {
+    padding: 9px 10px;
+    gap: 6px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-item-fields {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-time-field {
+    grid-template-columns: minmax(92px, 110px) minmax(0,1fr);
+    gap: 4px 7px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-time-field > input { min-height: 38px; height: 38px; }
+  #bulkCard.mobile-bottom-sheet .bulk-preset-row { gap: 4px; overflow-x: auto; scrollbar-width: none; }
+  #bulkCard.mobile-bottom-sheet .bulk-preset-row::-webkit-scrollbar { display: none; }
+  #bulkCard.mobile-bottom-sheet .bulk-preset-btn { min-width: 40px; min-height: 31px; }
+  #bulkCard.mobile-bottom-sheet .bulk-overtime-toggle { min-height: 38px; }
+  #bulkCard.mobile-bottom-sheet .bulk-summary { padding: 8px 10px; min-height: 38px; }
+}

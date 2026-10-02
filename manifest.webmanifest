@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.7.1 – Instant Bulk Defaults & Manual Smart Allocation.",
+  "description": "Quick Jira Log V1.7.2 – Bulk Log Layout Optimization.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

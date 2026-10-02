@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.7.1');
-console.log('V1.7.1 version test passed.');
+assert.equal(packageJson.version, '1.7.2');
+console.log('V1.7.2 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -443,3 +443,16 @@ const bulkOpenFn = appJs.slice(appJs.indexOf('function openBulkAll()'), appJs.in
 assert(bulkOpenFn.includes("timeSpent: '1h'"), 'Bulk defaults must be 1h immediately');
 assert(bulkOpenFn.includes('setTimeout(() => { void loadBulkCapacity(); }, 0);'), 'day-audit should be deferred/background');
 console.log('V1.7.1 instant bulk defaults + manual smart allocation tests passed.');
+
+// V1.7.2 - Bulk Log Layout Optimization.
+assert(indexHtml.includes('class="bulk-header-date"'));
+assert(indexHtml.includes('<span>Ngày logwork</span><input id="bulkDate" type="date" required />'));
+assert(!indexHtml.includes('Mặc định mỗi Sub-task là 1h để thao tác ngay.'));
+assert(!indexHtml.includes('id="bulkAllocationHint"'));
+assert(!indexHtml.includes('id="bulkAllocationText"'));
+assert(styles.includes('/* V1.7.2 – Bulk Log Layout Optimization */'));
+assert(styles.includes('.bulk-header-controls'));
+assert(styles.includes('#bulkCard .bulk-time-field'));
+assert(styles.includes('grid-template-areas:'));
+assert(appJs.includes("message: ''"));
+console.log('V1.7.2 bulk layout optimization tests passed.');
