@@ -5,10 +5,11 @@ const { getSession, clearSessionCookie } = require('../lib/session');
 const {
   JiraError,
   getMyself,
-  getIssue,
   getIssueWorklogs,
+  getIssuesByKeys,
   searchIssuesWorkedOnDate,
-  searchIssuesWithWorklogDate
+  searchIssuesWithWorklogDate,
+  searchRecentlyWorkedIssues
 } = require('../lib/jira');
 const { authorMatches, parseJiraStartedAtWorkTimezone, minuteToHHMM } = require('../lib/scheduler');
 
@@ -31,6 +32,29 @@ function commentText(comment) {
   return out.join(' ').replace(/\s+/g, ' ').trim();
 }
 
+function vietnamToday() {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(new Date());
+  const map = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${map.year}-${map.month}-${map.day}`;
+}
+
+function dayDistance(a, b) {
+  const am = Date.parse(`${a}T00:00:00Z`);
+  const bm = Date.parse(`${b}T00:00:00Z`);
+  return Number.isFinite(am) && Number.isFinite(bm) ? Math.round(Math.abs(am - bm) / 86400000) : Infinity;
+}
+
+async function safeKeys(fn) {
+  try {
+    return { ok: true, keys: await fn(), error: '' };
+  } catch (error) {
+    if (error?.status === 401) throw error;
+    return { ok: false, keys: [], error: error?.message || String(error) };
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET']);
   const session = getSession(req);
@@ -40,37 +64,81 @@ module.exports = async function handler(req, res) {
   const requestedKey = String(req.query?.key || '').trim().toUpperCase();
   if (!validDate(date)) return sendJson(res, 400, { ok: false, error: 'Ngày lịch sử không hợp lệ.' });
 
+  const startedAt = Date.now();
   try {
     const me = session.me || await getMyself(session);
-    const keySet = new Set(requestedKey ? [requestedKey] : []);
-    const sources = await Promise.allSettled([
-      searchIssuesWorkedOnDate(date, session),
-      searchIssuesWithWorklogDate(date, session)
-    ]);
-    for (const result of sources) {
-      if (result.status === 'fulfilled') for (const key of result.value || []) keySet.add(key);
-      else if (result.reason?.status === 401) throw result.reason;
+    const keySet = new Set();
+    let source = 'direct-key';
+    let sourceDetails = {};
+
+    if (requestedKey) {
+      keySet.add(requestedKey);
+    } else {
+      // Fast path: ưu tiên JQL có worklogAuthor=currentUser(). Không quét toàn bộ worklog
+      // của mọi user nếu Jira đã hỗ trợ truy vấn theo author.
+      const recentDate = dayDistance(date, vietnamToday()) <= 1;
+      const [authorDay, recentWorked] = await Promise.all([
+        safeKeys(() => searchIssuesWorkedOnDate(date, session)),
+        recentDate ? safeKeys(() => searchRecentlyWorkedIssues(session)) : Promise.resolve({ ok: true, keys: [], skipped: true })
+      ]);
+
+      for (const key of authorDay.keys || []) keySet.add(key);
+      for (const key of recentWorked.keys || []) keySet.add(key);
+      source = authorDay.ok ? 'author-day' : 'fallback-worklog-date';
+      sourceDetails.authorDay = { ok: authorDay.ok, issues: authorDay.keys.length, error: authorDay.error || null };
+      sourceDetails.recentWorked = { ok: recentWorked.ok, issues: recentWorked.keys.length, skipped: Boolean(recentWorked.skipped), error: recentWorked.error || null };
+
+      // Chỉ dùng scan worklogDate rộng khi truy vấn currentUser không khả dụng.
+      if (!authorDay.ok) {
+        const anyDay = await safeKeys(() => searchIssuesWithWorklogDate(date, session));
+        for (const key of anyDay.keys || []) keySet.add(key);
+        sourceDetails.anyDay = { ok: anyDay.ok, issues: anyDay.keys.length, error: anyDay.error || null };
+      } else {
+        sourceDetails.anyDay = { ok: false, issues: 0, skipped: true };
+      }
     }
 
     const keys = [...keySet].slice(0, 500);
+    if (!keys.length) {
+      return sendJson(res, 200, {
+        ok: true, date, items: [], skipped: [], issueCount: 0,
+        source, sourceDetails, elapsedMs: Date.now() - startedAt
+      });
+    }
+
+    // Batch metadata chạy song song với việc đọc worklog: giảm 1 round-trip nối tiếp.
+    const metadataPromise = getIssuesByKeys(keys, session)
+      .then(issues => ({ ok: true, issues }))
+      .catch(error => {
+        if (error?.status === 401) throw error;
+        return { ok: false, issues: [], error: error?.message || String(error) };
+      });
+
     const items = [];
     const skipped = [];
-    const concurrency = 8;
+    const worklogResults = [];
+    const concurrency = 12;
     for (let i = 0; i < keys.length; i += concurrency) {
       const batch = keys.slice(i, i + concurrency);
       const results = await Promise.all(batch.map(async key => {
         try {
-          const [issue, worklogs] = await Promise.all([getIssue(key, session), getIssueWorklogs(key, session)]);
-          return { key, issue, worklogs };
+          return { key, worklogs: await getIssueWorklogs(key, session) };
         } catch (error) {
           if (error?.status === 401) throw error;
           skipped.push({ key, status: error?.status || 0 });
-          return { key, issue: null, worklogs: [] };
+          return { key, worklogs: [] };
         }
       }));
+      worklogResults.push(...results);
+    }
 
-      for (const result of results) {
-        for (const worklog of result.worklogs || []) {
+    const metadata = await metadataPromise;
+    if (!metadata.ok) sourceDetails.metadataError = metadata.error;
+    const issueMap = new Map((metadata.issues || []).map(issue => [String(issue?.key || '').toUpperCase(), issue]));
+
+    for (const result of worklogResults) {
+      const issue = issueMap.get(String(result.key).toUpperCase());
+      for (const worklog of result.worklogs || []) {
           if (!authorMatches(worklog, me)) continue;
           const parsed = parseJiraStartedAtWorkTimezone(worklog.started);
           if (!parsed || parsed.date !== date) continue;
@@ -79,9 +147,9 @@ module.exports = async function handler(req, res) {
           items.push({
             id: String(worklog.id || ''),
             key: result.key,
-            project: String(result.issue?.fields?.project?.key || result.key.split('-')[0] || ''),
-            summary: String(result.issue?.fields?.summary || ''),
-            status: String(result.issue?.fields?.status?.name || ''),
+            project: String(issue?.fields?.project?.key || result.key.split('-')[0] || ''),
+            summary: String(issue?.fields?.summary || ''),
+            status: String(issue?.fields?.status?.name || ''),
             date,
             start: minuteToHHMM(parsed.minute),
             end: minuteToHHMM(endMinute),
@@ -92,10 +160,12 @@ module.exports = async function handler(req, res) {
           });
         }
       }
-    }
 
     items.sort((a, b) => b.start.localeCompare(a.start) || a.key.localeCompare(b.key));
-    return sendJson(res, 200, { ok: true, date, items, skipped, issueCount: keys.length });
+    return sendJson(res, 200, {
+      ok: true, date, items, skipped, issueCount: keys.length,
+      source, sourceDetails, elapsedMs: Date.now() - startedAt
+    });
   } catch (error) {
     if (error instanceof JiraError) {
       if (error.status === 401) res.setHeader('Set-Cookie', clearSessionCookie());

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.7.2';
+const APP_VERSION = '1.7.3';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -51,8 +51,97 @@ const state = {
   invalidLoginCount: 0,
   loginCooldownUntil: 0,
   loginCooldownTimer: null,
-  captchaRequired: false
+  captchaRequired: false,
+  historyCache: new Map(),
+  confirmResolver: null,
+  confirmOpen: false
 };
+
+
+const UI_MOTION_MS = 170;
+const uiAnimationTimers = new WeakMap();
+
+function reduceMotionEnabled() {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+}
+
+function clearUiAnimation(el) {
+  if (!el) return;
+  const timer = uiAnimationTimers.get(el);
+  if (timer) clearTimeout(timer);
+  uiAnimationTimers.delete(el);
+  el.classList.remove('qjl-opening', 'qjl-closing');
+}
+
+function showAnimated(el) {
+  if (!el) return;
+  clearUiAnimation(el);
+  el.classList.remove('hidden');
+  if (reduceMotionEnabled()) return;
+  el.classList.add('qjl-opening');
+  const timer = setTimeout(() => {
+    el.classList.remove('qjl-opening');
+    uiAnimationTimers.delete(el);
+  }, UI_MOTION_MS + 30);
+  uiAnimationTimers.set(el, timer);
+}
+
+function hideAnimated(el, onHidden) {
+  if (!el) { onHidden?.(); return; }
+  if (el.classList.contains('hidden')) { onHidden?.(); return; }
+  clearUiAnimation(el);
+  if (reduceMotionEnabled()) {
+    el.classList.add('hidden');
+    onHidden?.();
+    return;
+  }
+  el.classList.add('qjl-closing');
+  const timer = setTimeout(() => {
+    el.classList.add('hidden');
+    el.classList.remove('qjl-closing');
+    uiAnimationTimers.delete(el);
+    onHidden?.();
+  }, UI_MOTION_MS);
+  uiAnimationTimers.set(el, timer);
+}
+
+function animateResultCard() {
+  const result = $('resultCard');
+  if (result && !result.classList.contains('hidden')) showAnimated(result);
+}
+
+function closeLogConfirmation(answer = false) {
+  const overlay = $('logConfirmOverlay');
+  const resolver = state.confirmResolver;
+  state.confirmResolver = null;
+  state.confirmOpen = false;
+  if (overlay) {
+    overlay.setAttribute('aria-hidden', 'true');
+    hideAnimated(overlay);
+  }
+  resolver?.(answer === true);
+}
+
+function confirmLogAction({ title, message, rows = [], confirmLabel = 'XÁC NHẬN LOG' } = {}) {
+  if (state.confirmOpen) return Promise.resolve(false);
+  const overlay = $('logConfirmOverlay');
+  if (!overlay) return Promise.resolve(window.confirm(message || 'Xác nhận Logwork?'));
+  state.confirmOpen = true;
+  $('logConfirmTitle').textContent = title || 'Xác nhận Logwork';
+  $('logConfirmMessage').textContent = message || 'Worklog sẽ được ghi lên Jira. Hãy kiểm tra lại thông tin trước khi xác nhận.';
+  $('logConfirmSummary').innerHTML = rows.map(([label, value]) => `
+    <div class="confirm-summary-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>
+  `).join('');
+  $('confirmLogBtn').textContent = confirmLabel;
+  overlay.setAttribute('aria-hidden', 'false');
+  showAnimated(overlay);
+  setTimeout(() => $('confirmLogBtn')?.focus({ preventScroll: true }), reduceMotionEnabled() ? 0 : 100);
+  return new Promise(resolve => { state.confirmResolver = resolve; });
+}
+
+function invalidateHistoryCache() {
+  state.historyCache.clear();
+}
 
 
 function createRequestId(prefix = 'qjl') {
@@ -325,6 +414,19 @@ function closeMobileEditor() {
   window.scrollTo(0, state.mobileEditorScrollY || 0);
 }
 
+function closeSingleEditorAnimated({ hideResult = true } = {}) {
+  state.singleCapacitySeq += 1;
+  const card = $('worklogCard');
+  const finish = () => {
+    document.body.classList.remove('single-log-open');
+    if (hideResult) $('resultCard')?.classList.add('hidden');
+    closeMobileEditor();
+    closeDesktopEditor();
+  };
+  if (!card || card.classList.contains('hidden')) return finish();
+  hideAnimated(card, finish);
+}
+
 function dismissMobileEditorCard(cardId) {
   if (cardId === 'bulkCard') {
     resetBulkState();
@@ -511,11 +613,12 @@ function setLoggedIn(user) {
   state.invalidLoginCount = 0;
   clearLoginCooldown();
   state.user = user;
+  invalidateHistoryCache();
   document.body.classList.remove('single-log-open');
   $('loginCard').classList.add('hidden');
-  $('filterCard').classList.remove('hidden');
+  showAnimated($('filterCard'));
   $('worklogCard').classList.add('hidden');
-  $('statusCard').classList.remove('hidden');
+  showAnimated($('statusCard'));
   $('settingsBtn')?.classList.remove('hidden');
   $('plannerBtn')?.classList.remove('hidden');
   $('historyBtn')?.classList.remove('hidden');
@@ -534,6 +637,7 @@ function setLoggedOut() {
   setLoginError('');
   closeDesktopEditor();
   state.user = null;
+  invalidateHistoryCache();
   document.body.classList.remove('single-log-open');
   state.filterIssues = [];
   state.filterLoaded = false;
@@ -551,7 +655,7 @@ function setLoggedOut() {
   $('filterCard').classList.add('hidden');
   $('worklogCard').classList.add('hidden');
   $('bulkCard').classList.add('hidden');
-  $('loginCard').classList.remove('hidden');
+  showAnimated($('loginCard'));
   $('resultCard').classList.add('hidden');
   renderFilterIssues();
   renderBulkSelection();
@@ -713,7 +817,7 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   setIssueLookupState(summary ? `Summary: ${summary}` : 'Issue không có Summary.', 'ok');
   resetBulkState();
   $('resultCard').classList.add('hidden');
-  $('worklogCard').classList.remove('hidden');
+  showAnimated($('worklogCard'));
   document.body.classList.add('single-log-open');
   if (!$('timeSpent').value) $('timeSpent').value = state.prefs.lastTimeSpent || '1h';
   syncSinglePresetState();
@@ -945,15 +1049,16 @@ function unlockOverlayBody() {
 function closeOverlay(id, { restore = true } = {}) {
   const overlay = $(id);
   if (!overlay || overlay.classList.contains('hidden')) return;
-  overlay.classList.add('hidden');
   overlay.setAttribute('aria-hidden', 'true');
-  if (restore) unlockOverlayBody();
+  hideAnimated(overlay, () => {
+    if (restore) unlockOverlayBody();
+  });
 }
 
 function closeAllToolOverlays({ restore = true } = {}) {
   closeOverlay('plannerOverlay', { restore: false });
   closeOverlay('historyOverlay', { restore: false });
-  if (restore) unlockOverlayBody();
+  if (restore) setTimeout(unlockOverlayBody, reduceMotionEnabled() ? 0 : UI_MOTION_MS + 10);
 }
 
 function openOverlay(id, focusId) {
@@ -962,8 +1067,8 @@ function openOverlay(id, focusId) {
   closeOverlay('settingsOverlay', { restore: false });
   closeAllToolOverlays({ restore: false });
   lockOverlayBody();
-  overlay.classList.remove('hidden');
   overlay.setAttribute('aria-hidden', 'false');
+  showAnimated(overlay);
   requestAnimationFrame(() => $(focusId)?.focus({ preventScroll: true }));
 }
 
@@ -1074,22 +1179,47 @@ function renderWorklogHistory() {
   });
 }
 
-async function loadWorklogHistory({ quiet = false } = {}) {
+async function loadWorklogHistory({ quiet = false, force = false } = {}) {
   if (!state.user || state.historyLoading) return;
   const date = $('historyDate').value || todayLocal();
   const key = $('historyKey').value.trim().toUpperCase();
+  const cacheKey = `${date}|${key}`;
+  const cached = state.historyCache.get(cacheKey);
+  const cacheFresh = cached && (Date.now() - cached.at) < 20000;
+  if (!force && cacheFresh) {
+    state.historyItems = cached.items;
+    renderWorklogHistory();
+    if (!quiet) showToast(`Đã tải ${state.historyItems.length} worklog từ bộ nhớ nhanh.`);
+    return;
+  }
+
   state.historyLoading = true;
+  const searchBtn = $('refreshWorklogHistoryBtn');
+  if (searchBtn) {
+    searchBtn.disabled = true;
+    searchBtn.classList.add('is-loading');
+    searchBtn.textContent = key ? 'ĐANG TÌM KEY...' : 'ĐANG TÌM WORKLOG...';
+  }
   renderWorklogHistory();
   try {
     const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
     state.historyItems = Array.isArray(data.items) ? data.items : [];
-    if (!quiet) showToast(`Đã tải ${state.historyItems.length} worklog.`);
+    state.historyCache.set(cacheKey, { at: Date.now(), items: state.historyItems });
+    if (!quiet) {
+      const timing = Number(data.elapsedMs || 0) > 0 ? ` · ${Math.max(1, Math.round(Number(data.elapsedMs) / 100) / 10)}s` : '';
+      showToast(`Đã tải ${state.historyItems.length} worklog${timing}.`);
+    }
   } catch (error) {
     state.historyItems = [];
     if ($('worklogHistoryState')) $('worklogHistoryState').textContent = error.message;
     if (!quiet) showToast(error.message);
   } finally {
     state.historyLoading = false;
+    if (searchBtn) {
+      searchBtn.disabled = false;
+      searchBtn.classList.remove('is-loading');
+      searchBtn.textContent = 'TÌM WORKLOG ĐÃ LOG';
+    }
     renderWorklogHistory();
   }
 }
@@ -1104,12 +1234,12 @@ function openCorrection(item) {
   $('correctionDescription').value = item.description || item.summary || '';
   $('correctionTitle').textContent = `Sửa ${item.key}`;
   $('correctionMeta').textContent = `${item.start}–${item.end} · ${formatHistoryTimeSpent(item.minutes)}`;
-  $('worklogCorrectionPanel').classList.remove('hidden');
+  showAnimated($('worklogCorrectionPanel'));
   $('worklogCorrectionPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function closeCorrection() {
-  $('worklogCorrectionPanel').classList.add('hidden');
+  hideAnimated($('worklogCorrectionPanel'));
 }
 
 async function saveCorrection() {
@@ -1128,8 +1258,9 @@ async function saveCorrection() {
   try {
     await api('/api?action=worklog-correction', { method: 'PATCH', body: JSON.stringify(payload) });
     showToast('Đã cập nhật worklog trên Jira.');
+    invalidateHistoryCache();
     closeCorrection();
-    await loadWorklogHistory({ quiet: true });
+    await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
     showToast(error.message);
   } finally {
@@ -1144,8 +1275,9 @@ async function deleteHistoryItem(item) {
   try {
     await api('/api?action=worklog-correction', { method: 'DELETE', body: JSON.stringify({ key: item.key, worklogId: item.id }) });
     showToast('Đã xóa worklog trên Jira.');
+    invalidateHistoryCache();
     if ($('correctionWorklogId').value === item.id) closeCorrection();
-    await loadWorklogHistory({ quiet: true });
+    await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
     showToast(error.message);
   }
@@ -1267,8 +1399,9 @@ function singleCapacityExceeded() {
 
 function renderBulkSelection() {}
 
-function resetBulkState() {
-  const wasOpen = !$('bulkCard').classList.contains('hidden');
+function resetBulkState({ animate = false } = {}) {
+  const card = $('bulkCard');
+  const wasOpen = card && !card.classList.contains('hidden');
   state.bulkMode = false;
   state.bulkSelectedKeys.clear();
   state.bulkDrafts.clear();
@@ -1276,11 +1409,15 @@ function resetBulkState() {
   state.bulkCapacity = { date: '', regularLoggedMinutes: 0, loading: false, error: '' };
   state.bulkCapacityPromise = null;
   state.bulkAllocation = { autoApplied: false, userEdited: false, remainingMinutes: 0, message: '' };
-  $('bulkCard').classList.add('hidden');
-  if (wasOpen) {
-    closeMobileEditor();
-    closeDesktopEditor();
-  }
+  const finish = () => {
+    if (card) card.classList.add('hidden');
+    if (wasOpen) {
+      closeMobileEditor();
+      closeDesktopEditor();
+    }
+  };
+  if (wasOpen && animate) hideAnimated(card, finish);
+  else finish();
 }
 
 function openBulkAll() {
@@ -1317,7 +1454,7 @@ function openBulkAll() {
   document.body.classList.remove('single-log-open');
   $('resultCard').classList.add('hidden');
   renderBulkItems();
-  $('bulkCard').classList.remove('hidden');
+  showAnimated($('bulkCard'));
   const openedAsSheet = openMobileEditor('bulkCard');
   const openedAsDesktopModal = openDesktopEditor('bulkCard');
   if (!openedAsSheet && !openedAsDesktopModal) $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1600,7 +1737,7 @@ function renderBulkSuccess(data) {
       </div>
     `).join('')}
   `;
-  result.classList.remove('hidden');
+  showAnimated(result);
   requestAnimationFrame(() => result.scrollIntoView({ behavior: 'smooth', block: 'center' }));
 }
 
@@ -1617,6 +1754,22 @@ async function submitBulkWorklog(event) {
   if (!items.length) return showToast('Chưa có issue để Bulk Logwork.');
   if (items.some(item => !item.timeSpent || !item.description)) return showToast('Vui lòng nhập đủ TimeSpent và Description cho từng issue.');
 
+  const date = $('bulkDate').value;
+  const totalMinutes = items.reduce((sum, item) => sum + parseTimeSpentClient(item.timeSpent), 0);
+  const overtimeMinutes = items.filter(item => item.overtime).reduce((sum, item) => sum + parseTimeSpentClient(item.timeSpent), 0);
+  const confirmed = await confirmLogAction({
+    title: 'Xác nhận Log tất cả?',
+    message: 'Bạn sắp ghi nhiều worklog lên Jira. Hãy kiểm tra nhanh ngày, số Sub-task và tổng thời gian để tránh bấm nhầm.',
+    rows: [
+      ['Ngày logwork', date],
+      ['Sub-task', `${items.length} mục`],
+      ['Tổng thời gian', minutesLabel(totalMinutes)],
+      ...(overtimeMinutes > 0 ? [['Trong đó OT', minutesLabel(overtimeMinutes)]] : [])
+    ],
+    confirmLabel: 'XÁC NHẬN LOG TẤT CẢ'
+  });
+  if (!confirmed || state.bulkSubmitInFlight) return;
+
   state.bulkSubmitInFlight = true;
   const requestId = createRequestId('bulk');
   const btn = $('bulkLogBtn');
@@ -1624,7 +1777,6 @@ async function submitBulkWorklog(event) {
   btn.textContent = 'ĐANG LOG TẤT CẢ...';
   $('resultCard').classList.add('hidden');
   try {
-    const date = $('bulkDate').value;
     const data = await api('/api?action=bulk-worklog', {
       method: 'POST',
       body: JSON.stringify({ date, items, requestId }),
@@ -1646,6 +1798,7 @@ async function submitBulkWorklog(event) {
     const firstRange = data.items?.[0]?.segments?.map(segment => `${segment.start}–${segment.end}`).join(' · ') || '';
     showToast(data.items.length === 1 ? `Đã log ${data.items[0].key}${firstRange ? ` · ${firstRange}` : ''}` : `Đã log ${data.items.length} Sub-task lên Jira.`);
     showLateLogWarning(date);
+    invalidateHistoryCache();
     const loggedKeys = new Set((data.items || []).map(item => String(item.key || '').toUpperCase()));
     state.filterIssues = state.filterIssues.filter(item => !loggedKeys.has(String(item.key || '').toUpperCase()));
     state.filterLoaded = true;
@@ -1656,7 +1809,7 @@ async function submitBulkWorklog(event) {
     const result = $('resultCard');
     result.className = 'result error';
     result.innerHTML = `<h3>Bulk Logwork chưa thành công</h3><div class="meta">${escapeHtml(error.message)}</div>`;
-    result.classList.remove('hidden');
+    showAnimated(result);
     addAuditEntry({ ok: false, type: 'Bulk', message: error.message });
     showToast(error.message);
   } finally {
@@ -1670,6 +1823,10 @@ $('loginForm').addEventListener('submit', event => {
   event.preventDefault();
   performLogin({ captchaRetry: false });
 });
+
+$('cancelLogConfirmBtn')?.addEventListener('click', () => closeLogConfirmation(false));
+$('confirmLogBtn')?.addEventListener('click', () => closeLogConfirmation(true));
+document.querySelectorAll('[data-close-log-confirm]').forEach(el => el.addEventListener('click', () => closeLogConfirmation(false)));
 
 $('captchaRetryBtn')?.addEventListener('click', () => performLogin({ captchaRetry: true }));
 $('jiraVerifyBtn')?.addEventListener('click', () => {
@@ -1693,28 +1850,15 @@ $('logoutBtn').addEventListener('click', async () => {
 $('refreshFilterBtn').addEventListener('click', () => loadFilterIssues());
 $('filterIssueSearch').addEventListener('input', renderFilterIssues);
 $('logAllBtn').addEventListener('click', openBulkAll);
-$('cancelBulkBtn').addEventListener('click', resetBulkState);
+$('cancelBulkBtn').addEventListener('click', () => resetBulkState({ animate: true }));
 $('bulkForm').addEventListener('submit', submitBulkWorklog);
 $('bulkRedistributeBtn')?.addEventListener('click', () => {
   void requestBulkSmartAllocation();
 });
-$('closeWorklogBtn').addEventListener('click', () => {
-  state.singleCapacitySeq += 1;
-  $('worklogCard').classList.add('hidden');
-  document.body.classList.remove('single-log-open');
-  $('resultCard').classList.add('hidden');
-  closeMobileEditor();
-  closeDesktopEditor();
-});
+$('closeWorklogBtn').addEventListener('click', () => closeSingleEditorAnimated());
 $('mobileEditorBackdrop')?.addEventListener('click', () => {
-  if (!$('bulkCard').classList.contains('hidden')) return resetBulkState();
-  if (!$('worklogCard').classList.contains('hidden')) {
-    state.singleCapacitySeq += 1;
-    $('worklogCard').classList.add('hidden');
-    document.body.classList.remove('single-log-open');
-    closeMobileEditor();
-    closeDesktopEditor();
-  }
+  if (!$('bulkCard').classList.contains('hidden')) return resetBulkState({ animate: true });
+  if (!$('worklogCard').classList.contains('hidden')) closeSingleEditorAnimated({ hideResult: false });
 });
 
 $('date').addEventListener('change', () => {
@@ -1797,6 +1941,11 @@ $('installPwaBtn')?.addEventListener('click', installPwa);
 });
 $('runAuditBtn').addEventListener('click', runDayAudit);
 $('refreshWorklogHistoryBtn').addEventListener('click', () => loadWorklogHistory());
+$('historyKey')?.addEventListener('keydown', event => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  void loadWorklogHistory();
+});
 $('cancelCorrectionBtn').addEventListener('click', closeCorrection);
 $('saveCorrectionBtn').addEventListener('click', saveCorrection);
 $('deleteCorrectionBtn').addEventListener('click', deleteCurrentCorrection);
@@ -1809,6 +1958,12 @@ $('clearAuditHistoryBtn').addEventListener('click', () => {
 });
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
+  if (!$('logConfirmOverlay')?.classList.contains('hidden')) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    closeLogConfirmation(false);
+    return;
+  }
   if (!$('plannerOverlay')?.classList.contains('hidden')) return closePlanner();
   if (!$('historyOverlay')?.classList.contains('hidden')) return closeHistory();
   if (!$('settingsOverlay')?.classList.contains('hidden')) closeSettings();
@@ -1823,13 +1978,8 @@ document.addEventListener('keydown', event => {
   const typing = active && ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName);
   if (event.key === 'Escape' && document.body.classList.contains('desktop-editor-open')) {
     event.preventDefault();
-    if (!$('bulkCard')?.classList.contains('hidden')) resetBulkState();
-    else if (!$('worklogCard')?.classList.contains('hidden')) {
-      state.singleCapacitySeq += 1;
-      $('worklogCard').classList.add('hidden');
-      document.body.classList.remove('single-log-open');
-      closeDesktopEditor();
-    }
+    if (!$('bulkCard')?.classList.contains('hidden')) resetBulkState({ animate: true });
+    else if (!$('worklogCard')?.classList.contains('hidden')) closeSingleEditorAnimated({ hideResult: false });
     return;
   }
   if (event.key === '/' && !typing && state.user) {
@@ -1861,10 +2011,31 @@ $('worklogForm').addEventListener('submit', async event => {
     updateSingleCapacity();
     return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm TimeSpent hoặc bật OT.');
   }
-  state.submitInFlight = true;
   const logAndNext = state.logAndNextRequested === true;
   state.logAndNextRequested = false;
-  const currentKeyBeforeLog = $('key').value.trim().toUpperCase();
+  const payload = {
+    key: $('key').value.trim(),
+    project: $('project').value.trim(),
+    timeSpent: $('timeSpent').value.trim(),
+    date: $('date').value,
+    description: $('description').value.trim(),
+    overtime: $('overtime')?.checked === true
+  };
+  const confirmed = await confirmLogAction({
+    title: logAndNext ? 'Xác nhận Log & Next?' : 'Xác nhận Logwork?',
+    message: 'Worklog sẽ được ghi lên Jira và có thể cập nhật trạng thái issue. Hãy kiểm tra nhanh trước khi xác nhận.',
+    rows: [
+      ['Sub-task', payload.key || '—'],
+      ['Ngày logwork', payload.date || '—'],
+      ['TimeSpent', payload.timeSpent || '—'],
+      ['Loại', payload.overtime ? 'Overtime (OT)' : 'Giờ thường']
+    ],
+    confirmLabel: logAndNext ? 'XÁC NHẬN LOG & NEXT' : 'XÁC NHẬN LOG'
+  });
+  if (!confirmed || state.submitInFlight) return;
+
+  state.submitInFlight = true;
+  const currentKeyBeforeLog = payload.key.toUpperCase();
   const currentIndexBeforeLog = state.filterIssues.findIndex(item => String(item.key || '').toUpperCase() === currentKeyBeforeLog);
   const requestId = createRequestId('worklog');
   const btn = $('logBtn');
@@ -1875,14 +2046,6 @@ $('worklogForm').addEventListener('submit', async event => {
   if (nextBtn && logAndNext) nextBtn.textContent = 'ĐANG LOG...';
   $('resultCard').classList.add('hidden');
   try {
-    const payload = {
-      key: $('key').value.trim(),
-      project: $('project').value.trim(),
-      timeSpent: $('timeSpent').value.trim(),
-      date: $('date').value,
-      description: $('description').value.trim(),
-      overtime: $('overtime')?.checked === true
-    };
     const data = await api('/api?action=worklog', { method: 'POST', body: JSON.stringify({ ...payload, requestId }), requestId });
 
     state.prefs.lastProject = payload.project;
@@ -1899,12 +2062,13 @@ $('worklogForm').addEventListener('submit', async event => {
       ${data.segments.map(s => `<div class="segment"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('')}
       <div class="transition-note ${data.transition?.ok ? 'ok' : 'warn'}">${data.transition?.ok ? `✓ Trạng thái: ${escapeHtml(transitionPathLabel(data.transition))}` : `⚠ ${escapeHtml(data.transition?.message || 'Worklog đã tạo nhưng chưa chuyển được trạng thái.')}`}</div>
     `;
-    result.classList.remove('hidden');
+    showAnimated(result);
     result.dataset.lastSuccess = data.issue.key;
     addAuditEntry({ ok: true, key: data.issue.key, message: `${data.date} · ${minutesLabel(data.totalMinutes)}`, segments: data.segments });
     const loggedRange = (data.segments || []).map(segment => `${segment.start}–${segment.end}`).join(' · ');
     showToast(`Đã log ${data.issue.key}${loggedRange ? ` · ${loggedRange}` : ''}`);
     showLateLogWarning(payload.date);
+    invalidateHistoryCache();
     state.singleCapacitySeq += 1;
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
@@ -1941,7 +2105,7 @@ $('worklogForm').addEventListener('submit', async event => {
     const result = $('resultCard');
     result.className = 'result error';
     result.innerHTML = `<h3>Logwork chưa thành công</h3><div class="meta">${escapeHtml(error.message)}</div>`;
-    result.classList.remove('hidden');
+    showAnimated(result);
     addAuditEntry({ ok: false, key: $('key').value.trim().toUpperCase(), message: error.message });
     showToast(error.message);
   } finally {

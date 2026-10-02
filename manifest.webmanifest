@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.7.2 – Bulk Log Layout Optimization.",
+  "description": "Quick Jira Log V1.7.3 – Motion, Safe Submit & Fast History.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

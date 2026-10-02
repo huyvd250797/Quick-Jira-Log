@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.7.2');
-console.log('V1.7.2 version test passed.');
+assert.equal(packageJson.version, '1.7.3');
+console.log('V1.7.3 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -456,3 +456,25 @@ assert(styles.includes('#bulkCard .bulk-time-field'));
 assert(styles.includes('grid-template-areas:'));
 assert(appJs.includes("message: ''"));
 console.log('V1.7.2 bulk layout optimization tests passed.');
+
+
+// V1.7.3 - Motion, Safe Submit & Fast History.
+const historyHandlerJs = fs.readFileSync(path.join(root, 'handlers', 'worklog-history.js'), 'utf8');
+assert(indexHtml.includes('id="logConfirmOverlay"'));
+assert(indexHtml.includes('id="confirmLogBtn"'));
+assert(indexHtml.includes('id="cancelLogConfirmBtn"'));
+assert(appJs.includes('confirmLogAction'));
+assert(appJs.includes("title: 'Xác nhận Log tất cả?'"));
+assert(appJs.includes("title: logAndNext ? 'Xác nhận Log & Next?' : 'Xác nhận Logwork?'"));
+assert(styles.includes('/* V1.7.3 – Motion, Safe Submit & Fast History */'));
+assert(styles.includes('@media (prefers-reduced-motion: reduce)'));
+assert(styles.includes('.confirm-dialog'));
+assert(appJs.includes('historyCache: new Map()'));
+assert(appJs.includes('invalidateHistoryCache()'));
+assert(historyHandlerJs.includes('getIssuesByKeys'));
+assert(historyHandlerJs.includes('const concurrency = 12'));
+assert(historyHandlerJs.includes('if (!authorDay.ok)'));
+assert(historyHandlerJs.includes("source = authorDay.ok ? 'author-day' : 'fallback-worklog-date'"));
+assert(jiraJs.includes('async function getIssuesByKeys(keys, auth)'));
+assert(jiraJs.includes('getIssuesByKeys,'));
+console.log('V1.7.3 motion + safe submit + fast history tests passed.');

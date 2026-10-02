@@ -1,11 +1,11 @@
 {
   "name": "quick-jira-log",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "private": true,
   "engines": {
     "node": "24.x"
   },
   "scripts": {
-    "test": "node tests/run-tests.js && node tests/auth-tests.js"
+    "test": "node tests/run-tests.js && node tests/auth-tests.js && node tests/history-tests.js"
   }
 }

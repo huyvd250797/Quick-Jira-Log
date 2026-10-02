@@ -2152,3 +2152,115 @@ html[data-theme="dark"] .bulk-redistribute-btn:hover { background: #15304e; }
   #bulkCard.mobile-bottom-sheet .bulk-overtime-toggle { min-height: 38px; }
   #bulkCard.mobile-bottom-sheet .bulk-summary { padding: 8px 10px; min-height: 38px; }
 }
+
+/* V1.7.3 – Motion, Safe Submit & Fast History */
+:root { --qjl-motion-fast: 150ms; --qjl-motion-normal: 180ms; }
+@keyframes qjl-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes qjl-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes qjl-sheet-in { from { opacity: 0; transform: translateY(10px) scale(.992); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes qjl-sheet-out { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(8px) scale(.994); } }
+@keyframes qjl-card-in { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+@keyframes qjl-card-out { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 7px; } }
+
+.settings-overlay.qjl-opening .settings-backdrop,
+.confirm-overlay.qjl-opening .settings-backdrop { animation: qjl-fade-in var(--qjl-motion-fast) ease-out both; }
+.settings-overlay.qjl-opening .settings-sheet,
+.confirm-overlay.qjl-opening .confirm-dialog { animation: qjl-sheet-in var(--qjl-motion-normal) cubic-bezier(.2,.8,.2,1) both; }
+.settings-overlay.qjl-closing .settings-backdrop,
+.confirm-overlay.qjl-closing .settings-backdrop { animation: qjl-fade-out var(--qjl-motion-fast) ease-in both; }
+.settings-overlay.qjl-closing .settings-sheet,
+.confirm-overlay.qjl-closing .confirm-dialog { animation: qjl-sheet-out var(--qjl-motion-fast) ease-in both; }
+
+#worklogCard.qjl-opening,
+#bulkCard.qjl-opening { animation: qjl-card-in var(--qjl-motion-normal) cubic-bezier(.2,.8,.2,1) both; }
+#worklogCard.qjl-closing,
+#bulkCard.qjl-closing { animation: qjl-card-out var(--qjl-motion-fast) ease-in both; }
+.result.qjl-opening { animation: qjl-card-in var(--qjl-motion-normal) cubic-bezier(.2,.8,.2,1) both; }
+
+.confirm-overlay { z-index: 180; align-items: center; padding: 18px; }
+.confirm-overlay .settings-backdrop { background: rgba(5, 13, 26, .58); backdrop-filter: blur(4px); }
+.confirm-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 520px);
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px 14px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: 0 26px 70px rgba(0,0,0,.28);
+}
+.confirm-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #fff4d8;
+  color: #b46a00;
+  font-size: 23px;
+  font-weight: 900;
+}
+.confirm-copy { min-width: 0; }
+.confirm-copy h2 { margin: 0; font-size: 18px; line-height: 1.25; }
+.confirm-copy p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+.confirm-summary {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 7px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #f8fbff;
+}
+.confirm-summary-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; }
+.confirm-summary-row span { color: var(--muted); }
+.confirm-summary-row strong { color: var(--text); text-align: right; }
+.confirm-actions { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.2fr; gap: 9px; margin-top: 2px; }
+.confirm-actions button { min-height: 46px; }
+html[data-theme="dark"] .confirm-icon { background: #3a2c11; color: #ffc65c; }
+html[data-theme="dark"] .confirm-summary { background: #0d1929; }
+
+.history-search-btn.is-loading { position: relative; padding-left: 42px; opacity: .82; }
+.history-search-btn.is-loading::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: qjl-spin .7s linear infinite;
+}
+
+@media (max-width: 899px) {
+  .confirm-overlay { align-items: flex-end; padding: 0; }
+  .confirm-dialog {
+    width: 100%;
+    border-radius: 22px 22px 0 0;
+    padding: 18px 16px max(18px, calc(env(safe-area-inset-bottom) + 10px));
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qjl-opening, .qjl-closing,
+  .settings-overlay.qjl-opening .settings-backdrop,
+  .settings-overlay.qjl-opening .settings-sheet,
+  .settings-overlay.qjl-closing .settings-backdrop,
+  .settings-overlay.qjl-closing .settings-sheet,
+  .confirm-overlay.qjl-opening .settings-backdrop,
+  .confirm-overlay.qjl-opening .confirm-dialog,
+  .confirm-overlay.qjl-closing .settings-backdrop,
+  .confirm-overlay.qjl-closing .confirm-dialog,
+  #worklogCard.qjl-opening, #bulkCard.qjl-opening,
+  #worklogCard.qjl-closing, #bulkCard.qjl-closing,
+  .result.qjl-opening { animation: none !important; transition: none !important; }
+}

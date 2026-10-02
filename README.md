@@ -1,30 +1,31 @@
-# Quick Jira Log V1.7.2 – Bulk Log Layout Optimization
+# Quick Jira Log V1.7.3 – Motion, Safe Submit & Fast History
 
-Nâng cấp trực tiếp từ **V1.7.1 – Instant Bulk Defaults & Manual Smart Allocation**.
+Nâng cấp trực tiếp từ **V1.7.2 – Bulk Log Layout Optimization**.
 
 ## Trọng tâm phiên bản
 
-- Thu gọn layout **Log tất cả** để xem được nhiều Sub-task hơn nhưng vẫn giữ khoảng thở, không gây cảm giác chật.
-- Đưa **Ngày logwork** lên sticky header để cuộn xuống vẫn luôn biết đang log ngày nào.
-- Bỏ các đoạn mô tả/giải thích dài trong Bulk modal; chỉ giữ thông tin chức năng cần thiết.
-- Giữ **Tiến độ giờ thường / 8h** trong sticky header và đặt **Tự động phân bổ** ngay cạnh trạng thái tiến độ.
-- Tối ưu TimeSpent + preset + OT theo bố cục ngang trên desktop; mobile vẫn responsive và thao tác một tay.
-- Description tiếp tục thu gọn mặc định, chỉ mở khi người dùng cần sửa.
+- Bổ sung animation nhẹ khi mở/đóng modal, bottom sheet, tool overlay, correction panel và result card.
+- Chuyển động ngắn 150–180ms, chỉ dùng fade + translate/scale rất nhẹ; tự tắt khi thiết bị bật `prefers-reduced-motion`.
+- Mọi thao tác **LOG WORK / LOG & NEXT / LOG TẤT CẢ** đều có bước xác nhận trước khi gửi Jira để tránh bấm nhầm.
+- Popup xác nhận hiển thị đúng Sub-task/ngày/TimeSpent/OT hoặc số lượng Sub-task + tổng thời gian của Bulk.
+- Không phát sinh request Jira trước khi người dùng bấm **XÁC NHẬN LOG**.
 
-## Smart Bulk Allocation giữ nguyên
+## Fast Worklog History
 
-- Mỗi Sub-task mở Bulk mặc định **1h** để dùng ngay.
-- Không tự phân bổ khi mở modal.
-- Chỉ khi người dùng bấm **TỰ ĐỘNG PHÂN BỔ**, app mới đọc phần giờ còn thiếu tới 8h và chia lại TimeSpent.
-- Người dùng luôn có thể sửa TimeSpent, preset, OT hoặc bỏ Sub-task trước khi Log.
+- Nếu nhập KEY cụ thể: đọc trực tiếp issue/worklog, không chạy các JQL quét ngày không cần thiết.
+- Khi tìm theo ngày: ưu tiên `worklogAuthor = currentUser()`; chỉ fallback quét `worklogDate` rộng khi Jira không hỗ trợ truy vấn author.
+- Metadata issue được lấy theo batch tối đa 100 KEY/request thay vì gọi `getIssue()` riêng từng issue.
+- Metadata và worklog chạy song song; worklog dùng concurrency 12 có kiểm soát.
+- Cache kết quả tìm kiếm 20 giây trên client; tự invalidate sau Log/Sửa/Xóa worklog hoặc đổi tài khoản.
+- Nhấn Enter tại ô KEY có thể tìm ngay.
 
-## Reliability giữ nguyên
+## Các chức năng giữ nguyên
 
 - Jira Auth Classification + CAPTCHA Guard.
-- Late Worklog Warning từ N-2 trở về trước.
 - Daily Capacity 8h, OT, chống overlap, rollback và idempotency.
+- Smart Bulk Allocation chủ động.
+- Late Worklog Warning từ N-2 trở về trước.
 - Desktop modal / mobile bottom sheet / sticky header.
-- Log 1, Log tất cả, Planner, History và workflow transition.
 
 ## Thông tin
 
