@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.7.3');
-console.log('V1.7.3 version test passed.');
+assert.equal(packageJson.version, '1.8.0');
+console.log('V1.8.0 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -472,9 +472,36 @@ assert(styles.includes('.confirm-dialog'));
 assert(appJs.includes('historyCache: new Map()'));
 assert(appJs.includes('invalidateHistoryCache()'));
 assert(historyHandlerJs.includes('getIssuesByKeys'));
-assert(historyHandlerJs.includes('const concurrency = 12'));
+assert(historyHandlerJs.includes('mapWithConcurrency(keys, 12'));
 assert(historyHandlerJs.includes('if (!authorDay.ok)'));
 assert(historyHandlerJs.includes("source = authorDay.ok ? 'author-day' : 'fallback-worklog-date'"));
 assert(jiraJs.includes('async function getIssuesByKeys(keys, auth)'));
 assert(jiraJs.includes('getIssuesByKeys,'));
 console.log('V1.7.3 motion + safe submit + fast history tests passed.');
+
+
+// V1.8.0 - Performance & Reliability Hardening.
+const bulkHandlerV180 = fs.readFileSync(path.join(root, 'handlers', 'bulk-worklog.js'), 'utf8');
+const dayAuditHandlerV180 = fs.readFileSync(path.join(root, 'handlers', 'day-audit.js'), 'utf8');
+const historyHandlerV180 = fs.readFileSync(path.join(root, 'handlers', 'worklog-history.js'), 'utf8');
+const swV180 = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
+assert(indexHtml.includes('V1.8.0'));
+assert(indexHtml.includes('id="appUpdateBanner"'));
+assert(indexHtml.includes('id="appUpdateBtn"'));
+assert(appJs.includes("const APP_VERSION = '1.8.0'"));
+assert(appJs.includes('dayAuditCache: new Map()'));
+assert(appJs.includes('apiInflight: new Map()'));
+assert(appJs.includes("event.key.toLowerCase() === 'k'"));
+assert(appJs.includes('fetchDayAudit(date'));
+assert(styles.includes('/* V1.8.0 – Performance & Reliability Hardening */'));
+assert(bulkHandlerV180.includes('getIssuesByKeys'));
+assert(!bulkHandlerV180.includes('item => getIssue(item.key, session)'));
+assert(bulkHandlerV180.includes("perf.step('issueBatch'"));
+assert(dayAuditHandlerV180.includes('DAY_AUDIT_CACHE_MS'));
+assert(dayAuditHandlerV180.includes('cacheGet(cacheKey)'));
+assert(historyHandlerV180.includes('HISTORY_CACHE_MS'));
+assert(historyHandlerV180.includes('mapWithConcurrency(keys, 12'));
+assert(swV180.includes("quick-jira-log-v1.8.0-shell"));
+assert(swV180.includes("event.data?.type === 'SKIP_WAITING'"));
+assert(!swV180.includes('.then(() => self.skipWaiting())'));
+console.log('V1.8.0 performance + reliability hardening static tests passed.');

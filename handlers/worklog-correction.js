@@ -14,6 +14,8 @@ const {
   isWeekendDate
 } = require('../lib/scheduler');
 const { loadOccupiedRanges } = require('../lib/worklog-guard');
+const { invalidateWorklogCaches } = require('../lib/app-cache');
+const { createPerf } = require('../lib/perf');
 
 function validDate(value) { return /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')); }
 function validTime(value) { return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(value || '')); }
@@ -24,22 +26,27 @@ module.exports = async function handler(req, res) {
   const session = getSession(req);
   if (!session) return sendJson(res, 401, { ok: false, error: 'Vui lòng đăng nhập Jira.' });
 
+  const perf = createPerf();
   try {
-    const body = await readJson(req);
+    const body = await perf.step('readRequest', () => readJson(req));
     const key = String(body.key || '').trim().toUpperCase();
     const worklogId = String(body.worklogId || '').trim();
     if (!key || !worklogId) return sendJson(res, 400, { ok: false, error: 'Thiếu KEY hoặc Worklog ID.' });
 
-    const me = session.me || await getMyself(session);
-    const worklogs = await getIssueWorklogs(key, session);
+    const me = session.me || await perf.step('myself', () => getMyself(session));
+    const worklogs = await perf.step('worklogs', () => getIssueWorklogs(key, session));
     const current = worklogs.find(w => String(w?.id || '') === worklogId);
     if (!current) return sendJson(res, 404, { ok: false, error: 'Không tìm thấy worklog cần xử lý.' });
     if (!authorMatches(current, me)) return sendJson(res, 403, { ok: false, error: 'Bạn chỉ được sửa/xóa worklog của chính mình.' });
 
     if (req.method === 'DELETE') {
-      const ok = await deleteWorklog(key, worklogId, session);
+      const oldParsed = parseJiraStartedAtWorkTimezone(current?.started || '');
+      const ok = await perf.step('deleteWorklog', () => deleteWorklog(key, worklogId, session));
       if (!ok) return sendJson(res, 502, { ok: false, error: 'Jira không xóa được worklog.' });
-      return sendJson(res, 200, { ok: true, deleted: true, key, worklogId });
+      if (oldParsed?.date) await invalidateWorklogCaches(session, oldParsed.date, [key]);
+      const performance = perf.snapshot();
+      res.setHeader('Server-Timing', perf.serverTimingHeader());
+      return sendJson(res, 200, { ok: true, deleted: true, key, worklogId, performance });
     }
 
     const date = String(body.date || '').trim();
@@ -67,21 +74,30 @@ module.exports = async function handler(req, res) {
       throw error;
     }
 
-    const updated = await updateWorklog(key, worklogId, {
+    const oldParsed = parseJiraStartedAtWorkTimezone(current?.started || '');
+    const updated = await perf.step('updateWorklog', () => updateWorklog(key, worklogId, {
       started: jiraStarted(date, startMinute),
       seconds: minutes * 60,
       description
-    }, session);
+    }, session));
 
     const parsed = parseJiraStartedAtWorkTimezone(updated?.started || jiraStarted(date, startMinute));
+    const newDate = parsed?.date || date;
+    await Promise.all([
+      oldParsed?.date ? invalidateWorklogCaches(session, oldParsed.date, [key]) : Promise.resolve(),
+      newDate !== oldParsed?.date ? invalidateWorklogCaches(session, newDate, [key]) : Promise.resolve()
+    ]);
+    const performance = perf.snapshot();
+    res.setHeader('Server-Timing', perf.serverTimingHeader());
     return sendJson(res, 200, {
       ok: true,
       key,
       worklogId,
-      date: parsed?.date || date,
+      date: newDate,
       start,
       minutes,
-      description
+      description,
+      performance
     });
   } catch (error) {
     if (error instanceof JiraError) {

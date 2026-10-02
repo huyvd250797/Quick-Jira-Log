@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
 
     // Hai lớp bảo vệ: burst guard giúp tránh đẩy Jira vào CAPTCHA; broad guard chặn spam dài hơn.
     // Nút "Tôi đã xác minh – Thử lại" có một scope riêng để người dùng không bị kẹt bởi burst guard cũ.
-    const burstGate = hit(req, captchaRetry ? 'login-captcha-retry' : 'login-burst', username, { limit: captchaRetry ? 1 : 2, windowMs: captchaRetry ? 15 * 1000 : 30 * 1000 });
+    const burstGate = await hit(req, captchaRetry ? 'login-captcha-retry' : 'login-burst', username, { limit: captchaRetry ? 1 : 2, windowMs: captchaRetry ? 15 * 1000 : 30 * 1000 });
     if (!burstGate.allowed) {
       res.setHeader('Retry-After', String(burstGate.retryAfterSeconds));
       return sendJson(res, 429, {
@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const broadGate = hit(req, 'login', username, { limit: 6, windowMs: 5 * 60 * 1000 });
+    const broadGate = await hit(req, 'login', username, { limit: 6, windowMs: 5 * 60 * 1000 });
     if (!broadGate.allowed) {
       res.setHeader('Retry-After', String(broadGate.retryAfterSeconds));
       return sendJson(res, 429, {
@@ -41,9 +41,11 @@ module.exports = async function handler(req, res) {
     }
 
     const { auth, me } = await loginWithPassword(username, password);
-    reset(req, 'login', username);
-    reset(req, 'login-burst', username);
-    reset(req, 'login-captcha-retry', username);
+    await Promise.all([
+      reset(req, 'login', username),
+      reset(req, 'login-burst', username),
+      reset(req, 'login-captcha-retry', username)
+    ]);
     const sessionPayload = {
       ...auth,
       me: {

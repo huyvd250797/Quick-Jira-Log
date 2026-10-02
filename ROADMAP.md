@@ -31,3 +31,5 @@
 - ✅ **V1.7.2 – Bulk Log Layout Optimization**: compact Bulk cards, đưa Ngày logwork vào sticky header, bỏ mô tả dài và sắp xếp lại TimeSpent/preset/OT để xem được nhiều Sub-task hơn trên PC/mobile.
 
 - ✅ **V1.7.3 – Motion, Safe Submit & Fast History**: animation nhẹ khi đóng/mở chức năng, popup xác nhận trước mọi thao tác Logwork và tối ưu Worklog History bằng direct-key path, JQL currentUser ưu tiên, batch metadata, concurrency có kiểm soát và client cache 20 giây.
+
+- ✅ **V1.8.0 – Performance & Reliability Hardening**: Batch Jira metadata cho Bulk, cache ngắn Day Audit/History có invalidate sau mutation, request dedupe phía client, optional Redis/KV idempotency + login rate-limit cho Vercel multi-instance, Server-Timing diagnostics, Ctrl/Cmd+K và PWA update banner an toàn.

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.7.3';
+const APP_VERSION = '1.8.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -53,6 +53,10 @@ const state = {
   loginCooldownTimer: null,
   captchaRequired: false,
   historyCache: new Map(),
+  dayAuditCache: new Map(),
+  apiInflight: new Map(),
+  swUpdateRegistration: null,
+  swReloading: false,
   confirmResolver: null,
   confirmOpen: false
 };
@@ -141,6 +145,26 @@ function confirmLogAction({ title, message, rows = [], confirmLabel = 'XÁC NH�
 
 function invalidateHistoryCache() {
   state.historyCache.clear();
+}
+
+function invalidateDayAuditCache(date = '') {
+  if (!date) {
+    state.dayAuditCache.clear();
+    return;
+  }
+  for (const key of [...state.dayAuditCache.keys()]) {
+    if (String(key).startsWith(`${date}|`)) state.dayAuditCache.delete(key);
+  }
+}
+
+async function fetchDayAudit(date, key = '', { force = false } = {}) {
+  const cacheKey = `${date}|${String(key || '').toUpperCase()}`;
+  const cached = state.dayAuditCache.get(cacheKey);
+  if (!force && cached && Date.now() - Number(cached.at || 0) < 15000) return cached.data;
+  const path = `/api?action=day-audit&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? '&force=1' : ''}`;
+  const data = await api(path, { method: 'GET', cache: 'no-store' });
+  state.dayAuditCache.set(cacheKey, { at: Date.now(), data });
+  return data;
 }
 
 
@@ -614,6 +638,7 @@ function setLoggedIn(user) {
   clearLoginCooldown();
   state.user = user;
   invalidateHistoryCache();
+  invalidateDayAuditCache();
   document.body.classList.remove('single-log-open');
   $('loginCard').classList.add('hidden');
   showAnimated($('filterCard'));
@@ -638,6 +663,7 @@ function setLoggedOut() {
   closeDesktopEditor();
   state.user = null;
   invalidateHistoryCache();
+  invalidateDayAuditCache();
   document.body.classList.remove('single-log-open');
   state.filterIssues = [];
   state.filterLoaded = false;
@@ -726,30 +752,48 @@ async function installPwa() {
 
 async function api(path, options = {}) {
   const { requestId, ...fetchOptions } = options;
-  const response = await fetch(path, {
-    credentials: 'same-origin',
-    cache: fetchOptions.cache || 'no-store',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(requestId ? { 'X-Request-ID': requestId } : {}),
-      ...(fetchOptions.headers || {})
-    },
-    ...fetchOptions
-  });
-  let data = null;
-  try { data = await response.json(); }
-  catch { data = { ok: false, error: 'Server trả về dữ liệu không hợp lệ.' }; }
-  if (response.status === 401) setLoggedOut();
-  if (!response.ok || !data?.ok) {
-    const error = new Error(data?.error || 'Có lỗi xảy ra.');
-    error.details = data?.details;
-    error.code = data?.code || '';
-    error.jiraUrl = data?.jiraUrl || '';
-    error.retryAfterSeconds = Number(data?.retryAfterSeconds || response.headers.get('retry-after') || 0) || 0;
-    error.status = response.status;
-    throw error;
-  }
-  return data;
+  const method = String(fetchOptions.method || 'GET').toUpperCase();
+  const dedupeKey = method === 'GET' ? `${method}:${path}` : '';
+  if (dedupeKey && state.apiInflight.has(dedupeKey)) return state.apiInflight.get(dedupeKey);
+
+  const run = (async () => {
+    const startedAt = performance.now();
+    const response = await fetch(path, {
+      credentials: 'same-origin',
+      cache: fetchOptions.cache || 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(requestId ? { 'X-Request-ID': requestId } : {}),
+        ...(fetchOptions.headers || {})
+      },
+      ...fetchOptions
+    });
+    let data = null;
+    try { data = await response.json(); }
+    catch { data = { ok: false, error: 'Server trả về dữ liệu không hợp lệ.' }; }
+    data = data && typeof data === 'object' ? data : { ok: false, error: 'Server trả về dữ liệu không hợp lệ.' };
+    data.clientElapsedMs = Math.round(performance.now() - startedAt);
+    if (response.status === 401) setLoggedOut();
+    if (!response.ok || !data?.ok) {
+      const error = new Error(data?.error || 'Có lỗi xảy ra.');
+      error.details = data?.details;
+      error.code = data?.code || '';
+      error.jiraUrl = data?.jiraUrl || '';
+      error.retryAfterSeconds = Number(data?.retryAfterSeconds || response.headers.get('retry-after') || 0) || 0;
+      error.status = response.status;
+      throw error;
+    }
+    let debugPerformance = false;
+    try { debugPerformance = localStorage.getItem('quick-jira-log:debug-performance') === '1'; } catch {}
+    if (debugPerformance && data.performance) {
+      console.debug('[Quick Jira Log performance]', path, data.performance, `${data.clientElapsedMs}ms client`);
+    }
+    return data;
+  })();
+
+  if (dedupeKey) state.apiInflight.set(dedupeKey, run);
+  try { return await run; }
+  finally { if (dedupeKey && state.apiInflight.get(dedupeKey) === run) state.apiInflight.delete(dedupeKey); }
 }
 
 async function checkStatus() {
@@ -1202,11 +1246,12 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
   }
   renderWorklogHistory();
   try {
-    const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
+    const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? '&force=1' : ''}`, { method: 'GET', cache: 'no-store' });
     state.historyItems = Array.isArray(data.items) ? data.items : [];
     state.historyCache.set(cacheKey, { at: Date.now(), items: state.historyItems });
     if (!quiet) {
-      const timing = Number(data.elapsedMs || 0) > 0 ? ` · ${Math.max(1, Math.round(Number(data.elapsedMs) / 100) / 10)}s` : '';
+      const elapsed = Number(data.performance?.totalMs || data.clientElapsedMs || 0);
+      const timing = elapsed > 0 ? ` · ${Math.max(1, Math.round(elapsed / 100) / 10)}s` : '';
       showToast(`Đã tải ${state.historyItems.length} worklog${timing}.`);
     }
   } catch (error) {
@@ -1259,6 +1304,7 @@ async function saveCorrection() {
     await api('/api?action=worklog-correction', { method: 'PATCH', body: JSON.stringify(payload) });
     showToast('Đã cập nhật worklog trên Jira.');
     invalidateHistoryCache();
+    invalidateDayAuditCache();
     closeCorrection();
     await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
@@ -1276,6 +1322,7 @@ async function deleteHistoryItem(item) {
     await api('/api?action=worklog-correction', { method: 'DELETE', body: JSON.stringify({ key: item.key, worklogId: item.id }) });
     showToast('Đã xóa worklog trên Jira.');
     invalidateHistoryCache();
+    invalidateDayAuditCache();
     if ($('correctionWorklogId').value === item.id) closeCorrection();
     await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
@@ -1298,7 +1345,7 @@ async function runDayAudit() {
   out.classList.remove('hidden');
   out.innerHTML = 'Đang quét worklog trong ngày từ nhiều nguồn Jira...';
   try {
-    const data = await api(`/api?action=day-audit&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}`, { method: 'GET', cache: 'no-store' });
+    const data = await fetchDayAudit(date, key, { force: true });
     const sourceBits = [];
     if (data.sources?.authorDay?.ok) sourceBits.push(`JQL user: ${data.sources.authorDay.issues}`);
     if (data.sources?.anyDay?.ok) sourceBits.push(`JQL ngày: ${data.sources.anyDay.issues}`);
@@ -1375,7 +1422,7 @@ async function loadSingleCapacity() {
   state.singleCapacity = { date, regularLoggedMinutes: 0, loading: true, error: '' };
   updateSingleCapacity();
   try {
-    const data = await api(`/api?action=day-audit&date=${encodeURIComponent(date)}`, { method: 'GET', cache: 'no-store' });
+    const data = await fetchDayAudit(date);
     if (seq !== state.singleCapacitySeq || $('date')?.value !== date) return;
     state.singleCapacity = {
       date,
@@ -1577,7 +1624,7 @@ async function loadBulkCapacity({ force = false } = {}) {
   let promise;
   promise = (async () => {
     try {
-      const data = await api(`/api?action=day-audit&date=${encodeURIComponent(date)}`, { method: 'GET', cache: 'no-store' });
+      const data = await fetchDayAudit(date);
       if (seq !== state.bulkCapacitySeq || $('bulkDate')?.value !== date) return false;
       state.bulkCapacity = {
         date,
@@ -1799,6 +1846,7 @@ async function submitBulkWorklog(event) {
     showToast(data.items.length === 1 ? `Đã log ${data.items[0].key}${firstRange ? ` · ${firstRange}` : ''}` : `Đã log ${data.items.length} Sub-task lên Jira.`);
     showLateLogWarning(date);
     invalidateHistoryCache();
+    invalidateDayAuditCache(date);
     const loggedKeys = new Set((data.items || []).map(item => String(item.key || '').toUpperCase()));
     state.filterIssues = state.filterIssues.filter(item => !loggedKeys.has(String(item.key || '').toUpperCase()));
     state.filterLoaded = true;
@@ -1982,6 +2030,12 @@ document.addEventListener('keydown', event => {
     else if (!$('worklogCard')?.classList.contains('hidden')) closeSingleEditorAnimated({ hideResult: false });
     return;
   }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k' && state.user) {
+    event.preventDefault();
+    $('filterIssueSearch')?.focus();
+    $('filterIssueSearch')?.select?.();
+    return;
+  }
   if (event.key === '/' && !typing && state.user) {
     event.preventDefault();
     $('filterIssueSearch')?.focus();
@@ -2069,6 +2123,7 @@ $('worklogForm').addEventListener('submit', async event => {
     showToast(`Đã log ${data.issue.key}${loggedRange ? ` · ${loggedRange}` : ''}`);
     showLateLogWarning(payload.date);
     invalidateHistoryCache();
+    invalidateDayAuditCache(payload.date);
     state.singleCapacitySeq += 1;
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
@@ -2150,8 +2205,37 @@ window.addEventListener('appinstalled', () => {
   updatePwaUi();
   showToast('Đã cài Quick Jira Log lên thiết bị.');
 });
+function showAppUpdateBanner(registration) {
+  state.swUpdateRegistration = registration || state.swUpdateRegistration;
+  const banner = $('appUpdateBanner');
+  if (banner) banner.classList.remove('hidden');
+}
+
+$('appUpdateBtn')?.addEventListener('click', () => {
+  const waiting = state.swUpdateRegistration?.waiting;
+  if (!waiting) return location.reload();
+  waiting.postMessage({ type: 'SKIP_WAITING' });
+});
+$('dismissAppUpdateBtn')?.addEventListener('click', () => $('appUpdateBanner')?.classList.add('hidden'));
+
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      if (registration.waiting) showAppUpdateBanner(registration);
+      registration.addEventListener('updatefound', () => {
+        const installing = registration.installing;
+        installing?.addEventListener('statechange', () => {
+          if (installing.state === 'installed' && navigator.serviceWorker.controller) showAppUpdateBanner(registration);
+        });
+      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (state.swReloading) return;
+        state.swReloading = true;
+        location.reload();
+      });
+    } catch {}
+  });
 }
 updateConnectionState();
 updatePwaUi();

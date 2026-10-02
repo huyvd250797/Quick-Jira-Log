@@ -12,6 +12,11 @@ const {
   searchRecentlyWorkedIssues
 } = require('../lib/jira');
 const { authorMatches, parseJiraStartedAtWorkTimezone, minuteToHHMM } = require('../lib/scheduler');
+const { mapWithConcurrency } = require('../lib/async');
+const { historyKey, cacheGet, cacheSet } = require('../lib/app-cache');
+const { createPerf } = require('../lib/perf');
+
+const HISTORY_CACHE_MS = 15 * 1000;
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
@@ -62,25 +67,34 @@ module.exports = async function handler(req, res) {
 
   const date = String(req.query?.date || '').trim();
   const requestedKey = String(req.query?.key || '').trim().toUpperCase();
+  const force = String(req.query?.force || '') === '1';
   if (!validDate(date)) return sendJson(res, 400, { ok: false, error: 'Ngày lịch sử không hợp lệ.' });
 
-  const startedAt = Date.now();
+  const perf = createPerf();
   try {
-    const me = session.me || await getMyself(session);
+    const cacheKey = historyKey(session, date, requestedKey);
+    if (!force) {
+      const cached = await perf.step('cacheRead', () => cacheGet(cacheKey));
+      if (cached.hit) {
+        const performance = perf.snapshot({ cacheHit: 1 });
+        res.setHeader('Server-Timing', perf.serverTimingHeader({ cacheHit: 1 }));
+        return sendJson(res, 200, { ...cached.value, cache: { hit: true, source: cached.source }, performance });
+      }
+    }
+
+    const me = session.me || await perf.step('myself', () => getMyself(session));
     const keySet = new Set();
     let source = 'direct-key';
-    let sourceDetails = {};
+    const sourceDetails = {};
 
     if (requestedKey) {
       keySet.add(requestedKey);
     } else {
-      // Fast path: ưu tiên JQL có worklogAuthor=currentUser(). Không quét toàn bộ worklog
-      // của mọi user nếu Jira đã hỗ trợ truy vấn theo author.
       const recentDate = dayDistance(date, vietnamToday()) <= 1;
-      const [authorDay, recentWorked] = await Promise.all([
+      const [authorDay, recentWorked] = await perf.step('discoverIssues', () => Promise.all([
         safeKeys(() => searchIssuesWorkedOnDate(date, session)),
         recentDate ? safeKeys(() => searchRecentlyWorkedIssues(session)) : Promise.resolve({ ok: true, keys: [], skipped: true })
-      ]);
+      ]));
 
       for (const key of authorDay.keys || []) keySet.add(key);
       for (const key of recentWorked.keys || []) keySet.add(key);
@@ -88,9 +102,8 @@ module.exports = async function handler(req, res) {
       sourceDetails.authorDay = { ok: authorDay.ok, issues: authorDay.keys.length, error: authorDay.error || null };
       sourceDetails.recentWorked = { ok: recentWorked.ok, issues: recentWorked.keys.length, skipped: Boolean(recentWorked.skipped), error: recentWorked.error || null };
 
-      // Chỉ dùng scan worklogDate rộng khi truy vấn currentUser không khả dụng.
       if (!authorDay.ok) {
-        const anyDay = await safeKeys(() => searchIssuesWithWorklogDate(date, session));
+        const anyDay = await perf.step('fallbackIssueScan', () => safeKeys(() => searchIssuesWithWorklogDate(date, session)));
         for (const key of anyDay.keys || []) keySet.add(key);
         sourceDetails.anyDay = { ok: anyDay.ok, issues: anyDay.keys.length, error: anyDay.error || null };
       } else {
@@ -100,72 +113,67 @@ module.exports = async function handler(req, res) {
 
     const keys = [...keySet].slice(0, 500);
     if (!keys.length) {
-      return sendJson(res, 200, {
-        ok: true, date, items: [], skipped: [], issueCount: 0,
-        source, sourceDetails, elapsedMs: Date.now() - startedAt
-      });
+      const payload = { ok: true, date, items: [], skipped: [], issueCount: 0, source, sourceDetails };
+      await cacheSet(cacheKey, payload, HISTORY_CACHE_MS);
+      const performance = perf.snapshot({ cacheHit: 0 });
+      res.setHeader('Server-Timing', perf.serverTimingHeader({ cacheHit: 0 }));
+      return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });
     }
 
-    // Batch metadata chạy song song với việc đọc worklog: giảm 1 round-trip nối tiếp.
-    const metadataPromise = getIssuesByKeys(keys, session)
+    const metadataPromise = perf.step('metadataBatch', () => getIssuesByKeys(keys, session))
       .then(issues => ({ ok: true, issues }))
       .catch(error => {
         if (error?.status === 401) throw error;
         return { ok: false, issues: [], error: error?.message || String(error) };
       });
 
-    const items = [];
     const skipped = [];
-    const worklogResults = [];
-    const concurrency = 12;
-    for (let i = 0; i < keys.length; i += concurrency) {
-      const batch = keys.slice(i, i + concurrency);
-      const results = await Promise.all(batch.map(async key => {
-        try {
-          return { key, worklogs: await getIssueWorklogs(key, session) };
-        } catch (error) {
-          if (error?.status === 401) throw error;
-          skipped.push({ key, status: error?.status || 0 });
-          return { key, worklogs: [] };
-        }
-      }));
-      worklogResults.push(...results);
-    }
+    const worklogResults = await perf.step('worklogs', () => mapWithConcurrency(keys, 12, async key => {
+      try {
+        return { key, worklogs: await getIssueWorklogs(key, session) };
+      } catch (error) {
+        if (error?.status === 401) throw error;
+        skipped.push({ key, status: error?.status || 0 });
+        return { key, worklogs: [] };
+      }
+    }));
 
     const metadata = await metadataPromise;
     if (!metadata.ok) sourceDetails.metadataError = metadata.error;
     const issueMap = new Map((metadata.issues || []).map(issue => [String(issue?.key || '').toUpperCase(), issue]));
+    const items = [];
 
     for (const result of worklogResults) {
       const issue = issueMap.get(String(result.key).toUpperCase());
       for (const worklog of result.worklogs || []) {
-          if (!authorMatches(worklog, me)) continue;
-          const parsed = parseJiraStartedAtWorkTimezone(worklog.started);
-          if (!parsed || parsed.date !== date) continue;
-          const minutes = Math.max(1, Math.ceil(Number(worklog.timeSpentSeconds || 0) / 60));
-          const endMinute = parsed.minute + minutes;
-          items.push({
-            id: String(worklog.id || ''),
-            key: result.key,
-            project: String(issue?.fields?.project?.key || result.key.split('-')[0] || ''),
-            summary: String(issue?.fields?.summary || ''),
-            status: String(issue?.fields?.status?.name || ''),
-            date,
-            start: minuteToHHMM(parsed.minute),
-            end: minuteToHHMM(endMinute),
-            minutes,
-            timeSpentSeconds: Number(worklog.timeSpentSeconds || 0),
-            description: commentText(worklog.comment),
-            started: String(worklog.started || '')
-          });
-        }
+        if (!authorMatches(worklog, me)) continue;
+        const parsed = parseJiraStartedAtWorkTimezone(worklog.started);
+        if (!parsed || parsed.date !== date) continue;
+        const minutes = Math.max(1, Math.ceil(Number(worklog.timeSpentSeconds || 0) / 60));
+        const endMinute = parsed.minute + minutes;
+        items.push({
+          id: String(worklog.id || ''),
+          key: result.key,
+          project: String(issue?.fields?.project?.key || result.key.split('-')[0] || ''),
+          summary: String(issue?.fields?.summary || ''),
+          status: String(issue?.fields?.status?.name || ''),
+          date,
+          start: minuteToHHMM(parsed.minute),
+          end: minuteToHHMM(endMinute),
+          minutes,
+          timeSpentSeconds: Number(worklog.timeSpentSeconds || 0),
+          description: commentText(worklog.comment),
+          started: String(worklog.started || '')
+        });
       }
+    }
 
     items.sort((a, b) => b.start.localeCompare(a.start) || a.key.localeCompare(b.key));
-    return sendJson(res, 200, {
-      ok: true, date, items, skipped, issueCount: keys.length,
-      source, sourceDetails, elapsedMs: Date.now() - startedAt
-    });
+    const payload = { ok: true, date, items, skipped, issueCount: keys.length, source, sourceDetails };
+    await perf.step('cacheWrite', () => cacheSet(cacheKey, payload, HISTORY_CACHE_MS));
+    const performance = perf.snapshot({ cacheHit: 0 });
+    res.setHeader('Server-Timing', perf.serverTimingHeader({ cacheHit: 0 }));
+    return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });
   } catch (error) {
     if (error instanceof JiraError) {
       if (error.status === 401) res.setHeader('Set-Cookie', clearSessionCookie());

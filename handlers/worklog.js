@@ -27,6 +27,8 @@ const {
 const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { normalizeRequestId, runIdempotent } = require('../lib/idempotency');
 const { settleMapWithConcurrency } = require('../lib/async');
+const { invalidateWorklogCaches } = require('../lib/app-cache');
+const { createPerf } = require('../lib/perf');
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
@@ -53,7 +55,7 @@ function planningError(error, date, overtime) {
   return error;
 }
 
-async function performWorklog(body, session) {
+async function performWorklog(body, session, perf) {
   const key = String(body.key || '').trim().toUpperCase();
   const project = String(body.project || '').trim().toUpperCase();
   const timeSpent = String(body.timeSpent || '').trim();
@@ -78,8 +80,8 @@ async function performWorklog(body, session) {
     throw new JiraError('Worklog thường tối đa 8h. Nếu cần log ngoài giờ, hãy bật Overtime cho Sub-task.', 400);
   }
 
-  const mePromise = session.me ? Promise.resolve(session.me) : getMyself(session);
-  const issuePromise = getIssue(key, session);
+  const mePromise = session.me ? Promise.resolve(session.me) : perf.step('myself', () => getMyself(session));
+  const issuePromise = perf.step('issue', () => getIssue(key, session));
   const [me, issue] = await Promise.all([mePromise, issuePromise]);
 
   const actualProject = String(issue?.fields?.project?.key || '').toUpperCase();
@@ -89,8 +91,8 @@ async function performWorklog(body, session) {
 
   // Chạy kiểm tra timeline và preflight OT song song để giảm thời gian chờ Jira.
   const [guard, overtimePrepared] = await Promise.all([
-    loadOccupiedRangesStable(date, [key], me, session),
-    overtime ? prepareOvertimeUpdate(key, session) : Promise.resolve(null)
+    perf.step('guard', () => loadOccupiedRangesStable(date, [key], me, session)),
+    overtime ? perf.step('otPreflight', () => prepareOvertimeUpdate(key, session)) : Promise.resolve(null)
   ]);
   const windows = workWindowsFor(date, overtime);
   if (!overtime) {
@@ -110,20 +112,20 @@ async function performWorklog(body, session) {
   const created = [];
   let overtimeApplied = false;
   try {
-    const creationResults = await settleMapWithConcurrency(plan, 2, async seg => {
+    const creationResults = await perf.step('createWorklogs', () => settleMapWithConcurrency(plan, 2, async seg => {
       const worklog = await createWorklog(key, {
         started: jiraStarted(date, seg.start),
         seconds: seg.minutes * 60,
         description
       }, session);
       return { id: worklog?.id, segment: seg };
-    });
+    }));
     created.push(...creationResults.filter(x => x.status === 'fulfilled').map(x => x.value));
     const failedCreation = creationResults.find(x => x.status === 'rejected');
     if (failedCreation) throw failedCreation.reason;
 
     if (overtimePrepared) {
-      await applyOvertimeUpdate(overtimePrepared, session);
+      await perf.step('applyOvertime', () => applyOvertimeUpdate(overtimePrepared, session));
       overtimeApplied = true;
     }
   } catch (error) {
@@ -134,7 +136,7 @@ async function performWorklog(body, session) {
 
   let transition = { ok: false, message: 'Chưa kiểm tra transition.' };
   try {
-    transition = await transitionIssueToDone(key, session, issue);
+    transition = await perf.step('transition', () => transitionIssueToDone(key, session, issue));
   } catch (error) {
     if (error instanceof JiraError && error.status === 401) throw error;
     transition = { ok: false, message: error?.message || 'Worklog đã tạo nhưng chưa chuyển được sang Done.' };
@@ -170,13 +172,19 @@ module.exports = async function handler(req, res) {
   if (!session) return sendJson(res, 401, { ok: false, error: 'Vui lòng đăng nhập Jira.' });
 
   try {
-    const body = await readJson(req);
+    const perf = createPerf();
+    const body = await perf.step('readRequest', () => readJson(req));
     const requestId = normalizeRequestId(body.requestId || req.headers['x-request-id']);
-    const result = await runIdempotent('worklog', requestId, () => performWorklog(body, session));
-    return sendJson(res, 200, { ...result.value, requestId: result.requestId || undefined, replayed: result.replayed || undefined });
+    const result = await runIdempotent('worklog', requestId, () => performWorklog(body, session, perf));
+    await invalidateWorklogCaches(session, result.value.date, [result.value.issue?.key]);
+    const performance = perf.snapshot({ replayed: result.replayed ? 1 : 0 });
+    res.setHeader('Server-Timing', perf.serverTimingHeader({ replayed: result.replayed ? 1 : 0 }));
+    return sendJson(res, 200, { ...result.value, performance, idempotencyStore: result.store, requestId: result.requestId || undefined, replayed: result.replayed || undefined });
   } catch (error) {
     if (error?.message === 'PAYLOAD_TOO_LARGE') return sendJson(res, 413, { ok: false, error: 'Dữ liệu gửi lên quá lớn.' });
     if (error?.message === 'INVALID_JSON') return sendJson(res, 400, { ok: false, error: 'Dữ liệu gửi lên không hợp lệ.' });
+    if (error?.code === 'IDEMPOTENCY_IN_PROGRESS') return sendJson(res, 409, { ok: false, error: error.message, code: error.code });
+    if (error?.code === 'IDEMPOTENCY_STORE_UNAVAILABLE') return sendJson(res, 503, { ok: false, error: error.message, code: error.code });
     if (error instanceof JiraError) {
       if (error.status === 401) res.setHeader('Set-Cookie', clearSessionCookie());
       return sendJson(res, error.status || 500, { ok: false, error: error.message, details: error.details || undefined });
