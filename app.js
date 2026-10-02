@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.6.5';
+const APP_VERSION = '1.7.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -39,6 +39,7 @@ const state = {
   bulkSubmitInFlight: false,
   bulkCapacitySeq: 0,
   bulkCapacity: { date: '', regularLoggedMinutes: 0, loading: false, error: '' },
+  bulkAllocation: { autoApplied: false, userEdited: false, remainingMinutes: 0, message: '' },
   singleCapacitySeq: 0,
   singleCapacity: { date: '', regularLoggedMinutes: 0, loading: false, error: '' },
   mobileEditorScrollY: 0,
@@ -1272,6 +1273,7 @@ function resetBulkState() {
   state.bulkDrafts.clear();
   state.bulkCapacitySeq += 1;
   state.bulkCapacity = { date: '', regularLoggedMinutes: 0, loading: false, error: '' };
+  state.bulkAllocation = { autoApplied: false, userEdited: false, remainingMinutes: 0, message: '' };
   $('bulkCard').classList.add('hidden');
   if (wasOpen) {
     closeMobileEditor();
@@ -1295,11 +1297,13 @@ function openBulkAll() {
       key,
       project: issue.project || key.split('-')[0] || '',
       summary: issue.summary || '',
-      timeSpent: state.prefs.lastTimeSpent || '1h',
+      timeSpent: '',
       description: issue.summary || '',
-      overtime: false
+      overtime: false,
+      autoAllocated: false
     });
   }
+  state.bulkAllocation = { autoApplied: false, userEdited: false, remainingMinutes: 0, message: '' };
   const date = setSessionLogDate($('date').value || getSessionLogDate());
   $('bulkDate').value = date;
   $('worklogCard').classList.add('hidden');
@@ -1314,6 +1318,46 @@ function openBulkAll() {
 }
 function bulkDraftList() {
   return [...state.bulkSelectedKeys].map(key => state.bulkDrafts.get(key)).filter(Boolean);
+}
+
+function markBulkUserEdited() {
+  state.bulkAllocation.userEdited = true;
+  state.bulkAllocation.message = 'Đã chỉnh thủ công. Bấm “PHÂN BỔ LẠI” nếu muốn app chia lại phần giờ còn thiếu.';
+}
+
+function bulkCapacityReady() {
+  const date = $('bulkDate')?.value || '';
+  return state.bulkCapacity.date === date && !state.bulkCapacity.loading && !state.bulkCapacity.error;
+}
+
+function applyBulkSmartAllocation({ force = false } = {}) {
+  if (!bulkCapacityReady()) return false;
+  if (!force && (state.bulkAllocation.autoApplied || state.bulkAllocation.userEdited)) return false;
+  const items = bulkDraftList();
+  const targets = items.filter(item => item.overtime !== true);
+  if (!targets.length) return false;
+
+  const alreadyRegular = Number(state.bulkCapacity.regularLoggedMinutes || 0);
+  const remaining = Math.max(0, 480 - alreadyRegular);
+  const allocator = globalThis.QJLAllocation;
+  if (!allocator?.allocateRegularMinutes || !allocator?.formatTimeSpent) return false;
+  const allocations = allocator.allocateRegularMinutes(remaining, targets.length);
+
+  targets.forEach((item, index) => {
+    item.timeSpent = allocator.formatTimeSpent(allocations[index] || 0);
+    item.autoAllocated = true;
+  });
+
+  state.bulkAllocation = {
+    autoApplied: true,
+    userEdited: false,
+    remainingMinutes: remaining,
+    message: remaining > 0
+      ? `✨ Đã tự phân bổ ${minutesLabel(remaining)} còn thiếu cho ${targets.length} Sub-task. Bạn có thể chỉnh lại trước khi Log tất cả.`
+      : '✓ Ngày này đã đủ 8h giờ thường nên app không tự phân bổ thêm.'
+  };
+  renderBulkItems();
+  return true;
 }
 
 function updateBulkTotal() {
@@ -1353,7 +1397,16 @@ function updateBulkTotal() {
     overtimeEl.classList.toggle('hidden', overtimeDraft <= 0);
   }
 
-  $('bulkLogBtn').disabled = state.bulkSubmitInFlight || !items.length || total <= 0 || (capacityReady && projected > 480);
+  const allocationHint = $('bulkAllocationHint');
+  const allocationText = $('bulkAllocationText');
+  const redistributeBtn = $('bulkRedistributeBtn');
+  if (allocationHint && allocationText) {
+    allocationText.textContent = state.bulkAllocation.message || '';
+    allocationHint.classList.toggle('hidden', !state.bulkAllocation.message);
+  }
+  if (redistributeBtn) redistributeBtn.disabled = state.bulkSubmitInFlight || !capacityReady || alreadyRegular >= 480 || !items.length;
+
+  $('bulkLogBtn').disabled = state.bulkSubmitInFlight || !items.length || total <= 0 || items.some(item => parseTimeSpentClient(item.timeSpent) <= 0) || (capacityReady && projected > 480);
 }
 
 async function loadBulkCapacity() {
@@ -1371,6 +1424,7 @@ async function loadBulkCapacity() {
       loading: false,
       error: ''
     };
+    if (applyBulkSmartAllocation({ force: false })) return;
   } catch (error) {
     if (seq !== state.bulkCapacitySeq || $('bulkDate')?.value !== date) return;
     state.bulkCapacity = { date, regularLoggedMinutes: 0, loading: false, error: error?.message || 'Không đọc được giờ đã log.' };
@@ -1387,10 +1441,10 @@ function renderBulkItems() {
     return;
   }
   wrap.innerHTML = items.map((item, index) => `
-    <div class="bulk-item" data-key="${escapeHtml(item.key)}">
+    <div class="bulk-item${item.autoAllocated ? ' is-auto-allocated' : ''}" data-key="${escapeHtml(item.key)}">
       <div class="bulk-item-head">
         <div class="bulk-item-title">
-          <strong>${index + 1}. ${escapeHtml(item.key)}</strong>
+          <strong>${index + 1}. ${escapeHtml(item.key)}${item.autoAllocated ? '<span class="auto-time-badge">AUTO</span>' : ''}</strong>
           <span>${escapeHtml(item.summary || 'Không có summary')}</span>
           <small>${escapeHtml(item.project)}</small>
         </div>
@@ -1399,7 +1453,7 @@ function renderBulkItems() {
       <div class="bulk-item-fields">
         <label class="bulk-time-field">
           <span>TimeSpent</span>
-          <input class="bulk-time" value="${escapeHtml(item.timeSpent || '1h')}" placeholder="1h" inputmode="text" required />
+          <input class="bulk-time" value="${escapeHtml(item.timeSpent || '')}" placeholder="Đang phân bổ..." inputmode="text" required />
           <span class="bulk-preset-row" aria-label="Preset TimeSpent">
             ${['30m', '1h', '2h', '3h', '4h'].map(value => `<button class="bulk-preset-btn${String(item.timeSpent || '') === value ? ' active' : ''}" type="button" data-time="${value}">${value}</button>`).join('')}
           </span>
@@ -1409,7 +1463,10 @@ function renderBulkItems() {
           <span class="overtime-control" aria-hidden="true"></span>
           <span class="overtime-copy"><strong>Overtime (OT)</strong><small>${escapeHtml(overtimeWindowLabel($('bulkDate')?.value || todayLocal()))}</small></span>
         </label>
-        <label class="bulk-description-field">Description<textarea class="bulk-description" rows="2" required>${escapeHtml(item.description || item.summary || '')}</textarea></label>
+        <details class="bulk-description-details">
+          <summary>Sửa Description <span>${escapeHtml((item.description || item.summary || '').slice(0, 72))}${(item.description || item.summary || '').length > 72 ? '…' : ''}</span></summary>
+          <label class="bulk-description-field">Description<textarea class="bulk-description" rows="2">${escapeHtml(item.description || item.summary || '')}</textarea></label>
+        </details>
       </div>
     </div>
   `).join('');
@@ -1425,7 +1482,8 @@ function renderBulkItems() {
       });
     };
     bulkTimeInput?.addEventListener('input', event => {
-      if (draft) draft.timeSpent = event.target.value;
+      if (draft) { draft.timeSpent = event.target.value; draft.autoAllocated = false; }
+      markBulkUserEdited();
       syncBulkPresetState();
       updateBulkTotal();
     });
@@ -1434,21 +1492,24 @@ function renderBulkItems() {
         const value = button.dataset.time || '';
         if (!value || !bulkTimeInput) return;
         bulkTimeInput.value = value;
-        if (draft) draft.timeSpent = value;
+        if (draft) { draft.timeSpent = value; draft.autoAllocated = false; }
+        markBulkUserEdited();
         syncBulkPresetState();
         updateBulkTotal();
       });
     });
-    row.querySelector('.bulk-description').addEventListener('input', event => {
+    row.querySelector('.bulk-description')?.addEventListener('input', event => {
       if (draft) draft.description = event.target.value;
     });
     row.querySelector('.bulk-overtime')?.addEventListener('change', event => {
-      if (draft) draft.overtime = event.target.checked;
+      if (draft) { draft.overtime = event.target.checked; draft.autoAllocated = false; }
+      markBulkUserEdited();
       updateBulkTotal();
     });
     row.querySelector('.bulk-remove-btn')?.addEventListener('click', () => {
       state.bulkSelectedKeys.delete(key);
       state.bulkDrafts.delete(key);
+      markBulkUserEdited();
       renderBulkItems();
       showToast(`Đã bỏ ${key} khỏi lần Log tất cả này.`);
     });
@@ -1507,8 +1568,9 @@ async function submitBulkWorklog(event) {
     }
     if (items.length) {
       const last = items[items.length - 1];
+      const lastDraft = state.bulkDrafts.get(last.key);
       state.prefs.lastProject = last.project;
-      state.prefs.lastTimeSpent = last.timeSpent;
+      if (lastDraft?.autoAllocated !== true) state.prefs.lastTimeSpent = last.timeSpent;
       savePrefs();
       setLastLog({ ...last, date }, (data.items || []).find(x => x.key === last.key)?.summary || last.description);
     }
@@ -1566,6 +1628,11 @@ $('filterIssueSearch').addEventListener('input', renderFilterIssues);
 $('logAllBtn').addEventListener('click', openBulkAll);
 $('cancelBulkBtn').addEventListener('click', resetBulkState);
 $('bulkForm').addEventListener('submit', submitBulkWorklog);
+$('bulkRedistributeBtn')?.addEventListener('click', () => {
+  state.bulkAllocation.userEdited = false;
+  state.bulkAllocation.autoApplied = false;
+  applyBulkSmartAllocation({ force: true });
+});
 $('closeWorklogBtn').addEventListener('click', () => {
   state.singleCapacitySeq += 1;
   $('worklogCard').classList.add('hidden');
@@ -1595,6 +1662,8 @@ $('date').addEventListener('change', () => {
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = getSessionLogDate();
   setSessionLogDate($('bulkDate').value);
+  state.bulkAllocation = { autoApplied: false, userEdited: false, remainingMinutes: 0, message: '' };
+  bulkDraftList().forEach(item => { if (item.overtime !== true) { item.timeSpent = ''; item.autoAllocated = false; } });
   renderBulkItems();
   void loadBulkCapacity();
 });

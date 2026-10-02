@@ -24,3 +24,5 @@
 - ✅ **V1.6.4 – Late Worklog Friendly Warning**: cảnh báo bổ sung khi log từ N-2 trở về trước, giữ nguyên báo thành công, 10 câu vui luân phiên không lặp trong một vòng và áp dụng cho cả Log 1/Bulk.
 
 - ✅ **V1.6.5 – Jira Auth Classification Fix**: phân biệt sai mật khẩu với CAPTCHA; `AUTHENTICATED_FAILED`/`AUTHENTICATION_FAILED` trên 401 không còn bị hiểu nhầm là CAPTCHA, chỉ chuyển sang xác minh khi Jira trả `AUTHENTICATION_DENIED`; bổ sung regression tests cho chuỗi sai password → CAPTCHA.
+
+- ✅ **V1.7.0 – Fast Interaction & UX Polish**: Smart Bulk Time Allocation tự tính phần giờ còn thiếu tới 8h và tự điền TimeSpent cho toàn bộ Sub-task; cho phép chỉnh tay/Phân bổ lại, thu gọn Description, compact Bulk UI trên mobile và không thêm request Jira chỉ để phân bổ.

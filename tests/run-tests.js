@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.6.5');
-console.log('V1.6.5 version test passed.');
+assert.equal(packageJson.version, '1.7.0');
+console.log('V1.7.0 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -309,7 +309,8 @@ assert(appJs.includes("['30m', '1h', '2h', '3h', '4h']"));
 assert(appJs.includes('bulk-preset-btn'));
 assert(appJs.includes('data-time="${value}"'));
 assert(appJs.includes("row.querySelectorAll('.bulk-preset-btn')"));
-assert(appJs.includes('if (draft) draft.timeSpent = value'));
+assert(appJs.includes('draft.timeSpent = value'));
+assert(appJs.includes('draft.autoAllocated = false'));
 assert(styles.includes('.bulk-preset-row'));
 assert(styles.includes('.bulk-preset-btn'));
 console.log('V1.5.1 bulk TimeSpent presets tests passed.');
@@ -415,3 +416,23 @@ assert(jiraAuthJs.includes("return value === 'AUTHENTICATION_DENIED';"));
 assert(!jiraAuthJs.includes("value === 'AUTHENTICATED_FAILED' || value === 'AUTHENTICATION_FAILED'"));
 console.log('V1.6.5 Jira auth classification static tests passed.');
 
+
+
+// V1.7.0 - Smart Bulk Time Allocation & compact UX.
+const { allocateRegularMinutes, formatTimeSpent } = require('../lib/bulk-allocation');
+assert.deepStrictEqual(allocateRegularMinutes(420, 6), [60, 60, 60, 60, 60, 120]);
+assert.deepStrictEqual(allocateRegularMinutes(360, 6), [60, 60, 60, 60, 60, 60]);
+assert.deepStrictEqual(allocateRegularMinutes(240, 6), [60, 60, 30, 30, 30, 30]);
+assert.deepStrictEqual(allocateRegularMinutes(120, 6), [20, 20, 20, 20, 20, 20]);
+assert.deepStrictEqual(allocateRegularMinutes(0, 6), [0, 0, 0, 0, 0, 0]);
+assert.equal(formatTimeSpent(120), '2h');
+assert.equal(formatTimeSpent(90), '1h30m');
+assert.equal(formatTimeSpent(20), '20m');
+assert(indexHtml.includes('id="bulkRedistributeBtn"'));
+assert(indexHtml.includes('/lib/bulk-allocation.js'));
+assert(appJs.includes('applyBulkSmartAllocation'));
+assert(appJs.includes('Đã tự phân bổ'));
+assert(appJs.includes('bulk-description-details'));
+assert(styles.includes('.bulk-allocation-hint'));
+assert(styles.includes('.auto-time-badge'));
+console.log('V1.7.0 smart bulk allocation + compact UX tests passed.');

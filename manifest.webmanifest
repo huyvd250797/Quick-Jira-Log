@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.6.5 – Jira Auth Classification Fix.",
+  "description": "Quick Jira Log V1.7.0 – Fast Interaction & UX Polish.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

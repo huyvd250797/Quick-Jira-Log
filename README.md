@@ -1,43 +1,44 @@
-# Quick Jira Log V1.6.5 – Jira Auth Classification Fix
+# Quick Jira Log V1.7.0 – Fast Interaction & UX Polish
 
-Nâng cấp trực tiếp từ **V1.6.4 – Late Worklog Friendly Warning**.
+Nâng cấp trực tiếp từ **V1.6.5 – Jira Auth Classification Fix**.
 
-## Mục tiêu bản vá
+## Trọng tâm phiên bản
 
-Sửa lỗi phân loại Authentication có thể làm app báo **Jira yêu cầu CAPTCHA** ngay khi người dùng chỉ mới nhập sai mật khẩu.
+Giảm thao tác khi dùng **Log tất cả**, giúp người dùng có thể mở Bulk Logwork và bấm Log ngay mà không phải nhập TimeSpent cho từng Sub-task nếu không muốn chỉnh tay.
 
-## Logic Authentication sau khi sửa
+## Smart Bulk Time Allocation
 
-- `401` không có `X-Seraph-LoginReason` → **Sai username/password**.
-- `401 + AUTHENTICATED_FAILED` → **Sai username/password**, không hiện CAPTCHA.
-- `401 + AUTHENTICATION_FAILED` → **Sai username/password**, không hiện CAPTCHA.
-- `401/403 + AUTHENTICATION_DENIED` → **Jira yêu cầu CAPTCHA/xác minh bảo mật**.
-- Session login thành công nhưng `/rest/api/2/myself` trả `403` → **Không có quyền REST cần thiết**.
-- Mỗi lần bấm Login khi Jira trả `401/403` vẫn chỉ tạo **01 authentication attempt**, không fallback Basic gây tăng failed-login count.
+Khi mở **Log tất cả**:
 
-## CAPTCHA Guard giữ nguyên
+1. App dùng kết quả kiểm tra giờ trong ngày vốn đã có từ `day-audit`.
+2. Tính `Giờ còn thiếu = 8h - giờ thường đã log`.
+3. Tự phân bổ phần giờ còn thiếu cho toàn bộ Sub-task đang chọn.
+4. Người dùng vẫn có thể sửa TimeSpent, preset, OT hoặc bỏ Sub-task trước khi bấm **LOG TẤT CẢ**.
+5. Có nút **PHÂN BỔ LẠI** khi muốn app tính lại sau khi chỉnh danh sách.
 
-Khi Jira thật sự trả `AUTHENTICATION_DENIED`, app hiển thị panel xác minh với:
+Ví dụ: đã log **1h**, còn **7h**, có **6 Sub-task** → tự điền **1h + 1h + 1h + 1h + 1h + 2h = 7h**.
 
-- **MỞ JIRA ĐỂ XÁC MINH** → `https://task.ascvn.com.vn/`
-- **TÔI ĐÃ XÁC MINH – THỬ LẠI** → chủ động thử lại đúng 01 lần.
-- Không tự động retry CAPTCHA.
-- Giữ cơ chế cooldown/chống spam login để hạn chế đẩy tài khoản vào CAPTCHA.
+- Nếu quỹ giờ nhỏ hơn 1h/Sub-task, app ưu tiên block 30m khi có thể.
+- Nếu quỹ giờ nhỏ hơn 30m/Sub-task, app vẫn chia theo phút để giảm nhập tay.
+- OT không được cộng vào mốc 8h giờ thường.
+- Auto Allocation chỉ đề xuất dữ liệu trên giao diện, **không tự gửi Jira**.
+- Khi người dùng đã sửa thủ công, app không tự ghi đè; chỉ chia lại khi bấm **PHÂN BỔ LẠI**.
 
-## Regression tests bổ sung
+## UX Polish
 
-- `401 + AUTHENTICATED_FAILED` → `JIRA_INVALID_CREDENTIALS`.
-- `401 + AUTHENTICATION_FAILED` → `JIRA_INVALID_CREDENTIALS`.
-- `403 + AUTHENTICATION_DENIED` → `JIRA_CAPTCHA_REQUIRED`.
-- Chuỗi nhiều lần sai password: các lần đầu vẫn báo sai credentials; chỉ chuyển CAPTCHA khi Jira thật sự trả `AUTHENTICATION_DENIED`.
-- Kiểm tra mỗi lần đăng nhập sai chỉ gọi `/rest/auth/1/session` đúng 01 lần.
-- Giữ regression test session login, Basic fallback khi endpoint session không hỗ trợ, và quyền REST.
+- Bulk item có nhãn **AUTO** để nhận biết TimeSpent do app tự phân bổ.
+- Description được thu gọn mặc định thành **Sửa Description**, vì nội dung đã kế thừa Summary; chỉ mở khi cần chỉnh.
+- Mobile Bulk compact hơn để nhìn được nhiều Sub-task trong cùng một màn hình.
+- Daily Capacity sticky vẫn hiển thị `Đã log + Đang nhập = x/8h` trong suốt quá trình cuộn.
+- Không phát sinh thêm request Jira chỉ để tính phân bổ; thuật toán chạy tức thời trên client sau khi có dữ liệu `day-audit`.
 
-## Tính năng giữ nguyên từ V1.6.4
+## Reliability giữ nguyên
 
-- Cảnh báo thân thiện khi logwork từ N-2 trở về trước, không chặn log và không thay thế thông báo thành công.
-- Daily Capacity 8h, OT, chống overlap, Planner, History, rollback.
-- Log 1/Bulk, desktop modal, mobile bottom sheet, sticky capacity header và preset thời gian.
+- Jira Auth Classification + CAPTCHA Guard V1.6.5.
+- Late Worklog Warning từ N-2 trở về trước.
+- Daily Capacity 8h, OT, chống overlap, rollback và idempotency.
+- Desktop modal / mobile bottom sheet / sticky header.
+- Log 1, Log tất cả, Planner, History và workflow transition.
 
 ## Thông tin
 
