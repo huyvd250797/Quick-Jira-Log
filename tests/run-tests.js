@@ -126,8 +126,8 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.7.0');
-console.log('V1.7.0 version test passed.');
+assert.equal(packageJson.version, '1.7.1');
+console.log('V1.7.1 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
@@ -418,7 +418,7 @@ console.log('V1.6.5 Jira auth classification static tests passed.');
 
 
 
-// V1.7.0 - Smart Bulk Time Allocation & compact UX.
+// V1.7.1 - Bulk mở tức thì với 1h/Sub-task; Smart Allocation chỉ chạy khi người dùng bấm nút.
 const { allocateRegularMinutes, formatTimeSpent } = require('../lib/bulk-allocation');
 assert.deepStrictEqual(allocateRegularMinutes(420, 6), [60, 60, 60, 60, 60, 120]);
 assert.deepStrictEqual(allocateRegularMinutes(360, 6), [60, 60, 60, 60, 60, 60]);
@@ -429,10 +429,17 @@ assert.equal(formatTimeSpent(120), '2h');
 assert.equal(formatTimeSpent(90), '1h30m');
 assert.equal(formatTimeSpent(20), '20m');
 assert(indexHtml.includes('id="bulkRedistributeBtn"'));
+assert(indexHtml.includes('TỰ ĐỘNG PHÂN BỔ'));
 assert(indexHtml.includes('/lib/bulk-allocation.js'));
-assert(appJs.includes('applyBulkSmartAllocation'));
+assert(appJs.includes("timeSpent: '1h'"));
+assert(appJs.includes('requestBulkSmartAllocation'));
 assert(appJs.includes('Đã tự phân bổ'));
 assert(appJs.includes('bulk-description-details'));
 assert(styles.includes('.bulk-allocation-hint'));
 assert(styles.includes('.auto-time-badge'));
-console.log('V1.7.0 smart bulk allocation + compact UX tests passed.');
+const bulkCapacityFn = appJs.slice(appJs.indexOf('async function loadBulkCapacity'), appJs.indexOf('async function requestBulkSmartAllocation'));
+assert(!bulkCapacityFn.includes('applyBulkSmartAllocation'), 'loadBulkCapacity must never auto-allocate on open');
+const bulkOpenFn = appJs.slice(appJs.indexOf('function openBulkAll()'), appJs.indexOf('function bulkDraftList()'));
+assert(bulkOpenFn.includes("timeSpent: '1h'"), 'Bulk defaults must be 1h immediately');
+assert(bulkOpenFn.includes('setTimeout(() => { void loadBulkCapacity(); }, 0);'), 'day-audit should be deferred/background');
+console.log('V1.7.1 instant bulk defaults + manual smart allocation tests passed.');

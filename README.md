@@ -1,36 +1,36 @@
-# Quick Jira Log V1.7.0 – Fast Interaction & UX Polish
+# Quick Jira Log V1.7.1 – Instant Bulk Defaults & Manual Smart Allocation
 
-Nâng cấp trực tiếp từ **V1.6.5 – Jira Auth Classification Fix**.
+Hotfix UX nâng cấp trực tiếp từ **V1.7.0 – Fast Interaction & UX Polish**.
 
 ## Trọng tâm phiên bản
 
-Giảm thao tác khi dùng **Log tất cả**, giúp người dùng có thể mở Bulk Logwork và bấm Log ngay mà không phải nhập TimeSpent cho từng Sub-task nếu không muốn chỉnh tay.
+Mở **Log tất cả** phải dùng được ngay, không chờ app tính phân bổ. Mọi Sub-task mặc định có **TimeSpent = 1h**. Người dùng có thể bấm **LOG TẤT CẢ** ngay, chỉnh tay, hoặc chủ động bấm **TỰ ĐỘNG PHÂN BỔ** khi muốn app tính phần giờ còn thiếu tới 8h.
 
-## Smart Bulk Time Allocation
+## Smart Bulk Time Allocation – chỉ chạy khi người dùng yêu cầu
 
 Khi mở **Log tất cả**:
 
-1. App dùng kết quả kiểm tra giờ trong ngày vốn đã có từ `day-audit`.
-2. Tính `Giờ còn thiếu = 8h - giờ thường đã log`.
-3. Tự phân bổ phần giờ còn thiếu cho toàn bộ Sub-task đang chọn.
+1. Danh sách hiển thị ngay, mỗi Sub-task mặc định **1h**.
+2. `day-audit` chỉ chạy nền để cập nhật thanh tiến độ và không tự sửa TimeSpent.
+3. Nếu người dùng bấm **TỰ ĐỘNG PHÂN BỔ**, app lấy số giờ đã log, tính `Giờ còn thiếu = 8h - giờ thường đã log`, rồi phân bổ lại toàn bộ TimeSpent.
 4. Người dùng vẫn có thể sửa TimeSpent, preset, OT hoặc bỏ Sub-task trước khi bấm **LOG TẤT CẢ**.
-5. Có nút **PHÂN BỔ LẠI** khi muốn app tính lại sau khi chỉnh danh sách.
+5. Sau khi đã phân bổ tự động, nút đổi thành **PHÂN BỔ LẠI**.
 
-Ví dụ: đã log **1h**, còn **7h**, có **6 Sub-task** → tự điền **1h + 1h + 1h + 1h + 1h + 2h = 7h**.
+Ví dụ: đã log **1h**, còn **7h**, có **6 Sub-task** → khi bấm Tự động phân bổ sẽ điền **1h + 1h + 1h + 1h + 1h + 2h = 7h**.
 
 - Nếu quỹ giờ nhỏ hơn 1h/Sub-task, app ưu tiên block 30m khi có thể.
 - Nếu quỹ giờ nhỏ hơn 30m/Sub-task, app vẫn chia theo phút để giảm nhập tay.
 - OT không được cộng vào mốc 8h giờ thường.
-- Auto Allocation chỉ đề xuất dữ liệu trên giao diện, **không tự gửi Jira**.
-- Khi người dùng đã sửa thủ công, app không tự ghi đè; chỉ chia lại khi bấm **PHÂN BỔ LẠI**.
+- Auto Allocation chỉ chạy khi người dùng bấm nút và **không tự gửi Jira**.
+- Khi người dùng đã sửa thủ công, app không tự ghi đè; chỉ chia lại khi người dùng chủ động bấm **TỰ ĐỘNG PHÂN BỔ / PHÂN BỔ LẠI**.
 
 ## UX Polish
 
-- Bulk item có nhãn **AUTO** để nhận biết TimeSpent do app tự phân bổ.
+- Bulk item chỉ có nhãn **AUTO** sau khi người dùng chủ động chạy Tự động phân bổ.
 - Description được thu gọn mặc định thành **Sửa Description**, vì nội dung đã kế thừa Summary; chỉ mở khi cần chỉnh.
 - Mobile Bulk compact hơn để nhìn được nhiều Sub-task trong cùng một màn hình.
 - Daily Capacity sticky vẫn hiển thị `Đã log + Đang nhập = x/8h` trong suốt quá trình cuộn.
-- Không phát sinh thêm request Jira chỉ để tính phân bổ; thuật toán chạy tức thời trên client sau khi có dữ liệu `day-audit`.
+- Mở Bulk không chờ phân bổ; `day-audit` chạy nền. Khi người dùng bấm Tự động phân bổ, app tái sử dụng kết quả đang có hoặc chờ đúng một lượt kiểm tra nếu cần.
 
 ## Reliability giữ nguyên
 

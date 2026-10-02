@@ -1940,3 +1940,6 @@ html[data-theme="dark"] .auto-time-badge { background: #173b61; color: #8bc4ff; 
   #bulkCard.mobile-bottom-sheet .bulk-description-details { padding-top: 7px; }
   #bulkCard.mobile-bottom-sheet .bulk-allocation-hint { align-items: flex-start; }
 }
+
+
+/* V1.7.1 – Instant Bulk Defaults & Manual Smart Allocation */

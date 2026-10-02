@@ -25,4 +25,5 @@
 
 - ✅ **V1.6.5 – Jira Auth Classification Fix**: phân biệt sai mật khẩu với CAPTCHA; `AUTHENTICATED_FAILED`/`AUTHENTICATION_FAILED` trên 401 không còn bị hiểu nhầm là CAPTCHA, chỉ chuyển sang xác minh khi Jira trả `AUTHENTICATION_DENIED`; bổ sung regression tests cho chuỗi sai password → CAPTCHA.
 
-- ✅ **V1.7.0 – Fast Interaction & UX Polish**: Smart Bulk Time Allocation tự tính phần giờ còn thiếu tới 8h và tự điền TimeSpent cho toàn bộ Sub-task; cho phép chỉnh tay/Phân bổ lại, thu gọn Description, compact Bulk UI trên mobile và không thêm request Jira chỉ để phân bổ.
+- ✅ **V1.7.0 – Fast Interaction & UX Polish**: Smart Bulk Time Allocation, thu gọn Description và compact Bulk UI trên mobile.
+- ✅ **V1.7.1 – Instant Bulk Defaults & Manual Smart Allocation**: Log tất cả mở ngay với mặc định 1h/Sub-task; không còn tự phân bổ lúc mở. Day-audit chạy nền, người dùng chủ động bấm Tự động phân bổ/Phân bổ lại khi cần.

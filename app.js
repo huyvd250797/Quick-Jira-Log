@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -39,6 +39,7 @@ const state = {
   bulkSubmitInFlight: false,
   bulkCapacitySeq: 0,
   bulkCapacity: { date: '', regularLoggedMinutes: 0, loading: false, error: '' },
+  bulkCapacityPromise: null,
   bulkAllocation: { autoApplied: false, userEdited: false, remainingMinutes: 0, message: '' },
   singleCapacitySeq: 0,
   singleCapacity: { date: '', regularLoggedMinutes: 0, loading: false, error: '' },
@@ -739,7 +740,7 @@ function toggleBulkIssue(issue) {
       key,
       project: issue.project || key.split('-')[0] || '',
       summary: issue.summary || '',
-      timeSpent: state.prefs.lastTimeSpent || '1h',
+      timeSpent: '1h',
       description: issue.summary || '',
       overtime: false
     });
@@ -1273,6 +1274,7 @@ function resetBulkState() {
   state.bulkDrafts.clear();
   state.bulkCapacitySeq += 1;
   state.bulkCapacity = { date: '', regularLoggedMinutes: 0, loading: false, error: '' };
+  state.bulkCapacityPromise = null;
   state.bulkAllocation = { autoApplied: false, userEdited: false, remainingMinutes: 0, message: '' };
   $('bulkCard').classList.add('hidden');
   if (wasOpen) {
@@ -1297,13 +1299,18 @@ function openBulkAll() {
       key,
       project: issue.project || key.split('-')[0] || '',
       summary: issue.summary || '',
-      timeSpent: '',
+      timeSpent: '1h',
       description: issue.summary || '',
       overtime: false,
       autoAllocated: false
     });
   }
-  state.bulkAllocation = { autoApplied: false, userEdited: false, remainingMinutes: 0, message: '' };
+  state.bulkAllocation = {
+    autoApplied: false,
+    userEdited: false,
+    remainingMinutes: 0,
+    message: 'Mặc định 1h cho mỗi Sub-task để có thể Log ngay. Bấm “TỰ ĐỘNG PHÂN BỔ” nếu muốn app chia phần giờ còn thiếu đến 8h.'
+  };
   const date = setSessionLogDate($('date').value || getSessionLogDate());
   $('bulkDate').value = date;
   $('worklogCard').classList.add('hidden');
@@ -1311,10 +1318,11 @@ function openBulkAll() {
   $('resultCard').classList.add('hidden');
   renderBulkItems();
   $('bulkCard').classList.remove('hidden');
-  void loadBulkCapacity();
   const openedAsSheet = openMobileEditor('bulkCard');
   const openedAsDesktopModal = openDesktopEditor('bulkCard');
   if (!openedAsSheet && !openedAsDesktopModal) $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Hiển thị Bulk ngay với mặc định 1h/Sub-task; day-audit chạy nền và không chặn thao tác.
+  setTimeout(() => { void loadBulkCapacity(); }, 0);
 }
 function bulkDraftList() {
   return [...state.bulkSelectedKeys].map(key => state.bulkDrafts.get(key)).filter(Boolean);
@@ -1322,7 +1330,7 @@ function bulkDraftList() {
 
 function markBulkUserEdited() {
   state.bulkAllocation.userEdited = true;
-  state.bulkAllocation.message = 'Đã chỉnh thủ công. Bấm “PHÂN BỔ LẠI” nếu muốn app chia lại phần giờ còn thiếu.';
+  state.bulkAllocation.message = 'Đã chỉnh thủ công. Bấm “TỰ ĐỘNG PHÂN BỔ” nếu muốn app tự chia lại phần giờ còn thiếu đến 8h.';
 }
 
 function bulkCapacityReady() {
@@ -1339,6 +1347,17 @@ function applyBulkSmartAllocation({ force = false } = {}) {
 
   const alreadyRegular = Number(state.bulkCapacity.regularLoggedMinutes || 0);
   const remaining = Math.max(0, 480 - alreadyRegular);
+  if (remaining <= 0) {
+    state.bulkAllocation = {
+      autoApplied: false,
+      userEdited: false,
+      remainingMinutes: 0,
+      message: '✓ Ngày này đã đủ 8h giờ thường. App giữ nguyên TimeSpent hiện tại và không phân bổ thêm.'
+    };
+    updateBulkTotal();
+    return true;
+  }
+
   const allocator = globalThis.QJLAllocation;
   if (!allocator?.allocateRegularMinutes || !allocator?.formatTimeSpent) return false;
   const allocations = allocator.allocateRegularMinutes(remaining, targets.length);
@@ -1352,9 +1371,7 @@ function applyBulkSmartAllocation({ force = false } = {}) {
     autoApplied: true,
     userEdited: false,
     remainingMinutes: remaining,
-    message: remaining > 0
-      ? `✨ Đã tự phân bổ ${minutesLabel(remaining)} còn thiếu cho ${targets.length} Sub-task. Bạn có thể chỉnh lại trước khi Log tất cả.`
-      : '✓ Ngày này đã đủ 8h giờ thường nên app không tự phân bổ thêm.'
+    message: `✨ Đã tự phân bổ ${minutesLabel(remaining)} còn thiếu cho ${targets.length} Sub-task. Bạn có thể chỉnh lại trước khi Log tất cả.`
   };
   renderBulkItems();
   return true;
@@ -1404,32 +1421,86 @@ function updateBulkTotal() {
     allocationText.textContent = state.bulkAllocation.message || '';
     allocationHint.classList.toggle('hidden', !state.bulkAllocation.message);
   }
-  if (redistributeBtn) redistributeBtn.disabled = state.bulkSubmitInFlight || !capacityReady || alreadyRegular >= 480 || !items.length;
+  if (redistributeBtn) {
+    redistributeBtn.disabled = state.bulkSubmitInFlight || !items.length || (capacityReady && alreadyRegular >= 480);
+    if (!redistributeBtn.dataset.loading) {
+      redistributeBtn.textContent = state.bulkAllocation.autoApplied ? 'PHÂN BỔ LẠI' : 'TỰ ĐỘNG PHÂN BỔ';
+    }
+  }
 
   $('bulkLogBtn').disabled = state.bulkSubmitInFlight || !items.length || total <= 0 || items.some(item => parseTimeSpentClient(item.timeSpent) <= 0) || (capacityReady && projected > 480);
 }
 
-async function loadBulkCapacity() {
+async function loadBulkCapacity({ force = false } = {}) {
   const date = $('bulkDate')?.value || getSessionLogDate();
-  if (!validLocalDate(date)) return;
+  if (!validLocalDate(date)) return false;
+  if (!force && bulkCapacityReady()) return true;
+  if (!force && state.bulkCapacity.loading && state.bulkCapacity.date === date && state.bulkCapacityPromise) {
+    return state.bulkCapacityPromise;
+  }
+
   const seq = ++state.bulkCapacitySeq;
   state.bulkCapacity = { date, regularLoggedMinutes: 0, loading: true, error: '' };
   updateBulkTotal();
-  try {
-    const data = await api(`/api?action=day-audit&date=${encodeURIComponent(date)}`, { method: 'GET', cache: 'no-store' });
-    if (seq !== state.bulkCapacitySeq || $('bulkDate')?.value !== date) return;
-    state.bulkCapacity = {
-      date,
-      regularLoggedMinutes: Number(data.regularOccupiedMinutes ?? data.occupiedMinutes ?? 0),
-      loading: false,
-      error: ''
-    };
-    if (applyBulkSmartAllocation({ force: false })) return;
-  } catch (error) {
-    if (seq !== state.bulkCapacitySeq || $('bulkDate')?.value !== date) return;
-    state.bulkCapacity = { date, regularLoggedMinutes: 0, loading: false, error: error?.message || 'Không đọc được giờ đã log.' };
+
+  let promise;
+  promise = (async () => {
+    try {
+      const data = await api(`/api?action=day-audit&date=${encodeURIComponent(date)}`, { method: 'GET', cache: 'no-store' });
+      if (seq !== state.bulkCapacitySeq || $('bulkDate')?.value !== date) return false;
+      state.bulkCapacity = {
+        date,
+        regularLoggedMinutes: Number(data.regularOccupiedMinutes ?? data.occupiedMinutes ?? 0),
+        loading: false,
+        error: ''
+      };
+      // V1.7.1: chỉ cập nhật tiến độ; tuyệt đối không tự thay TimeSpent khi mở Bulk.
+      updateBulkTotal();
+      return true;
+    } catch (error) {
+      if (seq !== state.bulkCapacitySeq || $('bulkDate')?.value !== date) return false;
+      state.bulkCapacity = { date, regularLoggedMinutes: 0, loading: false, error: error?.message || 'Không đọc được giờ đã log.' };
+      updateBulkTotal();
+      return false;
+    } finally {
+      if (state.bulkCapacityPromise === promise) state.bulkCapacityPromise = null;
+    }
+  })();
+
+  state.bulkCapacityPromise = promise;
+  return promise;
+}
+
+async function requestBulkSmartAllocation() {
+  if (state.bulkSubmitInFlight) return;
+  const btn = $('bulkRedistributeBtn');
+  const originalText = btn?.textContent || 'TỰ ĐỘNG PHÂN BỔ';
+  if (btn) {
+    btn.dataset.loading = '1';
+    btn.disabled = true;
+    btn.textContent = 'ĐANG TÍNH...';
   }
-  updateBulkTotal();
+
+  try {
+    if (!bulkCapacityReady()) {
+      const ok = await loadBulkCapacity({ force: Boolean(state.bulkCapacity.error) });
+      if (!ok || !bulkCapacityReady()) {
+        showToast('Chưa đọc được số giờ đã log trên Jira. Vui lòng thử lại.');
+        return;
+      }
+    }
+    state.bulkAllocation.userEdited = false;
+    state.bulkAllocation.autoApplied = false;
+    if (!applyBulkSmartAllocation({ force: true })) {
+      showToast('Chưa thể tự động phân bổ TimeSpent cho danh sách hiện tại.');
+    }
+  } finally {
+    if (btn) {
+      delete btn.dataset.loading;
+      btn.textContent = originalText;
+    }
+    updateBulkTotal();
+  }
 }
 
 function renderBulkItems() {
@@ -1453,7 +1524,7 @@ function renderBulkItems() {
       <div class="bulk-item-fields">
         <label class="bulk-time-field">
           <span>TimeSpent</span>
-          <input class="bulk-time" value="${escapeHtml(item.timeSpent || '')}" placeholder="Đang phân bổ..." inputmode="text" required />
+          <input class="bulk-time" value="${escapeHtml(item.timeSpent || '')}" placeholder="VD: 1h" inputmode="text" required />
           <span class="bulk-preset-row" aria-label="Preset TimeSpent">
             ${['30m', '1h', '2h', '3h', '4h'].map(value => `<button class="bulk-preset-btn${String(item.timeSpent || '') === value ? ' active' : ''}" type="button" data-time="${value}">${value}</button>`).join('')}
           </span>
@@ -1629,9 +1700,7 @@ $('logAllBtn').addEventListener('click', openBulkAll);
 $('cancelBulkBtn').addEventListener('click', resetBulkState);
 $('bulkForm').addEventListener('submit', submitBulkWorklog);
 $('bulkRedistributeBtn')?.addEventListener('click', () => {
-  state.bulkAllocation.userEdited = false;
-  state.bulkAllocation.autoApplied = false;
-  applyBulkSmartAllocation({ force: true });
+  void requestBulkSmartAllocation();
 });
 $('closeWorklogBtn').addEventListener('click', () => {
   state.singleCapacitySeq += 1;
@@ -1662,10 +1731,15 @@ $('date').addEventListener('change', () => {
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = getSessionLogDate();
   setSessionLogDate($('bulkDate').value);
-  state.bulkAllocation = { autoApplied: false, userEdited: false, remainingMinutes: 0, message: '' };
-  bulkDraftList().forEach(item => { if (item.overtime !== true) { item.timeSpent = ''; item.autoAllocated = false; } });
+  state.bulkAllocation = {
+    autoApplied: false,
+    userEdited: false,
+    remainingMinutes: 0,
+    message: 'Mặc định 1h cho mỗi Sub-task. Bấm “TỰ ĐỘNG PHÂN BỔ” nếu muốn app chia phần giờ còn thiếu đến 8h.'
+  };
+  bulkDraftList().forEach(item => { if (item.overtime !== true) { item.timeSpent = '1h'; item.autoAllocated = false; } });
   renderBulkItems();
-  void loadBulkCapacity();
+  setTimeout(() => { void loadBulkCapacity(); }, 0);
 });
 
 $('overtime')?.addEventListener('change', () => {

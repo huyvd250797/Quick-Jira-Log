@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.7.0 – Fast Interaction & UX Polish.",
+  "description": "Quick Jira Log V1.7.1 – Instant Bulk Defaults & Manual Smart Allocation.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
