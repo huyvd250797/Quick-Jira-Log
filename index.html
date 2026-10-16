@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.10.1</title>
+  <title>Quick Jira Log · V1.10.2</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -20,7 +20,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.10.1</div>
+      <div class="boot-version">V1.10.2</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -29,7 +29,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.10.1</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.10.2</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -308,7 +308,7 @@
             <button id="historyListViewBtn" type="button" class="is-active" aria-pressed="true">☷ Danh sách</button>
             <button id="historyCalendarViewBtn" type="button" aria-pressed="false">▦ Lịch</button>
           </div>
-          <div class="history-toolbar">
+          <div id="historyListFilters" class="history-toolbar">
             <label>Ngày<input id="historyDate" type="date" /></label>
             <label>KEY (không bắt buộc)<input id="historyKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
           </div>
@@ -317,9 +317,13 @@
           <div id="historySummary" class="history-summary hidden" aria-live="polite"></div>
           <div id="worklogHistoryState" class="history-state">Chọn ngày hoặc nhập KEY, sau đó bấm “Tìm worklog đã log”.</div>
           <div id="calendarControls" class="calendar-controls hidden">
+            <div class="calendar-period-heading">
+              <strong id="calendarMonthLabel"></strong>
+              <button id="calendarRefreshBtn" class="calendar-refresh-btn" type="button" aria-label="Tải lại lịch" title="Tải lại lịch">↻</button>
+            </div>
             <div class="calendar-navigation">
               <button id="calendarPrevBtn" class="calendar-nav-btn" type="button" aria-label="Tháng trước" title="Tháng trước">‹</button>
-              <strong id="calendarMonthLabel"></strong>
+              <label class="calendar-date-field" for="calendarDate"><span>Đến ngày</span><input id="calendarDate" type="date" /></label>
               <button id="calendarTodayBtn" class="calendar-today-btn" type="button">Hôm nay</button>
               <button id="calendarNextBtn" class="calendar-nav-btn" type="button" aria-label="Tháng sau" title="Tháng sau">›</button>
             </div>
@@ -364,7 +368,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.10.1</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.10.2</footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>

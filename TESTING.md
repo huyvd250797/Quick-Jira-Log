@@ -1,6 +1,19 @@
-# Kiểm tra V1.10.1
+# Kiểm tra V1.10.2
 
 Ngày: 16/10/2026. Runtime: Node.js v24.19.0.
+
+## Giao diện lịch V1.10.2
+
+- Đã chạy npm test và node --check app.js: đạt toàn bộ bộ kiểm tra hiện có.
+- Playwright/Chromium với API giả lập: desktop 1440×1000, iPhone 13, mobile 315×683, ngang 844×390; không có lỗi JavaScript.
+- Danh sách hiển thị bộ lọc ngày/KEY và nút Tìm; Lịch ẩn cả cụm này và hiển thị ô Đến ngày trong thanh cố định.
+- KEY giữ nguyên khi chuyển qua lại; yêu cầu lịch tuần/tháng không gửi KEY ẩn, yêu cầu Danh sách gửi lại đúng KEY.
+- Chọn 01/11/2026: lịch tuần tải 26/10–01/11; lịch tháng tải 01/11–30/11. Chọn 15/12 chuyển đúng tháng 12.
+- Nút trước/sau, Hôm nay, chọn ô ngày tháng và tiêu đề ngày tuần đồng bộ ô Đến ngày.
+- Nút ↻ tải lại thành công; kiểm tra dữ liệu thiếu, API lỗi và thử lại. Thông báo lịch không hướng dẫn bấm nút Tìm đã ẩn.
+- Cuộn dọc/ngang: Tuần/Tháng, ô chọn ngày và nút tải lại giữ nguyên vị trí, vẫn hiển thị và hit-test được; mở/đóng form sửa vẫn thành công.
+- Đã kiểm tra ảnh giao diện sáng/tối. Màn hình ngang dùng thanh điều hướng hai cột để tăng vùng xem lịch; không tràn ngang toàn trang.
+- Dữ liệu giả lập, chưa kiểm tra Jira thật hoặc Safari trên iPhone vật lý.
 
 ## Hotfix V1.10.1
 
@@ -22,7 +35,7 @@ Ngày: 16/10/2026. Runtime: Node.js v24.19.0.
 - Geometry block đúng số phút, và các block trùng giờ được phân lane.
 - HTTP stream thực qua Node server cục bộ với Jira giả lập: Log đơn/Bulk, dữ liệu progress về trước kết quả cuối, phần trăm không giảm, lỗi không có 100%, idempotent replay không tạo worklog lại, API JSON vẫn tương thích.
 - `node --check` cho app.js, handlers/worklog.js, handlers/bulk-worklog.js, lib/ui-tools.js và các module thay đổi.
-- HTML có 165 ID duy nhất, không trùng.
+- HTML có 168 ID duy nhất, không trùng.
 
 ## Kiểm tra trình duyệt
 

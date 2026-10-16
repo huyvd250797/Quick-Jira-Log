@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.10.1';
+const APP_VERSION = '1.10.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1366,6 +1366,7 @@ function renderWeeklyCalendar(date) {
   $('weeklyCalendar').querySelectorAll('[data-week-event]').forEach(button => button.addEventListener('click', () => openCorrection(state.historyItems[Number(button.dataset.weekEvent)])));
   $('weeklyCalendar').querySelectorAll('[data-week-day]').forEach(button => button.addEventListener('click', () => {
     $('historyDate').value = button.dataset.weekDay;
+    syncCalendarControls();
     renderCalendarAgenda(button.dataset.weekDay);
     $('calendarDayHeading').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }));
@@ -1481,11 +1482,14 @@ function historyDayLabel(date, monthOnly = false) {
 function syncCalendarControls() {
   const date = $('historyDate').value || todayLocal();
   if (!QuickJiraUi.validDate(date)) return;
+  if ($('calendarDate').value !== date) $('calendarDate').value = date;
   const weekly = state.calendarMode === 'week';
   const week = QuickJiraUi.weekRange(date);
   $('calendarMonthLabel').textContent = weekly ? `${week.start.split('-').reverse().join('/')} – ${(state.calendarWeekends ? week.end : week.workEnd).split('-').reverse().join('/')}` : historyDayLabel(date, true);
   $('calendarPrevBtn').setAttribute('aria-label', weekly ? 'Tuần trước' : 'Tháng trước');
   $('calendarNextBtn').setAttribute('aria-label', weekly ? 'Tuần sau' : 'Tháng sau');
+  $('calendarPrevBtn').title = weekly ? 'Tuần trước' : 'Tháng trước';
+  $('calendarNextBtn').title = weekly ? 'Tuần sau' : 'Tháng sau';
   $('calendarWeekBtn').classList.toggle('is-active', weekly);
   $('calendarMonthBtn').classList.toggle('is-active', !weekly);
   $('calendarWeekBtn').setAttribute('aria-pressed', String(weekly));
@@ -1545,6 +1549,10 @@ function renderWorklogHistory() {
   const stateEl = $('worklogHistoryState');
   if (!wrap || !stateEl) return;
   const calendar = state.historyView === 'calendar';
+  $('historyListFilters').classList.toggle('hidden', calendar);
+  $('refreshWorklogHistoryBtn').classList.toggle('hidden', calendar);
+  $('historyOverlay').classList.toggle('is-calendar-view', calendar);
+  $('calendarRefreshBtn').disabled = state.historyLoading;
   $('calendarControls').classList.toggle('hidden', !calendar);
   if (calendar) syncCalendarControls();
   wrap.classList.toggle('hidden', calendar);
@@ -1604,7 +1612,7 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
   const selectedDate = $('historyDate').value || todayLocal();
   if (!QuickJiraUi.validDate(selectedDate)) return showToast('Vui lòng chọn ngày hợp lệ.');
   const range = state.historyView === 'calendar' ? (state.calendarMode === 'week' ? QuickJiraUi.weekRange(selectedDate) : QuickJiraUi.monthRange(selectedDate)) : { start: selectedDate, end: selectedDate };
-  const key = $('historyKey').value.trim().toUpperCase();
+  const key = state.historyView === 'calendar' ? '' : $('historyKey').value.trim().toUpperCase();
   const sequence = ++state.historySeq;
   closeCorrection();
   state.historyError = '';
@@ -1624,9 +1632,9 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
     state.historyLoaded = true;
     const notices = [];
     if (data.skipped?.length) notices.push(`${data.skipped.length} task chưa đọc được worklog`);
-    if (data.truncated) notices.push('Đang giới hạn 500 task; hãy thu hẹp bằng KEY');
+    if (data.truncated) notices.push(state.historyView === 'calendar' ? 'Đang giới hạn 500 task; chuyển sang Danh sách để tìm theo KEY' : 'Đang giới hạn 500 task; hãy thu hẹp bằng KEY');
     if (data.sourceDetails?.metadataError) notices.push('Một số thông tin task chưa tải được');
-    state.historyNotice = notices.length ? `Dữ liệu chưa đầy đủ: ${notices.join(' · ')}. Bấm Tìm worklog để tải lại.` : '';
+    state.historyNotice = notices.length ? `Dữ liệu chưa đầy đủ: ${notices.join(' · ')}. ${state.historyView === 'calendar' ? 'Bấm ↻ để tải lại lịch.' : 'Bấm Tìm worklog để tải lại.'}` : '';
     if (!quiet) showToast(`Đã tải ${state.historyItems.length} worklog.`);
   } catch (error) {
     if (sequence !== state.historySeq || !state.user) return;
@@ -2402,6 +2410,15 @@ window.addEventListener('focus', () => { if (state.user && (vietnamToday() !== s
 $('calendarPrevBtn').addEventListener('click', () => moveHistoryMonth(-1));
 $('calendarNextBtn').addEventListener('click', () => moveHistoryMonth(1));
 $('calendarTodayBtn').addEventListener('click', () => moveHistoryMonth(0));
+$('calendarDate').addEventListener('change', () => {
+  if (!QuickJiraUi.validDate($('calendarDate').value)) {
+    syncCalendarControls();
+    return showToast('Vui lòng chọn ngày hợp lệ.');
+  }
+  $('historyDate').value = $('calendarDate').value;
+  void loadWorklogHistory({ quiet: true });
+});
+$('calendarRefreshBtn').addEventListener('click', () => loadWorklogHistory({ quiet: true, force: true }));
 $('historyDate').addEventListener('change', () => loadWorklogHistory({ quiet: true }));
 $('togglePasswordBtn').addEventListener('click', () => setPasswordVisible($('password').type === 'password'));
 $('loginForm').addEventListener('submit', () => setPasswordVisible(false));

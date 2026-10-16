@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.10.1 – Fixed Calendar Controls on Mobile.",
+  "description": "Quick Jira Log V1.10.2 – Compact Calendar Date Navigation.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

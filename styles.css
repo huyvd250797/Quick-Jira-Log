@@ -2503,6 +2503,24 @@ html[data-theme="dark"] #historyOverlay .history-state.is-warning { color: #edc6
 #historyOverlay .calendar-controls { flex: 0 0 auto; min-width: 0; position: relative; background: var(--card); border-bottom: 1px solid var(--line); padding-bottom: 8px; }
 #calendarControls .calendar-navigation { padding: 0 0 8px; }
 #calendarControls .calendar-mode-toolbar { padding: 0; }
+/* V1.10.2 — Calendar has its own compact, fixed date navigation. */
+#historyOverlay.is-calendar-view .history-controls { grid-template-columns: 1fr; }
+#historyOverlay.is-calendar-view .history-view-switch { grid-column: 1 / -1; }
+.calendar-period-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.calendar-period-heading strong { font-size: 13px; text-transform: capitalize; }
+.calendar-refresh-btn { flex: 0 0 auto; width: 34px; height: 32px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text); font-size: 21px; cursor: pointer; }
+.calendar-refresh-btn:disabled { opacity: .5; cursor: wait; }
+#calendarControls .calendar-navigation { align-items: flex-end; }
+#calendarControls .calendar-date-field { flex: 1; min-width: 0; margin: 0; gap: 3px; }
+.calendar-date-field > span { font-size: 10px; color: var(--muted); }
+#calendarControls .calendar-date-field input { display: block; width: 100%; min-width: 0; max-width: 100%; min-height: 38px; height: 38px; margin: 0; padding: 5px 8px; font-size: 14px; }
+#calendarControls .calendar-date-field input::-webkit-date-and-time-value { text-align: left; }
+@media (max-height: 560px) and (min-width: 600px) {
+  #historyOverlay .calendar-controls { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.4fr); gap: 4px 12px; align-items: end; }
+  #calendarControls .calendar-navigation { padding-bottom: 0; }
+  #calendarControls .calendar-mode-toolbar { grid-column: 1 / -1; }
+  #calendarControls .calendar-week-summary { flex: 0 1 auto; margin-left: auto; padding: 0; gap: 12px; }
+}
 @media (max-width: 899px) {
   #historyOverlay .calendar-controls { padding-bottom: 7px; }
   #calendarControls .calendar-navigation { padding-bottom: 6px; }

@@ -1,5 +1,13 @@
 # Changelog
 
+## V1.10.2 — Compact Calendar Navigation
+
+- Ẩn bộ lọc ngày/KEY và nút Tìm của Danh sách khi xem Lịch.
+- Thêm ô Đến ngày trong thanh điều hướng cố định; tự chuyển đến tuần/tháng chứa ngày được chọn.
+- Đồng bộ ngày giữa ô chọn, trước/sau, Hôm nay và ngày trong lưới.
+- Lịch không dùng KEY ẩn; giữ KEY khi quay lại Danh sách. Thêm nút ↻ tải lại lịch.
+- Đồng bộ version và PWA cache; không thay đổi API.
+
 ## V1.10.1 — Fixed Calendar Controls
 
 - Đưa điều hướng kỳ và cụm Tuần/Tháng ra ngoài historyResults để không bị cuộn khuất hoặc header lưới lịch che trên mobile.

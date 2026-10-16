@@ -39,3 +39,5 @@
 - ✅ **V1.10.0 – Weekly Calendar, Dashboard & Live Progress**: lịch Tuần/Tháng, block tỷ lệ thời lượng và sửa/xóa trực tiếp; tổng ngày /8h, tuần /40h; dashboard giờ còn thiếu; tiến trình server và ETA cho Log đơn/Bulk.
 
 - ✅ **V1.10.1 – Fixed Calendar Controls**: cố định chọn Tuần/Tháng, điều hướng kỳ và tổng tuần ngoài vùng cuộn lịch, khắc phục bị che trên mobile.
+
+- ✅ **V1.10.2 – Compact Calendar Navigation**: ẩn bộ lọc Danh sách khi xem lịch, chọn ngày gọn trong thanh cố định, tự tải tuần/tháng và tải lại bằng ↻.
