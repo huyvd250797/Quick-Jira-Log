@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.10.4';
+const APP_VERSION = '1.10.5';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -78,6 +78,9 @@ const state = {
 
 const UI_MOTION_MS = 170;
 const uiAnimationTimers = new WeakMap();
+const correctionDesktopQuery = window.matchMedia('(min-width: 900px)');
+const correctionPanelHome = $('worklogCorrectionPanel').parentElement;
+let correctionSource = null;
 
 function reduceMotionEnabled() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
@@ -1140,6 +1143,7 @@ function closeOverlay(id, { restore = true } = {}) {
 }
 
 function closeAllToolOverlays({ restore = true } = {}) {
+  closeCorrection({ restoreFocus: false });
   closeOverlay('plannerOverlay', { restore: false });
   closeOverlay('historyOverlay', { restore: false });
   if (restore) setTimeout(unlockOverlayBody, reduceMotionEnabled() ? 0 : UI_MOTION_MS + 10);
@@ -1665,6 +1669,7 @@ function moveHistoryMonth(delta) {
 
 function openCorrection(item) {
   if (!item) return;
+  correctionSource = document.activeElement;
   $('correctionWorklogId').value = item.id;
   $('correctionKey').value = item.key;
   $('correctionDate').value = item.date;
@@ -1674,15 +1679,60 @@ function openCorrection(item) {
   $('correctionDescription').value = item.description || item.summary || '';
   $('correctionTitle').textContent = `Sửa ${item.key}`;
   $('correctionMeta').textContent = `${item.start}–${item.end} · ${formatHistoryTimeSpent(item.minutes)}`;
+  $('correctionIssueSummary').textContent = item.summary || item.description || 'Không có mô tả công việc';
+  $('correctionFeedback').classList.add('hidden');
   showAnimated($('worklogCorrectionPanel'));
+  syncCorrectionPresentation();
   requestAnimationFrame(() => {
-    $('worklogCorrectionPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if ($('worklogCorrectionPanel').classList.contains('hidden')) return;
+    if (!$('worklogCorrectionDialog').open) $('worklogCorrectionPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
     $('correctionTimeSpent').focus({ preventScroll: true });
   });
 }
 
-function closeCorrection() {
-  hideAnimated($('worklogCorrectionPanel'));
+function syncCorrectionPresentation() {
+  const panel = $('worklogCorrectionPanel');
+  if (panel.classList.contains('hidden') || panel.classList.contains('qjl-closing')) return;
+  const dialog = $('worklogCorrectionDialog');
+  if (correctionDesktopQuery.matches) {
+    if (!dialog.open) {
+      dialog.append(panel);
+      dialog.showModal();
+    }
+    $('correctionTitle').textContent = `Chi tiết worklog · ${$('correctionKey').value}`;
+  } else {
+    if (dialog.open) dialog.close();
+    if (panel.parentElement !== correctionPanelHome) correctionPanelHome.append(panel);
+    $('correctionTitle').textContent = `Sửa ${$('correctionKey').value}`;
+  }
+}
+
+function closeCorrection({ restoreFocus = true } = {}) {
+  const panel = $('worklogCorrectionPanel');
+  const dialog = $('worklogCorrectionDialog');
+  if (dialog.open || panel.parentElement === dialog) {
+    clearUiAnimation(panel);
+    panel.classList.add('hidden');
+    if (dialog.open) dialog.close();
+    correctionPanelHome.append(panel);
+    if (restoreFocus) {
+      const source = correctionSource;
+      requestAnimationFrame(() => {
+        if ($('historyOverlay').classList.contains('hidden') || $('historyOverlay').classList.contains('qjl-closing')) return;
+        const target = source?.isConnected && source.getClientRects().length ? source : $(state.historyView === 'calendar' ? 'historyCalendarViewBtn' : 'historyListViewBtn');
+        target?.focus({ preventScroll: true });
+      });
+    }
+  } else hideAnimated(panel);
+  $('correctionFeedback').classList.add('hidden');
+}
+
+function showCorrectionFeedback(message) {
+  if ($('worklogCorrectionDialog').open) {
+    $('correctionFeedback').textContent = message;
+    $('correctionFeedback').classList.remove('hidden');
+    $('correctionFeedback').scrollIntoView({ block: 'nearest' });
+  } else showToast(message);
 }
 
 async function saveCorrection() {
@@ -1694,7 +1744,8 @@ async function saveCorrection() {
     timeSpent: $('correctionTimeSpent').value.trim(),
     description: $('correctionDescription').value.trim()
   };
-  if (!payload.description) return showToast('Description không được để trống.');
+  if (!payload.description) return showCorrectionFeedback('Description không được để trống.');
+  $('correctionFeedback').classList.add('hidden');
   const btn = $('saveCorrectionBtn');
   btn.disabled = true;
   btn.textContent = 'ĐANG LƯU...';
@@ -1707,7 +1758,7 @@ async function saveCorrection() {
     closeCorrection();
     await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
-    showToast(error.message);
+    showCorrectionFeedback(error.message);
   } finally {
     btn.disabled = false;
     btn.textContent = 'LƯU CHỈNH SỬA';
@@ -1726,7 +1777,7 @@ async function deleteHistoryItem(item) {
     if ($('correctionWorklogId').value === item.id) closeCorrection();
     await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
-    showToast(error.message);
+    showCorrectionFeedback(error.message);
   }
 }
 
@@ -2429,6 +2480,38 @@ $('historyKey')?.addEventListener('keydown', event => {
   void loadWorklogHistory();
 });
 $('cancelCorrectionBtn').addEventListener('click', closeCorrection);
+$('worklogCorrectionDialog').addEventListener('cancel', event => {
+  event.preventDefault();
+  closeCorrection();
+});
+$('worklogCorrectionDialog').addEventListener('keydown', event => {
+  if (event.key !== 'Tab') return;
+  const elements = [...$('worklogCorrectionDialog').querySelectorAll('button, input, textarea, select, [tabindex]')]
+    .filter(element => !element.disabled && element.tabIndex >= 0 && element.getClientRects().length);
+  const first = elements[0], last = elements.at(-1);
+  if (!first) return;
+  if (event.shiftKey && document.activeElement === first || !event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
+});
+let correctionBackdropPressed = false;
+$('worklogCorrectionDialog').addEventListener('pointerdown', event => {
+  correctionBackdropPressed = event.target === $('worklogCorrectionDialog');
+});
+$('worklogCorrectionDialog').addEventListener('click', event => {
+  if (correctionBackdropPressed && event.target === $('worklogCorrectionDialog')) closeCorrection();
+  correctionBackdropPressed = false;
+});
+correctionDesktopQuery.addEventListener('change', () => {
+  const panel = $('worklogCorrectionPanel');
+  if (panel.classList.contains('hidden') || panel.classList.contains('qjl-closing')) return;
+  syncCorrectionPresentation();
+  requestAnimationFrame(() => {
+    if (!$('worklogCorrectionDialog').open) panel.scrollIntoView({ block: 'nearest' });
+    $('correctionTimeSpent').focus({ preventScroll: true });
+  });
+});
 $('saveCorrectionBtn').addEventListener('click', saveCorrection);
 $('deleteCorrectionBtn').addEventListener('click', deleteCurrentCorrection);
 $('clearAuditHistoryBtn').addEventListener('click', () => {
@@ -2440,6 +2523,12 @@ $('clearAuditHistoryBtn').addEventListener('click', () => {
 });
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
+  if ($('worklogCorrectionDialog').open) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    closeCorrection();
+    return;
+  }
   if (!$('logConfirmOverlay')?.classList.contains('hidden')) {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -2456,6 +2545,7 @@ $('logNextBtn')?.addEventListener('click', () => { state.logAndNextRequested = t
 
 
 document.addEventListener('keydown', event => {
+  if ($('worklogCorrectionDialog').open) return;
   const active = document.activeElement;
   const typing = active && ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName);
   if (event.key === 'Escape' && document.body.classList.contains('desktop-editor-open')) {

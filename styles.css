@@ -2614,3 +2614,34 @@ html[data-theme="dark"] #historyOverlay .history-state.is-warning { color: #edc6
   #bulkCard.mobile-bottom-sheet .bulk-sticky-header,
   #bulkCard.mobile-bottom-sheet .bulk-actions { position: static; }
 }
+
+/* V1.10.5 — Reuse the correction form in a native modal on desktop. */
+.correction-issue-summary { display: none; }
+#worklogCorrectionDialog {
+  width: min(680px, calc(100vw - 64px));
+  max-width: none;
+  max-height: calc(100dvh - 64px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--text);
+  background: var(--card);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .35);
+}
+#worklogCorrectionDialog::backdrop { background: rgba(4, 12, 24, .6); backdrop-filter: blur(3px); }
+#worklogCorrectionDialog .worklog-correction-panel { margin: 0; padding: 24px; gap: 16px; border: 0; border-radius: 0; color: var(--text); background: var(--card); }
+#worklogCorrectionDialog .correction-head { align-items: center; gap: 16px; }
+#worklogCorrectionDialog .correction-head strong { font-size: 18px; line-height: 1.4; }
+#worklogCorrectionDialog .correction-head small { margin-top: 4px; font-size: 12px; }
+#worklogCorrectionDialog #cancelCorrectionBtn { min-height: 36px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; }
+#worklogCorrectionDialog .correction-issue-summary { display: block; margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--primary-soft); font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; white-space: pre-wrap; }
+#worklogCorrectionDialog label { min-width: 0; font-size: 12px; }
+#worklogCorrectionDialog input, #worklogCorrectionDialog textarea { width: 100%; min-width: 0; font-size: 14px; }
+#worklogCorrectionDialog .duration-stepper > input { width: 0; }
+#worklogCorrectionDialog textarea { min-height: 110px; line-height: 1.5; resize: vertical; }
+#worklogCorrectionDialog .correction-actions { padding-top: 16px; border-top: 1px solid var(--line); gap: 10px; }
+#worklogCorrectionDialog .correction-actions button { min-height: 44px; font-size: 12px; }
+#worklogCorrectionDialog .correction-feedback { margin: 0; padding: 10px 12px; color: var(--danger); background: var(--primary-soft); border: 1px solid var(--danger); border-radius: 9px; font-size: 12px; line-height: 1.5; }

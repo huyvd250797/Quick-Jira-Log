@@ -1,5 +1,12 @@
 # Changelog
 
+## V1.10.5 — Desktop Worklog Details Popup
+
+- Hiển thị cùng form chi tiết/sửa/xóa trong native dialog trên PC từ 900px; mobile giữ form inline.
+- Popup có tên công việc đầy đủ, lỗi thao tác hiển thị tại chỗ, Escape/nền/Đóng, focus bàn phím và giữ vị trí lịch.
+- Dùng chung form và dữ liệu khi đổi kích thước PC/mobile, không trùng ID hoặc handler.
+- Giữ API, xác nhận xóa, làm mới dữ liệu sau mutation; đồng bộ version/PWA cache.
+
 ## V1.10.4 — Readable Mobile Duration
 
 - Tăng chiều rộng ô TimeSpent trong Bulk mobile lên tối đa 192px để không cắt giá trị giờ/phút.

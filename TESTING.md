@@ -1,6 +1,19 @@
-# Kiểm tra V1.10.4
+# Kiểm tra V1.10.5
 
 Ngày: 16/10/2026. Runtime: Node.js v24.19.0.
+
+## Desktop Worklog Details Popup V1.10.5
+
+- Playwright/Chromium với API giả lập: PC 1440×900, 1024×600, biên 900×720; mobile 390×844 và 315×683. Không có lỗi JavaScript.
+- PC bấm block mở native dialog, form được đưa vào popup; lịch không tự cuộn xuống. Mobile vẫn đưa form vào historyResults và tiêu đề/nội dung như trước.
+- Kiểm tra mã task, tên công việc, ngày/giờ/thời lượng/mô tả. Sửa ngày, giờ bắt đầu, tăng 30m và mô tả: payload PATCH đúng, đóng popup và tải lại dữ liệu.
+- Description rỗng không gửi PATCH; API lỗi giữ popup và dữ liệu nháp, thông báo lỗi tại chỗ; sửa lỗi rồi lưu lại thành công.
+- Xóa có xác nhận: Hủy không gửi DELETE, API lỗi giữ popup, thử lại thành công đóng popup và làm mới lịch.
+- Lịch tuần, agenda trong lịch tháng và nút Sửa ở Danh sách đều mở popup trên PC.
+- Tab đi vòng trong popup, Escape chỉ đóng popup; bấm nền hoặc Đóng cũng quay lại lịch, giữ scroll và trả focus về block.
+- Đổi từ PC → mobile → PC trong khi sửa giữ nội dung nháp, chỉ một form/handler và không có ID trùng.
+- Đã xem ảnh popup sáng/tối trên PC và ảnh form inline mobile. Kiểm tra dùng dữ liệu giả lập, chưa xác minh Jira thật hoặc Safari/iPhone vật lý.
+- npm test và node --check app.js đều đạt.
 
 ## Mobile TimeSpent V1.10.4
 
@@ -57,7 +70,7 @@ Ngày: 16/10/2026. Runtime: Node.js v24.19.0.
 - Geometry block đúng số phút, và các block trùng giờ được phân lane.
 - HTTP stream thực qua Node server cục bộ với Jira giả lập: Log đơn/Bulk, dữ liệu progress về trước kết quả cuối, phần trăm không giảm, lỗi không có 100%, idempotent replay không tạo worklog lại, API JSON vẫn tương thích.
 - `node --check` cho app.js, handlers/worklog.js, handlers/bulk-worklog.js, lib/ui-tools.js và các module thay đổi.
-- HTML có 168 ID duy nhất, không trùng.
+- HTML có 171 ID duy nhất, không trùng.
 
 ## Kiểm tra trình duyệt
 

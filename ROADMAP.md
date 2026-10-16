@@ -45,3 +45,5 @@
 - ✅ **V1.10.3 – Desktop Calendar Workspace**: lịch PC gần toàn màn hình, toolbar gọn, chọn ngày 144px, một vùng cuộn và giữ nguyên mobile.
 
 - ✅ **V1.10.4 – Readable Mobile Duration**: tăng chiều rộng TimeSpent mobile Bulk, tách hàng preset để hiển thị rõ giờ/phút.
+
+- ✅ **V1.10.5 – Desktop Worklog Details Popup**: popup xem/sửa/xóa worklog PC, giữ form bên dưới trên mobile.
