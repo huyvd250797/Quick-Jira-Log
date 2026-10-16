@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.11.1';
+const APP_VERSION = '1.11.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -85,6 +85,11 @@ const uiAnimationTimers = new WeakMap();
 const correctionDesktopQuery = window.matchMedia('(min-width: 900px)');
 const correctionPanelHome = $('worklogCorrectionPanel').parentElement;
 let correctionSource = null;
+let correctionMotion = null;
+let correctionMotionSeq = 0;
+let correctionCloseJob = null;
+let correctionBackground = null;
+let correctionTouch = null;
 
 function reduceMotionEnabled() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
@@ -1147,7 +1152,7 @@ function closeOverlay(id, { restore = true } = {}) {
 }
 
 function closeAllToolOverlays({ restore = true } = {}) {
-  closeCorrection({ restoreFocus: false });
+  closeCorrection({ restoreFocus: false, immediate: true });
   closeOverlay('plannerOverlay', { restore: false });
   closeOverlay('historyOverlay', { restore: false });
   if (restore) setTimeout(unlockOverlayBody, reduceMotionEnabled() ? 0 : UI_MOTION_MS + 10);
@@ -1185,7 +1190,7 @@ function closePlanner() {
 }
 
 function openHistory() {
-  closeCorrection();
+  closeCorrection({ immediate: true });
   state.historyView = 'calendar';
   state.calendarMode = 'week';
   state.historyScrollScope = '';
@@ -1197,7 +1202,7 @@ function openHistory() {
 
 function closeHistory() {
   void exitCalendarFullscreen();
-  closeCorrection();
+  closeCorrection({ immediate: true });
   closeOverlay('historyOverlay');
 }
 
@@ -1391,7 +1396,7 @@ function renderWeeklyCalendar(date) {
   const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:${index * 60}px">${timeText(from + index * 60)}</span>`).join('');
   const headers = days.map((day, index) => {
     const total = state.historyItems.filter(item => item.date === day).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-    return `<button type="button" class="week-day-heading${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Xem chi tiết ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
+    return `<button type="button" class="week-day-heading${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
   }).join('');
   const columns = days.map(day => {
     const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
@@ -1411,8 +1416,7 @@ function renderWeeklyCalendar(date) {
       el.classList.toggle('is-selected', selected);
       el.setAttribute('aria-pressed', String(selected));
     });
-    renderCalendarAgenda(button.dataset.weekDay);
-    $('calendarDayHeading').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Week view stays on the time grid; details open from each worklog block.
   }));
 }
 
@@ -1528,6 +1532,9 @@ function syncCalendarControls() {
   if (!QuickJiraUi.validDate(date)) return;
   if ($('calendarDate').value !== date) $('calendarDate').value = date;
   const weekly = state.calendarMode === 'week';
+  $('historyOverlay').classList.toggle('is-week-view', weekly);
+  $('calendarDayHeading').classList.toggle('hidden', weekly);
+  $('calendarAgenda').classList.toggle('hidden', weekly);
   const week = QuickJiraUi.weekRange(date);
   $('calendarMonthLabel').textContent = weekly ? `${week.start.split('-').reverse().join('/')} – ${(state.calendarWeekends ? week.end : week.workEnd).split('-').reverse().join('/')}` : historyDayLabel(date, true);
   $('calendarPrevBtn').setAttribute('aria-label', weekly ? 'Tuần trước' : 'Tháng trước');
@@ -1554,9 +1561,14 @@ function renderWorklogCalendar() {
   const controls = syncCalendarControls();
   if (!controls) return;
   const { date, weekly } = controls;
-  if (weekly) renderWeeklyCalendar(date);
-  else renderMonthlyCalendar(date);
-  renderCalendarAgenda(date);
+  if (weekly) {
+    renderWeeklyCalendar(date);
+    $('calendarDayHeading').replaceChildren();
+    $('calendarAgenda').replaceChildren();
+  } else {
+    renderMonthlyCalendar(date);
+    renderCalendarAgenda(date);
+  }
 }
 
 function renderMonthlyCalendar(date) {
@@ -1575,7 +1587,7 @@ function renderMonthlyCalendar(date) {
   }).join('');
   $('calendarGrid').querySelectorAll('[data-date]').forEach(button => button.addEventListener('click', () => {
     $('historyDate').value = button.dataset.date;
-    closeCorrection();
+    closeCorrection({ immediate: true });
     renderWorklogCalendar();
     // Keep keyboard focus on the chosen day after replacing calendar buttons.
     $('calendarGrid').querySelector(`[data-date="${button.dataset.date}"]`)?.focus({ preventScroll: true });
@@ -1675,7 +1687,7 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
   const sameScope = scope === state.historyScrollScope;
   const scroll = sameScope ? { top: results.scrollTop, left: results.scrollLeft, weekTop: weeklyScroll?.scrollTop || 0, weekLeft: weeklyScroll?.scrollLeft || 0 } : { top: 0, left: 0, weekTop: 0, weekLeft: 0 };
   const sequence = ++state.historySeq;
-  closeCorrection();
+  closeCorrection({ immediate: true });
   state.historyError = '';
   state.historyNotice = '';
   state.historyItems = [];
@@ -1709,6 +1721,7 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
       searchBtn.textContent = 'TÌM WORKLOG ĐÃ LOG';
       renderWorklogHistory();
       state.historyScrollScope = scope;
+      if (!sameScope && state.historyLoaded && !reduceMotionEnabled()) $('historyResults').animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' });
       requestAnimationFrame(() => {
         if (sequence !== state.historySeq) return;
         results.scrollTo(scroll.left, scroll.top);
@@ -1794,6 +1807,7 @@ async function exitCalendarFullscreen({ nativeEnded = false } = {}) {
 
 function openCorrection(item) {
   if (!item) return;
+  closeCorrection({ immediate: true, restoreFocus: false });
   correctionSource = document.activeElement;
   $('correctionWorklogId').value = item.id;
   $('correctionKey').value = item.key;
@@ -1806,8 +1820,10 @@ function openCorrection(item) {
   $('correctionMeta').textContent = `${item.start}–${item.end} · ${formatHistoryTimeSpent(item.minutes)}`;
   $('correctionIssueSummary').textContent = item.summary || item.description || 'Không có mô tả công việc';
   $('correctionFeedback').classList.add('hidden');
-  showAnimated($('worklogCorrectionPanel'));
+  clearUiAnimation($('worklogCorrectionPanel'));
+  $('worklogCorrectionPanel').classList.remove('hidden');
   syncCorrectionPresentation();
+  animateCorrection(false);
   // Focus a non-input immediately: opening details must never summon the mobile keyboard.
   $('cancelCorrectionBtn').focus({ preventScroll: true });
 }
@@ -1818,6 +1834,7 @@ function syncCorrectionPresentation() {
   const dialog = $('worklogCorrectionDialog');
   if (!dialog.open) {
     dialog.append(panel);
+    lockCorrectionBackground();
     dialog.showModal();
   }
   $('correctionTitle').textContent = `Chi tiết worklog · ${$('correctionKey').value}`;
@@ -1832,25 +1849,129 @@ function syncCorrectionViewport() {
   $('worklogCorrectionDialog').style.setProperty('--correction-keyboard-inset', `${inset}px`);
 }
 
-function closeCorrection({ restoreFocus = true } = {}) {
-  const panel = $('worklogCorrectionPanel');
-  const dialog = $('worklogCorrectionDialog');
-  if (dialog.open || panel.parentElement === dialog) {
-    clearUiAnimation(panel);
-    panel.classList.add('hidden');
-    if (dialog.open) dialog.close();
-    correctionPanelHome.append(panel);
-    if (restoreFocus) {
-      const source = correctionSource;
-      requestAnimationFrame(() => {
-        if (dialog.open || $('historyOverlay').classList.contains('hidden') || $('historyOverlay').classList.contains('qjl-closing')) return;
-        const target = source?.isConnected && source.getClientRects().length ? source : $(state.historyView === 'calendar' ? 'historyCalendarViewBtn' : 'historyListViewBtn');
-        target?.focus({ preventScroll: true });
-      });
-    }
-  } else hideAnimated(panel);
-  $('correctionFeedback').classList.add('hidden');
+function lockCorrectionBackground() {
+  if (correctionBackground) return;
+  const results = $('historyResults');
+  correctionBackground = { top: results.scrollTop, left: results.scrollLeft, inert: $('historyOverlay').inert };
+  document.documentElement.classList.add('worklog-details-open');
+  document.body.classList.add('worklog-details-open');
+  $('historyOverlay').inert = true;
 }
+
+function unlockCorrectionBackground() {
+  if (!correctionBackground) return;
+  const saved = correctionBackground;
+  correctionBackground = null;
+  $('historyOverlay').inert = saved.inert;
+  document.documentElement.classList.remove('worklog-details-open');
+  document.body.classList.remove('worklog-details-open');
+  $('historyResults').scrollTo(saved.left, saved.top);
+  correctionTouch = null;
+}
+
+function animateCorrection(closing, done) {
+  const dialog = $('worklogCorrectionDialog');
+  const seq = ++correctionMotionSeq;
+  // Sample the current frame so rapidly reversing the animation does not jump.
+  const current = getComputedStyle(dialog);
+  const opacity = closing ? current.opacity : '0';
+  const transform = closing ? current.transform : (correctionDesktopQuery.matches ? 'translateY(8px)' : 'translateY(100%)');
+  correctionMotion?.cancel();
+  correctionMotion = null;
+  if (reduceMotionEnabled() || !dialog.animate) { delete dialog.dataset.motion; done?.(); return; }
+  dialog.dataset.motion = closing ? 'closing' : 'opening';
+  correctionMotion = dialog.animate([
+    { opacity, transform },
+    { opacity: closing ? 0 : 1, transform: closing ? (correctionDesktopQuery.matches ? 'translateY(8px)' : 'translateY(100%)') : 'translateY(0)' }
+  ], { duration: closing ? 190 : 240, easing: closing ? 'cubic-bezier(.4,0,1,1)' : 'cubic-bezier(.16,1,.3,1)', fill: 'both' });
+  correctionMotion.finished.then(() => {
+    if (seq !== correctionMotionSeq) return;
+    correctionMotion?.cancel();
+    correctionMotion = null;
+    delete dialog.dataset.motion;
+    done?.();
+  }).catch(() => {});
+}
+
+function finishCorrectionClose(job) {
+  if (job !== correctionCloseJob) return;
+  ++correctionMotionSeq;
+  correctionMotion?.cancel(); correctionMotion = null;
+  const panel = $('worklogCorrectionPanel'), dialog = $('worklogCorrectionDialog');
+  delete dialog.dataset.motion;
+  clearUiAnimation(panel);
+  panel.classList.add('hidden');
+  if (dialog.open) dialog.close();
+  correctionPanelHome.append(panel);
+  $('correctionFeedback').classList.add('hidden');
+  unlockCorrectionBackground();
+  correctionCloseJob = null;
+  job.resolve();
+  if (job.restoreFocus) requestAnimationFrame(() => {
+    if (dialog.open || $('historyOverlay').classList.contains('hidden') || $('historyOverlay').classList.contains('qjl-closing')) return;
+    const source = job.source;
+    const target = source?.isConnected && source.getClientRects().length ? source : $('closeHistoryBtn');
+    target?.focus({ preventScroll: true });
+  });
+}
+
+function closeCorrection({ restoreFocus = true, immediate = false } = {}) {
+  if (correctionCloseJob) {
+    const job = correctionCloseJob;
+    if (immediate) finishCorrectionClose(job);
+    return job.promise;
+  }
+  const panel = $('worklogCorrectionPanel'), dialog = $('worklogCorrectionDialog');
+  if (!dialog.open) {
+    clearUiAnimation(panel); panel.classList.add('hidden');
+    unlockCorrectionBackground();
+    return Promise.resolve();
+  }
+  const job = { restoreFocus, source: correctionSource };
+  job.promise = new Promise(resolve => { job.resolve = resolve; });
+  correctionCloseJob = job;
+  if (immediate || reduceMotionEnabled()) finishCorrectionClose(job);
+  else animateCorrection(true, () => finishCorrectionClose(job));
+  return job.promise;
+}
+
+// Stop background pan and overscroll chaining on iOS, while allowing vertical
+// scrolling inside the dialog or a textarea that can consume the gesture.
+function correctionCanScroll(target, deltaY) {
+  const dialog = $('worklogCorrectionDialog');
+  for (let node = target?.nodeType === 1 ? target : target?.parentElement; node && dialog.contains(node); node = node.parentElement) {
+    const style = getComputedStyle(node);
+    if (/(auto|scroll)/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1) {
+      if (deltaY > 0 && node.scrollTop > 0) return true;
+      if (deltaY < 0 && node.scrollTop + node.clientHeight < node.scrollHeight - 1) return true;
+    }
+    if (node === dialog) break;
+  }
+  return false;
+}
+
+document.addEventListener('touchstart', event => {
+  if (!$('worklogCorrectionDialog').open || event.touches.length !== 1) { correctionTouch = null; return; }
+  const touch = event.touches[0], bounds = $('worklogCorrectionDialog').getBoundingClientRect();
+  correctionTouch = { x: touch.clientX, y: touch.clientY, outside: touch.clientX < bounds.left || touch.clientX > bounds.right || touch.clientY < bounds.top || touch.clientY > bounds.bottom };
+}, { capture: true, passive: true });
+document.addEventListener('touchmove', event => {
+  const dialog = $('worklogCorrectionDialog');
+  if (!dialog.open || event.touches.length !== 1 || !correctionTouch) return;
+  const touch = event.touches[0], dx = touch.clientX - correctionTouch.x, dy = touch.clientY - correctionTouch.y;
+  const outside = correctionTouch.outside;
+  correctionTouch = { x: touch.clientX, y: touch.clientY, outside };
+  if (outside || !dialog.contains(event.target) || dialog.dataset.motion === 'closing' || Math.abs(dx) > Math.abs(dy) || (Math.abs(dy) > 0 && !correctionCanScroll(event.target, dy))) {
+    if (event.cancelable) event.preventDefault();
+  }
+}, { capture: true, passive: false });
+document.addEventListener('wheel', event => {
+  const dialog = $('worklogCorrectionDialog');
+  if (!dialog.open) return;
+  const bounds = dialog.getBoundingClientRect();
+  const outside = event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom;
+  if (outside || !dialog.contains(event.target) || dialog.dataset.motion === 'closing' || Math.abs(event.deltaX) > Math.abs(event.deltaY) || !correctionCanScroll(event.target, -event.deltaY)) event.preventDefault();
+}, { capture: true, passive: false });
 
 function showCorrectionFeedback(message) {
   $('correctionFeedback').textContent = message;
@@ -1880,7 +2001,7 @@ async function saveCorrection() {
     invalidateHistoryCache();
     invalidateDayAuditCache();
     void refreshDashboard({ force: true });
-    closeCorrection();
+    await closeCorrection();
     await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
     showCorrectionFeedback(error.message);
@@ -1899,7 +2020,7 @@ async function deleteHistoryItem(item) {
     invalidateHistoryCache();
     invalidateDayAuditCache();
     void refreshDashboard({ force: true });
-    if ($('correctionWorklogId').value === item.id) closeCorrection();
+    if ($('correctionWorklogId').value === item.id) await closeCorrection();
     await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
     showCorrectionFeedback(error.message);
@@ -2619,7 +2740,7 @@ $('historyKey')?.addEventListener('keydown', event => {
 $('cancelCorrectionBtn').addEventListener('click', closeCorrection);
 $('worklogCorrectionDialog').addEventListener('cancel', event => {
   event.preventDefault();
-  closeCorrection();
+  void closeCorrection();
 });
 $('worklogCorrectionDialog').addEventListener('keydown', event => {
   if (event.key !== 'Tab') return;
@@ -2637,7 +2758,7 @@ $('worklogCorrectionDialog').addEventListener('pointerdown', event => {
   correctionBackdropPressed = event.target === $('worklogCorrectionDialog');
 });
 $('worklogCorrectionDialog').addEventListener('click', event => {
-  if (correctionBackdropPressed && event.target === $('worklogCorrectionDialog')) closeCorrection();
+  if (correctionBackdropPressed && event.target === $('worklogCorrectionDialog')) void closeCorrection();
   correctionBackdropPressed = false;
 });
 correctionDesktopQuery.addEventListener('change', () => {
@@ -2660,7 +2781,7 @@ document.addEventListener('keydown', event => {
   if ($('worklogCorrectionDialog').open) {
     event.preventDefault();
     event.stopImmediatePropagation();
-    closeCorrection();
+    void closeCorrection();
     return;
   }
   if (!$('logConfirmOverlay')?.classList.contains('hidden')) {

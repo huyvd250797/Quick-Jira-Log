@@ -1,4 +1,19 @@
-# Kiểm tra V1.11.1
+# Kiểm tra V1.11.2
+
+## Kiểm tra bổ sung V1.11.2
+
+`motion-lock.cjs` kiểm tra trên 315×683, 390×844, 844×390, 1440×900 và chế độ giảm chuyển động tại 390×844:
+
+- Lịch Tuần không còn DOM agenda và tiêu đề danh sách ngày; chọn ngày không thay chiều cao vùng lịch. Đổi sang Tháng có agenda, quay lại Tuần thì xóa và ẩn agenda.
+- Dialog mở với focus ở nút Đóng; nền inert và overflow được khóa.
+- Wheel ở nền không đổi vị trí lịch. Touch mô phỏng ở nền, kéo ngang trong sheet và kéo quá biên trên bị chặn; vùng nội dung sheet vẫn cuộn dọc được.
+- Dialog không có chiều rộng nội dung vượt khung và không trượt ngang.
+- Kiểm tra keyframe mở từ opacity 0 → 1, đóng về 0; mobile có translateY(100%) ở đầu vào/cuối ra.
+- Trong hiệu ứng đóng, dialog còn mở và nền còn khóa; chỉ gỡ khóa sau khi đóng hoàn tất, khôi phục vị trí cuộn.
+- Đóng rồi mở ngay không để callback animation trước ẩn nhầm sheet mới.
+- Cửa sổ Cài đặt dùng đúng fade in/out; Reduce Motion không chạy chuyển động.
+
+Các bộ kiểm tra giao diện cũ được cập nhật để chờ hiệu ứng đóng hoàn tất. Các phần còn lại giữ kiểm tra hồi quy từ bản nền.
 
 ## Kết quả và phạm vi
 
@@ -38,12 +53,12 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã có. `QJL_QA_OUTPUT` là thư mục lưu ảnh giả lập tùy chọn; mặc định không tạo ảnh. Các fixture dùng localhost 4174, 4176, 4179, 4182, 4184 và 4186 rồi đóng khi xong.
+Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã có. `QJL_QA_OUTPUT` là thư mục lưu ảnh giả lập tùy chọn; mặc định không tạo ảnh. Các fixture dùng localhost 4174, 4176, 4179, 4182, 4184, 4186 và 4188 rồi đóng khi xong.
 
 ## Kiểm tra sau triển khai trên iPhone thật
 
-1. Kiểm tra đầu trang/footer V1.11.1. Nếu dùng PWA, bấm Cập nhật hoặc tải lại trang sau deploy.
-2. Vào Worklog đã log → bấm block. Sheet phải nổi riêng, bàn phím chưa hiện. Chạm Thời lượng/Mô tả để nhập, chạm ngày/giờ để dùng bộ chọn native.
+1. Kiểm tra đầu trang/footer V1.11.2. Nếu dùng PWA, bấm Cập nhật hoặc tải lại trang sau deploy.
+2. Vào Worklog đã log → bấm block. Sheet phải nổi riêng, bàn phím chưa hiện. Chạm Thời lượng/Mô tả để nhập, chạm ngày/giờ để dùng bộ chọn native. Khi sheet mở, thử kéo ngang/dọc ngoài sheet: nền lịch phải đứng yên; cuộn trong sheet vẫn được.
 3. Thu/mở bàn phím, thử cuộn các trường; đảm bảo nút lưu/xóa còn tiếp cận được.
 4. Bấm icon toàn màn hình. Nếu máy chưa tự xoay, tắt khóa xoay rồi xoay ngang. Kiểm tra T2–T6, chọn ngày, Tuần/Tháng, T7/CN và thoát bằng icon.
 5. Mở chi tiết trong fullscreen, sửa một worklog thử với quyền Jira thực tế. Đối chiếu lịch và tổng giờ với Jira.

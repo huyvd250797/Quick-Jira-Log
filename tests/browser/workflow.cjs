@@ -99,7 +99,7 @@ const ui=require('../../lib/ui-tools');
   assert((await page.locator('#dashboardTodayRemaining').textContent()).includes('Tạm tính'));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);
-  console.log(name,'V1.11.1 dashboard, week/month, proportional blocks, edit/delete, streaming progress and interrupted response passed');
+  console.log(name,'V1.11.2 dashboard, week/month, proportional blocks, edit/delete, streaming progress and interrupted response passed');
   await context.close();
  }
  await browser.close();await new Promise(r=>server.close(r));

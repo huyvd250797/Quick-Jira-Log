@@ -1,0 +1,38 @@
+const {chromium}=require('playwright'),assert=require('node:assert/strict');const {server}=require('./serve.cjs');
+(async()=>{await new Promise(r=>server.listen(4188,'127.0.0.1',r));const browser=await chromium.launch({...process.env.QJL_CHROMIUM_PATH?{executablePath:process.env.QJL_CHROMIUM_PATH}:{},headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-zygote']});
+for(const config of [{width:315,height:683},{width:390,height:844},{width:844,height:390},{width:1440,height:900},{width:390,height:844,reduced:true}]){
+ const {reduced,...viewport}=config;const page=await browser.newPage({viewport,serviceWorkers:'block',reducedMotion:reduced?'reduce':'no-preference'}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>{const D=Date;window.Date=class extends D{constructor(...a){super(...a.length?a:['2026-10-16T02:00:00Z']);}static now(){return D.parse('2026-10-16T02:00:00Z');}};});
+ const item={id:'1',key:'EPU01-2799',date:'2026-10-16',start:'08:00',end:'12:00',minutes:240,summary:'Review yêu cầu và hỗ trợ trường',description:'Nội dung công việc để kiểm tra vùng cuộn trong sheet. '.repeat(14)};
+ await page.route('**/api?*',route=>{const a=new URL(route.request().url()).searchParams.get('action');return route.fulfill({contentType:'application/json',body:JSON.stringify(a==='status'?{ok:true,authenticated:true,user:{displayName:'Boss',username:'boss'}}:a==='subtasks'?{ok:true,issues:[]}:{ok:true,items:[item]})});});
+ await page.goto('http://127.0.0.1:4188');await page.locator(viewport.width>=900?'#historyBtn':'#mobileHistoryBtn').click();await page.waitForFunction(()=>state.historyLoaded&&!state.historyLoading);await page.waitForTimeout(220);
+ assert.equal(await page.locator('#calendarAgenda').isVisible(),false);assert.equal(await page.locator('#calendarAgenda').locator('*').count(),0);assert.equal(await page.locator('#calendarDayHeading').isVisible(),false);
+ const r=await page.locator('#historyResults').boundingBox();await page.locator('.week-day-heading').last().click();assert.equal(await page.locator('#calendarAgenda').isVisible(),false);assert.equal((await page.locator('#historyResults').boundingBox()).height,r.height);
+ await page.locator('#calendarMonthBtn').click();await page.waitForFunction(()=>!state.historyLoading);assert.equal(await page.locator('#calendarAgenda').isVisible(),true);assert.equal(await page.locator('.calendar-event').count(),1);await page.locator('#calendarWeekBtn').click();await page.waitForFunction(()=>!state.historyLoading);
+ await page.locator('.week-worklog-block').click();assert(await page.locator('#worklogCorrectionDialog').evaluate(e=>e.open));
+ if(!reduced){assert.equal(await page.locator('#worklogCorrectionDialog').getAttribute('data-motion'),'opening');assert(await page.locator('#worklogCorrectionDialog').evaluate(e=>e.getAnimations().some(a=>a.playState==='running')));const frames=await page.locator('#worklogCorrectionDialog').evaluate(e=>e.getAnimations()[0].effect.getKeyframes());assert.equal(Number(frames[0].opacity),0);assert.equal(Number(frames.at(-1).opacity),1);if(viewport.width<900)assert(frames[0].transform.includes('100%'));}
+ await page.waitForFunction(()=>!document.getElementById('worklogCorrectionDialog').dataset.motion);
+ assert.equal(await page.evaluate(()=>document.getElementById('historyOverlay').inert),true);assert.equal(await page.evaluate(()=>document.body.classList.contains('worklog-details-open')),true);assert.equal(await page.evaluate(()=>document.activeElement.tagName),'BUTTON');
+ const saved=await page.locator('#historyResults').evaluate(e=>({left:e.scrollLeft,top:e.scrollTop}));
+ await page.mouse.move(3,3);await page.mouse.wheel(150,300);await page.waitForTimeout(80);assert.deepEqual(await page.locator('#historyResults').evaluate(e=>({left:e.scrollLeft,top:e.scrollTop})),saved);
+ const touches=await page.evaluate(()=>{
+  const dialog=document.getElementById('worklogCorrectionDialog');
+  function fire(target,type,x,y){const e=new Event(type,{bubbles:true,cancelable:true});Object.defineProperty(e,'touches',{value:[{clientX:x,clientY:y}]});target.dispatchEvent(e);return e.defaultPrevented;}
+  const bg=document.getElementById('historyResults');fire(bg,'touchstart',2,2);const background=fire(bg,'touchmove',80,20);
+  const b=dialog.getBoundingClientRect();fire(dialog,'touchstart',b.x+20,b.y+100);const sideways=fire(dialog,'touchmove',b.x+100,b.y+100);
+  dialog.scrollTop=0;fire(dialog,'touchstart',b.x+20,b.y+100);const bounce=fire(dialog,'touchmove',b.x+20,b.y+150);
+  return {background,sideways,bounce,left:dialog.scrollLeft,width:dialog.clientWidth,scrollWidth:dialog.scrollWidth};
+ });assert(touches.background&&touches.sideways&&touches.bounce,JSON.stringify(touches));assert.equal(touches.left,0);assert(touches.scrollWidth<=touches.width+1,JSON.stringify(touches));
+ // The dialog itself can still scroll vertically where there is content.
+ const d=await page.locator('#worklogCorrectionDialog').boundingBox();const canScroll=await page.locator('#worklogCorrectionDialog').evaluate(e=>e.scrollHeight>e.clientHeight+2);
+ if(canScroll){await page.mouse.move(d.x+d.width/2,d.y+120);await page.mouse.wheel(0,180);await page.waitForTimeout(80);assert(await page.locator('#worklogCorrectionDialog').evaluate(e=>e.scrollTop>0),'sheet scroll remains usable');}
+ await page.locator('#cancelCorrectionBtn').click();
+ if(!reduced){assert.equal(await page.locator('#worklogCorrectionDialog').getAttribute('data-motion'),'closing');assert.equal(await page.locator('#worklogCorrectionDialog').evaluate(e=>e.open),true);assert(await page.evaluate(()=>document.getElementById('historyOverlay').inert));const frames=await page.locator('#worklogCorrectionDialog').evaluate(e=>e.getAnimations()[0].effect.getKeyframes());assert.equal(Number(frames.at(-1).opacity),0);if(viewport.width<900)assert(frames.at(-1).transform.includes('100%'));}
+ await page.waitForFunction(()=>!document.getElementById('worklogCorrectionDialog').open);assert.equal(await page.evaluate(()=>document.body.classList.contains('worklog-details-open')),false);assert.equal(await page.evaluate(()=>document.getElementById('historyOverlay').inert),false);assert.deepEqual(await page.locator('#historyResults').evaluate(e=>({left:e.scrollLeft,top:e.scrollTop})),saved);
+ // Rapid reversal must not let the previous close animation hide a new sheet.
+ await page.evaluate(()=>{openCorrection(state.historyItems[0]);closeCorrection();openCorrection(state.historyItems[0]);});await page.waitForTimeout(300);assert(await page.locator('#worklogCorrectionDialog').evaluate(e=>e.open));assert(await page.evaluate(()=>document.getElementById('historyOverlay').inert));await page.locator('#cancelCorrectionBtn').click();await page.waitForFunction(()=>!document.getElementById('worklogCorrectionDialog').open);
+ await page.locator('#closeHistoryBtn').click();await page.locator('#historyOverlay').waitFor({state:'hidden'});
+ await page.evaluate(()=>openSettings());if(!reduced)assert.equal(await page.locator('#settingsOverlay .settings-sheet').evaluate(e=>getComputedStyle(e).animationName),'qjl-view-fade-in');await page.waitForTimeout(220);await page.evaluate(()=>closeSettings());if(!reduced)assert.equal(await page.locator('#settingsOverlay .settings-sheet').evaluate(e=>getComputedStyle(e).animationName),'qjl-view-fade-out');await page.locator('#settingsOverlay').waitFor({state:'hidden'});
+ assert.deepEqual(errors,[]);console.log('Week-only grid, modal scroll lock, motion/reversal/fade passed',config);await page.close();
+}
+await browser.close();await new Promise(r=>server.close(r));})().catch(e=>{console.error(e);server.close();process.exit(1)});

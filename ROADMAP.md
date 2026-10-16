@@ -1,3 +1,7 @@
+# Trạng thái V1.11.2
+
+Đã hoàn thành gói sửa trải nghiệm: lịch tuần chỉ còn lưới giờ, khóa nền khi mở sheet, animation trượt/fade cho sheet và fade cho cửa sổ. Không bổ sung nghiệp vụ Jira mới.
+
 # Trạng thái V1.11.1
 
 Đã bổ sung bottom sheet chi tiết mobile, bỏ tự bật bàn phím khi mở, tăng diện tích lịch và thêm chế độ toàn màn hình/ngang theo yêu cầu. Các roadmap mở rộng bên dưới giữ làm tham khảo lịch sử; phiên bản này không thay đổi nghiệp vụ Jira.

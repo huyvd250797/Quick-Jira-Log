@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.11.1 – Desktop Worklog Details Popup.",
+  "description": "Quick Jira Log V1.11.2 – Desktop Worklog Details Popup.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -1,0 +1,44 @@
+/* V1.11.2 — Calendar-only week workspace, locked modal background and view fades. */
+#historyOverlay.is-calendar-view.is-week-view #calendarDayHeading,
+#historyOverlay.is-calendar-view.is-week-view #calendarAgenda { display: none; }
+#historyOverlay.is-calendar-view.is-week-view #worklogCalendar { margin: 0; padding: 0; }
+html.worklog-details-open { overflow: hidden; overscroll-behavior: none; }
+body.worklog-details-open { overflow: hidden; overscroll-behavior: none; }
+body.worklog-details-open #historyOverlay { pointer-events: none; touch-action: none; }
+body.worklog-details-open #historyResults { overflow: hidden !important; touch-action: none; overscroll-behavior: none; }
+#worklogCorrectionDialog { overflow-x: hidden; overscroll-behavior: none; touch-action: pan-y pinch-zoom; isolation: isolate; }
+#worklogCorrectionDialog .worklog-correction-panel { width: 100%; min-width: 0; max-width: 100%; }
+#worklogCorrectionDialog label, #worklogCorrectionDialog .correction-head > div { min-width: 0; }
+#worklogCorrectionDialog input, #worklogCorrectionDialog textarea { min-inline-size: 0; max-inline-size: 100%; }
+#worklogCorrectionDialog .duration-stepper { min-width: 0; width: 100%; }
+#worklogCorrectionDialog textarea { overflow-x: hidden; overflow-y: auto; touch-action: pan-y pinch-zoom; }
+#worklogCorrectionDialog[data-motion="closing"] .worklog-correction-panel { pointer-events: none; }
+#worklogCorrectionDialog[data-motion="opening"]::backdrop { animation: qjl-modal-backdrop-in 240ms ease-out both; }
+#worklogCorrectionDialog[data-motion="closing"]::backdrop { animation: qjl-modal-backdrop-out 190ms ease-in both; }
+@keyframes qjl-modal-backdrop-in { from { background-color: rgba(4,12,24,0); backdrop-filter: blur(0); } to { background-color: rgba(4,12,24,.65); backdrop-filter: blur(3px); } }
+@keyframes qjl-modal-backdrop-out { from { background-color: rgba(4,12,24,.65); backdrop-filter: blur(3px); } to { background-color: rgba(4,12,24,0); backdrop-filter: blur(0); } }
+@keyframes qjl-view-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes qjl-view-fade-out { from { opacity: 1; } to { opacity: 0; } }
+.settings-overlay.qjl-opening .settings-sheet,
+.confirm-overlay.qjl-opening .confirm-dialog { animation: qjl-view-fade-in 180ms ease-out both; }
+.settings-overlay.qjl-closing .settings-sheet,
+.confirm-overlay.qjl-closing .confirm-dialog { animation: qjl-view-fade-out 160ms ease-in both; }
+@media (max-width: 899px) {
+  #worklogCard.mobile-bottom-sheet.qjl-opening,
+  #bulkCard.mobile-bottom-sheet.qjl-opening { animation: qjl-editor-sheet-in 180ms cubic-bezier(.16,1,.3,1) both; }
+  #worklogCard.mobile-bottom-sheet.qjl-closing,
+  #bulkCard.mobile-bottom-sheet.qjl-closing { animation: qjl-editor-sheet-out 160ms ease-in both; }
+}
+@keyframes qjl-editor-sheet-in { from { opacity: 0; transform: translateY(36px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes qjl-editor-sheet-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(36px); } }
+@media (prefers-reduced-motion: reduce) {
+  #worklogCorrectionDialog::backdrop,
+  .settings-overlay.qjl-opening .settings-sheet,
+  .settings-overlay.qjl-closing .settings-sheet,
+  .confirm-overlay.qjl-opening .confirm-dialog,
+  .confirm-overlay.qjl-closing .confirm-dialog,
+  #worklogCard.mobile-bottom-sheet.qjl-opening,
+  #bulkCard.mobile-bottom-sheet.qjl-opening,
+  #worklogCard.mobile-bottom-sheet.qjl-closing,
+  #bulkCard.mobile-bottom-sheet.qjl-closing { animation: none !important; }
+}

@@ -1,5 +1,16 @@
 # Changelog
 
+## V1.11.2 — Fixed Week Calendar, Scroll Lock & Motion
+
+- Bỏ hoàn toàn agenda/danh sách chi tiết dưới lịch tuần; giữ agenda ở lịch tháng.
+- Khóa nền khi mở chi tiết bằng inert + overflow + touch/wheel boundary guard; giữ cuộn dọc trong sheet, chặn kéo ngang và scroll chaining.
+- Sheet trượt lên/rõ dần 240ms, trượt xuống/mờ dần 190ms; chỉ mở khóa sau khi đóng xong.
+- PC popup fade nhẹ; cửa sổ công cụ fade in/out; chuyển kỳ/cách xem lịch fade nhẹ.
+- Hủy animation cũ an toàn khi đóng/mở nhanh; lưu/xóa chờ đóng sheet rồi làm mới lịch.
+- Giữ focus ở nút Đóng, không tự bật bàn phím; hỗ trợ Reduce Motion.
+- Kiểm tra bổ sung: week-only grid, touch/wheel, biên cuộn, animation/rapid reversal và giảm chuyển động.
+
+
 ## V1.11.1 — Mobile Worklog Sheet & Fullscreen Calendar
 
 - Chi tiết worklog mobile chuyển thành native dialog dạng bottom sheet; PC giữ popup.
