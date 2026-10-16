@@ -1,6 +1,16 @@
-# Kiểm tra V1.10.0
+# Kiểm tra V1.10.1
 
 Ngày: 16/10/2026. Runtime: Node.js v24.19.0.
+
+## Hotfix V1.10.1
+
+- Đã chạy npm test: toàn bộ kiểm tra logic/API trước đây đều đạt.
+- Kiểm tra vị trí và hit-test bằng Playwright/Chromium: desktop 1440×1000, cấu hình iPhone 13, mobile 315×683 và landscape 844×390.
+- Cuộn historyResults đến cuối, cuộn dọc/ngang lưới tuần: tọa độ hai nút Tuần/Tháng giữ nguyên, luôn nằm trong viewport và không bị phần tử khác che.
+- Chuyển sang Tháng khi đang cuộn ở cuối; cuộn lịch tháng rồi chuyển về Tuần thành công.
+- Chuyển Danh sách ẩn thanh điều khiển lịch.
+- Đã xem ảnh render giao diện tối trên màn hình mobile nhỏ. Không có lỗi JavaScript hoặc trùng ID.
+- Kiểm tra dùng dữ liệu giả lập; chưa xác minh Safari trên iPhone vật lý hoặc Jira thật.
 
 ## Kiểm tra tự động
 
@@ -12,7 +22,7 @@ Ngày: 16/10/2026. Runtime: Node.js v24.19.0.
 - Geometry block đúng số phút, và các block trùng giờ được phân lane.
 - HTTP stream thực qua Node server cục bộ với Jira giả lập: Log đơn/Bulk, dữ liệu progress về trước kết quả cuối, phần trăm không giảm, lỗi không có 100%, idempotent replay không tạo worklog lại, API JSON vẫn tương thích.
 - `node --check` cho app.js, handlers/worklog.js, handlers/bulk-worklog.js, lib/ui-tools.js và các module thay đổi.
-- HTML có 164 ID duy nhất, không trùng.
+- HTML có 165 ID duy nhất, không trùng.
 
 ## Kiểm tra trình duyệt
 

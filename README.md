@@ -1,8 +1,16 @@
-# Quick Jira Log V1.10.0 — Weekly Calendar, Dashboard & Live Progress
+# Quick Jira Log V1.10.1 — Fixed Calendar Controls
 
-Nâng cấp trực tiếp từ V1.9.0 theo yêu cầu của Boss. Source có thể triển khai Vercel với cấu hình hiện có; không thêm database hoặc thư viện runtime.
+Bản sửa giao diện từ V1.10.0: cố định cụm chọn Tuần/Tháng khi cuộn lịch trên mobile. Source có thể triển khai Vercel với cấu hình hiện có; không thêm database hoặc thư viện runtime.
 
 © 2026 HuyVo. All rights reserved.
+
+## Sửa lỗi V1.10.1
+
+- Thanh chọn Tuần/Tháng nằm ngoài vùng kết quả cuộn, luôn nhìn thấy và thao tác được khi kéo lịch dọc/ngang trên mobile.
+- Cụm tuần trước/sau, Hôm nay và tổng giờ tuần cũng nằm cùng vùng cố định.
+- Ẩn cụm này khi chuyển về Danh sách. Trong lúc tải lại dữ liệu, giữ nút chuyển chế độ hiển thị và không dùng lại tổng tuần cũ.
+- Cách tính giờ, API Jira, dashboard và tiến trình log được giữ nguyên.
+- Sau triển khai, bấm CẬP NHẬT trên PWA hoặc tải lại trang để nhận bản V1.10.1 và cache mới.
 
 ## 1. Lịch Tuần / Tháng
 
@@ -87,14 +95,14 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.10.0` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.10.1` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.
 5. Framework Preset: **Other**. Build Command để trống. Output Directory dùng mặc định/root của project, không chọn `dist` vì source không có bước build.
 6. Node.js Version: **24.x**.
 7. Cấu hình biến môi trường bên dưới rồi redeploy.
-8. Mở app, kiểm tra footer V1.10.0. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
+8. Mở app, kiểm tra footer V1.10.1. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
 
 ### Biến môi trường
 
@@ -142,6 +150,6 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Block rất ngắn có thể không đủ chỗ hiển thị mô tả; title, nhãn trợ năng và danh sách ngày vẫn cho đọc/mở chi tiết.
 - ETA là ước tính, không phải thời gian cam kết. Hiệu năng thật phụ thuộc Jira và hosting.
 - Chưa deploy production hoặc xác minh Safari trên iPhone vật lý trong lần phát triển này.
-- Sau deploy, kiểm tra footer V1.10.0, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
+- Sau deploy, kiểm tra footer V1.10.1, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.

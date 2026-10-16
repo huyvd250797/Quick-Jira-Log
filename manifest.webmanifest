@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.10.0 – Weekly Calendar, Dashboard & Live Progress.",
+  "description": "Quick Jira Log V1.10.1 – Fixed Calendar Controls on Mobile.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

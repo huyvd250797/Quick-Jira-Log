@@ -2497,3 +2497,14 @@ html[data-theme="dark"] #historyOverlay .history-state.is-warning { color: #edc6
 }
 .log-progress-meter span { transition: none; }
 #calendarHelp { margin: 0 0 10px; }
+
+
+/* V1.10.1 — Calendar controls stay outside the scrollable results. */
+#historyOverlay .calendar-controls { flex: 0 0 auto; min-width: 0; position: relative; background: var(--card); border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+#calendarControls .calendar-navigation { padding: 0 0 8px; }
+#calendarControls .calendar-mode-toolbar { padding: 0; }
+@media (max-width: 899px) {
+  #historyOverlay .calendar-controls { padding-bottom: 7px; }
+  #calendarControls .calendar-navigation { padding-bottom: 6px; }
+  #calendarControls .calendar-week-summary { padding-top: 3px; }
+}

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.10.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1478,7 +1478,7 @@ function historyDayLabel(date, monthOnly = false) {
   return new Intl.DateTimeFormat('vi-VN', monthOnly ? { month: 'long', year: 'numeric', timeZone: 'UTC' } : { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
 }
 
-function renderWorklogCalendar() {
+function syncCalendarControls() {
   const date = $('historyDate').value || todayLocal();
   if (!QuickJiraUi.validDate(date)) return;
   const weekly = state.calendarMode === 'week';
@@ -1492,11 +1492,18 @@ function renderWorklogCalendar() {
   $('calendarMonthBtn').setAttribute('aria-pressed', String(!weekly));
   $('weeklyCalendar').classList.toggle('hidden', !weekly);
   $('monthlyCalendar').classList.toggle('hidden', weekly);
-  $('calendarWeekSummary').classList.toggle('hidden', !weekly);
+  $('calendarWeekSummary').classList.toggle('hidden', !weekly || state.historyLoading || !state.historyLoaded || !!state.historyError);
   $('calendarWeekendBtn').classList.toggle('hidden', !weekly);
   $('calendarWeekendBtn').setAttribute('aria-pressed', String(state.calendarWeekends));
   $('calendarWeekendBtn').textContent = state.calendarWeekends ? 'Ẩn T7/CN' : 'Hiện T7/CN';
   $('calendarHelp').textContent = weekly ? 'Chiều cao block theo đúng thời lượng · Bấm block để xem, sửa hoặc xóa · Cuộn ngang để xem đủ ngày trên điện thoại.' : 'Số giờ trong ô là tổng worklog đã ghi. Chọn ngày để xem chi tiết.';
+  return { date, weekly };
+}
+
+function renderWorklogCalendar() {
+  const controls = syncCalendarControls();
+  if (!controls) return;
+  const { date, weekly } = controls;
   if (weekly) renderWeeklyCalendar(date);
   else renderMonthlyCalendar(date);
   renderCalendarAgenda(date);
@@ -1538,6 +1545,8 @@ function renderWorklogHistory() {
   const stateEl = $('worklogHistoryState');
   if (!wrap || !stateEl) return;
   const calendar = state.historyView === 'calendar';
+  $('calendarControls').classList.toggle('hidden', !calendar);
+  if (calendar) syncCalendarControls();
   wrap.classList.toggle('hidden', calendar);
   $('worklogCalendar').classList.toggle('hidden', !calendar || state.historyLoading || !state.historyLoaded || !!state.historyError);
   $('historyListViewBtn').classList.toggle('is-active', !calendar);

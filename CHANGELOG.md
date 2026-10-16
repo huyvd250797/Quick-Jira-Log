@@ -1,5 +1,11 @@
 # Changelog
 
+## V1.10.1 — Fixed Calendar Controls
+
+- Đưa điều hướng kỳ và cụm Tuần/Tháng ra ngoài historyResults để không bị cuộn khuất hoặc header lưới lịch che trên mobile.
+- Giữ cụm điều khiển hiển thị khi lịch đang tải; ẩn trong chế độ Danh sách và ẩn tổng tuần cũ khi dữ liệu chưa sẵn sàng.
+- Đồng bộ version app/manifest/PWA cache, giữ nguyên nghiệp vụ và API.
+
 ## V1.10.0 — Weekly Calendar, Dashboard & Live Progress
 
 ### Added
