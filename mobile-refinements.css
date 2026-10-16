@@ -1,0 +1,41 @@
+/* V1.11.5 — Full-height editors, bounded native inputs and modal log progress. */
+label, form, .grid-2 > *, .worklog-primary-fields > *, .bulk-item-fields > * { min-width: 0; }
+input:not([type="checkbox"]):not([type="radio"]), textarea, select { box-sizing: border-box; min-inline-size: 0; max-inline-size: 100%; }
+input[type="date"], input[type="time"], input[type="datetime-local"] { display: block; inline-size: 100%; min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none; }
+input::-webkit-date-and-time-value { min-width: 0; max-width: 100%; text-align: left; white-space: nowrap; overflow: hidden; }
+input::-webkit-datetime-edit { min-width: 0; max-width: 100%; padding: 0; }
+input::-webkit-calendar-picker-indicator { flex: 0 0 auto; margin-left: 3px; }
+#worklogCorrectionDialog .correction-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#worklogCorrectionDialog .correction-grid > label { min-width: 0; max-width: 100%; }
+#worklogCorrectionDialog input:not([type="checkbox"]) { overflow: hidden; }
+#worklogCorrectionDialog .correction-head { touch-action: none; }
+html.log-progress-open, html.log-progress-open body { overflow: hidden; }
+#logProgressDialog { width: min(480px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; border-radius: 18px; color: var(--text); background: transparent; overflow: auto; overscroll-behavior: contain; }
+#logProgressDialog::backdrop { background: rgba(3, 9, 20, .76); backdrop-filter: blur(4px); }
+#logProgressDialog #logProgressPanel { position: static; inset: auto; width: 100%; margin: 0; padding: 23px; border-radius: 18px; background: var(--card); box-shadow: 0 24px 80px rgba(0,0,0,.4); outline: none; }
+#logProgressDialog .log-progress-head { gap: 12px; margin-bottom: 17px; }
+#logProgressDialog .log-progress-head strong { font-size: 17px; }
+#logProgressDialog .log-progress-head > span { font-size: 23px; }
+#logProgressDialog .log-progress-meter { height: 9px; }
+#logProgressDialog .log-progress-time { display: grid; gap: 5px; }
+#logProgressPanel.qjl-opening { animation: qjl-view-fade-in 180ms ease-out both; }
+#logProgressPanel.qjl-closing { animation: qjl-view-fade-out 160ms ease-in both; }
+@media (max-width: 899px) {
+  #worklogCard.mobile-bottom-sheet, #bulkCard.mobile-bottom-sheet {
+    top: calc(var(--editor-offset-top, 0px) + env(safe-area-inset-top)); bottom: auto;
+    height: calc(var(--editor-vvh, 100dvh) - env(safe-area-inset-top));
+    max-height: calc(var(--editor-vvh, 100dvh) - env(safe-area-inset-top));
+    min-height: 0; border-radius: 14px 14px 0 0;
+  }
+  #worklogCard.mobile-bottom-sheet .worklog-sticky-header,
+  #bulkCard.mobile-bottom-sheet .bulk-sticky-header { touch-action: none; }
+  #worklogCard.mobile-bottom-sheet .worklog-sticky-header button,
+  #bulkCard.mobile-bottom-sheet .bulk-sticky-header button { touch-action: manipulation; }
+  #logProgressDialog #logProgressPanel { padding: 20px; }
+}
+@media (max-width: 359px) {
+  #worklogCorrectionDialog .correction-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #logProgressPanel.qjl-opening, #logProgressPanel.qjl-closing { animation: none !important; }
+}

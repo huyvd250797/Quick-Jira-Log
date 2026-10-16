@@ -1,5 +1,13 @@
 # Trạng thái V1.11.2
 
+## Đã hoàn thành V1.11.5
+
+- OT đánh dấu trong lịch sau khi log, lưu riêng trong comment worklog, không phụ thuộc custom field.
+- Popup tiến trình giữa màn hình có backdrop.
+- Sheet cao hết vùng xem, kéo xuống để đóng; date/time/input nằm gọn.
+- Màu dự án không dùng xanh dương.
+- Còn xác minh thực tế iOS picker, bàn phím, vùng an toàn và quyền sửa Jira sau triển khai.
+
 ## Đã hoàn thành V1.11.4
 
 - Bảng màu dự án tươi sáng, ưu tiên màu lạnh và tách biệt bằng khoảng cách cảm nhận.

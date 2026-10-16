@@ -1,5 +1,15 @@
 # Changelog
 
+## V1.11.5 — Post-log OT, Centered Progress & Full-height Sheets
+
+- Bỏ OT ở form tạo đơn/Bulk, chặn yêu cầu OT tạo từ client cũ trước khi gọi Jira.
+- Thay cơ chế field issue bằng nhãn riêng trong comment worklog; không gọi field/editmeta, không ảnh hưởng worklog khác cùng issue. Lưu OT và nội dung trong cùng một lần sửa.
+- Không còn suy OT chỉ vì giờ bắt đầu hoặc field issue.
+- Tiến trình chuyển vào native dialog giữa màn hình, backdrop tối, khóa đóng khi đang xử lý; hỗ trợ fade và giảm chuyển động.
+- Sheet đơn/Bulk phủ hết chiều cao viewport; kéo grip/tiêu đề để đóng, giữ cuộn nội dung. Sheet chi tiết kéo tiêu đề xuống để đóng.
+- Giới hạn input/date/time trong khung, loại màu xanh dương khỏi palette dự án và chuyển registry v3.
+- Kiểm tra bổ sung API không field OT, roundtrip nhãn, modal progress, full-height/snap/dismiss và picker bounds.
+
 ## V1.11.4 — Cool Project Colors & Unified Worklog Editor
 
 - Bảng màu mới ưu tiên mint/sky/lavender, chọn theo khoảng cách OKLab, đổi bảng màu cũ và giữ lựa chọn bật/tắt.

@@ -1,12 +1,12 @@
 {
   "name": "quick-jira-log",
-  "version": "1.11.4",
+  "version": "1.11.5",
   "private": true,
   "engines": {
     "node": "24.x"
   },
   "scripts": {
-    "test": "node tests/run-tests.js && node tests/auth-tests.js && node tests/history-tests.js && node tests/hardening-tests.js && node tests/ui-tools-tests.js && node tests/week-progress-tests.js && node tests/calendar-style-tests.js && node tests/correction-overtime-tests.js",
-    "test:ui": "node tests/browser/layout.cjs && node tests/browser/correction.cjs && node tests/browser/duration.cjs && node tests/browser/workflow.cjs && node tests/browser/mobile-calendar.cjs && node tests/browser/native-fullscreen.cjs && node tests/browser/motion-lock.cjs && node tests/browser/calendar-colors.cjs && node tests/browser/correction-parity.cjs"
+    "test": "node tests/run-tests.js && node tests/auth-tests.js && node tests/history-tests.js && node tests/hardening-tests.js && node tests/ui-tools-tests.js && node tests/week-progress-tests.js && node tests/calendar-style-tests.js && node tests/correction-overtime-tests.js && node tests/creation-ot-tests.js",
+    "test:ui": "node tests/browser/layout.cjs && node tests/browser/correction.cjs && node tests/browser/duration.cjs && node tests/browser/workflow.cjs && node tests/browser/mobile-calendar.cjs && node tests/browser/native-fullscreen.cjs && node tests/browser/motion-lock.cjs && node tests/browser/calendar-colors.cjs && node tests/browser/correction-parity.cjs && node tests/browser/mobile-refinements.cjs"
   }
 }

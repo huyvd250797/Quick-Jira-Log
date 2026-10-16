@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.11.4 – Cool Project Colors and Unified Worklog Editor.",
+  "description": "Quick Jira Log V1.11.5 – Post-log Overtime, Modal Progress and Full-height Sheets.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

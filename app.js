@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.11.4';
+const APP_VERSION = '1.11.5';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -8,7 +8,7 @@ const STORAGE = {
   audit: 'quick-jira-log:audit:v1',
   theme: 'quick-jira-log:theme:v1',
   projectColors: 'quick-jira-log:project-colors:v1',
-  projectPalette: 'quick-jira-log:project-palette:v2',
+  projectPalette: 'quick-jira-log:project-palette:v3',
   sessionDate: 'quick-jira-log:session-log-date:v1'
 };
 
@@ -95,6 +95,7 @@ let correctionMotionSeq = 0;
 let correctionCloseJob = null;
 let correctionBackground = null;
 let correctionTouch = null;
+let correctionSheetDrag = null;
 
 function reduceMotionEnabled() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
@@ -254,9 +255,7 @@ function updateSingleOvertimeHint() {
   const hint = $('overtimeHint');
   if (!hint) return;
   const date = $('date')?.value || todayLocal();
-  hint.textContent = isWeekendDateClient(date)
-    ? 'OT cuối tuần: log trong 08:00–12:00 và 13:30–17:30; Jira sẽ đánh dấu Overtime.'
-    : 'OT ngày thường: log từ 17:30 trở đi; Jira sẽ đánh dấu Overtime.';
+  hint.textContent = 'Cần đánh dấu Overtime? Log trước, sau đó mở lịch và sửa worklog.';
 }
 
 function minutesLabel(minutes) {
@@ -438,14 +437,28 @@ function closeDesktopEditor() {
   delete document.body.dataset.desktopEditor;
 }
 
+function syncMobileEditorViewport() {
+  if (!document.body.classList.contains('mobile-editor-open')) return;
+  const viewport = window.visualViewport;
+  document.documentElement.style.setProperty('--editor-vvh', `${viewport?.height || innerHeight}px`);
+  document.documentElement.style.setProperty('--editor-offset-top', `${viewport?.offsetTop || 0}px`);
+}
+window.addEventListener('resize', syncMobileEditorViewport);
+window.visualViewport?.addEventListener('resize', syncMobileEditorViewport);
+window.visualViewport?.addEventListener('scroll', syncMobileEditorViewport);
+
 function openMobileEditor(cardId) {
   const card = $(cardId);
   if (!card || !isMobileEditorMode()) return false;
+  card._sheetSettleToken = (card._sheetSettleToken || 0) + 1;
+  card.style.transform = ''; card.style.transition = '';
+  card.classList.remove('is-snapping', 'is-dragging');
   if (!document.body.classList.contains('mobile-editor-open')) {
     state.mobileEditorScrollY = window.scrollY || document.documentElement.scrollTop || 0;
     document.body.style.top = `-${state.mobileEditorScrollY}px`;
     document.body.classList.add('mobile-editor-open');
   }
+  syncMobileEditorViewport();
   $('mobileEditorBackdrop')?.classList.remove('hidden');
   $('mobileEditorBackdrop')?.setAttribute('aria-hidden', 'false');
   $('worklogCard')?.classList.toggle('mobile-bottom-sheet', cardId === 'worklogCard');
@@ -506,21 +519,24 @@ function settleMobileSheet(card, shouldClose, cardId) {
   if (!card) return;
   card.classList.remove('is-dragging');
   card.classList.add('is-snapping');
-  card.style.transition = 'transform 190ms cubic-bezier(.2,.8,.2,1)';
+  const token = card._sheetSettleToken = (card._sheetSettleToken || 0) + 1;
+  const duration = reduceMotionEnabled() ? 0 : 190;
+  card.style.transition = `transform ${duration}ms` + ' cubic-bezier(.2,.8,.2,1)';
   if (shouldClose) {
     card.style.transform = 'translateY(105%)';
     const backdrop = $('mobileEditorBackdrop');
     if (backdrop) backdrop.style.opacity = '0';
-    setTimeout(() => dismissMobileEditorCard(cardId), 190);
+    setTimeout(() => { if (card._sheetSettleToken === token) dismissMobileEditorCard(cardId); }, duration);
   } else {
     card.style.transform = 'translateY(0)';
     const backdrop = $('mobileEditorBackdrop');
     if (backdrop) backdrop.style.opacity = '';
     setTimeout(() => {
+      if (card._sheetSettleToken !== token) return;
       card.classList.remove('is-snapping');
       card.style.transform = '';
       card.style.transition = '';
-    }, 190);
+    }, duration);
   }
 }
 
@@ -529,10 +545,16 @@ function setupBottomSheetDrag(cardId) {
   const handle = card?.querySelector('.bottom-sheet-drag-handle');
   if (!card || !handle) return;
 
-  handle.addEventListener('pointerdown', event => {
+  const targets = [handle, card.querySelector('.worklog-sticky-header, .bulk-sticky-header')].filter(Boolean);
+  const listen = (type, listener) => targets.forEach(target => target.addEventListener(type, listener));
+  let captureTarget = handle;
+  listen('pointerdown', event => {
     if (!isMobileEditorMode() || !card.classList.contains('mobile-bottom-sheet')) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    if (event.currentTarget !== handle && event.target.closest('button, input, textarea, select, a, summary')) return;
     event.preventDefault();
+    clearUiAnimation(card);
+    captureTarget = event.currentTarget;
     const startedAt = performance.now();
     state.mobileSheetDrag = {
       cardId,
@@ -546,10 +568,10 @@ function setupBottomSheetDrag(cardId) {
     card.classList.add('is-dragging');
     card.classList.remove('is-snapping');
     card.style.transition = 'none';
-    try { handle.setPointerCapture(event.pointerId); } catch {}
+    try { captureTarget.setPointerCapture(event.pointerId); } catch {}
   });
 
-  handle.addEventListener('pointermove', event => {
+  listen('pointermove', event => {
     const drag = state.mobileSheetDrag;
     if (!drag || drag.cardId !== cardId || drag.pointerId !== event.pointerId) return;
     event.preventDefault();
@@ -570,12 +592,12 @@ function setupBottomSheetDrag(cardId) {
     if (!drag || drag.cardId !== cardId || drag.pointerId !== event.pointerId) return;
     const shouldClose = drag.delta >= 110 || (drag.delta >= 45 && drag.velocity >= 0.65);
     state.mobileSheetDrag = null;
-    try { handle.releasePointerCapture(event.pointerId); } catch {}
+    try { captureTarget.releasePointerCapture(event.pointerId); } catch {}
     settleMobileSheet(card, shouldClose, cardId);
   };
 
-  handle.addEventListener('pointerup', finish);
-  handle.addEventListener('pointercancel', event => {
+  listen('pointerup', finish);
+  listen('pointercancel', event => {
     const drag = state.mobileSheetDrag;
     if (!drag || drag.cardId !== cardId || drag.pointerId !== event.pointerId) return;
     state.mobileSheetDrag = null;
@@ -1510,11 +1532,30 @@ function startLogProgress(mode, count = 1) {
   const baseline = mode === 'bulk' ? 12000 + count * 1800 : 12000;
   const expected = samples.length ? [...samples].sort((a,b)=>a-b)[Math.floor(samples.length / 2)] : baseline;
   state.logProgress = { mode, count, storageKey, samples, expected, started: Date.now(), percent: 0, phase: 'Đang gửi yêu cầu…', active: true };
-  $('logProgressPanel').classList.remove('hidden', 'is-error', 'is-complete');
+  const panel = $('logProgressPanel'), dialog = $('logProgressDialog');
+  clearUiAnimation(panel);
+  panel.classList.remove('hidden', 'is-error', 'is-complete');
+  state.logProgressSource = document.activeElement;
+  if (!dialog.open) dialog.showModal();
+  document.documentElement.classList.add('log-progress-open');
+  panel.tabIndex = -1;
+  panel.focus({ preventScroll: true });
+  showAnimated(panel);
   $('logProgressTitle').textContent = mode === 'bulk' ? `Đang log ${count} task` : 'Đang logwork';
   $('closeLogProgressBtn').classList.add('hidden');
   paintLogProgress();
   state.logProgressTimer = setInterval(paintLogProgress, 500);
+}
+
+function closeLogProgress() {
+  if (state.logProgress?.active) return;
+  clearTimeout(state.logProgressHideTimer);
+  hideAnimated($('logProgressPanel'), () => {
+    $('logProgressDialog').close();
+    document.documentElement.classList.remove('log-progress-open');
+    const source = state.logProgressSource;
+    if (source?.isConnected && source.getClientRects().length && !source.disabled) source.focus({ preventScroll: true });
+  });
 }
 
 function updateLogProgress(event) {
@@ -1557,7 +1598,7 @@ function finishLogProgress(success, error) {
   $('logProgressPanel').classList.toggle('is-complete', success);
   $('closeLogProgressBtn').classList.remove('hidden');
   paintLogProgress();
-  if (success) state.logProgressHideTimer = setTimeout(() => $('logProgressPanel').classList.add('hidden'), 4500);
+  if (success) state.logProgressHideTimer = setTimeout(closeLogProgress, 4500);
 }
 
 function historyDayLabel(date, monthOnly = false) {
@@ -1958,6 +1999,8 @@ function finishCorrectionClose(job) {
   clearUiAnimation(panel);
   panel.classList.add('hidden');
   if (dialog.open) dialog.close();
+  dialog.style.transform = ''; dialog.style.opacity = '';
+  correctionSheetDrag = null;
   correctionPanelHome.append(panel);
   $('correctionFeedback').classList.add('hidden');
   unlockCorrectionBackground();
@@ -2013,6 +2056,7 @@ document.addEventListener('touchstart', event => {
 }, { capture: true, passive: true });
 document.addEventListener('touchmove', event => {
   const dialog = $('worklogCorrectionDialog');
+  if (correctionSheetDrag) { event.preventDefault(); return; }
   if (!dialog.open || event.touches.length !== 1 || !correctionTouch) return;
   const touch = event.touches[0], dx = touch.clientX - correctionTouch.x, dy = touch.clientY - correctionTouch.y;
   const outside = correctionTouch.outside;
@@ -2029,6 +2073,39 @@ document.addEventListener('wheel', event => {
   if (outside || !dialog.contains(event.target) || dialog.dataset.motion === 'closing' || Math.abs(event.deltaX) > Math.abs(event.deltaY) || !correctionCanScroll(event.target, -event.deltaY)) event.preventDefault();
 }, { capture: true, passive: false });
 
+function setupCorrectionSheetDrag() {
+  const header = $('worklogCorrectionPanel').querySelector('.correction-head'), dialog = $('worklogCorrectionDialog');
+  header.addEventListener('pointerdown', event => {
+    if (correctionDesktopQuery.matches || !dialog.open || dialog.dataset.motion === 'closing' || event.target.closest('button, input, textarea, select, a')) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    event.preventDefault();
+    correctionMotion?.cancel(); correctionMotion = null;
+    correctionSheetDrag = { id: event.pointerId, start: event.clientY, delta: 0 };
+    try { header.setPointerCapture(event.pointerId); } catch {}
+  });
+  header.addEventListener('pointermove', event => {
+    const drag = correctionSheetDrag;
+    if (!drag || drag.id !== event.pointerId) return;
+    event.preventDefault(); drag.delta = Math.max(0, event.clientY - drag.start);
+    dialog.style.transform = `translateY(${drag.delta}px)`;
+    dialog.style.opacity = String(Math.max(.3, 1 - drag.delta / 900));
+  });
+  const finish = event => {
+    const drag = correctionSheetDrag;
+    if (!drag || drag.id !== event.pointerId) return;
+    correctionSheetDrag = null;
+    try { header.releasePointerCapture(event.pointerId); } catch {}
+    if (event.type !== 'pointercancel' && drag.delta >= 100) { void closeCorrection(); return; }
+    const motion = reduceMotionEnabled() ? null : dialog.animate([
+      { transform: dialog.style.transform || 'translateY(0)', opacity: dialog.style.opacity || '1' },
+      { transform: 'translateY(0)', opacity: 1 }
+    ], { duration: 160, easing: 'ease-out' });
+    dialog.style.transform = ''; dialog.style.opacity = '';
+    if (motion) { correctionMotion = motion; motion.finished.then(() => { if (correctionMotion === motion) { motion.cancel(); correctionMotion = null; } }).catch(() => {}); }
+  };
+  header.addEventListener('pointerup', finish); header.addEventListener('pointercancel', finish);
+}
+
 function showCorrectionFeedback(message) {
   $('correctionFeedback').textContent = message;
   $('correctionFeedback').classList.remove('hidden');
@@ -2043,9 +2120,7 @@ function syncCorrectionFields() {
     button.setAttribute('aria-pressed', String(active));
   });
   $('correctionTimeSpent')._syncDurationStepper?.();
-  $('correctionOvertimeHint').textContent = $('correctionOvertime').checked
-    ? `Khung Overtime: ${overtimeWindowLabel($('correctionDate').value)}. Khi đổi loại, hãy chọn giờ bắt đầu phù hợp.`
-    : 'Giờ thường: 08:00–12:00 · 13:30–17:30.';
+  $('correctionOvertimeHint').textContent = 'Đánh dấu Overtime cho worklog đã log; không tự thay đổi giờ bắt đầu.';
 }
 
 async function saveCorrection() {
@@ -2170,7 +2245,7 @@ function updateSingleCapacity() {
     else if (!capacityReady) status.textContent = 'Chưa có dữ liệu giờ đã log.';
     else if (projected < 480) status.textContent = `Còn thiếu ${minutesLabel(480 - projected)} để đủ 8h.`;
     else if (projected === 480) status.textContent = 'Đã đủ 8h giờ làm việc.';
-    else status.textContent = `Vượt ${minutesLabel(projected - 480)} so với 8h. Hãy giảm giờ thường hoặc bật OT.`;
+    else status.textContent = `Vượt ${minutesLabel(projected - 480)} so với 8h. Hãy giảm thời lượng hoặc dùng Tự động phân bổ.`;
   }
   const overtimeEl = $('singleOvertimeDraft');
   if (overtimeEl) {
@@ -2358,7 +2433,7 @@ function updateBulkTotal() {
     else if (!capacityReady) status.textContent = 'Chưa có dữ liệu giờ đã log.';
     else if (projected < 480) status.textContent = `Còn thiếu ${minutesLabel(480 - projected)} để đủ 8h.`;
     else if (projected === 480) status.textContent = 'Đã đủ 8h giờ làm việc.';
-    else status.textContent = `Vượt ${minutesLabel(projected - 480)} so với 8h. Hãy giảm giờ thường hoặc bật OT.`;
+    else status.textContent = `Vượt ${minutesLabel(projected - 480)} so với 8h. Hãy giảm thời lượng hoặc dùng Tự động phân bổ.`;
   }
   const overtimeEl = $('bulkOvertimeDraft');
   if (overtimeEl) {
@@ -2477,11 +2552,6 @@ function renderBulkItems() {
             ${['30m', '1h', '2h', '3h', '4h'].map(value => `<button class="bulk-preset-btn${String(item.timeSpent || '') === value ? ' active' : ''}" type="button" data-time="${value}">${value}</button>`).join('')}
           </span>
         </label>
-        <label class="bulk-overtime-toggle">
-          <input class="bulk-overtime" type="checkbox" ${item.overtime ? 'checked' : ''} />
-          <span class="overtime-control" aria-hidden="true"></span>
-          <span class="overtime-copy"><strong>Overtime</strong><small>${escapeHtml(overtimeWindowLabel($('bulkDate')?.value || todayLocal()))}</small></span>
-        </label>
         <details class="bulk-description-details">
           <summary>Sửa mô tả <span>${escapeHtml((item.description || item.summary || '').slice(0, 72))}${(item.description || item.summary || '').length > 72 ? '…' : ''}</span></summary>
           <label class="bulk-description-field">Mô tả<textarea class="bulk-description" rows="2">${escapeHtml(item.description || item.summary || '')}</textarea></label>
@@ -2567,7 +2637,7 @@ async function submitBulkWorklog(event) {
     project: item.project,
     timeSpent: String(item.timeSpent || '').trim(),
     description: String(item.description || item.summary || '').trim(),
-    overtime: item.overtime === true
+    overtime: false
   }));
   if (!items.length) return showToast('Chưa có issue để Bulk Logwork.');
   if (items.some(item => !item.timeSpent || !item.description)) return showToast('Vui lòng nhập đủ thời lượng và mô tả cho từng issue.');
@@ -2787,7 +2857,8 @@ $('calendarWeekendBtn').addEventListener('click', () => { state.calendarWeekends
 $('refreshDashboardBtn').addEventListener('click', () => refreshDashboard({ force: true }));
 setInterval(() => { if (state.user && !document.hidden && vietnamToday() !== state.dashboardDate) void refreshDashboard({ force: true }); }, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && state.user && (vietnamToday() !== state.dashboardDate || Date.now() - state.dashboardUpdated > 60000)) void refreshDashboard({ force: true }); });
-$('closeLogProgressBtn').addEventListener('click', () => $('logProgressPanel').classList.add('hidden'));
+$('closeLogProgressBtn').addEventListener('click', closeLogProgress);
+$('logProgressDialog').addEventListener('cancel', event => { event.preventDefault(); if (!state.logProgress?.active) closeLogProgress(); });
 window.addEventListener('focus', () => { if (state.user && (vietnamToday() !== state.dashboardDate || Date.now() - state.dashboardUpdated > 60000)) void refreshDashboard({ force: true }); });
 $('calendarPrevBtn').addEventListener('click', () => moveHistoryMonth(-1));
 $('calendarNextBtn').addEventListener('click', () => moveHistoryMonth(1));
@@ -2873,6 +2944,7 @@ $('clearAuditHistoryBtn').addEventListener('click', () => {
 });
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
+  if ($('logProgressDialog').open) { event.preventDefault(); if (!state.logProgress?.active) closeLogProgress(); return; }
   if ($('worklogCorrectionDialog').open) {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -2941,7 +3013,7 @@ $('worklogForm').addEventListener('submit', async event => {
   if (!validateDurationFields($('worklogForm'))) return;
   if (singleCapacityExceeded()) {
     updateSingleCapacity();
-    return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm thời lượng hoặc bật OT.');
+    return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm thời lượng hoặc kiểm tra các worklog đã log.');
   }
   const logAndNext = state.logAndNextRequested === true;
   state.logAndNextRequested = false;
@@ -2951,7 +3023,7 @@ $('worklogForm').addEventListener('submit', async event => {
     timeSpent: $('timeSpent').value.trim(),
     date: $('date').value,
     description: $('description').value.trim(),
-    overtime: $('overtime')?.checked === true
+    overtime: false
   };
   const confirmed = await confirmLogAction({
     title: logAndNext ? 'Xác nhận Log & Next?' : 'Xác nhận Logwork?',
@@ -3061,6 +3133,7 @@ function escapeHtml(value) {
 applyTheme(readThemePreference(), { persist: false });
 setupBottomSheetDrag('worklogCard');
 setupBottomSheetDrag('bulkCard');
+setupCorrectionSheetDrag();
 loadQuickData();
 $('date').value = getSessionLogDate();
 window.addEventListener('resize', () => {

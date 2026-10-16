@@ -7,7 +7,6 @@ const {
   getMyself,
   getIssueWorklogs,
   getIssuesByKeys,
-  getOvertimeFieldId,
   searchIssuesWorkedOnDate,
   searchIssuesWithWorklogDate,
   searchRecentlyWorkedIssues
@@ -19,23 +18,8 @@ const { createPerf } = require('../lib/perf');
 
 const HISTORY_CACHE_MS = 15 * 1000;
 const { validDate } = require('../lib/ui-tools');
-const { isOvertime, overtimeValue } = require('../lib/calendar-style');
+const { readLabel } = require('../lib/worklog-label');
 
-
-function commentText(comment) {
-  if (typeof comment === 'string') return comment;
-  if (!comment || typeof comment !== 'object') return '';
-  const out = [];
-  const walk = node => {
-    if (!node) return;
-    if (typeof node === 'string') return out.push(node);
-    if (Array.isArray(node)) return node.forEach(walk);
-    if (typeof node.text === 'string') out.push(node.text);
-    if (Array.isArray(node.content)) node.content.forEach(walk);
-  };
-  walk(comment);
-  return out.join(' ').replace(/\s+/g, ' ').trim();
-}
 
 function vietnamToday() {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -132,11 +116,7 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });
     }
 
-    const metadataPromise = perf.step('metadataBatch', () => (async () => {
-        const fieldId = await getOvertimeFieldId(session);
-        sourceDetails.overtimeFieldId = fieldId || null;
-        return getIssuesByKeys(keys, session, { extraFields: fieldId ? [fieldId] : [] });
-      })())
+    const metadataPromise = perf.step('metadataBatch', () => getIssuesByKeys(keys, session))
       .then(issues => ({ ok: true, issues }))
       .catch(error => {
         return { ok: false, issues: [], error: error?.message || String(error), fatal: error?.status === 401 ? error : null };
@@ -168,7 +148,8 @@ module.exports = async function handler(req, res) {
         const seconds = Number(worklog.timeSpentSeconds || 0);
         if (!Number.isFinite(seconds) || seconds <= 0) continue;
         const minutes = Math.ceil(seconds / 60);
-        const issueOvertime = overtimeValue(issue?.fields?.[sourceDetails.overtimeFieldId]);
+        const label = readLabel(worklog.comment);
+        const overtime = label.overtime ?? (worklog.overtime === true);
         const endMinute = parsed.minute + minutes;
         items.push({
           id: String(worklog.id || ''),
@@ -180,10 +161,10 @@ module.exports = async function handler(req, res) {
           start: minuteToHHMM(parsed.minute),
           end: minuteToHHMM(endMinute),
           minutes,
-          overtime: isOvertime({ overtime: typeof worklog.overtime === 'boolean' ? worklog.overtime : undefined, issueOvertime, start: minuteToHHMM(parsed.minute) }),
-          overtimeSource: typeof worklog.overtime === 'boolean' ? 'worklog' : issueOvertime ? 'jira-issue' : parsed.minute >= 1050 ? 'time-window' : '',
+          overtime,
+          overtimeSource: typeof label.overtime === 'boolean' ? 'worklog-label' : typeof worklog.overtime === 'boolean' ? 'worklog' : '',
           timeSpentSeconds: Number(worklog.timeSpentSeconds || 0),
-          description: commentText(worklog.comment),
+          description: label.description,
           started: String(worklog.started || '')
         });
       }

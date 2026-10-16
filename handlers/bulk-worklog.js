@@ -9,16 +9,13 @@ const {
   getIssuesByKeys,
   createWorklog,
   deleteWorklog,
-  transitionIssueToDone,
-  prepareOvertimeUpdate,
-  applyOvertimeUpdate,
-  restoreOvertimeUpdate
+  transitionIssueToDone
 } = require('../lib/jira');
 const { parseTimeSpent, jiraStarted, displaySegments, windowsLabel, minutesInsideWindows, workWindowsFor } = require('../lib/scheduler');
 const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { planBulkItems } = require('../lib/bulk');
 const { normalizeRequestId, runIdempotent } = require('../lib/idempotency');
-const { mapWithConcurrency, settleMapWithConcurrency } = require('../lib/async');
+const { settleMapWithConcurrency } = require('../lib/async');
 const { invalidateWorklogCaches } = require('../lib/app-cache');
 const { createPerf } = require('../lib/perf');
 const { createProgressChannel } = require('../lib/progress');
@@ -45,7 +42,8 @@ function normalizeItems(rawItems) {
     const project = String(raw?.project || '').trim().toUpperCase();
     const timeSpent = String(raw?.timeSpent || '').trim();
     const description = String(raw?.description || '').trim();
-    const overtime = toBoolean(raw?.overtime);
+    if (toBoolean(raw?.overtime)) throw new JiraError('Overtime chỉ được đánh dấu sau khi log, trong lịch Worklog đã log. Hãy tải lại app.', 400);
+    const overtime = false;
     if (!key || !project || !timeSpent) throw new JiraError(`Dòng ${index + 1}: thiếu KEY, PROJECT hoặc TimeSpent.`, 400);
     if (!key.startsWith(`${project}-`)) throw new JiraError(`Dòng ${index + 1}: KEY ${key} không khớp PROJECT ${project}.`, 400);
     if (seen.has(key)) throw new JiraError(`KEY ${key} đang xuất hiện nhiều hơn một lần trong danh sách Bulk.`, 400);
@@ -59,7 +57,7 @@ function normalizeItems(rawItems) {
         : `Dòng ${index + 1}: TimeSpent không hợp lệ. Ví dụ 30m, 1h, 1h30m.`, 400);
     }
     if (!overtime && minutes > MAX_REGULAR_MINUTES) {
-      throw new JiraError(`Dòng ${index + 1}: worklog thường tối đa 8h. Hãy bật Overtime nếu cần log ngoài giờ.`, 400);
+      throw new JiraError(`Dòng ${index + 1}: worklog thường tối đa 8h. Overtime được đánh dấu sau khi log trong lịch.`, 400);
     }
     return { key, project, timeSpent, description, overtime, minutes, order: index };
   });
@@ -102,20 +100,13 @@ async function performBulk(body, session, perf) {
   });
   if (verified.some(item => !item.description)) throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
 
-  perf.report?.(15, 'Đang kiểm tra cấu hình OT');
-  // Preflight toàn bộ field OT song song có giới hạn trước khi tạo bất kỳ worklog nào.
-  const overtimePrepared = new Map();
-  const overtimeItems = verified.filter(item => item.overtime);
-  const preparedOvertime = await perf.step('otPreflight', () => mapWithConcurrency(overtimeItems, 5, item => prepareOvertimeUpdate(item.key, session)));
-  overtimeItems.forEach((item, index) => overtimePrepared.set(item.key, preparedOvertime[index]));
-
   const targetKeys = verified.map(item => item.key);
   perf.report?.(25, 'Đang kiểm tra giờ trống và phân lịch');
   const initialGuard = await perf.step('guard', () => loadOccupiedRangesStable(date, targetKeys, me, session));
   const alreadyRegular = minutesInsideWindows(initialGuard.occupied, workWindowsFor(date, false));
   const requestedRegular = verified.filter(item => !item.overtime).reduce((sum, item) => sum + item.minutes, 0);
   if (alreadyRegular + requestedRegular > MAX_REGULAR_MINUTES) {
-    throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường của batch này sẽ vượt 8h; hãy bật Overtime cho các Sub-task ngoài giờ.`, 409);
+    throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường của batch này sẽ vượt 8h. Hãy kiểm tra và chỉnh lại các worklog đã log trong lịch.`, 409);
   }
   let planned;
   try { planned = planBulkItems(verified, initialGuard.occupied, { date }).plans; }
@@ -126,7 +117,6 @@ async function performBulk(body, session, perf) {
     const item = verified.find(x => x.key === plan.key) || plan;
     return { ...item, segments: plan.segments };
   });
-  const appliedOvertime = [];
   try {
     const creationJobs = actualPlans.flatMap(item => item.segments.map(segment => ({ item, segment })));
     let completedSegments = 0;
@@ -145,19 +135,9 @@ async function performBulk(body, session, perf) {
     const failedCreation = creationResults.find(x => x.status === 'rejected');
     if (failedCreation) throw failedCreation.reason;
 
-    perf.report?.(84, 'Đang cập nhật Overtime');
-    const otApplyResults = await perf.step('applyOvertime', () => settleMapWithConcurrency(overtimeItems, 4, async item => {
-      const prepared = overtimePrepared.get(item.key);
-      await applyOvertimeUpdate(prepared, session);
-      return prepared;
-    }));
-    appliedOvertime.push(...otApplyResults.filter(x => x.status === 'fulfilled').map(x => x.value));
-    const failedOt = otApplyResults.find(x => x.status === 'rejected');
-    if (failedOt) throw failedOt.reason;
   } catch (error) {
     perf.report?.(80, 'Có lỗi; đang xử lý hoàn tác, vui lòng chờ');
     await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(x.key, x.id, session)));
-    await Promise.allSettled(appliedOvertime.map(prepared => restoreOvertimeUpdate(prepared, session)));
     throw error;
   }
 

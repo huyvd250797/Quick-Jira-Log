@@ -9,10 +9,7 @@ const {
   getIssue,
   createWorklog,
   deleteWorklog,
-  transitionIssueToDone,
-  prepareOvertimeUpdate,
-  applyOvertimeUpdate,
-  restoreOvertimeUpdate
+  transitionIssueToDone
 } = require('../lib/jira');
 const {
   parseTimeSpent,
@@ -62,7 +59,8 @@ async function performWorklog(body, session, perf) {
   const timeSpent = String(body.timeSpent || '').trim();
   const date = String(body.date || '').trim();
   const description = String(body.description || '').trim();
-  const overtime = toBoolean(body.overtime);
+  if (toBoolean(body.overtime)) throw new JiraError('Overtime chỉ được đánh dấu trong phần sửa worklog đã log. Hãy tải lại app và log trước.', 400);
+  const overtime = false;
 
   if (!key || !project || !timeSpent || !date || !description) {
     throw new JiraError('Vui lòng nhập đủ KEY, PROJECT, TimeSpent, Date và Description.', 400);
@@ -78,7 +76,7 @@ async function performWorklog(body, session, perf) {
       : 'TimeSpent không hợp lệ. Ví dụ: 30m, 1h, 1h30m, 2.5h.', 400);
   }
   if (!overtime && minutes > MAX_REGULAR_MINUTES) {
-    throw new JiraError('Worklog thường tối đa 8h. Nếu cần log ngoài giờ, hãy bật Overtime cho Sub-task.', 400);
+    throw new JiraError('Mỗi lần log tối đa 8h trong khung giờ thường. Overtime được đánh dấu sau khi log trong lịch.', 400);
   }
 
   perf.report?.(5, 'Đang đọc thông tin task');
@@ -91,17 +89,13 @@ async function performWorklog(body, session, perf) {
     throw new JiraError(`Issue ${key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${project}.`, 400);
   }
 
-  perf.report?.(20, 'Đang kiểm tra giờ trống và dữ liệu OT');
-  // Chạy kiểm tra timeline và preflight OT song song để giảm thời gian chờ Jira.
-  const [guard, overtimePrepared] = await Promise.all([
-    perf.step('guard', () => loadOccupiedRangesStable(date, [key], me, session)),
-    overtime ? perf.step('otPreflight', () => prepareOvertimeUpdate(key, session)) : Promise.resolve(null)
-  ]);
+  perf.report?.(20, 'Đang kiểm tra giờ trống');
+  const guard = await perf.step('guard', () => loadOccupiedRangesStable(date, [key], me, session));
   const windows = workWindowsFor(date, overtime);
   if (!overtime) {
     const alreadyRegular = minutesInsideWindows(guard.occupied, workWindowsFor(date, false));
     if (alreadyRegular + minutes > MAX_REGULAR_MINUTES) {
-      throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường không được vượt 8h; hãy bật Overtime cho phần ngoài giờ.`, 409);
+      throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường không được vượt 8h. Hãy kiểm tra và chỉnh lại các worklog đã log trong lịch.`, 409);
     }
   }
   let plan;
@@ -115,7 +109,6 @@ async function performWorklog(body, session, perf) {
   perf.report?.(40, 'Đã kiểm tra xong; đang ghi worklog');
   let completedSegments = 0;
   const created = [];
-  let overtimeApplied = false;
   try {
     const creationResults = await perf.step('createWorklogs', () => settleMapWithConcurrency(plan, 2, async seg => {
       const worklog = await createWorklog(key, {
@@ -131,15 +124,9 @@ async function performWorklog(body, session, perf) {
     const failedCreation = creationResults.find(x => x.status === 'rejected');
     if (failedCreation) throw failedCreation.reason;
 
-    if (overtimePrepared) {
-      perf.report?.(84, 'Đang cập nhật Overtime');
-      await perf.step('applyOvertime', () => applyOvertimeUpdate(overtimePrepared, session));
-      overtimeApplied = true;
-    }
   } catch (error) {
     perf.report?.(80, 'Có lỗi; đang xử lý hoàn tác, vui lòng chờ');
     await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(key, x.id, session)));
-    if (overtimeApplied && overtimePrepared) await restoreOvertimeUpdate(overtimePrepared, session);
     throw error;
   }
 
@@ -158,7 +145,7 @@ async function performWorklog(body, session, perf) {
     project,
     date,
     overtime,
-    overtimeField: overtimePrepared ? { fieldId: overtimePrepared.fieldId, fieldName: overtimePrepared.fieldName } : null,
+    overtimeField: null,
     workWindow: windowsLabel(date, overtime),
     totalMinutes: minutes,
     segments: displaySegments(plan),
