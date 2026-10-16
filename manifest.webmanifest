@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.8.0 – Performance & Reliability Hardening.",
+  "description": "Quick Jira Log V1.9.0 – Time Stepper & Worklog Calendar.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

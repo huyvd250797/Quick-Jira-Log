@@ -2293,3 +2293,118 @@ html[data-theme="dark"] .confirm-summary { background: #0d1929; }
   .app-update-banner { align-items: stretch; flex-direction: column; gap: 10px; padding: 13px 14px; }
   .app-update-actions { justify-content: flex-end; }
 }
+
+/* V1.9.0 — 30-minute steppers, password visibility and roomy worklog calendar. */
+.password-field { display: block; position: relative; min-width: 0; }
+.password-field input { padding-right: 52px !important; }
+.password-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; display: grid; place-items: center; padding: 9px; border: 0; border-radius: 9px; color: var(--muted); background: transparent; cursor: pointer; }
+.password-toggle:hover { background: var(--primary-soft); color: var(--primary); }
+.password-toggle svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.password-toggle .eye-closed, .password-toggle[aria-pressed="true"] .eye-open { display: none; }
+.password-toggle[aria-pressed="true"] .eye-closed { display: block; }
+.duration-stepper { display: flex; align-items: stretch; position: relative; min-width: 0; width: 100%; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--card, #fff); }
+.duration-stepper:focus-within { border-color: var(--primary); box-shadow: var(--qjl-focus-ring); }
+.duration-stepper > input { flex: 1 1 0; min-width: 0; width: 0; border: 0 !important; border-radius: 0; box-shadow: none !important; height: 48px !important; min-height: 48px !important; max-height: 48px !important; margin: 0; background: transparent; }
+.duration-step-controls { flex: 0 0 42px; width: 42px; display: grid; grid-template-rows: 1fr 1fr; border-left: 1px solid var(--line); }
+.duration-step-controls button { display: grid; place-items: center; width: 100%; min-height: 24px; padding: 0; border: 0; border-radius: 0; background: var(--primary-soft); color: var(--primary); cursor: pointer; }
+.duration-step-controls button + button { border-top: 1px solid var(--line); }
+.duration-step-controls button:hover:not(:disabled) { filter: brightness(.94); }
+.duration-step-controls button:active:not(:disabled) { filter: brightness(.86); }
+.duration-step-controls button:disabled { opacity: .35; cursor: default; }
+.duration-step-controls svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#historyOverlay .history-tool-sheet { width: min(calc(100vw - 32px), 1120px); max-width: 1120px; height: min(94dvh, 1020px); max-height: 94dvh; display: flex; flex-direction: column; overflow: hidden !important; padding: 0; border-radius: 22px; }
+#historyOverlay .settings-head { position: static; flex: 0 0 auto; margin: 0; padding: 15px 18px 12px; top: auto; border-bottom: 1px solid var(--line); }
+#historyOverlay .settings-head h2 { font-size: 20px; }
+#historyOverlay .settings-head p { margin-top: 4px; font-size: 11px; line-height: 1.4; }
+#historyOverlay .tool-modal-body { display: flex; flex: 1 1 0; flex-direction: column; min-height: 0; gap: 9px; overflow: hidden; padding: 12px 18px max(16px, env(safe-area-inset-bottom)); }
+.history-controls { display: grid; grid-template-columns: 1fr auto; gap: 10px; flex: 0 0 auto; }
+.history-view-switch { display: flex; gap: 4px; width: fit-content; grid-column: 1 / -1; background: var(--primary-soft); padding: 4px; border-radius: 12px; }
+.history-view-switch button { border: 0; background: transparent; color: var(--muted); font-size: 12px; font-weight: 800; padding: 9px 15px; border-radius: 9px; min-height: 36px; cursor: pointer; }
+.history-view-switch button.is-active { color: var(--primary); background: var(--card, #fff); box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+#historyOverlay .history-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 0; margin: 0; }
+#historyOverlay .history-toolbar label { margin: 0; min-width: 0; font-size: 11px; gap: 5px; }
+#historyOverlay .history-toolbar input { min-width: 0; width: 100%; }
+#historyOverlay .history-search-btn { align-self: end; min-height: 44px; padding: 10px 16px; font-size: 10px; }
+.history-summary { flex: 0 0 auto; font-size: 11px; font-weight: 750; color: var(--muted); padding: 2px 0; }
+#historyOverlay .history-state { flex: 0 0 auto; padding: 8px 10px; font-size: 11px; }
+#historyOverlay .history-state.is-warning { border-color: #c9973e; color: #986600; background: #fff8e9; }
+#historyOverlay .history-state.is-error { border-color: var(--danger); color: var(--danger); }
+.history-results { flex: 1 1 0; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 3px 8px 0; scrollbar-gutter: stable; }
+#historyOverlay .worklog-history-list { max-height: none; overflow: visible; padding: 0; gap: 8px; align-content: start; }
+#historyOverlay .worklog-history-item { padding: 11px 13px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; }
+#historyOverlay .worklog-history-actions { gap: 6px; }
+#historyOverlay .worklog-history-actions button { min-height: 36px; min-width: 52px; padding: 8px 10px; }
+#historyOverlay .worklog-history-key small { font-size: 11px; }
+#historyOverlay .worklog-history-desc { font-size: 11px; }
+#historyOverlay .worklog-correction-panel { margin-top: 14px; scroll-margin-top: 8px; }
+.calendar-navigation { display: flex; align-items: center; gap: 9px; padding: 3px 0 12px; }
+.calendar-navigation strong { flex: 1; font-size: 16px; text-transform: capitalize; }
+.calendar-nav-btn, .calendar-today-btn { border: 1px solid var(--line); border-radius: 10px; color: var(--text); background: var(--card, #fff); min-width: 38px; height: 38px; padding: 0 10px; font-size: 22px; cursor: pointer; }
+.calendar-today-btn { font-size: 11px; font-weight: 800; }
+.calendar-nav-btn:hover, .calendar-today-btn:hover { background: var(--primary-soft); color: var(--primary); }
+.calendar-weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.calendar-weekdays { text-align: center; padding-bottom: 8px; color: var(--muted); font-size: 11px; font-weight: 800; }
+.calendar-weekdays span:nth-last-child(-n+2) { opacity: .75; }
+.calendar-day { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; min-width: 0; min-height: 86px; padding: 9px; gap: 4px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); background: var(--card, #fff); text-align: left; cursor: pointer; }
+.calendar-day:hover { border-color: var(--primary); }
+.calendar-day-number { font-size: 12px; font-weight: 850; color: var(--text); }
+.calendar-day strong { font-size: 13px; font-weight: 850; }
+.calendar-day small { font-size: 10px; }
+.calendar-day.has-worklogs { background: var(--primary-soft); color: var(--primary); }
+.calendar-day.is-today .calendar-day-number { text-decoration: underline; text-underline-offset: 4px; }
+.calendar-day.is-selected { border: 2px solid var(--primary); padding: 8px; box-shadow: 0 0 0 1px var(--primary); }
+.calendar-help { margin: 10px 0 18px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.calendar-day-heading { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between; gap: 6px; border-top: 1px solid var(--line); padding: 15px 0 12px; }
+.calendar-day-heading strong { font-size: 13px; text-transform: capitalize; }
+.calendar-day-heading > span { font-size: 11px; color: var(--muted); }
+.calendar-agenda { display: grid; gap: 8px; }
+.calendar-event { display: flex; align-items: center; gap: 14px; width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px; text-align: left; background: var(--card, #fff); color: var(--text); cursor: pointer; }
+.calendar-event:hover { border-color: var(--primary); background: var(--primary-soft); }
+.calendar-event-time { flex: 0 0 50px; display: grid; gap: 5px; font-size: 12px; font-weight: 850; }
+.calendar-event-time small { font-size: 10px; font-weight: 600; color: var(--muted); }
+.calendar-event-copy { flex: 1; min-width: 0; display: grid; gap: 5px; padding-left: 12px; border-left: 3px solid var(--primary); }
+.calendar-event-copy strong { font-size: 12px; color: var(--primary); }
+.calendar-event-copy em { font-style: normal; color: var(--muted); font-size: 10px; font-weight: 650; margin-left: 7px; }
+.calendar-event-copy > span { font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.calendar-event-arrow { font-size: 23px; color: var(--muted); }
+.calendar-empty { color: var(--muted); font-size: 12px; margin: 0; padding: 12px 0 24px; }
+html[data-theme="dark"] .duration-stepper { background: #0d1929; border-color: #2a3a51; }
+html[data-theme="dark"] #historyOverlay .history-state.is-warning { color: #edc67a; background: #2b2519; }
+@media (max-width: 899px) {
+  #historyOverlay .history-tool-sheet { width: calc(100vw - 12px); max-width: none; height: calc(100dvh - max(18px, env(safe-area-inset-top))); max-height: calc(100dvh - max(18px, env(safe-area-inset-top))); border-radius: 22px 22px 0 0; }
+  #historyOverlay .settings-head { padding: 13px 13px 10px; }
+  #historyOverlay .settings-head h2 { font-size: 19px; }
+  #historyOverlay .settings-head p { font-size: 10px; max-width: 280px; }
+  #historyOverlay .tool-modal-body { padding: 10px 12px max(12px, env(safe-area-inset-bottom)); gap: 8px; }
+  .history-controls { grid-template-columns: 1fr; gap: 8px; }
+  .history-view-switch { width: 100%; }
+  .history-view-switch button { flex: 1; min-height: 34px; padding: 7px 10px; }
+  #historyOverlay .history-toolbar { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 8px; }
+  #historyOverlay .history-toolbar input { height: 42px; min-height: 42px; font-size: 14px; padding: 8px; }
+  #historyOverlay .history-search-btn { min-height: 36px; padding: 8px 12px; }
+  #historyOverlay .worklog-history-item { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 10px; }
+  #historyOverlay .worklog-history-actions { display: flex; justify-content: flex-end; }
+  #historyOverlay .worklog-history-actions button { min-width: 64px; min-height: 34px; }
+  .calendar-weekdays, .calendar-grid { gap: 4px; }
+  .calendar-day { min-height: 66px; padding: 6px 4px; border-radius: 9px; }
+  .calendar-day.is-selected { padding: 5px 3px; }
+  .calendar-day strong { font-size: 10px; letter-spacing: -.3px; }
+  .calendar-day small { font-size: 8px; }
+  .calendar-day-number { font-size: 11px; }
+  .calendar-navigation { gap: 6px; }
+  .calendar-navigation strong { font-size: 14px; }
+  .calendar-nav-btn, .calendar-today-btn { height: 36px; min-width: 34px; padding: 0 8px; }
+  .calendar-help { margin-bottom: 12px; }
+  .calendar-event { gap: 9px; padding: 10px; }
+  .duration-stepper > input { font-size: 16px; }
+}
+@media (max-height: 560px) {
+  #historyOverlay .history-tool-sheet { height: 98dvh; max-height: 98dvh; }
+  #historyOverlay .settings-head p { display: none; }
+  #historyOverlay .history-controls { grid-template-columns: minmax(140px, 1fr) 2fr auto; }
+  #historyOverlay .history-view-switch { grid-column: auto; }
+  #historyOverlay .history-view-switch button { padding: 5px 7px; }
+}
+/* Keep the invisible OT checkbox from widening the scrollable editor. */
+.overtime-toggle input, .bulk-overtime-toggle input { width: 1px !important; max-width: 1px !important; height: 1px !important; min-height: 0 !important; max-height: 1px !important; padding: 0 !important; border: 0; clip-path: inset(50%); }
+.overtime-toggle input:focus-visible + .overtime-control, .bulk-overtime-toggle input:focus-visible + .overtime-control { outline: 2px solid var(--primary); outline-offset: 3px; }

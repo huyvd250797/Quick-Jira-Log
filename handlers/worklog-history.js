@@ -17,10 +17,8 @@ const { historyKey, cacheGet, cacheSet } = require('../lib/app-cache');
 const { createPerf } = require('../lib/perf');
 
 const HISTORY_CACHE_MS = 15 * 1000;
+const { validDate } = require('../lib/ui-tools');
 
-function validDate(value) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
-}
 
 function commentText(comment) {
   if (typeof comment === 'string') return comment;
@@ -66,14 +64,21 @@ module.exports = async function handler(req, res) {
   if (!session) return sendJson(res, 401, { ok: false, error: 'Vui lòng đăng nhập Jira.' });
 
   const date = String(req.query?.date || '').trim();
+  const endDate = String(req.query?.endDate || date).trim();
+  const isRange = endDate !== date;
   const requestedKey = String(req.query?.key || '').trim().toUpperCase();
   const force = String(req.query?.force || '') === '1';
-  if (!validDate(date)) return sendJson(res, 400, { ok: false, error: 'Ngày lịch sử không hợp lệ.' });
+  if (!validDate(date) || !validDate(endDate) || endDate < date || dayDistance(date, endDate) > 30) {
+    return sendJson(res, 400, { ok: false, error: 'Khoảng ngày lịch sử không hợp lệ (tối đa 31 ngày).' });
+  }
+  if (requestedKey && !/^[A-Z][A-Z0-9_]*-\d+$/.test(requestedKey)) {
+    return sendJson(res, 400, { ok: false, error: 'KEY Jira không hợp lệ.' });
+  }
 
   const perf = createPerf();
   try {
     const cacheKey = historyKey(session, date, requestedKey);
-    if (!force) {
+    if (!force && !isRange) {
       const cached = await perf.step('cacheRead', () => cacheGet(cacheKey));
       if (cached.hit) {
         const performance = perf.snapshot({ cacheHit: 1 });
@@ -90,9 +95,10 @@ module.exports = async function handler(req, res) {
     if (requestedKey) {
       keySet.add(requestedKey);
     } else {
-      const recentDate = dayDistance(date, vietnamToday()) <= 1;
+      const today = vietnamToday();
+      const recentDate = dayDistance(date, today) <= 1 || dayDistance(endDate, today) <= 1 || (date <= today && endDate >= today);
       const [authorDay, recentWorked] = await perf.step('discoverIssues', () => Promise.all([
-        safeKeys(() => searchIssuesWorkedOnDate(date, session)),
+        safeKeys(() => searchIssuesWorkedOnDate(date, session, endDate)),
         recentDate ? safeKeys(() => searchRecentlyWorkedIssues(session)) : Promise.resolve({ ok: true, keys: [], skipped: true })
       ]));
 
@@ -103,7 +109,7 @@ module.exports = async function handler(req, res) {
       sourceDetails.recentWorked = { ok: recentWorked.ok, issues: recentWorked.keys.length, skipped: Boolean(recentWorked.skipped), error: recentWorked.error || null };
 
       if (!authorDay.ok) {
-        const anyDay = await perf.step('fallbackIssueScan', () => safeKeys(() => searchIssuesWithWorklogDate(date, session)));
+        const anyDay = await perf.step('fallbackIssueScan', () => safeKeys(() => searchIssuesWithWorklogDate(date, session, endDate)));
         for (const key of anyDay.keys || []) keySet.add(key);
         sourceDetails.anyDay = { ok: anyDay.ok, issues: anyDay.keys.length, error: anyDay.error || null };
       } else {
@@ -111,10 +117,14 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (!requestedKey && sourceDetails.authorDay?.ok === false && sourceDetails.anyDay?.ok === false) {
+      throw new JiraError('Không thể tìm worklog trên Jira. Vui lòng tải lại hoặc tìm bằng KEY.', 502);
+    }
+    const truncated = keySet.size > 500;
     const keys = [...keySet].slice(0, 500);
     if (!keys.length) {
-      const payload = { ok: true, date, items: [], skipped: [], issueCount: 0, source, sourceDetails };
-      await cacheSet(cacheKey, payload, HISTORY_CACHE_MS);
+      const payload = { ok: true, date, endDate, items: [], skipped: [], truncated, issueCount: 0, source, sourceDetails };
+      if (!isRange) await cacheSet(cacheKey, payload, HISTORY_CACHE_MS);
       const performance = perf.snapshot({ cacheHit: 0 });
       res.setHeader('Server-Timing', perf.serverTimingHeader({ cacheHit: 0 }));
       return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });
@@ -123,8 +133,7 @@ module.exports = async function handler(req, res) {
     const metadataPromise = perf.step('metadataBatch', () => getIssuesByKeys(keys, session))
       .then(issues => ({ ok: true, issues }))
       .catch(error => {
-        if (error?.status === 401) throw error;
-        return { ok: false, issues: [], error: error?.message || String(error) };
+        return { ok: false, issues: [], error: error?.message || String(error), fatal: error?.status === 401 ? error : null };
       });
 
     const skipped = [];
@@ -139,6 +148,7 @@ module.exports = async function handler(req, res) {
     }));
 
     const metadata = await metadataPromise;
+    if (metadata.fatal) throw metadata.fatal;
     if (!metadata.ok) sourceDetails.metadataError = metadata.error;
     const issueMap = new Map((metadata.issues || []).map(issue => [String(issue?.key || '').toUpperCase(), issue]));
     const items = [];
@@ -148,7 +158,7 @@ module.exports = async function handler(req, res) {
       for (const worklog of result.worklogs || []) {
         if (!authorMatches(worklog, me)) continue;
         const parsed = parseJiraStartedAtWorkTimezone(worklog.started);
-        if (!parsed || parsed.date !== date) continue;
+        if (!parsed || parsed.date < date || parsed.date > endDate) continue;
         const minutes = Math.max(1, Math.ceil(Number(worklog.timeSpentSeconds || 0) / 60));
         const endMinute = parsed.minute + minutes;
         items.push({
@@ -157,7 +167,7 @@ module.exports = async function handler(req, res) {
           project: String(issue?.fields?.project?.key || result.key.split('-')[0] || ''),
           summary: String(issue?.fields?.summary || ''),
           status: String(issue?.fields?.status?.name || ''),
-          date,
+          date: parsed.date,
           start: minuteToHHMM(parsed.minute),
           end: minuteToHHMM(endMinute),
           minutes,
@@ -168,9 +178,10 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    items.sort((a, b) => b.start.localeCompare(a.start) || a.key.localeCompare(b.key));
-    const payload = { ok: true, date, items, skipped, issueCount: keys.length, source, sourceDetails };
-    await perf.step('cacheWrite', () => cacheSet(cacheKey, payload, HISTORY_CACHE_MS));
+    items.sort((a, b) => b.date.localeCompare(a.date) || b.start.localeCompare(a.start) || a.key.localeCompare(b.key));
+    const payload = { ok: true, date, endDate, items, skipped, truncated, issueCount: keys.length, source, sourceDetails };
+    // Range results are client-cached only: existing per-day invalidation remains authoritative.
+    if (!isRange) await perf.step('cacheWrite', () => cacheSet(cacheKey, payload, HISTORY_CACHE_MS));
     const performance = perf.snapshot({ cacheHit: 0 });
     res.setHeader('Server-Timing', perf.serverTimingHeader({ cacheHit: 0 }));
     return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });

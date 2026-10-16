@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -35,6 +35,11 @@ const state = {
   bootFinished: false,
   historyItems: [],
   historyLoading: false,
+  historyView: 'list',
+  historyLoaded: false,
+  historyError: '',
+  historyNotice: '',
+  historySeq: 0,
   submitInFlight: false,
   bulkSubmitInFlight: false,
   bulkCapacitySeq: 0,
@@ -145,6 +150,12 @@ function confirmLogAction({ title, message, rows = [], confirmLabel = 'XÁC NH�
 
 function invalidateHistoryCache() {
   state.historyCache.clear();
+  state.historySeq += 1;
+  state.historyLoading = false;
+  state.historyItems = [];
+  state.historyLoaded = false;
+  state.historyError = '';
+  state.historyNotice = '';
 }
 
 function invalidateDayAuditCache(date = '') {
@@ -662,6 +673,7 @@ function setLoggedOut() {
   setLoginError('');
   closeDesktopEditor();
   state.user = null;
+  setPasswordVisible(false);
   invalidateHistoryCache();
   invalidateDayAuditCache();
   document.body.classList.remove('single-log-open');
@@ -1140,6 +1152,7 @@ function openHistory() {
   if (!$('historyDate').value) $('historyDate').value = $('date').value || $('bulkDate').value || todayLocal();
   renderWorklogHistory();
   openOverlay('historyOverlay', 'closeHistoryBtn');
+  void loadWorklogHistory({ quiet: true });
 }
 
 function closeHistory() {
@@ -1179,34 +1192,133 @@ function renderAuditHistory() {
 
 
 function formatHistoryTimeSpent(minutes) {
-  const h = Math.floor(Number(minutes || 0) / 60);
-  const m = Number(minutes || 0) % 60;
-  return `${h ? `${h}h` : ''}${m ? `${m}m` : ''}` || '0m';
+  return QuickJiraUi.durationLabel(minutes);
+}
+
+function enhanceDurationInputs(root = document) {
+  root.querySelectorAll('#timeSpent, #correctionTimeSpent, .bulk-time').forEach((input, index) => {
+    if (input.closest('.duration-stepper')) return;
+    if (!input.id) input.id = `bulk-time-${index}`;
+    const group = document.createElement('span');
+    group.className = 'duration-stepper';
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-label', 'Thời lượng, tăng giảm mỗi lần 30 phút');
+    input.parentNode.insertBefore(group, input);
+    group.append(input);
+    const controls = document.createElement('span');
+    controls.className = 'duration-step-controls';
+    controls.innerHTML = `<button type="button" data-step="1" aria-label="Tăng 30 phút" aria-controls="${input.id}" title="Tăng 30 phút"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 10 4-4 4 4"/></svg></button><button type="button" data-step="-1" aria-label="Giảm 30 phút" aria-controls="${input.id}" title="Giảm 30 phút"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></button>`;
+    group.append(controls);
+    const sync = () => {
+      const minutes = QuickJiraUi.durationMinutes(input.value);
+      controls.querySelector('[data-step="1"]').disabled = input.disabled || (Number.isFinite(minutes) && minutes >= 960);
+      controls.querySelector('[data-step="-1"]').disabled = input.disabled || (Number.isFinite(minutes) && minutes <= 30);
+    };
+    const step = direction => {
+      const next = QuickJiraUi.stepDuration(input.value, direction);
+      if (next === null) return showToast('Thời lượng chưa hợp lệ. Ví dụ: 30m, 1h hoặc 1h 30m.');
+      input.value = next;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      sync();
+    };
+    controls.querySelectorAll('button').forEach(button => button.addEventListener('click', () => step(Number(button.dataset.step))));
+    input.addEventListener('keydown', event => {
+      if (!['ArrowUp', 'ArrowDown'].includes(event.key) || event.altKey || event.metaKey || event.ctrlKey) return;
+      event.preventDefault();
+      if (controls.querySelector(`[data-step="${event.key === 'ArrowUp' ? 1 : -1}"]`).disabled) return;
+      step(event.key === 'ArrowUp' ? 1 : -1);
+    });
+    input.addEventListener('input', sync);
+    input.addEventListener('change', sync);
+    input._syncDurationStepper = sync;
+    sync();
+  });
+}
+
+function setPasswordVisible(visible) {
+  $('password').type = visible ? 'text' : 'password';
+  const button = $('togglePasswordBtn');
+  button.setAttribute('aria-pressed', String(visible));
+  button.setAttribute('aria-label', visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+  button.title = visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
+}
+
+function historyDayLabel(date, monthOnly = false) {
+  return new Intl.DateTimeFormat('vi-VN', monthOnly ? { month: 'long', year: 'numeric', timeZone: 'UTC' } : { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
+}
+
+function renderWorklogCalendar() {
+  const date = $('historyDate').value || todayLocal();
+  if (!QuickJiraUi.validDate(date)) return;
+  $('calendarMonthLabel').textContent = historyDayLabel(date, true);
+  const totals = new Map();
+  for (const item of state.historyItems) {
+    const current = totals.get(item.date) || { minutes: 0, count: 0 };
+    current.minutes += Number(item.minutes || 0);
+    current.count += 1;
+    totals.set(item.date, current);
+  }
+  $('calendarGrid').innerHTML = QuickJiraUi.monthCells(date).map(day => {
+    if (!day) return '<span class="calendar-blank" aria-hidden="true"></span>';
+    const total = totals.get(day);
+    const label = `${historyDayLabel(day)} · ${total ? `${formatHistoryTimeSpent(total.minutes)}, ${total.count} worklog` : 'Chưa có worklog'}`;
+    return `<button type="button" class="calendar-day${total ? ' has-worklogs' : ''}${day === todayLocal() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}" data-date="${day}" aria-pressed="${day === date}" aria-label="${escapeHtml(label)}"${day === todayLocal() ? ' aria-current="date"' : ''}><span class="calendar-day-number">${Number(day.slice(-2))}</span><strong>${total ? escapeHtml(formatHistoryTimeSpent(total.minutes)) : '—'}</strong><small>${total ? `${total.count} log` : ''}</small></button>`;
+  }).join('');
+  $('calendarGrid').querySelectorAll('[data-date]').forEach(button => button.addEventListener('click', () => {
+    $('historyDate').value = button.dataset.date;
+    closeCorrection();
+    renderWorklogCalendar();
+    // Keep keyboard focus on the chosen day after replacing calendar buttons.
+    $('calendarGrid').querySelector(`[data-date="${button.dataset.date}"]`)?.focus({ preventScroll: true });
+  }));
+  const items = state.historyItems.filter(item => item.date === date).sort((a, b) => a.start.localeCompare(b.start) || a.key.localeCompare(b.key));
+  const minutes = items.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+  $('calendarDayHeading').innerHTML = `<strong>${escapeHtml(historyDayLabel(date))}</strong><span>${items.length} worklog · ${escapeHtml(formatHistoryTimeSpent(minutes))}</span>`;
+  $('calendarAgenda').innerHTML = items.length ? items.map((item, index) => `<button class="calendar-event" type="button" data-event-index="${index}" title="Xem và sửa ${escapeHtml(item.key)}"><span class="calendar-event-time">${escapeHtml(item.start)}<small>${escapeHtml(item.end)}</small></span><span class="calendar-event-copy"><strong>${escapeHtml(item.key)} <em>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</em></strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="calendar-event-arrow" aria-hidden="true">›</span></button>`).join('') : '<p class="calendar-empty">Chưa có worklog trong ngày này.</p>';
+  $('calendarAgenda').querySelectorAll('[data-event-index]').forEach(button => button.addEventListener('click', () => openCorrection(items[Number(button.dataset.eventIndex)])));
 }
 
 function renderWorklogHistory() {
   const wrap = $('worklogHistoryList');
   const stateEl = $('worklogHistoryState');
   if (!wrap || !stateEl) return;
-  if (state.historyLoading) {
-    stateEl.textContent = 'Đang tải worklog thật từ Jira...';
-    stateEl.classList.remove('hidden');
+  const calendar = state.historyView === 'calendar';
+  wrap.classList.toggle('hidden', calendar);
+  $('worklogCalendar').classList.toggle('hidden', !calendar || state.historyLoading || !state.historyLoaded || !!state.historyError);
+  $('historyListViewBtn').classList.toggle('is-active', !calendar);
+  $('historyCalendarViewBtn').classList.toggle('is-active', calendar);
+  $('historyListViewBtn').setAttribute('aria-pressed', String(!calendar));
+  $('historyCalendarViewBtn').setAttribute('aria-pressed', String(calendar));
+  $('historySummary').classList.toggle('hidden', state.historyLoading || !state.historyLoaded || !!state.historyError);
+  let message = '';
+  if (state.historyLoading) message = calendar ? 'Đang tải worklog trong tháng từ Jira...' : 'Đang tải worklog từ Jira...';
+  else if (state.historyError) message = state.historyError;
+  else if (!state.historyLoaded) message = 'Chọn ngày hoặc KEY rồi tìm worklog.';
+  else if (state.historyNotice) message = state.historyNotice;
+  else if (!state.historyItems.length && !calendar) message = 'Không có worklog của bạn trong ngày này.';
+  stateEl.textContent = message;
+  stateEl.classList.toggle('hidden', !message);
+  stateEl.classList.toggle('is-warning', !!state.historyNotice && !state.historyError);
+  stateEl.classList.toggle('is-error', !!state.historyError);
+  $('historyResults').setAttribute('aria-busy', String(state.historyLoading));
+  if (state.historyLoading || state.historyError || !state.historyLoaded) {
     wrap.innerHTML = '';
     return;
   }
-  if (!state.historyItems.length) {
-    stateEl.textContent = 'Không có worklog của bạn trong ngày này.';
-    stateEl.classList.remove('hidden');
+  const total = state.historyItems.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+  $('historySummary').textContent = `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.length} worklog · ${formatHistoryTimeSpent(total)}${calendar ? ' trong tháng' : ' trong ngày'} · Giờ Việt Nam`;
+  if (calendar) {
     wrap.innerHTML = '';
+    renderWorklogCalendar();
     return;
   }
-  stateEl.classList.add('hidden');
   wrap.innerHTML = state.historyItems.map(item => `
     <div class="worklog-history-item" data-worklog-id="${escapeHtml(item.id)}" data-key="${escapeHtml(item.key)}">
       <div class="worklog-history-main">
         <div class="worklog-history-time"><strong>${escapeHtml(item.start)}–${escapeHtml(item.end)}</strong><span>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</span></div>
         <div class="worklog-history-key"><strong>${escapeHtml(item.key)}</strong><small>${escapeHtml(item.summary || '')}</small></div>
-        <div class="worklog-history-desc">${escapeHtml(item.description || 'Không có Description')}</div>
+        ${item.description && item.description !== item.summary ? `<div class="worklog-history-desc">${escapeHtml(item.description)}</div>` : ''}
       </div>
       <div class="worklog-history-actions">
         <button class="soft-btn history-edit-btn" type="button">Sửa</button>
@@ -1215,58 +1327,69 @@ function renderWorklogHistory() {
     </div>
   `).join('');
   wrap.querySelectorAll('.worklog-history-item').forEach(row => {
-    const id = row.dataset.worklogId || '';
-    const key = row.dataset.key || '';
-    const item = state.historyItems.find(x => x.id === id && x.key === key);
+    const item = state.historyItems.find(x => x.id === row.dataset.worklogId && x.key === row.dataset.key);
     row.querySelector('.history-edit-btn')?.addEventListener('click', () => openCorrection(item));
     row.querySelector('.history-delete-btn')?.addEventListener('click', () => deleteHistoryItem(item));
   });
 }
 
 async function loadWorklogHistory({ quiet = false, force = false } = {}) {
-  if (!state.user || state.historyLoading) return;
-  const date = $('historyDate').value || todayLocal();
+  if (!state.user) return;
+  const selectedDate = $('historyDate').value || todayLocal();
+  if (!QuickJiraUi.validDate(selectedDate)) return showToast('Vui lòng chọn ngày hợp lệ.');
+  const range = state.historyView === 'calendar' ? QuickJiraUi.monthRange(selectedDate) : { start: selectedDate, end: selectedDate };
   const key = $('historyKey').value.trim().toUpperCase();
-  const cacheKey = `${date}|${key}`;
+  const cacheKey = `${range.start}|${range.end}|${key}`;
+  const sequence = ++state.historySeq;
   const cached = state.historyCache.get(cacheKey);
-  const cacheFresh = cached && (Date.now() - cached.at) < 20000;
-  if (!force && cacheFresh) {
-    state.historyItems = cached.items;
-    renderWorklogHistory();
-    if (!quiet) showToast(`Đã tải ${state.historyItems.length} worklog từ bộ nhớ nhanh.`);
-    return;
-  }
-
+  closeCorrection();
+  state.historyError = '';
+  state.historyNotice = '';
+  state.historyItems = [];
+  state.historyLoaded = false;
   state.historyLoading = true;
   const searchBtn = $('refreshWorklogHistoryBtn');
-  if (searchBtn) {
-    searchBtn.disabled = true;
-    searchBtn.classList.add('is-loading');
-    searchBtn.textContent = key ? 'ĐANG TÌM KEY...' : 'ĐANG TÌM WORKLOG...';
-  }
+  searchBtn.disabled = true;
+  searchBtn.classList.add('is-loading');
+  searchBtn.textContent = 'ĐANG TẢI...';
   renderWorklogHistory();
   try {
-    const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? '&force=1' : ''}`, { method: 'GET', cache: 'no-store' });
+    const data = !force && cached && Date.now() - cached.at < 20000 ? cached.data : await api(`/api?action=worklog-history&date=${encodeURIComponent(range.start)}${range.end !== range.start ? `&endDate=${encodeURIComponent(range.end)}` : ''}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? '&force=1' : ''}`, { method: 'GET', cache: 'no-store' });
+    if (sequence !== state.historySeq || !state.user) return;
     state.historyItems = Array.isArray(data.items) ? data.items : [];
-    state.historyCache.set(cacheKey, { at: Date.now(), items: state.historyItems });
-    if (!quiet) {
-      const elapsed = Number(data.performance?.totalMs || data.clientElapsedMs || 0);
-      const timing = elapsed > 0 ? ` · ${Math.max(1, Math.round(elapsed / 100) / 10)}s` : '';
-      showToast(`Đã tải ${state.historyItems.length} worklog${timing}.`);
-    }
+    state.historyLoaded = true;
+    const notices = [];
+    if (data.skipped?.length) notices.push(`${data.skipped.length} task chưa đọc được worklog`);
+    if (data.truncated) notices.push('Đang giới hạn 500 task; hãy thu hẹp bằng KEY');
+    if (data.sourceDetails?.metadataError) notices.push('Một số thông tin task chưa tải được');
+    state.historyNotice = notices.length ? `Dữ liệu chưa đầy đủ: ${notices.join(' · ')}. Bấm Tìm worklog để tải lại.` : '';
+    state.historyCache.set(cacheKey, { at: cached?.data === data ? cached.at : Date.now(), data });
+    if (!quiet) showToast(`Đã tải ${state.historyItems.length} worklog.`);
   } catch (error) {
-    state.historyItems = [];
-    if ($('worklogHistoryState')) $('worklogHistoryState').textContent = error.message;
-    if (!quiet) showToast(error.message);
+    if (sequence !== state.historySeq || !state.user) return;
+    state.historyError = error.message || 'Không tải được worklog. Vui lòng thử lại.';
+    if (!quiet) showToast(state.historyError);
   } finally {
-    state.historyLoading = false;
-    if (searchBtn) {
+    if (sequence === state.historySeq) {
+      state.historyLoading = false;
       searchBtn.disabled = false;
       searchBtn.classList.remove('is-loading');
       searchBtn.textContent = 'TÌM WORKLOG ĐÃ LOG';
+      renderWorklogHistory();
     }
-    renderWorklogHistory();
   }
+}
+
+function setHistoryView(view) {
+  if (state.historyView === view && state.historyLoaded) return;
+  state.historyView = view;
+  renderWorklogHistory();
+  void loadWorklogHistory({ quiet: true });
+}
+
+function moveHistoryMonth(delta) {
+  $('historyDate').value = delta === 0 ? todayLocal() : QuickJiraUi.shiftMonth($('historyDate').value || todayLocal(), delta);
+  void loadWorklogHistory({ quiet: true });
 }
 
 function openCorrection(item) {
@@ -1276,11 +1399,15 @@ function openCorrection(item) {
   $('correctionDate').value = item.date;
   $('correctionStart').value = item.start;
   $('correctionTimeSpent').value = formatHistoryTimeSpent(item.minutes);
+  $('correctionTimeSpent')._syncDurationStepper?.();
   $('correctionDescription').value = item.description || item.summary || '';
   $('correctionTitle').textContent = `Sửa ${item.key}`;
   $('correctionMeta').textContent = `${item.start}–${item.end} · ${formatHistoryTimeSpent(item.minutes)}`;
   showAnimated($('worklogCorrectionPanel'));
-  $('worklogCorrectionPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  requestAnimationFrame(() => {
+    $('worklogCorrectionPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('correctionTimeSpent').focus({ preventScroll: true });
+  });
 }
 
 function closeCorrection() {
@@ -1729,7 +1856,7 @@ function renderBulkItems() {
     const syncBulkPresetState = () => {
       const current = String(bulkTimeInput?.value || '').trim();
       row.querySelectorAll('.bulk-preset-btn').forEach(button => {
-        button.classList.toggle('active', button.dataset.time === current);
+        button.classList.toggle('active', QuickJiraUi.durationMinutes(button.dataset.time) === QuickJiraUi.durationMinutes(current));
       });
     };
     bulkTimeInput?.addEventListener('input', event => {
@@ -1747,6 +1874,7 @@ function renderBulkItems() {
         markBulkUserEdited();
         syncBulkPresetState();
         updateBulkTotal();
+        bulkTimeInput._syncDurationStepper?.();
       });
     });
     row.querySelector('.bulk-description')?.addEventListener('input', event => {
@@ -1765,6 +1893,7 @@ function renderBulkItems() {
       showToast(`Đã bỏ ${key} khỏi lần Log tất cả này.`);
     });
   });
+  enhanceDurationInputs(wrap);
   updateBulkTotal();
 }
 
@@ -1936,10 +2065,11 @@ $('overtime')?.addEventListener('change', () => {
 });
 
 function syncSinglePresetState() {
-  const current = String($('timeSpent')?.value || '').trim();
+  const current = QuickJiraUi.durationMinutes($('timeSpent')?.value);
   document.querySelectorAll('.preset-btn').forEach(button => {
-    button.classList.toggle('active', button.dataset.time === current);
+    button.classList.toggle('active', QuickJiraUi.durationMinutes(button.dataset.time) === current);
   });
+  $('timeSpent')?._syncDurationStepper?.();
 }
 
 $('timeSpent').addEventListener('input', () => {
@@ -1988,7 +2118,16 @@ $('installPwaBtn')?.addEventListener('click', installPwa);
   }, { passive: false });
 });
 $('runAuditBtn').addEventListener('click', runDayAudit);
-$('refreshWorklogHistoryBtn').addEventListener('click', () => loadWorklogHistory());
+$('refreshWorklogHistoryBtn').addEventListener('click', () => loadWorklogHistory({ force: true }));
+$('historyListViewBtn').addEventListener('click', () => setHistoryView('list'));
+$('historyCalendarViewBtn').addEventListener('click', () => setHistoryView('calendar'));
+$('calendarPrevBtn').addEventListener('click', () => moveHistoryMonth(-1));
+$('calendarNextBtn').addEventListener('click', () => moveHistoryMonth(1));
+$('calendarTodayBtn').addEventListener('click', () => moveHistoryMonth(0));
+$('historyDate').addEventListener('change', () => loadWorklogHistory({ quiet: true }));
+$('togglePasswordBtn').addEventListener('click', () => setPasswordVisible($('password').type === 'password'));
+$('loginForm').addEventListener('submit', () => setPasswordVisible(false));
+
 $('historyKey')?.addEventListener('keydown', event => {
   if (event.key !== 'Enter') return;
   event.preventDefault();
@@ -2188,6 +2327,7 @@ window.addEventListener('resize', () => {
 $('bulkDate').value = getSessionLogDate();
 updateSingleOvertimeHint();
 $('historyDate').value = todayLocal();
+enhanceDurationInputs();
 hydrateQuickInputs();
 renderBulkSelection();
 ['gesturestart', 'gesturechange', 'gestureend'].forEach(name => {

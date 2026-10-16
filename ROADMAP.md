@@ -33,3 +33,5 @@
 - ✅ **V1.7.3 – Motion, Safe Submit & Fast History**: animation nhẹ khi đóng/mở chức năng, popup xác nhận trước mọi thao tác Logwork và tối ưu Worklog History bằng direct-key path, JQL currentUser ưu tiên, batch metadata, concurrency có kiểm soát và client cache 20 giây.
 
 - ✅ **V1.8.0 – Performance & Reliability Hardening**: Batch Jira metadata cho Bulk, cache ngắn Day Audit/History có invalidate sau mutation, request dedupe phía client, optional Redis/KV idempotency + login rate-limit cho Vercel multi-instance, Server-Timing diagnostics, Ctrl/Cmd+K và PWA update banner an toàn.
+
+- ✅ **V1.9.0 – Time Stepper & Worklog Calendar**: bổ sung mũi tên tăng/giảm mỗi lần 30 phút ở Log đơn/Bulk/Sửa, icon hiện/ẩn mật khẩu, Worklog đã log cao hơn với bộ lọc gọn, chế độ Lịch tháng và chi tiết worklog theo ngày. Phạm vi theo yêu cầu Boss; xem CHANGELOG.md và README.md.
