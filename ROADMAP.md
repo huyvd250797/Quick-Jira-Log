@@ -1,5 +1,11 @@
 # Trạng thái V1.11.2
 
+## Đã hoàn thành V1.11.6
+
+- Màu dự án ngẫu nhiên theo mỗi lần xem, tông dịu, ít bão hòa.
+- Bỏ ước tính thời gian còn lại trong tiến trình log.
+- Giữ các chức năng và guard từ V1.11.5.
+
 ## Đã hoàn thành V1.11.5
 
 - OT đánh dấu trong lịch sau khi log, lưu riêng trong comment worklog, không phụ thuộc custom field.

@@ -15,7 +15,7 @@ const {server}=require('./serve.cjs');
    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
   });
   await page.goto('http://127.0.0.1:4192');await page.waitForFunction(()=>!document.body.classList.contains('booting'));await page.locator(viewport.width>=900?'#historyBtn':'#mobileHistoryBtn').click();await page.waitForFunction(()=>state.historyLoaded&&!state.historyLoading);await page.waitForTimeout(250);
-  assert.equal(await page.evaluate(()=>state.projectPalette.EPU01.h),145,'old similar palette is replaced');
+  assert.equal(await page.evaluate(()=>state.projectPalette.EPU01.h===340&&state.projectPalette.EPU01.s===48),false,'legacy colors are ignored');
   await page.locator('.week-worklog-block').click();assert.equal(await page.evaluate(()=>document.activeElement.id),'cancelCorrectionBtn');assert.equal(await page.locator('.correction-overtime strong').innerText(),'Overtime');assert.equal(await page.locator('#correctionOvertime').isChecked(),false);
   assert.equal(await page.locator('.correction-preset-btn').count(),5);
   const mainBefore=await page.locator('#timeSpent').inputValue();

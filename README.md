@@ -1,17 +1,25 @@
-# Quick Jira Log V1.11.5 — Professional UI & Calendar First
+# Quick Jira Log V1.11.6 — Professional UI & Calendar First
 
 © 2026 HuyVo. All rights reserved.
 
-## Cải tiến V1.11.5
+## Cải tiến V1.11.6
+
+- Màu dự án chuyển sang **tông dịu, giảm độ bão hòa**: nền nhẹ, viền và KEY rõ, điều chỉnh riêng cho Sáng/Tối. Không dùng xanh dương giống màu mặc định và không dùng vàng dành cho OT.
+- App **cấp màu ngẫu nhiên** khi mở lịch, bấm Làm mới hoặc tắt/bật lại icon màu. Chọn giữa các màu có độ tách biệt tốt; cùng dự án cùng màu trong lần xem hiện tại.
+- Giữ màu khi đổi theme, Tuần/Tháng, fullscreen, sửa worklog hoặc tải lại dữ liệu sau sửa để tránh đổi màu giữa thao tác. Mở lại hoặc refresh chủ động sẽ có bảng màu khác; app ghi nhớ màu vừa dùng chỉ để tránh lặp lại ngay cho cùng dự án, không cố định màu dự án.
+- **Bỏ hoàn toàn ETA**, số giây còn lại và giờ hoàn thành dự kiến, gồm cả phần tính toán/lưu mẫu. Popup chỉ giữ phần trăm, bước xử lý và thời gian đã chạy; lỗi và mất phản hồi vẫn được hiển thị rõ.
+- Giữ luồng Overtime sau khi log, màu vàng OT cố định, sheet kéo xuống để đóng và input gọn trong khung từ phiên bản trước.
+
+## Các chức năng V1.11.5 được giữ
 
 - **Log mới không còn công tắc Overtime**, ở cả log đơn và Log tất cả. Sau khi log, mở Worklog đã log → bấm block → đánh dấu Overtime → Lưu chỉnh sửa.
 - Sửa lỗi nhầm Overtime thành custom field của issue Jira. App không tìm field Overtime, không gọi editmeta và không cập nhật trạng thái của toàn issue nữa.
 - **OT là nhãn riêng của từng worklog trong Quick Jira Log**. Nhãn được lưu bền kèm mô tả worklog bằng API sửa worklog hiện có; đóng/mở app hoặc dùng thiết bị khác vẫn đọc được. Đây không phải thuộc tính Overtime native hay plugin chấm công của Jira.
-- Popup tiến trình log đơn/Bulk nằm giữa màn hình, nền phía sau tối/mờ, giữ %/bước/ETA theo phản hồi thật. Đang xử lý thì không đóng bằng Escape/nền; hoàn tất/lỗi có nút đóng. Thành công tự đóng sau 4,5 giây; lỗi giữ lại để đọc.
+- Popup tiến trình log đơn/Bulk nằm giữa màn hình, nền phía sau tối/mờ, giữ phần trăm/bước xử lý theo phản hồi thật và thời gian đã chạy. Đang xử lý thì không đóng bằng Escape/nền; hoàn tất/lỗi có nút đóng. Thành công tự đóng sau 4,5 giây; lỗi giữ lại để đọc.
 - Sheet log đơn và Log tất cả dùng hết chiều cao viewport có thể sử dụng, thích ứng bàn phím/vùng an toàn. Kéo xuống ở thanh kéo hoặc vùng tiêu đề để đóng; vuốt ngắn thì trở về vị trí cũ. Giữ cuộn nội dung và thao tác ngày/nút bấm.
 - Sheet sửa worklog cũng có thể kéo tiêu đề xuống để đóng trên mobile.
 - Các input, textarea, date/time picker được giới hạn trong khung, grid không bị kéo giãn bởi kích thước nội tại của picker.
-- Bảng màu dự án bỏ toàn bộ dải xanh dương, chuyển sang mint/lilac/rose và các màu khác biệt; tự đổi bảng màu cũ, giữ lựa chọn bật/tắt. Vàng nhạt chỉ dành cho OT.
+- Bảng màu dự án dùng tông dịu, cấp lại ngẫu nhiên theo mỗi lần mở/làm mới; giữ lựa chọn bật/tắt. Vàng nhạt chỉ dành cho OT.
 
 ### Cách đánh dấu Overtime sau khi log
 
@@ -28,13 +36,13 @@ Dữ liệu cũ chỉ được suy OT từ custom field issue hoặc từ mốc 
 
 ## Triển khai nhanh
 
-Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.11.5`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
+Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.11.6`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
 
-App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp giao diện không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.11.5**.
+App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp giao diện không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.11.6**.
 
 Đã kiểm tra bằng dữ liệu Jira giả lập; **chưa đăng nhập/ghi giờ lên Jira thật và chưa kiểm tra trên iPhone Safari vật lý**. Xem `TESTING.md` để biết phạm vi, cách chạy và giới hạn.
 
-Bảng màu có 120 swatch khác mã, không dùng dải xanh dương hoặc vàng OT; độ khác biệt dễ nhìn được ưu tiên cho các dự án đầu tiên. Khi có rất nhiều dự án, màu không thể thay thế KEY/tên dự án để nhận diện. Màu được lưu theo trình duyệt, chưa đồng bộ giữa các thiết bị.
+Bảng màu có 40 swatch dịu, không dùng dải xanh dương hoặc vàng OT; chọn màu có khoảng cách tốt với các màu đang hiển thị. Khi có nhiều hơn 40 dự án, màu có thể lặp và KEY/tên dự án vẫn là thông tin nhận diện chính. Các thiết bị có thể cấp màu khác nhau; phân loại OT vẫn đọc từ worklog trên Jira.
 
 ## 1. Lịch Tuần / Tháng
 
@@ -81,21 +89,20 @@ Quy tắc tính:
 
 Ví dụ: Hôm nay 3h 30m → cần log thêm 4h 30m. Tuần đã log 33h → cần thêm 7h. Nếu cuối tuần đã log 2h, dòng T7/CN hiển thị 2h riêng.
 
-## 3. Tiến trình log và thời gian dự kiến
+## 3. Tiến trình log
 
 Áp dụng cho **Logwork**, **Log & Next** và **Log tất cả**. Sau khi xác nhận, app hiển thị:
 
 - Thanh tiến trình và phần trăm.
 - Bước xử lý hiện tại: đọc task → kiểm tra giờ trống/OT → ghi worklog → cập nhật trạng thái → hoàn tất.
 - Thời gian đã chạy.
-- Số giây còn lại ước tính và giờ hoàn thành dự kiến.
 
 Cách hoạt động:
 
 - Server truyền tiến độ qua NDJSON trong chính POST đang ghi. Không cần function polling hoặc Redis riêng cho tiến trình.
 - % là mức hoàn thành theo các giai đoạn có trọng số, không phải % thời gian cam kết. Giai đoạn ghi worklog cập nhật theo số worklog đã nhận kết quả tạo thành công.
 - Client chỉ cho 100% sau khi đọc được kết quả cuối cùng thành công. Không dùng timer tự tăng % khi server chưa xác nhận.
-- ETA dựa trên các lần log thành công trước của tài khoản/trình duyệt và tiến độ hiện tại. Chưa có lịch sử thì dùng ước tính khởi tạo; khi Jira chậm hơn dự kiến, app thông báo đang cập nhật ước tính.
+- Chỉ hiển thị thời gian đã chạy, không đoán số giây còn lại hoặc giờ hoàn thành.
 - Khi lỗi, thanh dừng trước 100% và hiển thị lý do. Khi mất phản hồi cuối, thông báo **chưa xác định kết quả** và yêu cầu kiểm tra lịch sử trước khi gửi lại; không tự retry POST.
 - Đóng form hoặc mất kết nối không đồng nghĩa thao tác server đã hủy. Hãy đối soát Jira/lịch sử nếu kết quả chưa xác định.
 - Nếu lớp proxy/hosting đệm dữ liệu, cập nhật có thể về theo đợt. Kết quả JSON cũ vẫn được hỗ trợ, và app không tạo % giả để bù việc thiếu stream.
@@ -119,14 +126,14 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.11.5` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.11.6` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.
 5. Framework Preset: **Other**. Build Command để trống. Output Directory dùng mặc định/root của project, không chọn `dist` vì source không có bước build.
 6. Node.js Version: **24.x**.
 7. Cấu hình biến môi trường bên dưới rồi redeploy.
-8. Mở app, kiểm tra footer V1.11.5. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
+8. Mở app, kiểm tra footer V1.11.6. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
 
 ### Biến môi trường
 
@@ -172,8 +179,8 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Cache kết quả ngày kế thừa cơ chế server cũ. Khoảng tuần/tháng dùng cache client ngắn 20 giây; cache xóa sau ghi/sửa/xóa trong app.
 - Lưới thời gian giới hạn trong 00:00–24:00 của ngày bắt đầu. Worklog nhập tay trực tiếp trong Jira mà kéo qua nửa đêm có thể bị cắt tại mép lưới; tổng thời lượng và form chi tiết vẫn giữ dữ liệu thật. Luồng log hiện có trong app xếp trong các khung giờ cùng ngày.
 - Block rất ngắn có thể không đủ chỗ hiển thị mô tả; title, nhãn trợ năng và danh sách ngày vẫn cho đọc/mở chi tiết.
-- ETA là ước tính, không phải thời gian cam kết. Hiệu năng thật phụ thuộc Jira và hosting.
+- Thời gian đã chạy là thời lượng thực tế của yêu cầu; tốc độ xử lý phụ thuộc Jira và hosting.
 - Chưa deploy production hoặc xác minh Safari trên iPhone vật lý trong lần phát triển này.
-- Sau deploy, kiểm tra footer V1.11.5, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
+- Sau deploy, kiểm tra footer V1.11.6, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.

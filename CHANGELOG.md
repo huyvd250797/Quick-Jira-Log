@@ -1,5 +1,12 @@
 # Changelog
 
+## V1.11.6 — Refined Random Project Colors & No ETA
+
+- Màu nền dịu, ít bão hòa; viền và KEY rõ, chỉnh riêng Sáng/Tối.
+- Cấp màu ngẫu nhiên theo lần mở/làm mới/bật lại, cùng dự án giữ cùng màu trong lần xem; tránh lặp ngay màu trước đó.
+- Bỏ ETA/countdown/giờ hoàn thành dự kiến và các mẫu thời gian; giữ %/bước/thời gian đã chạy.
+- Kiểm tra mở lại/refresh/reload, ổn định khi đổi theme, ưu tiên OT và không còn ETA ở trạng thái active/lỗi.
+
 ## V1.11.5 — Post-log OT, Centered Progress & Full-height Sheets
 
 - Bỏ OT ở form tạo đơn/Bulk, chặn yêu cầu OT tạo từ client cũ trước khi gọi Jira.

@@ -5,11 +5,12 @@
 #historyOverlay .week-day-heading.is-complete i { background: #dff3e8; }
 #historyOverlay .week-day-heading.is-complete i b { background: #249b5e; }
 html[data-theme="dark"] #historyOverlay .week-day-heading.is-complete i { background: #173e2b; }
-#historyOverlay .has-project-color { background: hsl(var(--project-hue) var(--project-saturation) var(--project-lightness, 80%)); border-color: hsl(var(--project-hue) 45% 72%); border-left-color: hsl(var(--project-hue) 58% 43%); }
-#historyOverlay .has-project-color strong { color: hsl(var(--project-hue) 70% 20%); }
-#historyOverlay .has-project-color .calendar-event-copy { border-left-color: hsl(var(--project-hue) 58% 43%); }
-html[data-theme="dark"] #historyOverlay .has-project-color { background: hsl(var(--project-hue) calc(var(--project-saturation) - 25%) var(--project-dark-lightness, 24%)); border-color: hsl(var(--project-hue) 35% 40%); border-left-color: hsl(var(--project-hue) 65% 68%); }
-html[data-theme="dark"] #historyOverlay .has-project-color strong { color: hsl(var(--project-hue) 75% 82%); }
+#historyOverlay .has-project-color { background: hsl(var(--project-hue) var(--project-saturation) var(--project-lightness)); border-color: hsl(var(--project-hue) 22% 77%); border-left-color: hsl(var(--project-hue) 36% 47%); }
+#historyOverlay .has-project-color strong { color: hsl(var(--project-hue) 32% 28%); }
+#historyOverlay .has-project-color .calendar-event-copy { border-left-color: hsl(var(--project-hue) 36% 47%); }
+html[data-theme="dark"] #historyOverlay .has-project-color { background: hsl(var(--project-hue) calc(var(--project-saturation) - 10%) var(--project-dark-lightness)); border-color: hsl(var(--project-hue) 20% 35%); border-left-color: hsl(var(--project-hue) 33% 65%); }
+html[data-theme="dark"] #historyOverlay .has-project-color strong { color: hsl(var(--project-hue) 35% 80%); }
+html[data-theme="dark"] #historyOverlay .has-project-color .calendar-event-copy { border-left-color: hsl(var(--project-hue) 33% 65%); }
 #historyOverlay .is-ot { background: #fff3b0; border-color: #d8b846; border-left-color: #b58a16; color: #493b14; }
 #historyOverlay .is-ot strong { color: #674a04; }
 #historyOverlay .is-ot small, #historyOverlay .is-ot em, #historyOverlay .is-ot .calendar-event-time small { color: #685923; }

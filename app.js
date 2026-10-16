@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.11.5';
+const APP_VERSION = '1.11.6';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -8,7 +8,7 @@ const STORAGE = {
   audit: 'quick-jira-log:audit:v1',
   theme: 'quick-jira-log:theme:v1',
   projectColors: 'quick-jira-log:project-colors:v1',
-  projectPalette: 'quick-jira-log:project-palette:v3',
+  projectPaletteHistory: 'quick-jira-log:project-palette:last-random:v1',
   sessionDate: 'quick-jira-log:session-log-date:v1'
 };
 
@@ -41,7 +41,8 @@ const state = {
   calendarMode: 'week',
   calendarWeekends: false,
   projectColors: readStorage(STORAGE.projectColors, false) === true,
-  projectPalette: readStorage(STORAGE.projectPalette, {}),
+  projectPalette: {},
+  previousProjectPalette: readStorage(STORAGE.projectPaletteHistory, {}) || {},
   calendarFullscreen: false,
   calendarNativeFullscreen: false,
   calendarFullscreenSeq: 0,
@@ -1216,7 +1217,13 @@ function closePlanner() {
   closeOverlay('plannerOverlay');
 }
 
+function resetProjectPalette() {
+  state.previousProjectPalette = { ...state.previousProjectPalette, ...state.projectPalette };
+  state.projectPalette = {};
+}
+
 function openHistory() {
+  resetProjectPalette();
   closeCorrection({ immediate: true });
   state.historyView = 'calendar';
   state.calendarMode = 'week';
@@ -1414,10 +1421,10 @@ function calendarAppearance(item) {
   const project = QuickJiraCalendar.projectKey(item);
   let style = '', classes = ot ? ' is-ot' : '';
   if (state.projectColors && !ot) {
-    const palette = QuickJiraCalendar.paletteFor(project, state.projectPalette);
+    const palette = QuickJiraCalendar.paletteFor(project, state.projectPalette, { previous: state.previousProjectPalette });
     state.projectPalette = palette.registry;
-    if (palette.changed) writeStorage(STORAGE.projectPalette, palette.registry);
-    style = `--project-hue:${palette.color.h};--project-saturation:${palette.color.s}%;--project-lightness:${palette.color.l}%;--project-dark-lightness:${(palette.color.l * .6 - 24).toFixed(1)}%;`;
+    if (palette.changed) writeStorage(STORAGE.projectPaletteHistory, { ...state.previousProjectPalette, ...palette.registry });
+    style = `--project-hue:${palette.color.h};--project-saturation:${palette.color.s}%;--project-lightness:${palette.color.l}%;--project-dark-lightness:${(palette.color.l === 90 ? 21 : 24)}%;`;
     classes += ' has-project-color';
   }
   return { ot, project, style, classes, badge: ot ? '<span class="ot-ribbon" aria-hidden="true">OT</span>' : '' };
@@ -1525,13 +1532,7 @@ async function consumeApiResponse(response, onProgress) {
 
 function startLogProgress(mode, count = 1) {
   clearInterval(state.logProgressTimer); clearTimeout(state.logProgressHideTimer);
-  const identity = state.user?.username || 'current-user';
-  const storageKey = `quick-jira-log:eta:${identity}:${mode}`;
-  const saved = readStorage(storageKey, []);
-  const samples = Array.isArray(saved) ? saved.filter(value => Number.isFinite(value) && value > 200).slice(-8) : [];
-  const baseline = mode === 'bulk' ? 12000 + count * 1800 : 12000;
-  const expected = samples.length ? [...samples].sort((a,b)=>a-b)[Math.floor(samples.length / 2)] : baseline;
-  state.logProgress = { mode, count, storageKey, samples, expected, started: Date.now(), percent: 0, phase: 'Đang gửi yêu cầu…', active: true };
+  state.logProgress = { mode, count, started: Date.now(), percent: 0, phase: 'Đang gửi yêu cầu…', active: true };
   const panel = $('logProgressPanel'), dialog = $('logProgressDialog');
   clearUiAnimation(panel);
   panel.classList.remove('hidden', 'is-error', 'is-complete');
@@ -1575,11 +1576,7 @@ function paintLogProgress() {
   $('logProgressMeter').setAttribute('aria-valuenow', String(progress.percent));
   $('logProgressPhase').textContent = progress.phase;
   $('logProgressElapsed').textContent = `Đã chạy ${Math.floor(elapsed / 1000)}s`;
-  if (!progress.active) return;
-  const phaseEstimate = progress.percent >= 15 ? elapsed * (100 - progress.percent) / progress.percent : progress.expected;
-  const remaining = Math.max(1000, (progress.expected * (100 - progress.percent) / 100 + phaseEstimate) / 2);
-  const finish = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(Date.now() + remaining));
-  $('logProgressEta').textContent = elapsed > progress.expected * 1.5 ? 'Jira chậm hơn dự kiến · đang cập nhật ước tính' : `Ước tính còn ~${Math.ceil(remaining / 1000)}s · khoảng ${finish}`;
+
 }
 
 function finishLogProgress(success, error) {
@@ -1590,10 +1587,8 @@ function finishLogProgress(success, error) {
   progress.phase = success ? 'Đã nhận kết quả hoàn tất từ Jira' : error?.code === 'RESULT_UNKNOWN' ? 'Chưa xác định kết quả; hãy kiểm tra lịch sử trước khi gửi lại' : `Chưa hoàn tất: ${error?.message || 'Có lỗi xảy ra'}`;
   if (success) {
     progress.percent = 100;
-    writeStorage(progress.storageKey, [...progress.samples, Date.now() - progress.started].slice(-8));
   }
   $('logProgressTitle').textContent = success ? 'Logwork hoàn tất' : error?.code === 'RESULT_UNKNOWN' ? 'Cần kiểm tra kết quả' : 'Logwork chưa hoàn tất';
-  $('logProgressEta').textContent = success ? 'Hoàn tất' : 'Không có thời gian hoàn thành dự kiến';
   $('logProgressPanel').classList.toggle('is-error', !success);
   $('logProgressPanel').classList.toggle('is-complete', success);
   $('closeLogProgressBtn').classList.remove('hidden');
@@ -2875,6 +2870,7 @@ $('calendarProjectColorsBtn').addEventListener('click', () => {
   const results = $('historyResults'), top = results.scrollTop, left = results.scrollLeft;
   state.projectColors = !state.projectColors;
   writeStorage(STORAGE.projectColors, state.projectColors);
+  if (state.projectColors) resetProjectPalette();
   renderWorklogHistory();
   results.scrollTo(left, top);
   scheduleWeekFit();
@@ -2893,7 +2889,7 @@ document.addEventListener('fullscreenchange', () => {
 window.visualViewport?.addEventListener('resize', syncCorrectionViewport);
 window.visualViewport?.addEventListener('scroll', syncCorrectionViewport);
 window.addEventListener('resize', syncCorrectionViewport);
-$('calendarRefreshBtn').addEventListener('click', () => loadWorklogHistory({ quiet: true, force: true }));
+$('calendarRefreshBtn').addEventListener('click', () => { resetProjectPalette(); void loadWorklogHistory({ quiet: true, force: true }); });
 $('historyDate').addEventListener('change', () => loadWorklogHistory({ quiet: true }));
 $('togglePasswordBtn').addEventListener('click', () => setPasswordVisible($('password').type === 'password'));
 $('loginForm').addEventListener('submit', () => setPasswordVisible(false));

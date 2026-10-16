@@ -1,4 +1,4 @@
-# Kiểm tra V1.11.5
+# Kiểm tra V1.11.6
 
 ## Kết quả và phạm vi
 
@@ -7,7 +7,13 @@ Kiểm tra bằng Node.js, Chromium headless và Jira giả lập; không dùng 
 - `npm test`: logic/API, xác thực, lịch sử, author filtering, guard trùng giờ/khung giờ, cache/idempotency, đơn/Bulk, streaming tiến độ và mất phản hồi.
 - `creation-ot-tests.js`: log đơn và Bulk thành công khi Jira không có field Overtime; không gọi `/field`/`editmeta`/issue PUT. Client cũ gửi OT lúc tạo bị báo 400 trước khi ghi Jira.
 - `correction-overtime-tests.js`: bật/tắt nhãn riêng worklog, lưu cùng comment bằng một PUT; worklog khác cùng issue không đổi; lưu lặp không trùng nhãn, legacy edit giữ nhãn; đọc string/ADF; lỗi quyền/overlap/nghỉ trưa vẫn chặn; lỗi cập nhật không báo thành công.
-- `calendar-style-tests.js`: đọc lại nhãn từ history, không gọi field issue, không suy OT chỉ từ 17:30/cuối tuần, bỏ worklog 0 phút; thời lượng gọn. 120 màu khác mã, không chứa dải xanh dương/vàng; ưu tiên mint/lilac/rose, 8 màu đầu có khoảng cách OKLab > 0.09.
+- `calendar-style-tests.js`: đọc lại nhãn từ history, không gọi field issue, không suy OT chỉ từ 17:30/cuối tuần, bỏ worklog 0 phút; thời lượng gọn. 40 màu dịu khác mã, không chứa dải xanh dương/vàng; RNG có thể tiêm để kiểm tra, giữ màu trong phiên và tránh lặp màu trước.
+
+## Kiểm tra mới V1.11.6
+
+- `random-palette.cjs`: 390×844, 844×390, 1440×1000; cùng dự án cùng nền, đổi theme không đổi bảng màu; mở lại/làm mới/reload cấp hue mới cho từng dự án; màu OT cố định.
+- Kiểm tra tiến trình không còn DOM ETA, không còn `expected`/`samples`, không có chuỗi ước tính/thời gian còn lại ở trạng thái active hoặc lỗi; giữ phần trăm thật và thời gian đã chạy.
+- `workflow.cjs` giữ kiểm tra HTTP streaming đơn/Bulk và kết quả gián đoạn, đổi kỳ vọng ETA thành không có ETA.
 
 ## Giao diện
 
@@ -44,11 +50,11 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-Có thể dùng Chromium sẵn qua `QJL_CHROMIUM_PATH`. `QJL_QA_OUTPUT` là thư mục ảnh QA tùy chọn; mặc định không tạo ảnh. Fixture dùng localhost 4174, 4176, 4179, 4182, 4184, 4186, 4188, 4190, 4192, 4194 và tự đóng.
+Có thể dùng Chromium sẵn qua `QJL_CHROMIUM_PATH`. `QJL_QA_OUTPUT` là thư mục ảnh QA tùy chọn; mặc định không tạo ảnh. Fixture dùng localhost 4174, 4176, 4179, 4182, 4184, 4186, 4188, 4190, 4192, 4194, 4196 và tự đóng.
 
 ## Kiểm tra sau triển khai
 
-1. Đầu trang/footer V1.11.5; cập nhật PWA hoặc reload app cũ. PWA cho phép xoay máy, nhưng hệ điều hành/trình duyệt quyết định fullscreen và khóa hướng.
+1. Đầu trang/footer V1.11.6; cập nhật PWA hoặc reload app cũ. PWA cho phép xoay máy, nhưng hệ điều hành/trình duyệt quyết định fullscreen và khóa hướng.
 2. Mở log đơn và Log tất cả: sheet tận dụng hết vùng xem, không có checkbox OT; kéo grip/tiêu đề xuống để đóng, thử vuốt ngắn, vuốt dài, thao tác trên date và nút phân bổ.
 3. Thử picker Ngày/Giờ bắt đầu trong chi tiết worklog bằng ngôn ngữ máy đang dùng. Kiểm tra không tràn viền khi xoay, mở/đóng bàn phím, cỡ chữ trợ năng và safe area.
 4. Log thử một worklog, kiểm tra popup tiến trình ở giữa có nền tối; lỗi/mất mạng phải giữ trạng thái để đối soát, không tự báo thành công hay retry POST.

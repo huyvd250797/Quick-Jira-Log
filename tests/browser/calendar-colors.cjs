@@ -51,8 +51,8 @@ async function capture(page,name){if(!process.env.QJL_QA_OUTPUT)return;fs.mkdirS
    await page.locator('#calendarFullscreenBtn').click();
   }
   await page.locator('#calendarProjectColorsBtn').click();assert.equal(await page.locator('.has-project-color').count(),0);assert.equal(await page.locator('.is-ot').count(),3);
-  await page.locator('#calendarProjectColorsBtn').click();assert.equal(await page.evaluate(()=>JSON.stringify(state.projectPalette)),palette);
-  await page.reload();await page.waitForFunction(()=>!document.body.classList.contains('booting'));await open();assert.equal(await page.locator('#calendarProjectColorsBtn').getAttribute('aria-pressed'),'true');assert.equal(await page.evaluate(()=>JSON.stringify(state.projectPalette)),palette);
+  await page.locator('#calendarProjectColorsBtn').click();assert.notEqual(await page.evaluate(()=>JSON.stringify(state.projectPalette)),palette);const beforeReload=await page.evaluate(()=>JSON.stringify(state.projectPalette));
+  await page.reload();await page.waitForFunction(()=>!document.body.classList.contains('booting'));await open();assert.equal(await page.locator('#calendarProjectColorsBtn').getAttribute('aria-pressed'),'true');assert.notEqual(await page.evaluate(()=>JSON.stringify(state.projectPalette)),beforeReload);
   await page.locator('#calendarMonthBtn').click();await page.waitForFunction(()=>!state.historyLoading);await page.locator('.calendar-day[data-date="2026-10-14"]').click();assert.equal(await page.locator('.calendar-event.is-ot').count(),2);assert.equal(await page.locator('.calendar-event.is-ot').first().evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 243, 176)');
   assert.deepEqual(errors,[]);console.log('V1.11.3 fullscreen fill, fixed OT/ribbon, green progress, compact durations and persistent project toggle passed',viewport);await context.close();
  }
