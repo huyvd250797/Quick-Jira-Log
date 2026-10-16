@@ -293,3 +293,10 @@ body:has(.log-progress-panel:not(.hidden)) .toast { bottom: 200px; }
   #calendarControls .calendar-today-btn { position: absolute; right: 42px; top: 0; width: 56px; height: 32px; }
   #calendarControls .calendar-date-field { flex: 1 1 150px; width: auto; }
 }
+
+/* V1.11.9 — Actionable diagnostics stay collapsed and fit narrow sheets. */
+.correction-error-details { min-width: 0; max-width: 100%; color: var(--muted); font-size: 12px; }
+.correction-error-details summary { cursor: pointer; padding: 6px 0; }
+.correction-error-details pre { margin: 6px 0; max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font: inherit; line-height: 1.6; }
+
+#keepCorrectionOvertimeBtn { align-self: flex-start; min-height: 32px; padding: 6px 10px; font-size: 12px; }

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.11.8';
+const APP_VERSION = '1.11.9';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1951,6 +1951,7 @@ function openCorrection(item) {
   $('correctionMeta').textContent = `${item.start}–${item.end} · ${formatHistoryTimeSpent(item.minutes)}`;
   $('correctionIssueSummary').textContent = item.summary || item.description || 'Không có mô tả công việc';
   $('correctionFeedback').classList.add('hidden');
+  $('correctionErrorDetails').classList.add('hidden');
   clearUiAnimation($('worklogCorrectionPanel'));
   $('worklogCorrectionPanel').classList.remove('hidden');
   syncCorrectionPresentation();
@@ -2037,6 +2038,7 @@ function finishCorrectionClose(job) {
   correctionSheetDrag = null;
   correctionPanelHome.append(panel);
   $('correctionFeedback').classList.add('hidden');
+  $('correctionErrorDetails').classList.add('hidden');
   unlockCorrectionBackground();
   correctionCloseJob = null;
   job.resolve();
@@ -2140,13 +2142,28 @@ function setupCorrectionSheetDrag() {
   header.addEventListener('pointerup', finish); header.addEventListener('pointercancel', finish);
 }
 
-function showCorrectionFeedback(message) {
+function showCorrectionFeedback(message, details) {
   $('correctionFeedback').textContent = message;
   $('correctionFeedback').classList.remove('hidden');
+  const extra = $('correctionErrorDetails');
+  const stages = { readOvertimeAttribute: 'Đọc danh sách thuộc tính Overtime', readOvertime: 'Đọc Overtime của worklog', updateOvertime: 'Lưu Overtime', verifyOvertime: 'Xác nhận Overtime sau lưu', updateWorklog: 'Lưu thông tin worklog', verifyWorklog: 'Xác nhận thông tin sau lưu' };
+  const lines = details && typeof details === 'object' ? [
+    details.code ? `Mã: ${details.code}` : '',
+    details.stage ? `Bước: ${stages[details.stage] || details.stage}` : '',
+    details.status ? `HTTP: ${details.status}` : '',
+    details.endpoint ? `${details.method || ''} ${details.endpoint}`.trim() : '',
+    details.jiraMessage ? `Jira: ${details.jiraMessage}` : '',
+    details.xsrfRejected ? 'Jira báo lỗi kiểm tra XSRF của yêu cầu.' : '',
+    details.authenticationUnrecognized ? 'Jira chưa nhận diện được tài khoản trong yêu cầu này.' : '',
+    details.reauthenticate ? 'Cần đăng xuất và đăng nhập lại để cập nhật phiên WorklogPRO.' : ''
+  ].filter(Boolean) : [];
+  $('correctionErrorText').textContent = lines.join('\n');
+  extra.classList.toggle('hidden', !lines.length); extra.open = false;
   $('correctionFeedback').scrollIntoView({ block: 'nearest' });
 }
 
 function syncCorrectionFields() {
+  $('keepCorrectionOvertimeBtn').classList.toggle('hidden', !correctionOvertimeTouched || $('correctionOvertime').checked === correctionInitialOvertime);
   const minutes = QuickJiraUi.durationMinutes($('correctionTimeSpent').value);
   document.querySelectorAll('.correction-preset-btn').forEach(button => {
     const active = QuickJiraUi.durationMinutes(button.dataset.time) === minutes;
@@ -2155,8 +2172,8 @@ function syncCorrectionFields() {
   });
   $('correctionTimeSpent')._syncDurationStepper?.();
   $('correctionOvertimeHint').textContent = correctionInitialOvertime === null && !correctionOvertimeTouched
-    ? 'Chưa đọc được trạng thái trên Jira. App sẽ kiểm tra lại khi lưu; không tự đổi trạng thái nếu chưa chọn.'
-    : 'Đánh dấu Overtime cho worklog đã log và kiểm tra lại trên Jira; không tự thay đổi giờ bắt đầu.';
+    ? 'Chưa đọc được Overtime. Vẫn sửa được ngày, giờ và mô tả; giữ nguyên công tắc nếu không đổi OT.'
+    : 'Đổi công tắc để cập nhật Overtime cho worklog đã log; không tự thay đổi giờ bắt đầu.';
 }
 
 async function saveCorrection() {
@@ -2174,17 +2191,19 @@ async function saveCorrection() {
   if (!QuickJiraUi.validDate(payload.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(payload.start)) return showCorrectionFeedback('Vui lòng chọn ngày và giờ bắt đầu hợp lệ.');
   if (!payload.description) return showCorrectionFeedback('Mô tả không được để trống.');
   $('correctionFeedback').classList.add('hidden');
+  $('correctionErrorDetails').classList.add('hidden');
   const btn = $('saveCorrectionBtn');
   btn.disabled = true;
   btn.textContent = 'ĐANG LƯU...';
+  $('keepCorrectionOvertimeBtn').disabled = true;
   try {
     const result = await api('/api?action=worklog-correction', { method: 'PATCH', body: JSON.stringify(payload) });
-    if (result.overtimeVerified !== true) {
-      const unverified = new Error('Jira chưa xác nhận được Overtime. Hãy cập nhật app và tải lại lịch/Jira để kiểm tra trước khi lưu lại.');
+    if (result.worklogVerified !== true || (payload.updateOvertime && result.overtimeVerified !== true)) {
+      const unverified = new Error('Jira chưa xác nhận được nội dung vừa sửa. Hãy cập nhật app và tải lại lịch/Jira để kiểm tra trước khi lưu lại.');
       unverified.details = { resultUnknown: true };
       throw unverified;
     }
-    showToast('Đã lưu worklog và xác nhận Overtime trên Jira.');
+    showToast(payload.updateOvertime ? 'Đã lưu worklog và xác nhận Overtime trên Jira.' : 'Đã lưu chỉnh sửa worklog trên Jira.');
     invalidateHistoryCache();
     invalidateDayAuditCache();
     void refreshDashboard({ force: true });
@@ -2196,10 +2215,11 @@ async function saveCorrection() {
       invalidateDayAuditCache();
       void loadWorklogHistory({ quiet: true, force: true, preserveCorrection: true });
     }
-    showCorrectionFeedback(error.message);
+    showCorrectionFeedback(error.message, { ...error.details, code: error.code });
   } finally {
     btn.disabled = false;
     btn.textContent = 'LƯU CHỈNH SỬA';
+    $('keepCorrectionOvertimeBtn').disabled = false;
   }
 }
 
@@ -2878,6 +2898,14 @@ $('correctionTimeSpent').addEventListener('input', syncCorrectionFields);
 $('correctionTimeSpent').addEventListener('change', syncCorrectionFields);
 $('correctionDate').addEventListener('change', syncCorrectionFields);
 $('correctionOvertime').addEventListener('change', () => { correctionOvertimeTouched = true; syncCorrectionFields(); });
+$('keepCorrectionOvertimeBtn').addEventListener('click', () => {
+  correctionOvertimeTouched = false;
+  $('correctionOvertime').checked = correctionInitialOvertime === true;
+  $('correctionOvertime').indeterminate = correctionInitialOvertime === null;
+  $('correctionFeedback').classList.add('hidden');
+  $('correctionErrorDetails').classList.add('hidden');
+  syncCorrectionFields();
+});
 
 document.querySelectorAll('.preset-btn').forEach(button => {
   button.addEventListener('click', () => {

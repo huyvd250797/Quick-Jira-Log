@@ -1,5 +1,14 @@
 # Changelog
 
+## V1.11.9 — Independent Worklog Editing & WorklogPRO Auth Fix
+
+- Sửa coupling `overtime` luôn có trong payload: chỉ đổi OT mới đi WorklogPRO. Ngày/giờ/thời lượng/mô tả đi Jira core, giữ native OT, không gọi plugin khi không có ý định đổi OT.
+- Sau auth Jira thành công, thêm Basic dành riêng WorklogPRO vào cookie phiên mã hóa HttpOnly; không trả JSON/log. Gửi no-check cho PUT plugin, không retry write hay fallback auth tự động. Phiên cũ có thông báo đăng nhập lại khi bị từ chối.
+- Một GET riêng xác minh thông tin sau PUT Jira core; xử lý kết quả chưa rõ và cache như OT. Bỏ revalidation lịch nếu không đổi lịch/thời lượng; giữ giây bắt đầu gốc khi chỉ đổi OT/mô tả.
+- Cho bỏ thay đổi OT đang nháp bằng Giữ nguyên Overtime mà không mất thông tin khác. Không tự lưu một phần khi request đổi OT thất bại.
+- Chẩn đoán stage/method/endpoint/HTTP và thông báo Jira đã lọc; không gán mọi 403 thành lỗi quyền/kỳ khóa. Mapping ID do quản trị xác nhận hỗ trợ khi chỉ danh sách thuộc tính bị chặn.
+- Kiểm tra API/HTTP login cookie và trình duyệt qua handler thật: core edit vẫn hoạt động dưới plugin 403, OT on/off, header Basic/no-check, quyền thật vẫn chặn, không lộ credential, bảo toàn nháp và xác minh.
+
 ## V1.11.8 — Native WorklogPRO Overtime Synchronization
 
 - Thay cơ chế nhãn mô tả bằng thuộc tính BOOL WorklogPRO đúng worklog. Tự tìm Over Time?/Overtime, có override ID để giải quyết trùng tên; không gọi issue field/editmeta.

@@ -48,6 +48,9 @@ module.exports = async function handler(req, res) {
     ]);
     const sessionPayload = {
       ...auth,
+      // WorklogPRO documents Basic auth; some installations do not accept the Jira cookie.
+      // Kept only in the existing encrypted HttpOnly session, never in the JSON response.
+      ...(auth.mode === 'session' ? { worklogproAuth: { username, password } } : {}),
       me: {
         displayName: me?.displayName || me?.name || username,
         name: me?.name || username,

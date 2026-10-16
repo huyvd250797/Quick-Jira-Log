@@ -24,7 +24,7 @@ const {server}=require('./serve.cjs');
     else if(method==='DELETE')item=null;
     else item={...item,date:body.date,start:body.start,minutes:90,end:'10:00',description:body.description};
    }
-   if(action==='worklog-correction'&&status===200)data={...data,overtimeVerified:true};
+   if(action==='worklog-correction'&&status===200)data={...data,overtimeVerified:true,worklogVerified:true};
    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
   });
   await page.goto('http://127.0.0.1:4179');await page.locator(desktop?'#historyBtn':'#mobileHistoryBtn').click();await page.waitForFunction(()=>!state.historyLoading);

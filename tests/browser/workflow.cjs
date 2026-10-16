@@ -34,7 +34,7 @@ const ui=require('../../lib/ui-tools');
     if(route.request().method()==='DELETE'){entries.splice(index,1);deleted++;}
     else{entries[index]={...entries[index],minutes:ui.durationMinutes(b.timeSpent),description:b.description};corrected++;}
    }
-   if(action==='worklog-correction'&&status===200)data={...data,overtimeVerified:true};
+   if(action==='worklog-correction'&&status===200)data={...data,overtimeVerified:true,worklogVerified:true};
    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
   });
   await page.goto('http://127.0.0.1:4174');

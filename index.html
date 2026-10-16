@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.11.8</title>
+  <title>Quick Jira Log · V1.11.9</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -25,7 +25,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.11.8</div>
+      <div class="boot-version">V1.11.9</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -34,7 +34,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.11.8</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.11.9</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -356,6 +356,7 @@
             <div class="correction-head"><div><strong id="correctionTitle">Sửa worklog</strong><small id="correctionMeta"></small></div><button id="cancelCorrectionBtn" class="text-btn" type="button">Đóng</button></div>
             <p id="correctionIssueSummary" class="correction-issue-summary"></p>
             <p id="correctionFeedback" class="correction-feedback hidden" role="alert"></p>
+            <details id="correctionErrorDetails" class="correction-error-details hidden"><summary>Chi tiết lỗi</summary><pre id="correctionErrorText"></pre></details>
             <input id="correctionWorklogId" type="hidden" />
             <input id="correctionKey" type="hidden" />
             <div class="correction-grid">
@@ -378,6 +379,7 @@
               <span class="overtime-copy"><strong>Overtime</strong><small id="correctionOvertimeHint"></small></span>
             </label>
             <small id="correctionOvertimeScope" class="field-help">Đồng bộ ô Over Time? của riêng worklog này trên Jira.</small>
+            <button id="keepCorrectionOvertimeBtn" class="soft-btn hidden" type="button">Giữ nguyên Overtime</button>
             <label>Mô tả<textarea id="correctionDescription" rows="4" placeholder="Mô tả công việc đã thực hiện..."></textarea></label>
             <div class="correction-actions"><button id="deleteCorrectionBtn" class="danger-btn" type="button">XÓA WORKLOG</button><button id="saveCorrectionBtn" class="primary" type="button">LƯU CHỈNH SỬA</button></div>
           </div>
@@ -398,7 +400,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.11.8</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.11.9</footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>

@@ -2,7 +2,7 @@
 
 const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
-const { JiraError, getMyself, getIssueWorklogs, updateWorklog, deleteWorklog } = require('../lib/jira');
+const { JiraError, getMyself, getIssueWorklogs, getWorklog, updateWorklog, deleteWorklog } = require('../lib/jira');
 const {
   parseTimeSpent,
   jiraStarted,
@@ -19,7 +19,7 @@ const { createPerf } = require('../lib/perf');
 const { readLabel } = require('../lib/worklog-label');
 const worklogpro = require('../lib/worklogpro');
 
-function validDate(value) { return /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')); }
+const { validDate } = require('../lib/ui-tools');
 function validTime(value) { return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(value || '')); }
 
 module.exports = async function handler(req, res) {
@@ -70,34 +70,35 @@ module.exports = async function handler(req, res) {
 
     const startMinute = hhmmToMinute(start);
     const segment = { start: startMinute, end: startMinute + minutes, minutes };
-    const guard = await loadOccupiedRanges(date, [key], me, session, { excludeWorklogIds: [worklogId] });
-    const allowedWindows = isWeekendDate(date)
-      ? workWindowsFor(date, false)
-      : [...workWindowsFor(date, false), ...workWindowsFor(date, true)];
-    try { validateScheduledSegments([segment], guard.occupied, allowedWindows); }
-    catch (error) {
-      if (error.message === 'SEGMENT_OVERLAP') return sendJson(res, 409, { ok: false, error: 'Khoảng giờ sửa bị trùng với worklog khác trong ngày.' });
-      if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') return sendJson(res, 409, { ok: false, error: 'Worklog phải nằm trong 08:00–12:00, 13:30–17:30; ngày Thứ 2–Thứ 6 cho phép giờ ngoài giờ từ 17:30–23:59.' });
-      throw error;
-    }
-
     const oldParsed = parseJiraStartedAtWorkTimezone(current?.started || '');
-    const started = jiraStarted(date, startMinute);
+    const scheduleChanged = oldParsed?.date !== date || oldParsed?.minute !== startMinute || Number(current.timeSpentSeconds) !== minutes * 60;
+    if (scheduleChanged) {
+      const guard = await loadOccupiedRanges(date, [key], me, session, { excludeWorklogIds: [worklogId] });
+      const allowedWindows = isWeekendDate(date)
+        ? workWindowsFor(date, false)
+        : [...workWindowsFor(date, false), ...workWindowsFor(date, true)];
+      try { validateScheduledSegments([segment], guard.occupied, allowedWindows); }
+      catch (error) {
+        if (error.message === 'SEGMENT_OVERLAP') return sendJson(res, 409, { ok: false, error: 'Khoảng giờ sửa bị trùng với worklog khác trong ngày.' });
+        if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') return sendJson(res, 409, { ok: false, error: 'Worklog phải nằm trong 08:00–12:00, 13:30–17:30; ngày Thứ 2–Thứ 6 cho phép giờ ngoài giờ từ 17:30–23:59.' });
+        throw error;
+      }
+    }
+    const started = scheduleChanged ? jiraStarted(date, startMinute) : current.started;
     let updated, overtime, overtimeVerified = false;
     const invalidate = () => Promise.all([
       oldParsed?.date ? invalidateWorklogCaches(session, oldParsed.date, [key]) : Promise.resolve(),
       date !== oldParsed?.date ? invalidateWorklogCaches(session, date, [key]) : Promise.resolve()
     ]);
-    if (typeof body.overtime === 'boolean') {
+    const overtimeChangeRequested = typeof body.overtime === 'boolean' && body.updateOvertime !== false;
+    if (overtimeChangeRequested) {
       // Resolve the worklog BOOL field from WorklogPRO, not Jira /field or editmeta.
       const attribute = await perf.step('worklogproAttribute', () => worklogpro.getOvertimeAttribute(session));
       const native = await perf.step('worklogproRead', () => worklogpro.getWorklog(worklogId, session));
       if (current.author?.key && String(current.author.key) !== String(native.authorUserKey)) {
         throw new JiraError('Tác giả worklog trên Jira và WorklogPRO không khớp. Hãy tải lại lịch trước khi sửa.', 409);
       }
-      const previousOvertime = worklogpro.overtimeOf(native, attribute);
-      // No toggle intent: preserve the current Jira value even if the open calendar was stale.
-      overtime = body.updateOvertime === false ? previousOvertime : body.overtime;
+      overtime = body.overtime;
       try {
         await perf.step('worklogproUpdateAndVerify', () => worklogpro.updateNativeWorklog({
           worklogId, current: native, attribute, overtime, started, seconds: minutes * 60, description
@@ -109,11 +110,25 @@ module.exports = async function handler(req, res) {
       updated = { started };
       overtimeVerified = true;
     } else {
-      // Legacy clients that do not send an OT field keep ordinary edits working.
-      // Jira's standard worklog update preserves plugin attributes and never sets OT.
-      updated = await perf.step('updateWorklog', () => updateWorklog(key, worklogId, {
-        started, seconds: minutes * 60, description
-      }, session));
+      // Ordinary changes are independent of WorklogPRO availability and preserve native OT.
+      let written = false;
+      try {
+        await perf.step('updateWorklog', () => updateWorklog(key, worklogId, {
+          started, seconds: minutes * 60, description
+        }, session));
+        written = true;
+        updated = await perf.step('verifyWorklog', () => getWorklog(key, worklogId, session));
+        if (String(updated?.id) !== worklogId || Date.parse(updated.started) !== Date.parse(started) ||
+            Number(updated.timeSpentSeconds) !== minutes * 60 || readLabel(updated.comment).description !== description || !authorMatches(updated, me)) {
+          throw new JiraError('Dữ liệu đọc lại từ Jira chưa khớp yêu cầu.', 502, { provider: 'jira', stage: 'verifyWorklog' }, 'JIRA_WORKLOG_VERIFY_FAILED');
+        }
+      } catch (error) {
+        if (written || [500, 502, 503, 504].includes(error.status)) {
+          throw new JiraError('Chưa xác nhận được kết quả sửa worklog trên Jira. Hãy tải lại lịch/Jira để kiểm tra trước khi lưu lại.', error.status || 502,
+            { ...(error.details && typeof error.details === 'object' ? error.details : {}), provider: 'jira', resultUnknown: true }, 'JIRA_WORKLOG_RESULT_UNKNOWN');
+        }
+        throw error;
+      } finally { await invalidate(); }
     }
 
     const parsed = parseJiraStartedAtWorkTimezone(updated?.started || jiraStarted(date, startMinute));
@@ -132,6 +147,9 @@ module.exports = async function handler(req, res) {
       start,
       minutes,
       description,
+      worklogVerified: true,
+      editProvider: overtimeChangeRequested ? 'worklogpro' : 'jira',
+      overtimeChangeRequested,
       ...(overtimeVerified ? { overtime, overtimeKnown: true, overtimeVerified: true, overtimeSource: 'worklogpro' } : { overtimeKnown: false }),
       performance
     });

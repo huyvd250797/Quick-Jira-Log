@@ -1,4 +1,11 @@
-# Trạng thái V1.11.8
+# Trạng thái V1.11.9
+
+## Đã hoàn thành V1.11.9
+
+- Tách sửa thông tin thường và OT; plugin 403 không chặn cập nhật ngày/giờ/thời lượng/mô tả khi không đổi OT.
+- WorklogPRO Basic Auth trong phiên mã hóa và header no-check; giữ kiểm tra quyền thực tế.
+- Chi tiết lỗi theo bước; giữ nguyên OT đang nháp, GET kiểm tra sau ghi và bảo toàn nháp khi lỗi.
+- Cần cập nhật PWA và đăng nhập lại một lần sau deploy; đối chiếu quyền/kỳ duyệt/API trên Jira đang chạy để xác định các 403 còn lại.
 
 ## Đã hoàn thành V1.11.8
 

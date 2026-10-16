@@ -1,4 +1,4 @@
-# Kiểm tra V1.11.8
+# Kiểm tra V1.11.9
 
 ## Kết quả và phạm vi
 
@@ -9,7 +9,14 @@ Kiểm tra bằng Node.js, Chromium headless và Jira giả lập; không dùng 
 - `correction-overtime-tests.js`: WorklogPRO API fixture; tự tìm BOOL/Over Time?, bật/tắt, một PUT đúng Worklog ID + GET kiểm tra lại, giữ thuộc tính khác/author/estimate, history đọc native trái với marker cũ. Auth/overlap/nghỉ trưa vẫn chặn trước khi ghi; metadata 403/404, field thiếu/trùng/tắt/sai kiểu, override ID; PUT 403; HTTP 200 nhưng OT không đổi, GET sau ghi bị từ chối, mất kết nối sau commit đều không báo thành công và không tự retry PUT. Đọc OT lịch có giới hạn đồng thời và thời gian; khi API chậm, các worklog chưa đọc được giữ trạng thái unknown thay vì treo toàn bộ lịch.
 - `calendar-style-tests.js`: native OT thay cho marker, không gọi field issue/không suy từ giờ/cuối tuần; bỏ 0 phút. Giữ kiểm tra 52 màu/13 họ, không ép xanh lá.
 
-## Kiểm tra mới V1.11.8
+## Kiểm tra mới V1.11.9
+
+- `correction-overtime-tests.js`: dưới `/attr` HTTP 403, đổi đồng thời ngày/giờ/thời lượng/mô tả qua Jira core thành công, không có request plugin, giữ thuộc tính OT. Legacy/no-touch checkbox giữ native OT; core 403 trả đúng stage/provider/thông báo, không cấp quyền giả. Core PUT HTTP 200 nhưng GET không khớp trả resultUnknown.
+- HTTP login handler thật: đăng nhập bằng cookie Jira, cookie app mã hóa giữ Basic riêng WorklogPRO; JSON không chứa password. Fixture từ chối cookie-only nhưng chấp nhận Authorization Basic; phiên cũ báo reauthenticate, phiên mới cập nhật OT được. PUT có X-Atlassian-Token: no-check. Mapping ID cho phép bỏ phụ thuộc vào `/attr` bị chặn; quyền worklog vẫn không bỏ qua.
+- OT-only/description-only ở lịch cũ ngoài khung giờ không bị revalidation không cần thiết và giữ nguyên giây bắt đầu. Khi đổi lịch còn guard overlap/nghỉ trưa/khung giờ; không sửa worklog của người khác. Diagnostics không trả HTML/mật khẩu/cookie/token.
+- `native-overtime.cjs`: PC 1440×900, mobile 390×844; trình duyệt → HTTP handler thật → Jira/WorklogPRO fixture. Đổi ngày/giờ/thời lượng/mô tả dưới plugin 403 vẫn lưu được và giữ OT; request OT thực sự vẫn thất bại đúng lỗi và không lưu một phần. Mở Chi tiết lỗi có stage và HTTP. Giữ nguyên Overtime bỏ ý định đổi OT, bảo toàn bản nháp; lưu tiếp qua core giữ native OT vừa có trên Jira. Còn các kiểm tra on/off, dọn marker, GET xác minh không khớp, không tự đóng/mất nháp và từ chối success không có xác nhận.
+
+## Kiểm tra từ V1.11.8
 
 - `native-overtime.cjs`: Chromium 390×844 và 1440×900 → HTTP API/handler thật → fixture WorklogPRO. Check rồi lưu bật đúng thuộc tính, mở lại vẫn checked; uncheck xóa OT, dọn marker mô tả, giữ thuộc tính khác. GET xác minh OT không đổi giữ form/nháp/lỗi và refresh lịch nền; quyền bị từ chối không ghi. Khi unknown mà chưa chạm công tắc, save giữ native OT vừa đọc; response thiếu `overtimeVerified` bị từ chối ở UI.
 - Chưa có tài khoản Jira thật và không ghi lên task.ascvn.com.vn. Hợp đồng endpoint/body bám tài liệu nhà cung cấp được dẫn ở README. Fixture không chứng minh quyền/kỳ khóa hoặc khác biệt phiên bản WorklogPRO trên Jira thực tế; cần đối soát sau deploy.
@@ -66,7 +73,7 @@ Có thể dùng Chromium sẵn qua `QJL_CHROMIUM_PATH`. `QJL_QA_OUTPUT` là thư
 
 ## Kiểm tra sau triển khai
 
-1. Đầu trang/footer V1.11.8; cập nhật PWA hoặc reload app cũ. PWA cho phép xoay máy, nhưng hệ điều hành/trình duyệt quyết định fullscreen và khóa hướng.
+1. Đầu trang/footer V1.11.9; cập nhật PWA hoặc reload app cũ. PWA cho phép xoay máy, nhưng hệ điều hành/trình duyệt quyết định fullscreen và khóa hướng.
 2. Mở log đơn và Log tất cả: sheet tận dụng hết vùng xem, không có checkbox OT; kéo grip/tiêu đề xuống để đóng, thử vuốt ngắn, vuốt dài, thao tác trên date và nút phân bổ.
 3. Thử picker Ngày/Giờ bắt đầu trong chi tiết worklog bằng ngôn ngữ máy đang dùng. Kiểm tra không tràn viền khi xoay, mở/đóng bàn phím, cỡ chữ trợ năng và safe area.
 4. Log thử một worklog, kiểm tra popup tiến trình ở giữa có nền tối; lỗi/mất mạng phải giữ trạng thái để đối soát, không tự báo thành công hay retry POST.
@@ -75,3 +82,5 @@ Có thể dùng Chromium sẵn qua `QJL_CHROMIUM_PATH`. `QJL_QA_OUTPUT` là thư
 7. Giữ giới hạn tạo giờ thường 8h/ngày và quy tắc tránh overlap. Check OT không tự dời giờ hoặc tăng tổng đã log; muốn đổi giờ thì sửa Giờ bắt đầu.
 
 8. Bật Lưu đăng nhập, đăng nhập thật rồi đăng xuất/để hết phiên và mở lại: cả hai trường được điền, vẫn cần bấm Đăng nhập. Bỏ chọn, tải lại để xác nhận không còn bản lưu của app; kiểm tra riêng trình quản lý mật khẩu của trình duyệt nếu vẫn autofill.
+
+9. Sau deploy V1.11.9, đăng xuất/đăng nhập lại để có Basic cho WorklogPRO. Sửa một worklog: ngày, giờ, thời lượng, mô tả khi giữ công tắc OT, rồi kiểm tra Jira. Thử riêng đổi OT và đối chiếu checkbox trên Jira. Nếu lỗi, mở Chi tiết lỗi: phân biệt đúng bước/API, không suy đoán chỉ dựa vào 403.
