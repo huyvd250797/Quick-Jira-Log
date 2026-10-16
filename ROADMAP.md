@@ -41,3 +41,5 @@
 - ✅ **V1.10.1 – Fixed Calendar Controls**: cố định chọn Tuần/Tháng, điều hướng kỳ và tổng tuần ngoài vùng cuộn lịch, khắc phục bị che trên mobile.
 
 - ✅ **V1.10.2 – Compact Calendar Navigation**: ẩn bộ lọc Danh sách khi xem lịch, chọn ngày gọn trong thanh cố định, tự tải tuần/tháng và tải lại bằng ↻.
+
+- ✅ **V1.10.3 – Desktop Calendar Workspace**: lịch PC gần toàn màn hình, toolbar gọn, chọn ngày 144px, một vùng cuộn và giữ nguyên mobile.

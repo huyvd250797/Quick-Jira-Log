@@ -2526,3 +2526,67 @@ html[data-theme="dark"] #historyOverlay .history-state.is-warning { color: #edc6
   #calendarControls .calendar-navigation { padding-bottom: 6px; }
   #calendarControls .calendar-week-summary { padding-top: 3px; }
 }
+
+/* V1.10.3 — Desktop calendar workspace. Mobile keeps the V1.10.2 layout. */
+@media (min-width: 900px) {
+  #historyOverlay.is-calendar-view .history-tool-sheet {
+    position: relative;
+    width: min(calc(100vw - 40px), 1640px);
+    max-width: 1640px;
+    height: calc(100dvh - 32px);
+    max-height: calc(100dvh - 32px);
+    border-radius: 18px;
+  }
+  #historyOverlay.is-calendar-view .settings-head { min-height: 66px; padding: 11px 16px; padding-right: 300px; align-items: center; }
+  #historyOverlay.is-calendar-view .settings-head h2 { font-size: 18px; line-height: 1.3; }
+  #historyOverlay.is-calendar-view .settings-head p { margin-top: 3px; font-size: 11px; }
+  #historyOverlay.is-calendar-view #closeHistoryBtn { position: absolute; top: 13px; right: 16px; width: 38px; height: 38px; }
+  #historyOverlay.is-calendar-view .tool-modal-body { padding: 10px 16px 12px; gap: 7px; }
+  #historyOverlay.is-calendar-view .history-controls { position: absolute; top: 12px; right: 68px; z-index: 5; }
+  #historyOverlay.is-calendar-view .history-view-switch { padding: 3px; border-radius: 10px; }
+  #historyOverlay.is-calendar-view .history-view-switch button { min-height: 34px; padding: 7px 13px; font-size: 11px; }
+  #historyOverlay.is-calendar-view #calendarControls {
+    order: 1;
+    display: grid;
+    grid-template-columns: minmax(200px, 1fr) auto minmax(340px, 1.4fr);
+    align-items: center;
+    gap: 8px 18px;
+    padding: 0 0 9px;
+  }
+  #historyOverlay.is-calendar-view .calendar-period-heading { gap: 7px; }
+  #historyOverlay.is-calendar-view #calendarMonthLabel { font-size: 13px; line-height: 1.4; }
+  #historyOverlay.is-calendar-view .calendar-refresh-btn { width: 32px; height: 32px; }
+  #historyOverlay.is-calendar-view .calendar-navigation { padding: 0; align-items: center; gap: 6px; }
+  #historyOverlay.is-calendar-view .calendar-date-field { flex: 0 0 144px; width: 144px; }
+  #historyOverlay.is-calendar-view .calendar-date-field > span { display: none; }
+  #historyOverlay.is-calendar-view .calendar-date-field input { height: 34px; min-height: 34px; padding: 5px 8px; font-size: 12px; border-radius: 8px; }
+  #historyOverlay.is-calendar-view .calendar-nav-btn { height: 34px; min-width: 30px; padding: 0 7px; border-radius: 8px; }
+  #historyOverlay.is-calendar-view .calendar-today-btn { height: 34px; padding: 0 10px; border-radius: 8px; }
+  #historyOverlay.is-calendar-view .calendar-mode-toolbar { gap: 10px; flex-wrap: nowrap; padding: 0; }
+  #historyOverlay.is-calendar-view .calendar-mode-switch { flex: 0 0 auto; border-radius: 9px; }
+  #historyOverlay.is-calendar-view .calendar-mode-switch button { min-height: 30px; padding: 6px 12px; font-size: 11px; }
+  #historyOverlay.is-calendar-view #calendarWeekendBtn { flex: 0 0 auto; font-size: 11px; padding: 4px 0; white-space: nowrap; }
+  #historyOverlay.is-calendar-view .calendar-week-summary { flex: 0 1 auto; display: grid; text-align: right; gap: 1px; padding: 0; }
+  #historyOverlay.is-calendar-view .calendar-week-summary > strong { font-size: 16px; white-space: nowrap; }
+  #historyOverlay.is-calendar-view .calendar-week-summary > span { font-size: 10px; line-height: 1.3; }
+  #historyOverlay.is-calendar-view #historySummary { order: 2; padding: 0; font-size: 10px; }
+  #historyOverlay.is-calendar-view #worklogHistoryState { order: 3; margin: 0; }
+  #historyOverlay.is-calendar-view #historyResults { order: 4; overflow: auto; padding: 0; border: 1px solid var(--line); border-radius: 12px; scrollbar-gutter: stable; }
+  #historyOverlay.is-calendar-view #calendarHelp { display: none; }
+  #historyOverlay.is-calendar-view .weekly-scroll { max-height: none; overflow: visible; border: 0; border-radius: 0; scrollbar-gutter: auto; }
+  #historyOverlay.is-calendar-view .weekly-inner { min-width: 0; }
+  #historyOverlay.is-calendar-view .week-grid-heading { top: 0; }
+  #historyOverlay.is-calendar-view .week-day-heading { min-height: 60px; padding: 7px; gap: 4px; }
+  #historyOverlay.is-calendar-view .week-worklog-block strong { font-size: 11px; }
+  #historyOverlay.is-calendar-view .week-worklog-block > span { font-size: 10px; }
+  #historyOverlay.is-calendar-view .week-worklog-block small { font-size: 11px; }
+  #historyOverlay.is-calendar-view #monthlyCalendar { padding: 12px; }
+  #historyOverlay.is-calendar-view .calendar-day { min-height: 96px; }
+  #historyOverlay.is-calendar-view #calendarDayHeading { margin: 0 12px; }
+  #historyOverlay.is-calendar-view #calendarAgenda { padding: 0 12px 12px; }
+  #historyOverlay.is-calendar-view #worklogCorrectionPanel { margin: 12px; }
+}
+@media (min-width: 900px) and (max-width: 1199px) {
+  #historyOverlay.is-calendar-view #calendarControls { grid-template-columns: minmax(220px, 1fr) auto; gap: 7px 16px; }
+  #historyOverlay.is-calendar-view .calendar-mode-toolbar { grid-column: 1 / -1; }
+}

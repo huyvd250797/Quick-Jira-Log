@@ -1,5 +1,14 @@
 # Changelog
 
+## V1.10.3 — Desktop Calendar Workspace
+
+- Tái bố cục lịch PC từ 900px: chuyển kiểu xem lên header, toolbar ngang và ô ngày 144px.
+- Mở rộng cửa sổ và chiều cao lịch; PC hẹp tự xếp toolbar hai hàng.
+- Một vùng cuộn nội dung lịch, bỏ cuộn lồng của lưới tuần; giữ header ngày sticky.
+- Lưới 5/7 ngày vừa chiều rộng PC, tăng cỡ chữ block và thu gọn header ngày.
+- Mobile giữ nguyên CSS/bố cục V1.10.2; không thay đổi xử lý worklog hoặc API.
+- Đồng bộ version app và cache PWA.
+
 ## V1.10.2 — Compact Calendar Navigation
 
 - Ẩn bộ lọc ngày/KEY và nút Tìm của Danh sách khi xem Lịch.

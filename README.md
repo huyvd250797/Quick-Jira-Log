@@ -1,17 +1,18 @@
-# Quick Jira Log V1.10.2 — Compact Calendar Navigation
+# Quick Jira Log V1.10.3 — Desktop Calendar Workspace
 
-Bản cải tiến giao diện lịch từ V1.10.1. Source triển khai Vercel với cấu hình hiện có; không thêm thư viện runtime hoặc database.
+Tối ưu không gian xem lịch trên PC từ V1.10.2. Source triển khai Vercel với cấu hình hiện có; không thêm thư viện runtime hoặc database.
 
 © 2026 HuyVo. All rights reserved.
 
-## Cải tiến V1.10.2
+## Cải tiến V1.10.3
 
-- Chế độ Lịch ẩn toàn bộ bộ lọc ngày/KEY và nút Tìm của Danh sách, dành thêm chiều cao cho lịch.
-- Ô Đến ngày nằm trong thanh điều hướng lịch: tự tải tuần/tháng chứa ngày vừa chọn. Nút trước/sau, Hôm nay và chọn ngày trong lưới đồng bộ cùng một ngày.
-- Lịch luôn hiển thị toàn bộ worklog trong kỳ, không bị giới hạn bởi KEY đã nhập ở Danh sách. Quay lại Danh sách vẫn giữ KEY.
-- Nút ↻ tải lại lịch khi cần hoặc khi Jira báo lỗi/tải thiếu; không cần quay lại Danh sách.
-- Thanh điều hướng và Tuần/Tháng tiếp tục cố định khi cuộn dọc/ngang trên mobile.
-- Sau triển khai, bấm CẬP NHẬT trên PWA hoặc tải lại trang để nhận bản V1.10.2.
+- Chỉ áp dụng bố cục mới từ chiều rộng 900px; mobile giữ nguyên giao diện V1.10.2.
+- Cửa sổ lịch PC rộng hơn, gần hết chiều cao màn hình; chuyển Danh sách/Lịch nằm gọn cạnh tiêu đề.
+- Thanh công cụ ngang gồm kỳ đang xem, tải lại, trước/sau, chọn ngày rộng 144px, Hôm nay, Tuần/Tháng, cuối tuần và tổng giờ. PC hẹp dưới 1200px tự xuống hai hàng để tránh chen lấn.
+- Nội dung lịch chỉ có một vùng cuộn chung: bỏ vùng cuộn lồng trong lưới tuần. Tiêu đề ngày vẫn cố định khi cuộn; sửa/xóa và danh sách chi tiết ngày dùng cùng vùng nội dung.
+- Lưới tuần vừa chiều rộng PC, kể cả khi hiện 7 ngày; tăng độ rõ chữ trong block, thu gọn header ngày.
+- Chọn ngày tự tải tuần/tháng tương ứng; lịch không áp dụng KEY ẩn. Danh sách giữ bộ lọc như trước.
+- Sau triển khai, bấm CẬP NHẬT trên PWA hoặc tải lại trang để nhận bản V1.10.3.
 
 ## 1. Lịch Tuần / Tháng
 
@@ -96,14 +97,14 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.10.2` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.10.3` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.
 5. Framework Preset: **Other**. Build Command để trống. Output Directory dùng mặc định/root của project, không chọn `dist` vì source không có bước build.
 6. Node.js Version: **24.x**.
 7. Cấu hình biến môi trường bên dưới rồi redeploy.
-8. Mở app, kiểm tra footer V1.10.2. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
+8. Mở app, kiểm tra footer V1.10.3. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
 
 ### Biến môi trường
 
@@ -151,6 +152,6 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Block rất ngắn có thể không đủ chỗ hiển thị mô tả; title, nhãn trợ năng và danh sách ngày vẫn cho đọc/mở chi tiết.
 - ETA là ước tính, không phải thời gian cam kết. Hiệu năng thật phụ thuộc Jira và hosting.
 - Chưa deploy production hoặc xác minh Safari trên iPhone vật lý trong lần phát triển này.
-- Sau deploy, kiểm tra footer V1.10.2, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
+- Sau deploy, kiểm tra footer V1.10.3, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.

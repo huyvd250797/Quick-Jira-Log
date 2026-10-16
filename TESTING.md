@@ -1,6 +1,18 @@
-# Kiểm tra V1.10.2
+# Kiểm tra V1.10.3
 
 Ngày: 16/10/2026. Runtime: Node.js v24.19.0.
+
+## Desktop Calendar Workspace V1.10.3
+
+- npm test đạt toàn bộ kiểm tra hiện có; node --check app.js đạt.
+- Playwright/Chromium với API giả lập: PC 1440×900, 1366×768, 960×720, 1920×1080; thêm iPhone 13, 315×683 và 844×390.
+- PC chỉ có một phần tử nội dung cuộn dọc (#historyResults), không có cuộn lồng ở lưới tuần. Header ngày giữ ở đầu vùng lịch khi cuộn.
+- Ô chọn ngày rộng 144px. Chiều cao vùng kết quả lần lượt khoảng 699px, 567px, 476px và 879px trên bốn kích thước PC nêu trên, khi tải xong dữ liệu thông thường.
+- Chọn ngày giao tháng, trước/sau, Hôm nay, đổi Tuần/Tháng, mở/đóng sửa, API lỗi/tải thiếu và thử lại đều đạt.
+- Workflow desktop/iPhone: dashboard, block đúng tỷ lệ giờ, tăng 30m rồi lưu, xóa từ block, tiến trình log đơn/Bulk và stream bị ngắt đều đạt.
+- Danh sách/Lịch trên header PC hiển thị và bấm được; quay lại Danh sách vẫn giữ KEY, tìm kiếm và bố cục cũ.
+- Đối chiếu tự động V1.10.2 và V1.10.3 ở 390×844, 315×683, 844×390 cho cả Tuần và Tháng: tọa độ, kích thước, hiển thị, cỡ chữ, padding, màu và overflow của các phần chính giống nhau. Tắt animation trong bài đối chiếu để lấy trạng thái ổn định.
+- Đã kiểm tra ảnh PC sáng/tối; không có lỗi JavaScript hoặc tràn ngang toàn trang. Các thử nghiệm dùng dữ liệu giả lập, chưa xác minh Safari/iPhone vật lý hoặc Jira thật.
 
 ## Giao diện lịch V1.10.2
 
