@@ -1,4 +1,10 @@
-# Trạng thái V1.11.7
+# Trạng thái V1.11.8
+
+## Đã hoàn thành V1.11.8
+
+- Sửa OT thành thuộc tính WorklogPRO thật; không dùng nhãn mô tả để xác định OT.
+- GET kiểm tra sau PUT, giữ thuộc tính khác và trạng thái thực khi checkbox chưa thay đổi; xử lý rõ trường hợp chưa xác nhận.
+- Kiểm tra giả lập cả API và luồng trình duyệt qua handler thật. Cần đối soát checkbox/kỳ chấm công/quyền trên Jira đang triển khai sau deploy.
 
 ## Đã hoàn thành V1.11.7
 

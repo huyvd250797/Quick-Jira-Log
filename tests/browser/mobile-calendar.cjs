@@ -14,6 +14,7 @@ async function capture(page,name){if(!process.env.QJL_QA_OUTPUT)return;fs.mkdirS
    if(a==='subtasks')data={ok:true,issues:[]};
    if(a==='worklog-history')data={ok:true,items:deleted?[]:[item]};
    if(a==='worklog-correction'){const body=route.request().postDataJSON();mutations.push(body);if(fail){status=502;data={ok:false,error:'Jira tạm lỗi. Hãy thử lại.'};}else if(route.request().method()==='DELETE')deleted=true;else Object.assign(item,{description:body.description,minutes:150,end:'16:00'});}
+   if(a==='worklog-correction'&&status===200)data={...data,overtimeVerified:true};
    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
   });
   await page.goto('http://127.0.0.1:4184');await page.waitForFunction(()=>!document.body.classList.contains('booting'));await page.locator(viewport.width>=900?'#historyBtn':'#mobileHistoryBtn').click();await page.waitForFunction(()=>state.historyLoaded&&!state.historyLoading);await page.waitForTimeout(250);

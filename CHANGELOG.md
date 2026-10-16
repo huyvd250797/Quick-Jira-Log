@@ -1,5 +1,13 @@
 # Changelog
 
+## V1.11.8 — Native WorklogPRO Overtime Synchronization
+
+- Thay cơ chế nhãn mô tả bằng thuộc tính BOOL WorklogPRO đúng worklog. Tự tìm Over Time?/Overtime, có override ID để giải quyết trùng tên; không gọi issue field/editmeta.
+- Một PUT WorklogPRO lưu công việc và thuộc tính; giữ author/thuộc tính khác, adjustEstimate=leave. GET riêng kiểm tra lại OT/ngày giờ/thời lượng/nội dung/thuộc tính giữ lại trước trả success. Không retry PUT, không tự rollback khi kết quả chưa rõ.
+- History lấy OT native, đánh dấu unknown khi không đọc được, không lấy marker làm nguồn; giữ native OT khi chỉ sửa nội dung. Dọn marker cũ ở worklog được lưu, không migration hàng loạt.
+- UI từ chối success thiếu xác nhận native; phản hồi lỗi không đóng form/mất bản nháp khi refresh lịch để đối soát. Tách cache lịch cũ; giữ Lưu đăng nhập và giao diện V1.11.7.
+- API fixture kiểm tra quyền, kỳ khóa/403, schema/ID trùng, preserve attrs, overlap, timeout sau commit, read-back không khớp. Browser đi qua handler thật đến fixture WorklogPRO trên PC/mobile.
+
 ## V1.11.7 — Random Hue Families, Clean Calendar Header & Remember Login
 
 - Bảng màu ngẫu nhiên 13 họ màu/52 swatch, không ép xanh lá; ưu tiên các hue tách nhau khi còn lựa chọn, tránh lặp ngay hue của dự án, giữ vàng riêng OT.

@@ -1,4 +1,4 @@
-const CACHE = 'quick-jira-log-v1.11.7-shell';
+const CACHE = 'quick-jira-log-v1.11.8-shell';
 const APP_SHELL = ['/', '/index.html', '/styles.css', '/ui.css', '/mobile-calendar.css', '/motion.css', '/calendar-colors.css', '/mobile-refinements.css', '/lib/calendar-style.js', '/lib/remembered-login.js', '/app.js', '/lib/ui-tools.js', '/lib/bulk-allocation.js', '/lib/late-log-warning.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png', '/icons/favicon-64.png'];
 
 self.addEventListener('install', event => {

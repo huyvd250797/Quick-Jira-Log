@@ -16,7 +16,8 @@ const {
 const { loadOccupiedRanges } = require('../lib/worklog-guard');
 const { invalidateWorklogCaches } = require('../lib/app-cache');
 const { createPerf } = require('../lib/perf');
-const { readLabel, writeLabel } = require('../lib/worklog-label');
+const { readLabel } = require('../lib/worklog-label');
+const worklogpro = require('../lib/worklogpro');
 
 function validDate(value) { return /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')); }
 function validTime(value) { return /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(String(value || '')); }
@@ -32,7 +33,7 @@ module.exports = async function handler(req, res) {
     const body = await perf.step('readRequest', () => readJson(req));
     const key = String(body.key || '').trim().toUpperCase();
     const worklogId = String(body.worklogId || '').trim();
-    if (!key || !worklogId) return sendJson(res, 400, { ok: false, error: 'Thiếu KEY hoặc Worklog ID.' });
+    if (!/^[A-Z][A-Z0-9_]*-\d+$/.test(key) || !/^\d+$/.test(worklogId)) return sendJson(res, 400, { ok: false, error: 'KEY hoặc Worklog ID không hợp lệ.' });
 
     const me = session.me || await perf.step('myself', () => getMyself(session));
     const worklogs = await perf.step('worklogs', () => getIssueWorklogs(key, session));
@@ -53,15 +54,12 @@ module.exports = async function handler(req, res) {
     const date = String(body.date || '').trim();
     const start = String(body.start || '').trim();
     const timeSpent = String(body.timeSpent || '').trim();
-    const description = String(body.description || '').trim();
+    const description = readLabel(String(body.description || '')).description.trim();
     if ((body.overtime !== undefined && typeof body.overtime !== 'boolean') ||
         (body.updateOvertime !== undefined && typeof body.updateOvertime !== 'boolean') ||
         (body.updateOvertime === true && typeof body.overtime !== 'boolean')) {
       return sendJson(res, 400, { ok: false, error: 'Trạng thái Overtime không hợp lệ.' });
     }
-    const previousLabel = readLabel(current.comment);
-    const overtime = typeof body.overtime === 'boolean' ? body.overtime : previousLabel.overtime;
-    const jiraDescription = writeLabel(description, overtime);
     if (!validDate(date) || !validTime(start) || !timeSpent || !description) {
       return sendJson(res, 400, { ok: false, error: 'Vui lòng nhập đúng Date, Start, TimeSpent và Description.' });
     }
@@ -84,11 +82,39 @@ module.exports = async function handler(req, res) {
     }
 
     const oldParsed = parseJiraStartedAtWorkTimezone(current?.started || '');
-    const updated = await perf.step('updateWorklog', () => updateWorklog(key, worklogId, {
-      started: jiraStarted(date, startMinute),
-      seconds: minutes * 60,
-      description: jiraDescription
-    }, session));
+    const started = jiraStarted(date, startMinute);
+    let updated, overtime, overtimeVerified = false;
+    const invalidate = () => Promise.all([
+      oldParsed?.date ? invalidateWorklogCaches(session, oldParsed.date, [key]) : Promise.resolve(),
+      date !== oldParsed?.date ? invalidateWorklogCaches(session, date, [key]) : Promise.resolve()
+    ]);
+    if (typeof body.overtime === 'boolean') {
+      // Resolve the worklog BOOL field from WorklogPRO, not Jira /field or editmeta.
+      const attribute = await perf.step('worklogproAttribute', () => worklogpro.getOvertimeAttribute(session));
+      const native = await perf.step('worklogproRead', () => worklogpro.getWorklog(worklogId, session));
+      if (current.author?.key && String(current.author.key) !== String(native.authorUserKey)) {
+        throw new JiraError('Tác giả worklog trên Jira và WorklogPRO không khớp. Hãy tải lại lịch trước khi sửa.', 409);
+      }
+      const previousOvertime = worklogpro.overtimeOf(native, attribute);
+      // No toggle intent: preserve the current Jira value even if the open calendar was stale.
+      overtime = body.updateOvertime === false ? previousOvertime : body.overtime;
+      try {
+        await perf.step('worklogproUpdateAndVerify', () => worklogpro.updateNativeWorklog({
+          worklogId, current: native, attribute, overtime, started, seconds: minutes * 60, description
+        }, session));
+      } finally {
+        // Invalidate even after an interrupted response: the write may already be committed.
+        await invalidate();
+      }
+      updated = { started };
+      overtimeVerified = true;
+    } else {
+      // Legacy clients that do not send an OT field keep ordinary edits working.
+      // Jira's standard worklog update preserves plugin attributes and never sets OT.
+      updated = await perf.step('updateWorklog', () => updateWorklog(key, worklogId, {
+        started, seconds: minutes * 60, description
+      }, session));
+    }
 
     const parsed = parseJiraStartedAtWorkTimezone(updated?.started || jiraStarted(date, startMinute));
     const newDate = parsed?.date || date;
@@ -106,13 +132,13 @@ module.exports = async function handler(req, res) {
       start,
       minutes,
       description,
-      overtime: overtime === true,
+      ...(overtimeVerified ? { overtime, overtimeKnown: true, overtimeVerified: true, overtimeSource: 'worklogpro' } : { overtimeKnown: false }),
       performance
     });
   } catch (error) {
     if (error instanceof JiraError) {
       if (error.status === 401) res.setHeader('Set-Cookie', clearSessionCookie());
-      return sendJson(res, error.status || 500, { ok: false, error: error.message, details: error.details || undefined });
+      return sendJson(res, error.status || 500, { ok: false, error: error.message, code: error.code, details: error.details || undefined });
     }
     return sendJson(res, 500, { ok: false, error: 'Không xử lý được worklog.' });
   }

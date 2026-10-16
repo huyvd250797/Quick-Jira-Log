@@ -19,6 +19,7 @@ const { createPerf } = require('../lib/perf');
 const HISTORY_CACHE_MS = 15 * 1000;
 const { validDate } = require('../lib/ui-tools');
 const { readLabel } = require('../lib/worklog-label');
+const { enrichHistory } = require('../lib/worklogpro');
 
 
 function vietnamToday() {
@@ -149,7 +150,6 @@ module.exports = async function handler(req, res) {
         if (!Number.isFinite(seconds) || seconds <= 0) continue;
         const minutes = Math.ceil(seconds / 60);
         const label = readLabel(worklog.comment);
-        const overtime = label.overtime ?? (worklog.overtime === true);
         const endMinute = parsed.minute + minutes;
         items.push({
           id: String(worklog.id || ''),
@@ -161,8 +161,10 @@ module.exports = async function handler(req, res) {
           start: minuteToHHMM(parsed.minute),
           end: minuteToHHMM(endMinute),
           minutes,
-          overtime,
-          overtimeSource: typeof label.overtime === 'boolean' ? 'worklog-label' : typeof worklog.overtime === 'boolean' ? 'worklog' : '',
+          overtime: false,
+          overtimeKnown: false,
+          overtimeSource: '',
+          legacyOvertime: label.overtime,
           timeSpentSeconds: Number(worklog.timeSpentSeconds || 0),
           description: label.description,
           started: String(worklog.started || '')
@@ -170,6 +172,8 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    const nativeOvertime = await perf.step('worklogproOvertime', () => enrichHistory(items, session));
+    if (nativeOvertime.unavailable) sourceDetails.overtimeUnavailable = nativeOvertime.unavailable;
     items.sort((a, b) => b.date.localeCompare(a.date) || b.start.localeCompare(a.start) || a.key.localeCompare(b.key));
     const payload = { ok: true, date, endDate, items, skipped, truncated, issueCount: keys.length, source, sourceDetails };
     // Range results are client-cached only: existing per-day invalidation remains authoritative.

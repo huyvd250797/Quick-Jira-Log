@@ -1,4 +1,4 @@
-# Kiểm tra V1.11.7
+# Kiểm tra V1.11.8
 
 ## Kết quả và phạm vi
 
@@ -6,8 +6,13 @@ Kiểm tra bằng Node.js, Chromium headless và Jira giả lập; không dùng 
 
 - `npm test`: logic/API, xác thực, lịch sử, author filtering, guard trùng giờ/khung giờ, cache/idempotency, đơn/Bulk, streaming tiến độ và mất phản hồi.
 - `creation-ot-tests.js`: log đơn và Bulk thành công khi Jira không có field Overtime; không gọi `/field`/`editmeta`/issue PUT. Client cũ gửi OT lúc tạo bị báo 400 trước khi ghi Jira.
-- `correction-overtime-tests.js`: bật/tắt nhãn riêng worklog, lưu cùng comment bằng một PUT; worklog khác cùng issue không đổi; lưu lặp không trùng nhãn, legacy edit giữ nhãn; đọc string/ADF; lỗi quyền/overlap/nghỉ trưa vẫn chặn; lỗi cập nhật không báo thành công.
-- `calendar-style-tests.js`: đọc lại nhãn từ history, không gọi field issue, không suy OT chỉ từ 17:30/cuối tuần, bỏ worklog 0 phút; thời lượng gọn. 52 màu dịu khác mã thuộc 13 họ, không chứa vàng OT; không ép xanh lá; RNG có thể tiêm để kiểm tra, giữ màu trong phiên và tránh lặp màu trước.
+- `correction-overtime-tests.js`: WorklogPRO API fixture; tự tìm BOOL/Over Time?, bật/tắt, một PUT đúng Worklog ID + GET kiểm tra lại, giữ thuộc tính khác/author/estimate, history đọc native trái với marker cũ. Auth/overlap/nghỉ trưa vẫn chặn trước khi ghi; metadata 403/404, field thiếu/trùng/tắt/sai kiểu, override ID; PUT 403; HTTP 200 nhưng OT không đổi, GET sau ghi bị từ chối, mất kết nối sau commit đều không báo thành công và không tự retry PUT. Đọc OT lịch có giới hạn đồng thời và thời gian; khi API chậm, các worklog chưa đọc được giữ trạng thái unknown thay vì treo toàn bộ lịch.
+- `calendar-style-tests.js`: native OT thay cho marker, không gọi field issue/không suy từ giờ/cuối tuần; bỏ 0 phút. Giữ kiểm tra 52 màu/13 họ, không ép xanh lá.
+
+## Kiểm tra mới V1.11.8
+
+- `native-overtime.cjs`: Chromium 390×844 và 1440×900 → HTTP API/handler thật → fixture WorklogPRO. Check rồi lưu bật đúng thuộc tính, mở lại vẫn checked; uncheck xóa OT, dọn marker mô tả, giữ thuộc tính khác. GET xác minh OT không đổi giữ form/nháp/lỗi và refresh lịch nền; quyền bị từ chối không ghi. Khi unknown mà chưa chạm công tắc, save giữ native OT vừa đọc; response thiếu `overtimeVerified` bị từ chối ở UI.
+- Chưa có tài khoản Jira thật và không ghi lên task.ascvn.com.vn. Hợp đồng endpoint/body bám tài liệu nhà cung cấp được dẫn ở README. Fixture không chứng minh quyền/kỳ khóa hoặc khác biệt phiên bản WorklogPRO trên Jira thực tế; cần đối soát sau deploy.
 
 ## Kiểm tra mới V1.11.7
 
@@ -57,16 +62,16 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-Có thể dùng Chromium sẵn qua `QJL_CHROMIUM_PATH`. `QJL_QA_OUTPUT` là thư mục ảnh QA tùy chọn; mặc định không tạo ảnh. Fixture dùng localhost 4174, 4176, 4179, 4182, 4184, 4186, 4188, 4190, 4192, 4194, 4196, 4198 và tự đóng.
+Có thể dùng Chromium sẵn qua `QJL_CHROMIUM_PATH`. `QJL_QA_OUTPUT` là thư mục ảnh QA tùy chọn; mặc định không tạo ảnh. Fixture dùng localhost 4174, 4176, 4179, 4182, 4184, 4186, 4188, 4190, 4192, 4194, 4196, 4198, 4200 và tự đóng.
 
 ## Kiểm tra sau triển khai
 
-1. Đầu trang/footer V1.11.7; cập nhật PWA hoặc reload app cũ. PWA cho phép xoay máy, nhưng hệ điều hành/trình duyệt quyết định fullscreen và khóa hướng.
+1. Đầu trang/footer V1.11.8; cập nhật PWA hoặc reload app cũ. PWA cho phép xoay máy, nhưng hệ điều hành/trình duyệt quyết định fullscreen và khóa hướng.
 2. Mở log đơn và Log tất cả: sheet tận dụng hết vùng xem, không có checkbox OT; kéo grip/tiêu đề xuống để đóng, thử vuốt ngắn, vuốt dài, thao tác trên date và nút phân bổ.
 3. Thử picker Ngày/Giờ bắt đầu trong chi tiết worklog bằng ngôn ngữ máy đang dùng. Kiểm tra không tràn viền khi xoay, mở/đóng bàn phím, cỡ chữ trợ năng và safe area.
 4. Log thử một worklog, kiểm tra popup tiến trình ở giữa có nền tối; lỗi/mất mạng phải giữ trạng thái để đối soát, không tự báo thành công hay retry POST.
-5. Vào lịch → sửa → check Overtime → lưu. Tải lại app và kiểm tra trên thiết bị khác; nhãn ở cuối mô tả trên Jira, màu OT trong app. Tắt/lưu lại, đảm bảo worklog khác cùng issue không đổi.
-6. Kiểm tra phân loại OT này không được hiểu nhầm là field OT native của Jira/plugin chấm công. Nếu tự sửa/xóa nhãn trong Jira, app sẽ đọc theo nội dung thực tế.
+5. Vào lịch → sửa → check Overtime → lưu. Mở lại worklog trên Jira: ô Over Time? phải được chọn; mở lại app/thiết bị khác phải thấy màu OT. Mô tả không thêm nhãn của app. Tắt/lưu lại, đảm bảo worklog khác cùng issue không đổi.
+6. Đổi checkbox trực tiếp trên WorklogPRO/Jira rồi refresh lịch trong app: trạng thái phải trùng. Với worklog chỉ có marker từ bản cũ, xác nhận không tự tô vàng; chọn OT/lưu rồi kiểm tra checkbox và marker được dọn. Thử kỳ khóa/quyền bị từ chối: form giữ lỗi, không báo thành công.
 7. Giữ giới hạn tạo giờ thường 8h/ngày và quy tắc tránh overlap. Check OT không tự dời giờ hoặc tăng tổng đã log; muốn đổi giờ thì sửa Giờ bắt đầu.
 
 8. Bật Lưu đăng nhập, đăng nhập thật rồi đăng xuất/để hết phiên và mở lại: cả hai trường được điền, vẫn cần bấm Đăng nhập. Bỏ chọn, tải lại để xác nhận không còn bản lưu của app; kiểm tra riêng trình quản lý mật khẩu của trình duyệt nếu vẫn autofill.

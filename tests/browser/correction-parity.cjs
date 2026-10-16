@@ -12,6 +12,7 @@ const {server}=require('./serve.cjs');
    if(a==='subtasks')data={ok:true,issues:[]};
    if(a==='worklog-history')data={ok:true,items:[item]};
    if(a==='worklog-correction'){const body=route.request().postDataJSON();mutations.push(body);if(fail){status=403;data={ok:false,error:'Không cập nhật được Overtime; đã hoàn tác worklog.'};}else{const minutes=await page.evaluate(t=>QuickJiraUi.durationMinutes(t),body.timeSpent),[h,m]=body.start.split(':').map(Number),end=h*60+m+minutes;item={...item,...body,minutes,end:`${String(Math.floor(end/60)).padStart(2,'0')}:${String(end%60).padStart(2,'0')}`};}}
+   if(a==='worklog-correction'&&status===200)data={...data,overtimeVerified:true};
    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
   });
   await page.goto('http://127.0.0.1:4192');await page.waitForFunction(()=>!document.body.classList.contains('booting'));await page.locator(viewport.width>=900?'#historyBtn':'#mobileHistoryBtn').click();await page.waitForFunction(()=>state.historyLoaded&&!state.historyLoading);await page.waitForTimeout(250);

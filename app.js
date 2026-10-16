@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.11.7';
+const APP_VERSION = '1.11.8';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -93,6 +93,7 @@ let correctionSource = null;
 let loginInputRevision = 0;
 let rememberedLoginLoadSeq = 0;
 let correctionInitialOvertime = false;
+let correctionOvertimeTouched = false;
 let correctionMotion = null;
 let correctionMotionSeq = 0;
 let correctionCloseJob = null;
@@ -1400,7 +1401,7 @@ async function fetchHistoryRange(range, key = '', force = false) {
 }
 
 function historyIsPartial(data) {
-  return !!(data.skipped?.length || data.truncated || data.sourceDetails?.metadataError);
+  return !!(data.skipped?.length || data.truncated || data.sourceDetails?.metadataError || data.sourceDetails?.overtimeUnavailable);
 }
 
 async function refreshDashboard({ force = false } = {}) {
@@ -1783,7 +1784,7 @@ function renderWorklogHistory() {
   });
 }
 
-async function loadWorklogHistory({ quiet = false, force = false } = {}) {
+async function loadWorklogHistory({ quiet = false, force = false, preserveCorrection = false } = {}) {
   if (!state.user) return;
   const selectedDate = $('historyDate').value || todayLocal();
   if (!QuickJiraUi.validDate(selectedDate)) return showToast('Vui lòng chọn ngày hợp lệ.');
@@ -1795,7 +1796,7 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
   const sameScope = scope === state.historyScrollScope;
   const scroll = sameScope ? { top: results.scrollTop, left: results.scrollLeft, weekTop: weeklyScroll?.scrollTop || 0, weekLeft: weeklyScroll?.scrollLeft || 0 } : { top: 0, left: 0, weekTop: 0, weekLeft: 0 };
   const sequence = ++state.historySeq;
-  closeCorrection({ immediate: true });
+  if (!preserveCorrection) closeCorrection({ immediate: true });
   state.historyError = '';
   state.historyNotice = '';
   state.historyItems = [];
@@ -1815,6 +1816,7 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
     if (data.skipped?.length) notices.push(`${data.skipped.length} task chưa đọc được worklog`);
     if (data.truncated) notices.push(state.historyView === 'calendar' ? 'Đang giới hạn 500 task; chuyển sang Danh sách để tìm theo KEY' : 'Đang giới hạn 500 task; hãy thu hẹp bằng KEY');
     if (data.sourceDetails?.metadataError) notices.push('Một số thông tin task chưa tải được');
+    if (data.sourceDetails?.overtimeUnavailable) notices.push(`Chưa xác nhận được Overtime trên Jira cho ${data.sourceDetails.overtimeUnavailable} worklog`);
     state.historyNotice = notices.length ? `Dữ liệu chưa đầy đủ: ${notices.join(' · ')}. ${state.historyView === 'calendar' ? 'Bấm ↻ để tải lại lịch.' : 'Bấm Tìm worklog để tải lại.'}` : '';
     if (!quiet) showToast(`Đã tải ${state.historyItems.length} worklog.`);
   } catch (error) {
@@ -1936,8 +1938,13 @@ function openCorrection(item) {
   $('correctionStart').value = item.start;
   $('correctionTimeSpent').value = formatHistoryTimeSpent(item.minutes);
   $('correctionTimeSpent')._syncDurationStepper?.();
-  correctionInitialOvertime = QuickJiraCalendar.isOvertime(item);
-  $('correctionOvertime').checked = correctionInitialOvertime;
+  correctionInitialOvertime = item.overtimeKnown === false ? null : QuickJiraCalendar.isOvertime(item);
+  correctionOvertimeTouched = false;
+  $('correctionOvertime').checked = correctionInitialOvertime === true;
+  $('correctionOvertime').indeterminate = correctionInitialOvertime === null;
+  $('correctionOvertimeScope').textContent = item.legacyOvertime === true && !item.overtime
+    ? 'Bản cũ chỉ có nhãn OT trong mô tả. Chọn Overtime và lưu để bật ô Over Time? trên Jira.'
+    : 'Đồng bộ ô Over Time? của riêng worklog này trên Jira.';
   syncCorrectionFields();
   $('correctionDescription').value = item.description || item.summary || '';
   $('correctionTitle').textContent = `Sửa ${item.key}`;
@@ -2147,7 +2154,9 @@ function syncCorrectionFields() {
     button.setAttribute('aria-pressed', String(active));
   });
   $('correctionTimeSpent')._syncDurationStepper?.();
-  $('correctionOvertimeHint').textContent = 'Đánh dấu Overtime cho worklog đã log; không tự thay đổi giờ bắt đầu.';
+  $('correctionOvertimeHint').textContent = correctionInitialOvertime === null && !correctionOvertimeTouched
+    ? 'Chưa đọc được trạng thái trên Jira. App sẽ kiểm tra lại khi lưu; không tự đổi trạng thái nếu chưa chọn.'
+    : 'Đánh dấu Overtime cho worklog đã log và kiểm tra lại trên Jira; không tự thay đổi giờ bắt đầu.';
 }
 
 async function saveCorrection() {
@@ -2159,7 +2168,7 @@ async function saveCorrection() {
     timeSpent: $('correctionTimeSpent').value.trim(),
     description: $('correctionDescription').value.trim(),
     overtime: $('correctionOvertime').checked,
-    updateOvertime: $('correctionOvertime').checked !== correctionInitialOvertime
+    updateOvertime: correctionOvertimeTouched && $('correctionOvertime').checked !== correctionInitialOvertime
   };
   if (!validateDurationFields($('worklogCorrectionPanel'))) return;
   if (!QuickJiraUi.validDate(payload.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(payload.start)) return showCorrectionFeedback('Vui lòng chọn ngày và giờ bắt đầu hợp lệ.');
@@ -2169,14 +2178,24 @@ async function saveCorrection() {
   btn.disabled = true;
   btn.textContent = 'ĐANG LƯU...';
   try {
-    await api('/api?action=worklog-correction', { method: 'PATCH', body: JSON.stringify(payload) });
-    showToast('Đã cập nhật worklog trên Jira.');
+    const result = await api('/api?action=worklog-correction', { method: 'PATCH', body: JSON.stringify(payload) });
+    if (result.overtimeVerified !== true) {
+      const unverified = new Error('Jira chưa xác nhận được Overtime. Hãy cập nhật app và tải lại lịch/Jira để kiểm tra trước khi lưu lại.');
+      unverified.details = { resultUnknown: true };
+      throw unverified;
+    }
+    showToast('Đã lưu worklog và xác nhận Overtime trên Jira.');
     invalidateHistoryCache();
     invalidateDayAuditCache();
     void refreshDashboard({ force: true });
     await closeCorrection();
     await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
+    if (error.details?.resultUnknown) {
+      invalidateHistoryCache();
+      invalidateDayAuditCache();
+      void loadWorklogHistory({ quiet: true, force: true, preserveCorrection: true });
+    }
     showCorrectionFeedback(error.message);
   } finally {
     btn.disabled = false;
@@ -2858,7 +2877,7 @@ document.querySelectorAll('.correction-preset-btn').forEach(button => {
 $('correctionTimeSpent').addEventListener('input', syncCorrectionFields);
 $('correctionTimeSpent').addEventListener('change', syncCorrectionFields);
 $('correctionDate').addEventListener('change', syncCorrectionFields);
-$('correctionOvertime').addEventListener('change', syncCorrectionFields);
+$('correctionOvertime').addEventListener('change', () => { correctionOvertimeTouched = true; syncCorrectionFields(); });
 
 document.querySelectorAll('.preset-btn').forEach(button => {
   button.addEventListener('click', () => {
