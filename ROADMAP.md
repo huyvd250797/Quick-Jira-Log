@@ -1,4 +1,11 @@
-# Trạng thái V1.11.2
+# Trạng thái V1.11.7
+
+## Đã hoàn thành V1.11.7
+
+- Màu chọn ngẫu nhiên giữa nhiều họ màu, không bắt buộc xanh lá, ưu tiên tách biệt.
+- Bỏ gạch ngang chọn ngày; giữ nền tiêu đề và progress log.
+- Lưu đăng nhập tùy chọn sau khi xác thực thành công, mã hóa trên thiết bị, điền lại khi chưa có phiên; bỏ chọn để xóa.
+- Kiểm tra tự động PC/mobile; còn xác minh iPhone Safari vật lý, quota/key IndexedDB thực tế và Jira thật sau triển khai.
 
 ## Đã hoàn thành V1.11.6
 

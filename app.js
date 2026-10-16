@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.11.6';
+const APP_VERSION = '1.11.7';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -90,6 +90,8 @@ const uiAnimationTimers = new WeakMap();
 const correctionDesktopQuery = window.matchMedia('(min-width: 900px)');
 const correctionPanelHome = $('worklogCorrectionPanel').parentElement;
 let correctionSource = null;
+let loginInputRevision = 0;
+let rememberedLoginLoadSeq = 0;
 let correctionInitialOvertime = false;
 let correctionMotion = null;
 let correctionMotionSeq = 0;
@@ -353,6 +355,26 @@ function updateLoginButtonState() {
   }
 }
 
+async function restoreRememberedLogin() {
+  if (state.user || state.loginInFlight || loginInputRevision > 0) return;
+  const seq = ++rememberedLoginLoadSeq, revision = loginInputRevision;
+  try {
+    const saved = await QuickJiraCredentials.load();
+    if (seq !== rememberedLoginLoadSeq || revision !== loginInputRevision || state.user || state.loginInFlight) return;
+    $('rememberLogin').checked = Boolean(saved);
+    if (saved) {
+      $('username').value = saved.username;
+      $('password').value = saved.password;
+      setPasswordVisible(false);
+      $('rememberLoginHint').textContent = 'Đã điền thông tin đã lưu trên thiết bị này. Bấm Đăng nhập để tiếp tục.';
+    }
+  } catch (error) {
+    if (seq !== rememberedLoginLoadSeq || revision !== loginInputRevision) return;
+    $('rememberLogin').checked = false;
+    $('rememberLoginHint').textContent = error.message || 'Chưa đọc được đăng nhập đã lưu. Vui lòng nhập lại.';
+  }
+}
+
 async function performLogin({ captchaRetry = false } = {}) {
   if (state.loginInFlight) return;
   const remaining = Math.max(0, Math.ceil((state.loginCooldownUntil - Date.now()) / 1000));
@@ -377,11 +399,18 @@ async function performLogin({ captchaRetry = false } = {}) {
       body: JSON.stringify({ username, password, captchaRetry })
     });
     $('password').value = '';
+    let rememberError = '';
+    try {
+      if ($('rememberLogin').checked) await QuickJiraCredentials.save(username, password);
+      else await QuickJiraCredentials.clear();
+    } catch {
+      rememberError = 'Đăng nhập thành công, nhưng chưa cập nhật được bản lưu trên thiết bị.';
+    }
     state.invalidLoginCount = 0;
     clearLoginCooldown();
     setCaptchaPanel(false);
     setLoggedIn(data.user);
-    showToast('Đăng nhập Jira thành công. Đang tải Sub-task chưa logwork...');
+    showToast(rememberError || 'Đăng nhập Jira thành công. Đang tải Sub-task chưa logwork...');
   } catch (error) {
     const code = String(error.code || '');
     setLoginError(error.message);
@@ -692,6 +721,8 @@ function savePrefs() {
 }
 
 function setLoggedIn(user) {
+  loginInputRevision = 0;
+  rememberedLoginLoadSeq += 1;
   closeDesktopEditor();
   setCaptchaPanel(false);
   setLoginError('');
@@ -752,6 +783,7 @@ function setLoggedOut() {
   renderFilterIssues();
   renderBulkSelection();
   updateConnectionState();
+  void restoreRememberedLogin();
 }
 
 function updateConnectionState() {
@@ -2723,9 +2755,26 @@ $('jiraVerifyBtn')?.addEventListener('click', () => {
 });
 for (const id of ['username', 'password']) {
   $(id)?.addEventListener('input', () => {
+    loginInputRevision += 1;
     if (state.captchaRequired) setCaptchaPanel(false);
     setLoginError('');
   });
+}
+
+$('rememberLogin').addEventListener('change', () => {
+  loginInputRevision += 1;
+  rememberedLoginLoadSeq += 1;
+  if (!$('rememberLogin').checked) {
+    void QuickJiraCredentials.clear().then(() => {
+      if (!$('rememberLogin').checked) $('rememberLoginHint').textContent = 'Đã xóa bản lưu của app trên thiết bị này.';
+    }).catch(() => {
+      $('rememberLoginHint').textContent = 'Chưa xóa được bản lưu trên thiết bị. Hãy thử lại.';
+    });
+  } else $('rememberLoginHint').textContent = 'Sẽ lưu trên thiết bị này sau khi đăng nhập thành công.';
+});
+if (!QuickJiraCredentials.supported()) {
+  $('rememberLogin').disabled = true;
+  $('rememberLoginHint').textContent = 'Không thể lưu đăng nhập trên trình duyệt này. Bạn vẫn có thể đăng nhập bình thường.';
 }
 
 $('logoutBtn').addEventListener('click', async () => {

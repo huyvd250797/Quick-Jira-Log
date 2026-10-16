@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.11.6 – Refined Random Project Colors and Clear Progress.",
+  "description": "Quick Jira Log V1.11.7 – Random Project Colors, Clean Calendar and Remember Login.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

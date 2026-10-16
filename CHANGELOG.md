@@ -1,5 +1,13 @@
 # Changelog
 
+## V1.11.7 — Random Hue Families, Clean Calendar Header & Remember Login
+
+- Bảng màu ngẫu nhiên 13 họ màu/52 swatch, không ép xanh lá; ưu tiên các hue tách nhau khi còn lựa chọn, tránh lặp ngay hue của dự án, giữ vàng riêng OT.
+- Bỏ underline ngày đang chọn, giữ nền chọn và thanh tiến trình log.
+- Checkbox Lưu đăng nhập: chỉ lưu sau auth thành công; AES-GCM/IndexedDB với khóa không export; logout/401/mở lại điền form, không auto-login. Bỏ chọn xóa bản lưu.
+- Đọc/ghi tuần tự, chống ghi đè bản nháp khi đọc chậm; lỗi auth không đổi bản lưu cũ, lỗi storage không làm mất phiên đã xác thực. Cập nhật PWA cache/script.
+- Kiểm tra PC/mobile, lưu sau thành công, không plaintext, hết phiên/reload/logout, bỏ lưu, auth lỗi, đọc chậm và trình duyệt thiếu bộ nhớ.
+
 ## V1.11.6 — Refined Random Project Colors & No ETA
 
 - Màu nền dịu, ít bão hòa; viền và KEY rõ, chỉnh riêng Sáng/Tối.

@@ -1,14 +1,21 @@
-# Quick Jira Log V1.11.6 — Professional UI & Calendar First
+# Quick Jira Log V1.11.7 — Professional UI & Calendar First
 
 © 2026 HuyVo. All rights reserved.
 
-## Cải tiến V1.11.6
+## Cải tiến V1.11.7
 
-- Màu dự án chuyển sang **tông dịu, giảm độ bão hòa**: nền nhẹ, viền và KEY rõ, điều chỉnh riêng cho Sáng/Tối. Không dùng xanh dương giống màu mặc định và không dùng vàng dành cho OT.
-- App **cấp màu ngẫu nhiên** khi mở lịch, bấm Làm mới hoặc tắt/bật lại icon màu. Chọn giữa các màu có độ tách biệt tốt; cùng dự án cùng màu trong lần xem hiện tại.
-- Giữ màu khi đổi theme, Tuần/Tháng, fullscreen, sửa worklog hoặc tải lại dữ liệu sau sửa để tránh đổi màu giữa thao tác. Mở lại hoặc refresh chủ động sẽ có bảng màu khác; app ghi nhớ màu vừa dùng chỉ để tránh lặp lại ngay cho cùng dự án, không cố định màu dự án.
-- **Bỏ hoàn toàn ETA**, số giây còn lại và giờ hoàn thành dự kiến, gồm cả phần tính toán/lưu mẫu. Popup chỉ giữ phần trăm, bước xử lý và thời gian đã chạy; lỗi và mất phản hồi vẫn được hiển thị rõ.
-- Giữ luồng Overtime sau khi log, màu vàng OT cố định, sheet kéo xuống để đóng và input gọn trong khung từ phiên bản trước.
+- Màu dự án chọn ngẫu nhiên từ nhiều họ màu dịu, **không bắt buộc xanh lá** hoặc ưu tiên riêng một màu. Nền, KEY và viền có độ tương phản phù hợp cho Sáng/Tối; vàng nhạt vẫn dành riêng cho OT.
+- Cấp lại bảng màu khi mở lịch, Làm mới hoặc tắt/bật icon màu; tránh hue vừa dùng, ưu tiên các họ màu cách nhau. Cùng dự án giữ cùng màu trong lần xem; đổi theme/sửa worklog không đổi màu giữa thao tác.
+- Bỏ gạch ngang đánh dấu ngày đang chọn. Tiêu đề vẫn đổi nền; thanh tiến trình giờ log của từng ngày và màu xanh khi đủ mục tiêu vẫn giữ.
+- Thêm **Lưu đăng nhập**: chỉ ghi username/password sau khi Jira xác nhận đăng nhập thành công. Sau đăng xuất/hết phiên, hoặc mở lại app khi chưa có phiên, điền lại hai trường để người dùng bấm Đăng nhập; không tự đăng nhập.
+- Bản lưu chỉ trên trình duyệt/thiết bị hiện tại; mật khẩu vẫn được che. Bỏ chọn ô để xóa bản lưu của app. Không ghi đè thông tin đang nhập khi việc đọc bộ nhớ trả về chậm; đăng nhập lỗi không thay bản lưu thành công trước đó.
+- Giữ tiến trình không ETA, Overtime sau khi log, màu OT cố định, sheet cao hết vùng xem/kéo xuống để đóng và input gọn trong khung.
+
+### Lưu đăng nhập trên thiết bị
+
+Username và password được mã hóa AES-GCM với IV ngẫu nhiên, lưu trong IndexedDB cùng CryptoKey không cho export. Không ghi mật khẩu dạng rõ vào localStorage/sessionStorage. Cơ chế này mã hóa dữ liệu lưu trữ; JavaScript cùng nguồn của app vẫn có thể dùng khóa để giải mã và điền form. Bản lưu tách biệt với cookie phiên Jira và không được gửi cho đến khi người dùng bấm Đăng nhập.
+
+Bỏ chọn **Lưu đăng nhập** xóa bản lưu của app; trình quản lý mật khẩu của trình duyệt là chức năng độc lập. Xóa dữ liệu website hoặc đổi trình duyệt/thiết bị sẽ không còn bản lưu. Nếu trình duyệt không hỗ trợ Web Crypto/IndexedDB, ô lưu bị vô hiệu hóa và vẫn đăng nhập thủ công được. Nếu bộ nhớ không ghi được, app báo rõ nhưng không làm thất bại phiên Jira đã đăng nhập thành công. Không thay đổi cookie phiên, xác thực server hay cơ chế CAPTCHA.
 
 ## Các chức năng V1.11.5 được giữ
 
@@ -36,13 +43,13 @@ Dữ liệu cũ chỉ được suy OT từ custom field issue hoặc từ mốc 
 
 ## Triển khai nhanh
 
-Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.11.6`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
+Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.11.7`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
 
-App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp giao diện không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.11.6**.
+App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp giao diện không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.11.7**.
 
 Đã kiểm tra bằng dữ liệu Jira giả lập; **chưa đăng nhập/ghi giờ lên Jira thật và chưa kiểm tra trên iPhone Safari vật lý**. Xem `TESTING.md` để biết phạm vi, cách chạy và giới hạn.
 
-Bảng màu có 40 swatch dịu, không dùng dải xanh dương hoặc vàng OT; chọn màu có khoảng cách tốt với các màu đang hiển thị. Khi có nhiều hơn 40 dự án, màu có thể lặp và KEY/tên dự án vẫn là thông tin nhận diện chính. Các thiết bị có thể cấp màu khác nhau; phân loại OT vẫn đọc từ worklog trên Jira.
+Bảng màu có 52 swatch dịu thuộc 13 họ màu; không dùng dải vàng OT. Ưu tiên hue chưa dùng và cách ít nhất 40° với màu đang có khi còn lựa chọn, không ép dùng xanh lá. Khi có nhiều dự án, độ tách biệt giảm; vượt 52 dự án có thể lặp màu. KEY/tên dự án vẫn là thông tin nhận diện chính. Các thiết bị có thể cấp màu khác nhau; phân loại OT vẫn đọc từ worklog trên Jira.
 
 ## 1. Lịch Tuần / Tháng
 
@@ -126,14 +133,14 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.11.6` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.11.7` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.
 5. Framework Preset: **Other**. Build Command để trống. Output Directory dùng mặc định/root của project, không chọn `dist` vì source không có bước build.
 6. Node.js Version: **24.x**.
 7. Cấu hình biến môi trường bên dưới rồi redeploy.
-8. Mở app, kiểm tra footer V1.11.6. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
+8. Mở app, kiểm tra footer V1.11.7. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
 
 ### Biến môi trường
 
@@ -181,6 +188,6 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Block rất ngắn có thể không đủ chỗ hiển thị mô tả; title, nhãn trợ năng và danh sách ngày vẫn cho đọc/mở chi tiết.
 - Thời gian đã chạy là thời lượng thực tế của yêu cầu; tốc độ xử lý phụ thuộc Jira và hosting.
 - Chưa deploy production hoặc xác minh Safari trên iPhone vật lý trong lần phát triển này.
-- Sau deploy, kiểm tra footer V1.11.6, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
+- Sau deploy, kiểm tra footer V1.11.7, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.

@@ -39,3 +39,8 @@ html.log-progress-open, html.log-progress-open body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   #logProgressPanel.qjl-opening, #logProgressPanel.qjl-closing { animation: none !important; }
 }
+
+/* V1.11.7 — Native checkbox stays compact inside the login form. */
+#loginForm .remember-login { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text); }
+#loginForm #rememberLogin { flex: 0 0 18px; width: 18px; min-width: 18px; height: 18px; margin: 0; accent-color: var(--primary); }
+#loginForm #rememberLoginHint { margin-top: -2px; line-height: 1.5; font-weight: 400; }

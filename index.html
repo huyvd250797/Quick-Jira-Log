@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.11.6</title>
+  <title>Quick Jira Log · V1.11.7</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -25,7 +25,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.11.6</div>
+      <div class="boot-version">V1.11.7</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -34,7 +34,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.11.6</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.11.7</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -87,6 +87,8 @@
             </button>
           </span>
         </label>
+        <label class="remember-login"><input id="rememberLogin" type="checkbox" /><span>Lưu đăng nhập</span></label>
+        <small id="rememberLoginHint" class="field-help" role="status" aria-live="polite">Chỉ lưu trên thiết bị này sau khi đăng nhập thành công.</small>
         <button id="loginBtn" class="primary" type="submit">ĐĂNG NHẬP</button>
         <div id="loginError" class="login-error hidden" role="alert" aria-live="polite"></div>
       </form>
@@ -396,7 +398,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.11.6</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.11.7</footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -415,6 +417,7 @@
   <script src="/lib/late-log-warning.js" defer></script>
   <script src="/lib/ui-tools.js" defer></script>
   <script src="/lib/calendar-style.js" defer></script>
+  <script src="/lib/remembered-login.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
