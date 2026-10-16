@@ -2,6 +2,7 @@
 
 const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
+const worklogpro = require('../lib/worklogpro');
 const { BULK_MAX_ITEMS, MAX_REGULAR_MINUTES } = require('../lib/config');
 const {
   JiraError,
@@ -42,8 +43,9 @@ function normalizeItems(rawItems) {
     const project = String(raw?.project || '').trim().toUpperCase();
     const timeSpent = String(raw?.timeSpent || '').trim();
     const description = String(raw?.description || '').trim();
-    if (toBoolean(raw?.overtime)) throw new JiraError('Overtime chỉ được đánh dấu sau khi log, trong lịch Worklog đã log. Hãy tải lại app.', 400);
-    const overtime = false;
+    const overtime = toBoolean(raw?.overtime);
+    const overtimeStart = overtime ? String(raw?.overtimeStart || '') : '';
+    if (overtimeStart && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(overtimeStart)) throw new JiraError(`Dòng ${index + 1}: giờ Overtime không hợp lệ.`, 400);
     if (!key || !project || !timeSpent) throw new JiraError(`Dòng ${index + 1}: thiếu KEY, PROJECT hoặc TimeSpent.`, 400);
     if (!key.startsWith(`${project}-`)) throw new JiraError(`Dòng ${index + 1}: KEY ${key} không khớp PROJECT ${project}.`, 400);
     if (seen.has(key)) throw new JiraError(`KEY ${key} đang xuất hiện nhiều hơn một lần trong danh sách Bulk.`, 400);
@@ -57,9 +59,9 @@ function normalizeItems(rawItems) {
         : `Dòng ${index + 1}: TimeSpent không hợp lệ. Ví dụ 30m, 1h, 1h30m.`, 400);
     }
     if (!overtime && minutes > MAX_REGULAR_MINUTES) {
-      throw new JiraError(`Dòng ${index + 1}: worklog thường tối đa 8h. Overtime được đánh dấu sau khi log trong lịch.`, 400);
+      throw new JiraError(`Dòng ${index + 1}: worklog thường tối đa 8h. Chọn Overtime để log ngoài giờ.`, 400);
     }
-    return { key, project, timeSpent, description, overtime, minutes, order: index };
+    return { key, project, timeSpent, description, overtime, overtimeStart, minutes, order: index };
   });
 }
 
@@ -106,13 +108,14 @@ async function performBulk(body, session, perf) {
   const alreadyRegular = minutesInsideWindows(initialGuard.occupied, workWindowsFor(date, false));
   const requestedRegular = verified.filter(item => !item.overtime).reduce((sum, item) => sum + item.minutes, 0);
   if (alreadyRegular + requestedRegular > MAX_REGULAR_MINUTES) {
-    throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường của batch này sẽ vượt 8h. Hãy kiểm tra và chỉnh lại các worklog đã log trong lịch.`, 409);
+    throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường của batch này sẽ vượt 8h. Chọn Overtime cho các dòng cần log ngoài giờ.`, 409);
   }
   let planned;
   try { planned = planBulkItems(verified, initialGuard.occupied, { date }).plans; }
   catch (error) { throw planningError(error, error.bulkItem || verified[0], date); }
 
   const created = [];
+  const attribute = verified.some(item => item.overtime) ? await worklogpro.getOvertimeAttribute(session) : null;
   const actualPlans = planned.map(plan => {
     const item = verified.find(x => x.key === plan.key) || plan;
     return { ...item, segments: plan.segments };
@@ -127,17 +130,28 @@ async function performBulk(body, session, perf) {
         seconds: segment.minutes * 60,
         description: item.description
       }, session);
+      if (!worklog?.id) throw new JiraError('Jira chưa trả về ID worklog. Hãy tải lại lịch trước khi thử lại.', 502);
+      created.push({ key: item.key, id: worklog.id, segment });
+      if (item.overtime) {
+        const current = await worklogpro.getWorklog(worklog.id, session);
+        await worklogpro.updateNativeWorklog({ key: item.key, worklogId: worklog.id, current, attribute, overtime: true,
+          started: jiraStarted(date, segment.start), seconds: segment.minutes * 60, description: item.description }, session);
+      }
       completedSegments += 1;
       perf.report?.(40 + 40 * completedSegments / creationJobs.length, `Đã ghi ${completedSegments}/${creationJobs.length} worklog`);
       return { key: item.key, id: worklog?.id, segment };
     }));
-    created.push(...creationResults.filter(x => x.status === 'fulfilled').map(x => x.value));
+
     const failedCreation = creationResults.find(x => x.status === 'rejected');
     if (failedCreation) throw failedCreation.reason;
 
   } catch (error) {
     perf.report?.(80, 'Có lỗi; đang xử lý hoàn tác, vui lòng chờ');
-    await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(x.key, x.id, session)));
+    const rollback = await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(x.key, x.id, session)));
+    await invalidateWorklogCaches(session, date, targetKeys);
+    const remaining = created.filter((x, i) => rollback[i]?.status !== 'fulfilled' || rollback[i]?.value !== true);
+    if (remaining.length) throw new JiraError('Logwork bị gián đoạn và chưa hoàn tác hết. Hãy tải lại lịch/Jira trước khi log lại để tránh trùng.', 502,
+      { resultUnknown: true, remainingWorklogIds: remaining.map(x => String(x.id)) }, 'WORKLOG_ROLLBACK_INCOMPLETE');
     throw error;
   }
 
@@ -169,6 +183,7 @@ async function performBulk(body, session, perf) {
       summary: item.summary,
       description: item.description,
       overtime: item.overtime === true,
+      overtimeVerified: item.overtime === true,
       workWindow: windowsLabel(date, item.overtime === true),
       minutes: item.minutes,
       segments: displaySegments(item.segments)

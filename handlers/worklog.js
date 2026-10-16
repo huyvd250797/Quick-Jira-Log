@@ -2,6 +2,8 @@
 
 const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
+const { overtimeBusy } = require('../lib/bulk');
+const worklogpro = require('../lib/worklogpro');
 const { MAX_REGULAR_MINUTES } = require('../lib/config');
 const {
   JiraError,
@@ -59,8 +61,9 @@ async function performWorklog(body, session, perf) {
   const timeSpent = String(body.timeSpent || '').trim();
   const date = String(body.date || '').trim();
   const description = String(body.description || '').trim();
-  if (toBoolean(body.overtime)) throw new JiraError('Overtime chỉ được đánh dấu trong phần sửa worklog đã log. Hãy tải lại app và log trước.', 400);
-  const overtime = false;
+  const overtime = toBoolean(body.overtime);
+  const overtimeStart = overtime ? String(body.overtimeStart || '') : '';
+  if (overtimeStart && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(overtimeStart)) throw new JiraError('Giờ bắt đầu Overtime không hợp lệ.', 400);
 
   if (!key || !project || !timeSpent || !date || !description) {
     throw new JiraError('Vui lòng nhập đủ KEY, PROJECT, TimeSpent, Date và Description.', 400);
@@ -76,7 +79,7 @@ async function performWorklog(body, session, perf) {
       : 'TimeSpent không hợp lệ. Ví dụ: 30m, 1h, 1h30m, 2.5h.', 400);
   }
   if (!overtime && minutes > MAX_REGULAR_MINUTES) {
-    throw new JiraError('Mỗi lần log tối đa 8h trong khung giờ thường. Overtime được đánh dấu sau khi log trong lịch.', 400);
+    throw new JiraError('Mỗi lần log tối đa 8h trong khung giờ thường. Chọn Overtime nếu cần log ngoài giờ.', 400);
   }
 
   perf.report?.(5, 'Đang đọc thông tin task');
@@ -95,12 +98,12 @@ async function performWorklog(body, session, perf) {
   if (!overtime) {
     const alreadyRegular = minutesInsideWindows(guard.occupied, workWindowsFor(date, false));
     if (alreadyRegular + minutes > MAX_REGULAR_MINUTES) {
-      throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường không được vượt 8h. Hãy kiểm tra và chỉnh lại các worklog đã log trong lịch.`, 409);
+      throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường không được vượt 8h. Chọn Overtime để log thêm ngoài giờ.`, 409);
     }
   }
   let plan;
   try {
-    plan = scheduleForDate(minutes, guard.occupied, date, overtime);
+    plan = scheduleForDate(minutes, overtime ? overtimeBusy(guard.occupied, overtimeStart) : guard.occupied, date, overtime);
     validateScheduledSegments(plan, guard.occupied, windows);
   } catch (error) {
     throw planningError(error, date, overtime);
@@ -109,6 +112,7 @@ async function performWorklog(body, session, perf) {
   perf.report?.(40, 'Đã kiểm tra xong; đang ghi worklog');
   let completedSegments = 0;
   const created = [];
+  const attribute = overtime ? await worklogpro.getOvertimeAttribute(session) : null;
   try {
     const creationResults = await perf.step('createWorklogs', () => settleMapWithConcurrency(plan, 2, async seg => {
       const worklog = await createWorklog(key, {
@@ -116,17 +120,28 @@ async function performWorklog(body, session, perf) {
         seconds: seg.minutes * 60,
         description
       }, session);
+      if (!worklog?.id) throw new JiraError('Jira chưa trả về ID worklog. Hãy tải lại lịch trước khi thử lại.', 502);
+      created.push({ id: worklog.id, segment: seg });
+      if (overtime) {
+        const current = await worklogpro.getWorklog(worklog.id, session);
+        await worklogpro.updateNativeWorklog({ key, worklogId: worklog.id, current, attribute, overtime: true,
+          started: jiraStarted(date, seg.start), seconds: seg.minutes * 60, description }, session);
+      }
       completedSegments += 1;
       perf.report?.(40 + 40 * completedSegments / plan.length, `Đã ghi ${completedSegments}/${plan.length} worklog`);
       return { id: worklog?.id, segment: seg };
     }));
-    created.push(...creationResults.filter(x => x.status === 'fulfilled').map(x => x.value));
+
     const failedCreation = creationResults.find(x => x.status === 'rejected');
     if (failedCreation) throw failedCreation.reason;
 
   } catch (error) {
     perf.report?.(80, 'Có lỗi; đang xử lý hoàn tác, vui lòng chờ');
-    await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(key, x.id, session)));
+    const rollback = await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(key, x.id, session)));
+    await invalidateWorklogCaches(session, date, [key]);
+    const remaining = created.filter((x, i) => rollback[i]?.status !== 'fulfilled' || rollback[i]?.value !== true);
+    if (remaining.length) throw new JiraError('Logwork bị gián đoạn và chưa hoàn tác hết. Hãy tải lại lịch/Jira trước khi log lại để tránh trùng.', 502,
+      { resultUnknown: true, remainingWorklogIds: remaining.map(x => String(x.id)) }, 'WORKLOG_ROLLBACK_INCOMPLETE');
     throw error;
   }
 
@@ -145,7 +160,8 @@ async function performWorklog(body, session, perf) {
     project,
     date,
     overtime,
-    overtimeField: null,
+    overtimeVerified: overtime,
+    overtimeSource: overtime ? 'worklogpro' : '',
     workWindow: windowsLabel(date, overtime),
     totalMinutes: minutes,
     segments: displaySegments(plan),
@@ -186,7 +202,7 @@ module.exports = async function handler(req, res) {
     if (error?.code === 'IDEMPOTENCY_STORE_UNAVAILABLE') return sendJson(res, 503, { ok: false, error: error.message, code: error.code });
     if (error instanceof JiraError) {
       if (error.status === 401 && !res.headersSent) res.setHeader('Set-Cookie', clearSessionCookie());
-      return sendJson(res, error.status || 500, { ok: false, error: error.message, details: error.details || undefined });
+      return sendJson(res, error.status || 500, { ok: false, error: error.message, code: error.code, details: error.details || undefined });
     }
     return sendJson(res, 500, { ok: false, error: 'Logwork thất bại. Vui lòng thử lại.' });
   }

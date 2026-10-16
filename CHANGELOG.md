@@ -1,3 +1,12 @@
+# V1.12.0 — Native WorklogPRO Form & Overtime Creation
+
+- Thay REST PUT cập nhật OT bằng form native có token/cookie động và GET xác minh.
+- Tạo Overtime ngay từ log đơn hoặc từng task trong Bulk; hỗ trợ ngày đã đủ 8h và giờ xếp tùy chọn.
+- Giữ guard trùng giờ/khung giờ, idempotency, thuộc tính worklog khác và estimate.
+- Core edit 403 được thử qua form khi giữ nguyên OT; không retry write chưa rõ kết quả.
+- Hoàn tác worklog vừa tạo nếu đồng bộ OT lỗi; báo rõ khi hoàn tác chưa hết.
+- Cập nhật phiên bản app, PWA cache, tài liệu và kiểm thử. Chưa thử Jira thật.
+
 # Changelog
 
 ## V1.11.9 — Independent Worklog Editing & WorklogPRO Auth Fix

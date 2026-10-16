@@ -1,5 +1,6 @@
 'use strict';
 const {chromium}=require('playwright'),assert=require('node:assert/strict'),http=require('http'),fs=require('fs'),path=require('path');
+const fixture=require('../fixtures/native-form');
 const api=require('../../api/index'),{createSessionCookie}=require('../../lib/session');
 const root=path.resolve(__dirname,'../..'),base='/rest/com.deniz.jira.worklog/1.0',oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;
 let server,browser,mode='',writes=0,ordinaryWrites=0,record,core;
@@ -7,13 +8,15 @@ process.env.APP_SESSION_SECRET='browser-native-ot-at-least-32-character-secret';
 const user={name:'qa-native',key:'JIRAUSER123',displayName:'QA Native'};
 const reset=()=>{mode='';writes=0;ordinaryWrites=0;core={id:'7',author:user,started:'2026-10-16T08:00:00.000+0700',timeSpentSeconds:3600,comment:'Work completed\n\n[Quick Jira Log: Overtime]'};record={id:7,workStart:Date.parse(core.started),timeSpent:3600,authorUserKey:user.key,comment:core.comment,workLogAttributes:[{attrTypeId:23,attrValue:'no'},{attrTypeId:9,attrValue:'CUSTOM'}]};};
 global.fetch=async(url,options={})=>{
- const u=new URL(String(url)),body=options.body?JSON.parse(options.body):{};
+ const u=new URL(String(url)),body=options.body?(u.pathname===fixture.action?Object.fromEntries(new URLSearchParams(options.body)):JSON.parse(options.body)):{};
  if(u.pathname===`${base}/attr`)return mode==='denied'?Response.json({}, {status:403}):Response.json([{id:23,name:'Over Time?',type:'BOOL',enabled:true}]);
- if(u.pathname===`${base}/worklog/7`){
-  if(options.method==='PUT'){
-   writes++;const attrs=mode==='ignored'?record.workLogAttributes:body.workLogAttributes;
-   record={...record,...body,workStart:Date.parse(body.workStart),workLogAttributes:attrs};Object.assign(core,{started:body.workStart,timeSpentSeconds:body.timeSpent,comment:body.comment});
-  }return Response.json(record);
+ if(u.pathname==='/rest/com.deniz.jira.worklog/latest/worklog')return Response.json({projects:[{issues:[{key:'NATIVE-1',workLogs:[record]}]}]});
+ if(u.pathname===fixture.action){
+  if(options.method!=='POST')return new Response(fixture.render('NATIVE-1',record));
+  writes++;const value=fixture.values(new URLSearchParams(options.body),record);
+  if(mode==='ignored')value.workLogAttributes=record.workLogAttributes;
+  record={...record,...value,workStart:Date.parse(value.workStart)};Object.assign(core,{started:value.workStart,timeSpentSeconds:value.timeSpent,comment:value.comment});
+  return new Response('<div>Saved</div>');
  }
  if(u.pathname.endsWith('/search'))return Response.json({issues:[{key:'NATIVE-1',fields:{project:{key:'NATIVE'},summary:'Native WorklogPRO Overtime',status:{name:'Done'}}}],total:1});
  if(u.pathname.endsWith('/worklog/updated'))return Response.json({}, {status:404});
@@ -52,6 +55,6 @@ global.fetch=async(url,options={})=>{
   // Unknown checkbox untouched: a fresh native value must survive a content edit.
   mode='';record.workLogAttributes.find(a=>a.attrTypeId===23).attrValue='yes';await page.locator('#correctionDescription').fill('Content edit while checkbox unknown');await page.locator('#saveCorrectionBtn').click();await page.waitForFunction(()=>!state.historyLoading&&!document.getElementById('worklogCorrectionDialog').open);assert.equal(record.workLogAttributes.find(a=>a.attrTypeId===23).attrValue,'yes');
   mode='unverified-response';await block.click();await page.locator('#saveCorrectionBtn').click();await page.locator('#correctionFeedback').waitFor({state:'visible'});assert((await page.locator('#correctionFeedback').innerText()).includes('chưa xác nhận'));
-  assert.deepEqual(errors,[]);console.log('V1.11.9 browser → real handler → WorklogPRO fixture: native on/off, independent date/time/duration/comment edits under plugin 403, diagnostics, readback failure and unknown OT preservation passed',viewport);await context.close();
+  assert.deepEqual(errors,[]);console.log('V1.12.0 browser → real handler → WorklogPRO fixture: native on/off, independent date/time/duration/comment edits under plugin 403, diagnostics, readback failure and unknown OT preservation passed',viewport);await context.close();
  }
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();if(server)await new Promise(r=>server.close(r));global.fetch=oldFetch;if(oldSecret==null)delete process.env.APP_SESSION_SECRET;else process.env.APP_SESSION_SECRET=oldSecret;});

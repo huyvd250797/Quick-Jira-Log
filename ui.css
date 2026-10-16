@@ -300,3 +300,8 @@ body:has(.log-progress-panel:not(.hidden)) .toast { bottom: 200px; }
 .correction-error-details pre { margin: 6px 0; max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font: inherit; line-height: 1.6; }
 
 #keepCorrectionOvertimeBtn { align-self: flex-start; min-height: 32px; padding: 6px 10px; font-size: 12px; }
+
+/* Native Overtime creation controls. */
+.bulk-ot-toggle { grid-column: 1 / -1; min-width: 0; }
+.bulk-ot-start-field, #overtimeStartField { min-width: 0; }
+.bulk-ot-start-field input, #overtimeStart { box-sizing: border-box; min-width: 0; max-width: 100%; width: 100%; }

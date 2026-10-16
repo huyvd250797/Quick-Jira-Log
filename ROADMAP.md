@@ -1,6 +1,20 @@
-# Trạng thái V1.11.9
+# Trạng thái V1.12.0
 
-## Đã hoàn thành V1.11.9
+## Đã triển khai V1.12.0
+
+- Native form WorklogPRO: session/token động, đúng worklog, bảo toàn các thuộc tính khác.
+- GET read-back theo endpoint native latest; không báo thành công chỉ dựa vào HTTP 200.
+- Tạo OT cho từng task trong log đơn/Bulk; hỗ trợ ngày đủ 8h, batch trộn thường/OT và giờ xếp sớm nhất.
+- Hoàn tác worklog mới khi đồng bộ OT thất bại; thông báo riêng nếu hoàn tác chưa hết.
+- Core 403 khi sửa thông tin thường có thể chuyển sang native form, giữ OT thực.
+- Cần đối soát Jira thật sau triển khai; chưa có xác minh quyền/session/form trên deployment thực tế.
+
+## Phiên bản kế tiếp dự kiến — V1.12.1
+
+- Củng cố adapter theo kết quả chạy thực tế trên Jira, đặc biệt token/phiên và thông báo form.
+- Cân nhắc cấu hình khung OT/ngày nghỉ theo quy định thay vì khung cố định, sau khi thống nhất nhu cầu.
+
+## V1.11.9 trước đây
 
 - Tách sửa thông tin thường và OT; plugin 403 không chặn cập nhật ngày/giờ/thời lượng/mô tả khi không đổi OT.
 - WorklogPRO Basic Auth trong phiên mã hóa và header no-check; giữ kiểm tra quyền thực tế.

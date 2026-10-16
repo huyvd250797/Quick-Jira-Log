@@ -85,7 +85,7 @@ module.exports = async function handler(req, res) {
       }
     }
     const started = scheduleChanged ? jiraStarted(date, startMinute) : current.started;
-    let updated, overtime, overtimeVerified = false;
+    let updated, overtime, overtimeVerified = false, editProvider = 'jira';
     const invalidate = () => Promise.all([
       oldParsed?.date ? invalidateWorklogCaches(session, oldParsed.date, [key]) : Promise.resolve(),
       date !== oldParsed?.date ? invalidateWorklogCaches(session, date, [key]) : Promise.resolve()
@@ -101,7 +101,7 @@ module.exports = async function handler(req, res) {
       overtime = body.overtime;
       try {
         await perf.step('worklogproUpdateAndVerify', () => worklogpro.updateNativeWorklog({
-          worklogId, current: native, attribute, overtime, started, seconds: minutes * 60, description
+          key, worklogId, current: native, attribute, overtime, started, seconds: minutes * 60, description
         }, session));
       } finally {
         // Invalidate even after an interrupted response: the write may already be committed.
@@ -109,13 +109,26 @@ module.exports = async function handler(req, res) {
       }
       updated = { started };
       overtimeVerified = true;
+      editProvider = 'worklogpro-form';
     } else {
       // Ordinary changes are independent of WorklogPRO availability and preserve native OT.
       let written = false;
       try {
-        await perf.step('updateWorklog', () => updateWorklog(key, worklogId, {
-          started, seconds: minutes * 60, description
-        }, session));
+        try {
+          await perf.step('updateWorklog', () => updateWorklog(key, worklogId, {
+            started, seconds: minutes * 60, description
+          }, session));
+        } catch (error) {
+          // Retry through another provider only after a definite rejection, never a timeout.
+          if (error.status !== 403) throw error;
+          const attribute = await worklogpro.getOvertimeAttribute(session);
+          const native = await worklogpro.getWorklog(worklogId, session);
+          if (current.author?.key && String(current.author.key) !== String(native.authorUserKey)) throw new JiraError('Tác giả worklog không khớp.', 409);
+          overtime = worklogpro.overtimeOf(native, attribute);
+          await worklogpro.updateNativeWorklog({ key, worklogId, current: native, attribute, overtime, started, seconds: minutes * 60, description }, session);
+          overtimeVerified = true;
+          editProvider = 'worklogpro-form';
+        }
         written = true;
         updated = await perf.step('verifyWorklog', () => getWorklog(key, worklogId, session));
         if (String(updated?.id) !== worklogId || Date.parse(updated.started) !== Date.parse(started) ||
@@ -148,7 +161,7 @@ module.exports = async function handler(req, res) {
       minutes,
       description,
       worklogVerified: true,
-      editProvider: overtimeChangeRequested ? 'worklogpro' : 'jira',
+      editProvider,
       overtimeChangeRequested,
       ...(overtimeVerified ? { overtime, overtimeKnown: true, overtimeVerified: true, overtimeSource: 'worklogpro' } : { overtimeKnown: false }),
       performance

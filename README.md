@@ -1,33 +1,35 @@
-# Quick Jira Log V1.11.9 — Professional UI & Calendar First
+# Quick Jira Log V1.12.0 — Native WorklogPRO Form & Overtime Creation
 
 © 2026 HuyVo. All rights reserved.
 
-## Cải tiến V1.11.9 — Sửa worklog độc lập, xác thực WorklogPRO và lỗi rõ ràng
+## Cải tiến V1.12.0
 
-- Sửa lỗi V1.11.8 ép mọi chỉnh sửa đi qua WorklogPRO chỉ vì payload luôn chứa `overtime`. Khi **không đổi công tắc OT**, app cập nhật ngày, giờ bắt đầu, thời lượng và mô tả qua API worklog gốc của Jira; không gọi WorklogPRO và giữ nguyên thuộc tính OT trên Jira.
-- Khi **đổi công tắc OT**, vẫn lưu vào checkbox **Over Time?** của đúng worklog bằng API WorklogPRO, giữ các thuộc tính khác. Không thay bằng nhãn mô tả và không báo thành công nếu OT chưa xác nhận. Nếu yêu cầu OT bị từ chối, không tự lưu riêng phần thông tin còn lại.
-- Thêm **Giữ nguyên Overtime** để bỏ thay đổi công tắc đang nháp, giữ nội dung/ngày/giờ đã nhập và lưu thông tin thông thường, kể cả khi chưa đọc được OT. Đây không phải thao tác đổi OT trên Jira.
-- Phiên mới dùng Basic Auth cho WorklogPRO theo tài liệu nhà cung cấp và gửi `X-Atlassian-Token: no-check` cho PUT. API Jira gốc vẫn dùng cơ chế đăng nhập hiện có. Không tự thử lại write hoặc lặp xác thực khi bị từ chối.
-- Chỉ sửa OT/mô tả sẽ không kiểm tra lại khung giờ cũ không thay đổi và không làm tròn giây bắt đầu. Khi đổi lịch/thời lượng vẫn kiểm tra trùng giờ, ngày hợp lệ và khung giờ của app; tác giả và quyền sửa vẫn được Jira kiểm tra.
-- GET riêng xác nhận nội dung sau mỗi PUT. Kết quả chưa rõ giữ form/nháp và thông báo đối soát. **Chi tiết lỗi** ghi đúng bước/API/HTTP/thông báo Jira đã lọc, không suy mọi 403 thành kỳ chấm công bị khóa, không lộ mật khẩu/cookie.
+- **Sửa Overtime bằng form WorklogPRO gốc** `/secure/WPCreateWorklogOnIssueWithWorkLogAction.jspa`, thay cho REST PUT bị từ chối 403 trên hệ thống đã đối chiếu. Backend đọc form của đúng worklog, lấy token mới, giữ cookie Jira/XSRF và các trường/thuộc tính khác; không chép token từ ảnh hoặc bỏ qua quyền Jira.
+- **Log mới có lựa chọn Overtime cho từng sub-task**, cả log đơn và Log tất cả. Ngày đủ 8h thường vẫn tạo được OT. Không tự chuyển giờ vượt 8h sang OT.
+- Giờ thường: 08:00–12:00, 13:30–17:30; tối đa 8h. OT ngày thường: 17:30–23:59; OT Thứ 7/CN theo hai khung ban ngày. Tùy chọn **Xếp từ giờ** đặt giờ sớm nhất; để trống để tự xếp, nếu bị bận sẽ xếp tiếp sau đó. Mọi loại vẫn kiểm tra trùng lịch.
+- Ví dụ đã có 8h thường, chọn sub-task 2h + Overtime: app xếp 17:30–19:30 nếu trống; tổng thực tế 10h gồm 8h thường và 2h OT. Batch có thể trộn dòng thường/OT; tự động phân bổ 8h chỉ tác động dòng thường.
+- Luồng tạo OT gồm tạo worklog Jira, đồng bộ checkbox native rồi GET đọc lại. Chỉ hoàn tất khi đã xác nhận OT. Nếu đồng bộ lỗi, hoàn tác **chỉ những worklog vừa tạo trong yêu cầu**; nếu hoàn tác chưa hết, báo worklog ID và yêu cầu kiểm tra Jira trước khi log lại. Không âm thầm giữ worklog thiếu nhãn OT rồi báo thành công.
+- **Sửa ngày, giờ, thời lượng, mô tả** vẫn qua Jira core khi không đổi OT. Nếu core trả 403 rõ ràng, app thử form native và giữ nguyên trạng thái OT đã đọc được. Không chuyển sang provider khác sau timeout/5xx có thể đã ghi.
+- Đổi OT cùng thông tin khác được gửi trong một form. Bật/tắt OT trên worklog cũ không tự dời giờ. Có nút Giữ nguyên Overtime để bỏ thay đổi công tắc đang nháp.
+- Đọc lại bằng `/rest/com.deniz.jira.worklog/latest/worklog?id=...`, tìm đúng worklog trong projects/issues/workLogs. So sánh OT, ngày giờ, thời lượng, mô tả, tác giả và các thuộc tính khác. HTTP 200 đơn lẻ không được coi là thành công. Không tự retry POST; mất phản hồi hoặc dữ liệu chưa khớp được báo chưa xác định kết quả.
 
-### Cập nhật và đăng nhập lại
+### Cập nhật
 
-Sau deploy, cập nhật PWA để đầu trang/footer là **V1.11.9**, rồi **đăng xuất và đăng nhập lại một lần** để phiên có xác thực mới dành cho WorklogPRO. Phiên cũ không có thông tin này; nếu plugin không chấp nhận cookie Jira, app báo cần đăng nhập lại. Chức năng Lưu đăng nhập vẫn hoạt động như trước.
+Giữ cấu hình Vercel và `APP_SESSION_SECRET` hiện có. Deploy source, cập nhật PWA/tải lại để đầu trang và footer hiện **V1.12.0**. Không cần database hay token Jira mới. Đăng nhập lại nếu phiên Jira đã hết hạn.
 
-Thông tin Basic dành cho WorklogPRO chỉ nằm trong cookie phiên của app đã mã hóa AES-GCM, HttpOnly/Secure/SameSite; không nằm trong JSON đăng nhập, log hay Chi tiết lỗi. Bản lưu tùy chọn trên thiết bị là chức năng riêng; đăng xuất xóa cookie phiên như trước.
+### Cấu hình và giới hạn
 
-### Cấu hình và giới hạn thực tế
+Mặc định tìm thuộc tính BOOL tên Over Time / Over Time? / Overtime qua WorklogPRO. Trên hệ thống đã đối chiếu, ID là **1**; có thể đặt `WORKLOGPRO_OVERTIME_ATTRIBUTE_ID=1` trên Vercel khi cần cố định mapping hoặc `/attr` bị hạn chế. Cấu hình ID không cấp thêm quyền.
 
-Mặc định app tự tìm checkbox BOOL tên Over Time / Over Time? / Overtime. Nếu có nhiều thuộc tính trùng tên hoặc tài khoản bị từ chối đọc danh sách `/attr`, quản trị Jira có thể xác nhận `WORKLOGPRO_OVERTIME_ATTRIBUTE_ID` (xem `.env.example`). ID cấu hình chỉ xác định thuộc tính, không cấp quyền đọc/sửa worklog.
+Form native lấy từ Jira trong mỗi lần sửa; action cùng origin và đường dẫn được kiểm tra, đúng issue/worklog, có token, checkbox OT đang cho sửa. Cookie và token chỉ dùng ở backend, không trả ra giao diện/log. Phiên Jira và Basic riêng WorklogPRO giữ trong cookie app mã hóa như bản trước.
 
-App không thể tự cấp quyền Jira. Một lỗi 403 trong ảnh không xác định được chính xác endpoint hay nguyên nhân vì bản cũ đã bỏ thông tin này; bản mới phân biệt đọc danh sách, đọc worklog, PUT OT, PUT thông tin thường và GET xác minh. Nếu Jira vẫn từ chối, mở **Chi tiết lỗi** để đối soát đúng lỗi. Các khác biệt quyền/kỳ duyệt hoặc quy tắc plugin trên hệ thống đang chạy cần kiểm tra thực tế sau deploy; chưa đăng nhập vào Jira của Boss trong quá trình sửa source.
+Luồng form phụ thuộc phiên bản WorklogPRO. Nếu cấu trúc form thay đổi hoặc quyền/kỳ chấm công không cho sửa, app báo lỗi thay vì đoán và ghi. Form quan sát được chỉ hỗ trợ thời gian tới phút: app từ chối sửa OT bằng form với worklog có giây lẻ để không âm thầm làm tròn; sửa trực tiếp Jira cho trường hợp đặc biệt đó. Chỉnh mô tả qua core vẫn giữ giây.
 
-Tài liệu: [WorklogPRO API và Basic Auth](https://thestarware.atlassian.net/wiki/spaces/WLP/pages/24477792), [API thuộc tính](https://thestarware.atlassian.net/wiki/spaces/WLP/pages/4000677902), [API worklog](https://thestarware.atlassian.net/wiki/spaces/WLP/pages/4000579631), [Atlassian REST và XSRF](https://developer.atlassian.com/server/framework/atlassian-sdk/atlassian-rest-api-design-guidelines-version-1/).
+Chưa đăng nhập hoặc ghi lên Jira thật trong quá trình phát triển; kiểm thử dùng phản hồi giả lập theo ảnh/payload Boss cung cấp. Cần đối soát một worklog thực tế sau deploy. Xem `TESTING.md`.
 
-### Overtime từ các bản cũ
+### Worklog từ bản cũ
 
-Lịch lấy OT từ WorklogPRO, không từ `[Quick Jira Log: Overtime]` hoặc `[Quick Jira Log: Regular]`. Nhãn cũ được ẩn khỏi ô mô tả và dọn khi lưu worklog đó thành công; không tự chuyển hàng loạt worklog thành OT. Log mới đơn/Bulk vẫn giữ luồng giờ thường; chỉ chỉnh OT tại lịch sau khi log. Giữ các cải tiến màu, Lưu đăng nhập, fullscreen, bottom sheet và tiến trình không ETA.
+Lịch đọc OT từ thuộc tính WorklogPRO thật, không suy từ `[Quick Jira Log: Overtime]`, giờ bắt đầu hay ngày cuối tuần. Nhãn cũ được ẩn khỏi mô tả và dọn khi lưu thành công; không tự chuyển hàng loạt dữ liệu.
 
 ## Các cải tiến V1.11.7 được giữ
 
@@ -36,7 +38,7 @@ Lịch lấy OT từ WorklogPRO, không từ `[Quick Jira Log: Overtime]` hoặc
 - Bỏ gạch ngang đánh dấu ngày đang chọn. Tiêu đề vẫn đổi nền; thanh tiến trình giờ log của từng ngày và màu xanh khi đủ mục tiêu vẫn giữ.
 - Thêm **Lưu đăng nhập**: chỉ ghi username/password sau khi Jira xác nhận đăng nhập thành công. Sau đăng xuất/hết phiên, hoặc mở lại app khi chưa có phiên, điền lại hai trường để người dùng bấm Đăng nhập; không tự đăng nhập.
 - Bản lưu chỉ trên trình duyệt/thiết bị hiện tại; mật khẩu vẫn được che. Bỏ chọn ô để xóa bản lưu của app. Không ghi đè thông tin đang nhập khi việc đọc bộ nhớ trả về chậm; đăng nhập lỗi không thay bản lưu thành công trước đó.
-- Giữ tiến trình không ETA, Overtime sau khi log, màu OT cố định, sheet cao hết vùng xem/kéo xuống để đóng và input gọn trong khung.
+- Giữ tiến trình không ETA, chỉnh Overtime từ lịch, màu OT cố định, sheet cao hết vùng xem/kéo xuống để đóng và input gọn trong khung.
 
 ### Lưu đăng nhập trên thiết bị
 
@@ -46,9 +48,9 @@ Bỏ chọn **Lưu đăng nhập** xóa bản lưu của app; trình quản lý 
 
 ## Logwork và giao diện hiện tại
 
-- **Log mới không còn công tắc Overtime**, ở cả log đơn và Log tất cả. Sau khi log, mở Worklog đã log → bấm block → đánh dấu Overtime → Lưu chỉnh sửa.
+- **Có công tắc Overtime khi tạo**, ở cả log đơn và từng dòng Log tất cả; cũng có thể chỉnh lại từ block lịch.
 - Sửa lỗi nhầm Overtime thành custom field của issue Jira. App không tìm field Overtime, không gọi editmeta và không cập nhật trạng thái của toàn issue nữa.
-- **OT đọc/ghi vào checkbox Over Time? của WorklogPRO trên Jira**, riêng cho từng worklog. Tạo worklog đơn/Bulk vẫn giữ luồng giờ thường, chỉ chỉnh OT tại lịch sau khi log.
+- **OT đọc/ghi vào checkbox Over Time? của WorklogPRO trên Jira**, riêng cho từng worklog. Tạo worklog đơn/Bulk có thể chọn thường/OT và đồng bộ checkbox native.
 - Popup tiến trình log đơn/Bulk nằm giữa màn hình, nền phía sau tối/mờ, giữ phần trăm/bước xử lý theo phản hồi thật và thời gian đã chạy. Đang xử lý thì không đóng bằng Escape/nền; hoàn tất/lỗi có nút đóng. Thành công tự đóng sau 4,5 giây; lỗi giữ lại để đọc.
 - Sheet log đơn và Log tất cả dùng hết chiều cao viewport có thể sử dụng, thích ứng bàn phím/vùng an toàn. Kéo xuống ở thanh kéo hoặc vùng tiêu đề để đóng; vuốt ngắn thì trở về vị trí cũ. Giữ cuộn nội dung và thao tác ngày/nút bấm.
 - Sheet sửa worklog cũng có thể kéo tiêu đề xuống để đóng trên mobile.
@@ -57,22 +59,22 @@ Bỏ chọn **Lưu đăng nhập** xóa bản lưu của app; trình quản lý 
 
 ### Cách đánh dấu Overtime sau khi log
 
-1. Log đơn hoặc Log tất cả như bình thường, chưa chọn OT.
+1. Mở lịch để chỉnh một worklog đã log; khi tạo mới có thể chọn OT ngay trong form log.
 2. Mở **Worklog đã log**, bấm block cần đánh dấu.
 3. Chọn **Overtime**, bấm **Lưu chỉnh sửa**. Chỉ checkbox của worklog đang sửa được cập nhật; các worklog khác cùng issue không đổi.
 4. Bỏ chọn rồi lưu để bỏ phân loại OT. Đóng/kéo sheet xuống khi chưa lưu sẽ bỏ các chỉnh sửa nháp.
 
 Sau khi app báo thành công, mở lại worklog trên Jira/WorklogPRO để đối soát checkbox **Over Time?**. Worklog cũ chỉ có nhãn mô tả sẽ không tự được chuyển thành OT: bấm block, chọn Overtime và lưu một lần. Khi thành công, nhãn cũ được dọn khỏi mô tả của worklog đang sửa.
 
-Bật/tắt OT chỉ là phân loại, **không tự đổi ngày, giờ bắt đầu, thời lượng hay tổng giờ đã log**. Nếu cần dời block, sửa Giờ bắt đầu; vẫn kiểm tra trùng giờ và khung giờ hợp lệ. Log mới giữ giới hạn giờ thường 8h/ngày và cơ chế phân bổ cũ, không tự chuyển phần vượt 8h sang OT. Các bản app cũ gửi yêu cầu OT ngay lúc tạo sẽ được báo tải lại/chuyển sang phần sửa, không âm thầm tạo sai loại.
+Bật/tắt OT chỉ là phân loại, **không tự đổi ngày, giờ bắt đầu, thời lượng hay tổng giờ đã log**. Nếu cần dời block, sửa Giờ bắt đầu; vẫn kiểm tra trùng giờ và khung giờ hợp lệ. Log mới giữ giới hạn giờ thường 8h/ngày và cơ chế phân bổ cũ, không tự chuyển phần vượt 8h sang OT. Chọn OT rõ ràng để app xếp riêng ngoài khung giờ thường.
 
 Màu vàng chỉ phản ánh OT đã đọc được từ WorklogPRO. Không suy OT từ giờ 17:30, custom field issue hoặc nhãn mô tả cũ. Nếu không đọc được thuộc tính, app hiển thị cảnh báo và công tắc ở trạng thái chưa xác định; lưu khi chưa chọn công tắc sẽ giữ giá trị vừa đọc lại trên Jira.
 
 ## Triển khai nhanh
 
-Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.11.9`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
+Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.12.0`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
 
-App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp giao diện không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.11.9**.
+App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp này không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.12.0**.
 
 Đã kiểm tra bằng dữ liệu Jira giả lập; **chưa đăng nhập/ghi giờ lên Jira thật và chưa kiểm tra trên iPhone Safari vật lý**. Xem `TESTING.md` để biết phạm vi, cách chạy và giới hạn.
 
@@ -160,14 +162,14 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.11.9` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.12.0` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.
 5. Framework Preset: **Other**. Build Command để trống. Output Directory dùng mặc định/root của project, không chọn `dist` vì source không có bước build.
 6. Node.js Version: **24.x**.
 7. Cấu hình biến môi trường bên dưới rồi redeploy.
-8. Mở app, kiểm tra footer V1.11.9. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
+8. Mở app, kiểm tra footer V1.12.0. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
 
 ### Biến môi trường
 
@@ -215,6 +217,6 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Block rất ngắn có thể không đủ chỗ hiển thị mô tả; title, nhãn trợ năng và danh sách ngày vẫn cho đọc/mở chi tiết.
 - Thời gian đã chạy là thời lượng thực tế của yêu cầu; tốc độ xử lý phụ thuộc Jira và hosting.
 - Chưa deploy production hoặc xác minh Safari trên iPhone vật lý trong lần phát triển này.
-- Sau deploy, kiểm tra footer V1.11.9, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
+- Sau deploy, kiểm tra footer V1.12.0, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.

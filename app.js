@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.11.9';
+const APP_VERSION = '1.12.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -259,7 +259,8 @@ function updateSingleOvertimeHint() {
   const hint = $('overtimeHint');
   if (!hint) return;
   const date = $('date')?.value || todayLocal();
-  hint.textContent = 'Cần đánh dấu Overtime? Log trước, sau đó mở lịch và sửa worklog.';
+  $('overtimeStartField')?.classList.toggle('hidden', !$('overtime')?.checked);
+  hint.textContent = $('overtime')?.checked ? `Overtime: ${overtimeWindowLabel(date)}. App sẽ đồng bộ ô OT trên Jira và kiểm tra lại sau lưu.` : 'Giờ thường: 08:00–12:00 · 13:30–17:30, tối đa 8h. Chọn Overtime để log thêm ngoài giờ.';
 }
 
 function minutesLabel(minutes) {
@@ -964,6 +965,7 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   $('date').value = logDate;
   $('description').value = summary || '';
   if ($('overtime')) $('overtime').checked = false;
+  if ($('overtimeStart')) $('overtimeStart').value = '';
   updateSingleOvertimeHint();
   $('selectedIssueKey').textContent = normalizedKey;
   $('selectedIssueProject').textContent = normalizedProject || '—';
@@ -2146,7 +2148,7 @@ function showCorrectionFeedback(message, details) {
   $('correctionFeedback').textContent = message;
   $('correctionFeedback').classList.remove('hidden');
   const extra = $('correctionErrorDetails');
-  const stages = { readOvertimeAttribute: 'Đọc danh sách thuộc tính Overtime', readOvertime: 'Đọc Overtime của worklog', updateOvertime: 'Lưu Overtime', verifyOvertime: 'Xác nhận Overtime sau lưu', updateWorklog: 'Lưu thông tin worklog', verifyWorklog: 'Xác nhận thông tin sau lưu' };
+  const stages = { readWorklogForm: 'Đọc form sửa WorklogPRO', readOvertimeAttribute: 'Đọc danh sách thuộc tính Overtime', readOvertime: 'Đọc Overtime của worklog', updateOvertime: 'Lưu Overtime', verifyOvertime: 'Xác nhận Overtime sau lưu', updateWorklog: 'Lưu thông tin worklog', verifyWorklog: 'Xác nhận thông tin sau lưu' };
   const lines = details && typeof details === 'object' ? [
     details.code ? `Mã: ${details.code}` : '',
     details.stage ? `Bước: ${stages[details.stage] || details.stage}` : '',
@@ -2618,6 +2620,14 @@ function renderBulkItems() {
             ${['30m', '1h', '2h', '3h', '4h'].map(value => `<button class="bulk-preset-btn${String(item.timeSpent || '') === value ? ' active' : ''}" type="button" data-time="${value}">${value}</button>`).join('')}
           </span>
         </label>
+        <label class="overtime-toggle bulk-ot-toggle">
+          <input class="bulk-overtime" type="checkbox" ${item.overtime ? 'checked' : ''} />
+          <span class="overtime-control" aria-hidden="true"></span>
+          <span class="overtime-copy"><strong>Overtime</strong><small>${overtimeWindowLabel($('bulkDate')?.value || todayLocal())} · đồng bộ OT trên Jira</small></span>
+        </label>
+        <label class="bulk-ot-start-field${item.overtime ? '' : ' hidden'}">Xếp từ giờ (tùy chọn)
+          <input class="bulk-ot-start" type="time" value="${escapeHtml(item.overtimeStart || '')}" />
+        </label>
         <details class="bulk-description-details">
           <summary>Sửa mô tả <span>${escapeHtml((item.description || item.summary || '').slice(0, 72))}${(item.description || item.summary || '').length > 72 ? '…' : ''}</span></summary>
           <label class="bulk-description-field">Mô tả<textarea class="bulk-description" rows="2">${escapeHtml(item.description || item.summary || '')}</textarea></label>
@@ -2659,9 +2669,11 @@ function renderBulkItems() {
     });
     row.querySelector('.bulk-overtime')?.addEventListener('change', event => {
       if (draft) { draft.overtime = event.target.checked; draft.autoAllocated = false; }
+      row.querySelector('.bulk-ot-start-field')?.classList.toggle('hidden', !event.target.checked);
       markBulkUserEdited();
       updateBulkTotal();
     });
+    row.querySelector('.bulk-ot-start')?.addEventListener('change', event => { if (draft) draft.overtimeStart = event.target.value; markBulkUserEdited(); });
     row.querySelector('.bulk-remove-btn')?.addEventListener('click', () => {
       state.bulkSelectedKeys.delete(key);
       state.bulkDrafts.delete(key);
@@ -2703,7 +2715,8 @@ async function submitBulkWorklog(event) {
     project: item.project,
     timeSpent: String(item.timeSpent || '').trim(),
     description: String(item.description || item.summary || '').trim(),
-    overtime: false
+    overtime: item.overtime === true,
+    overtimeStart: item.overtime ? item.overtimeStart || '' : ''
   }));
   if (!items.length) return showToast('Chưa có issue để Bulk Logwork.');
   if (items.some(item => !item.timeSpent || !item.description)) return showToast('Vui lòng nhập đủ thời lượng và mô tả cho từng issue.');
@@ -2738,6 +2751,7 @@ async function submitBulkWorklog(event) {
       requestId,
       onProgress: updateLogProgress
     });
+    if (items.some(item => item.overtime && !(data.items || []).some(saved => saved.key === item.key && saved.overtime === true && saved.overtimeVerified === true))) throw new Error('Chưa xác nhận Overtime cho tất cả task. Hãy tải lại lịch/Jira trước khi log lại.');
     finishLogProgress(true);
     for (const item of data.items || []) {
       addRecentIssue({ key: item.key, project: item.project, summary: item.summary });
@@ -3105,7 +3119,7 @@ $('worklogForm').addEventListener('submit', async event => {
   if (!validateDurationFields($('worklogForm'))) return;
   if (singleCapacityExceeded()) {
     updateSingleCapacity();
-    return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm thời lượng hoặc kiểm tra các worklog đã log.');
+    return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm thời lượng hoặc chọn Overtime để log ngoài giờ.');
   }
   const logAndNext = state.logAndNextRequested === true;
   state.logAndNextRequested = false;
@@ -3115,7 +3129,8 @@ $('worklogForm').addEventListener('submit', async event => {
     timeSpent: $('timeSpent').value.trim(),
     date: $('date').value,
     description: $('description').value.trim(),
-    overtime: false
+    overtime: $('overtime').checked,
+    overtimeStart: $('overtime').checked ? $('overtimeStart').value : ''
   };
   const confirmed = await confirmLogAction({
     title: logAndNext ? 'Xác nhận Log & Next?' : 'Xác nhận Logwork?',
@@ -3144,6 +3159,7 @@ $('worklogForm').addEventListener('submit', async event => {
   startLogProgress('single');
   try {
     const data = await api('/api?action=worklog', { method: 'POST', body: JSON.stringify({ ...payload, requestId }), requestId, onProgress: updateLogProgress });
+    if (payload.overtime && (data.overtime !== true || data.overtimeVerified !== true)) throw new Error('Chưa xác nhận Overtime trên Jira. Hãy tải lại lịch/Jira trước khi log lại.');
     finishLogProgress(true);
 
     state.prefs.lastProject = payload.project;
@@ -3178,6 +3194,7 @@ $('worklogForm').addEventListener('submit', async event => {
     $('project').value = '';
     $('description').value = '';
     if ($('overtime')) $('overtime').checked = false;
+    if ($('overtimeStart')) $('overtimeStart').value = '';
     updateSingleOvertimeHint();
     state.currentIssueSummary = '';
     markSelectedIssue('');
