@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.11.3 – Adaptive Fullscreen Calendar, OT and Project Colors.",
+  "description": "Quick Jira Log V1.11.4 – Cool Project Colors and Unified Worklog Editor.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

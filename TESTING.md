@@ -1,4 +1,12 @@
-# Kiểm tra V1.11.3
+# Kiểm tra V1.11.4
+
+## Kiểm tra bổ sung V1.11.4
+
+- `calendar-style-tests.js`: giữ kiểm tra định dạng/OT; 120 màu không trùng mã HSL; ba màu đầu mint/sky/lavender; khoảng cách OKLab giữa 8 màu đầu lớn hơn 0.09. Màu cũ bị thay bằng registry v2.
+- `correction-overtime-tests.js` gọi handler HTTP với Jira giả lập: bật/tắt field, array/boolean/number/option/string, giữ nguyên công tắc không ghi field; kiểm tra giờ OT/giờ thường/cuối tuần, overlap, quyền sở hữu, dữ liệu boolean sai.
+- Kiểm tra field không đọc được thì chưa ghi; field lỗi sau khi sửa worklog thì hoàn tác; lỗi 503 sau khi field đã ghi vẫn thử khôi phục cả hai; hoàn tác thất bại trả `partial: true`, không báo hoàn thành.
+- `correction-parity.cjs`: 315×683, 390×844, 844×390, 1440×900. Năm preset/active state, tăng giảm, không focus input khi mở/chọn preset, không ảnh hưởng bản nháp Logwork mới; bật/tắt OT gửi đúng payload, giữ draft khi lỗi/đổi hướng và màu cập nhật sau lưu; registry cũ được thay; không tràn ngang, nền vẫn inert.
+- Rà ảnh form Sáng/Tối, kiểm tra preset nằm gọn cùng hàng trên mobile; giữ kiểm tra fullscreen/motion/scroll-lock và nghiệp vụ cũ.
 
 ## Kiểm tra bổ sung V1.11.3
 
@@ -63,15 +71,15 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã có. `QJL_QA_OUTPUT` là thư mục lưu ảnh giả lập tùy chọn; mặc định không tạo ảnh. Các fixture dùng localhost 4174, 4176, 4179, 4182, 4184, 4186, 4188 và 4190 rồi đóng khi xong.
+Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã có. `QJL_QA_OUTPUT` là thư mục lưu ảnh giả lập tùy chọn; mặc định không tạo ảnh. Các fixture dùng localhost 4174, 4176, 4179, 4182, 4184, 4186, 4188, 4190 và 4192 rồi đóng khi xong.
 
 ## Kiểm tra sau triển khai trên iPhone thật
 
-1. Kiểm tra đầu trang/footer V1.11.3. Nếu dùng PWA, bấm Cập nhật hoặc tải lại trang sau deploy.
+1. Kiểm tra đầu trang/footer V1.11.4. Nếu dùng PWA, bấm Cập nhật hoặc tải lại trang sau deploy.
 2. Vào Worklog đã log → bấm block. Sheet phải nổi riêng, bàn phím chưa hiện. Chạm Thời lượng/Mô tả để nhập, chạm ngày/giờ để dùng bộ chọn native. Khi sheet mở, thử kéo ngang/dọc ngoài sheet: nền lịch phải đứng yên; cuộn trong sheet vẫn được.
 3. Thu/mở bàn phím, thử cuộn các trường; đảm bảo nút lưu/xóa còn tiếp cận được.
 4. Bấm icon toàn màn hình. Nếu máy chưa tự xoay, tắt khóa xoay rồi xoay ngang. Kiểm tra T2–T6, chọn ngày, Tuần/Tháng, T7/CN và thoát bằng icon.
-5. Mở chi tiết trong fullscreen, sửa một worklog thử với quyền Jira thực tế. Đối chiếu lịch và tổng giờ với Jira.
+5. Mở chi tiết trong fullscreen, chọn preset rồi đổi Overtime và giờ bắt đầu phù hợp trên issue thử nghiệm. Kiểm tra field issue trên Jira, màu các worklog liên quan và lưu lại sau reload. Thử cả bật/tắt, không có quyền sửa field, lỗi mạng và sửa chỉ mô tả. Đối chiếu tổng giờ với Jira.
 
 ## Giới hạn rõ ràng
 
@@ -79,4 +87,4 @@ Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã có. `QJL_QA_OUTP
 - Trình duyệt quyết định việc cho phép fullscreen thật, ẩn thanh trình duyệt và khóa hướng màn hình. App chỉ yêu cầu xoay ngang; khi không hỗ trợ hoặc bị từ chối, dùng giao diện tràn màn hình trong trang và hướng dẫn xoay máy.
 - Tham chiếu API: https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock và https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen .
 - Native date/time có định dạng theo thiết lập ngôn ngữ của máy. Sheet dùng visualViewport để thích ứng bàn phím; cần xác nhận lại trên iPhone thật.
-- Các API ghi Jira, phân bổ giờ, 8h/ngày, 40h/tuần T2–T6 và tiến trình giữ logic bản nền. Đọc lịch sử thêm metadata OverTime. Cờ này ở cấp issue nên không phân biệt được từng worklog giờ thường/OT cùng issue; xem README.
+- Luồng tạo Logwork/Bulk, phân bổ giờ, 8h/ngày, 40h/tuần và tiến trình giữ logic bản nền. API sửa có thêm bật/tắt Overtime ở cấp issue; không phân biệt được OT riêng từng worklog cùng issue. Hai API Jira không có transaction chung: hoàn tác là best effort, lỗi chưa đầy đủ được báo để kiểm tra thủ công; xem README.

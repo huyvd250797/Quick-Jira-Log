@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.11.3</title>
+  <title>Quick Jira Log · V1.11.4</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -24,7 +24,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.11.3</div>
+      <div class="boot-version">V1.11.4</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -33,7 +33,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.11.3</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.11.4</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -219,7 +219,7 @@
         <label class="overtime-toggle">
           <input id="overtime" type="checkbox" />
           <span class="overtime-control" aria-hidden="true"></span>
-          <span class="overtime-copy"><strong>Làm thêm (OT)</strong><small id="overtimeHint">Ngày thường: log từ 17:30 trở đi. Thứ 7/CN: dùng khung giờ ban ngày.</small></span>
+          <span class="overtime-copy"><strong>Overtime</strong><small id="overtimeHint">Ngày thường: log từ 17:30 trở đi. Thứ 7/CN: dùng khung giờ ban ngày.</small></span>
         </label>
 
         <label>Mô tả
@@ -359,11 +359,26 @@
             <input id="correctionWorklogId" type="hidden" />
             <input id="correctionKey" type="hidden" />
             <div class="correction-grid">
-              <label>Ngày<input id="correctionDate" type="date" /></label>
+              <label>Ngày logwork<input id="correctionDate" type="date" /></label>
               <label>Giờ bắt đầu<input id="correctionStart" type="time" step="60" /></label>
-              <label>Thời lượng<input id="correctionTimeSpent" placeholder="1h" /></label>
+              <label class="correction-duration-field">Thời lượng
+                <input id="correctionTimeSpent" placeholder="2h30m" inputmode="text" />
+                <span class="preset-row correction-presets" aria-label="Thời lượng nhanh">
+                  <button type="button" class="correction-preset-btn" data-time="30m">30m</button>
+                  <button type="button" class="correction-preset-btn" data-time="1h">1h</button>
+                  <button type="button" class="correction-preset-btn" data-time="2h">2h</button>
+                  <button type="button" class="correction-preset-btn" data-time="3h">3h</button>
+                  <button type="button" class="correction-preset-btn" data-time="4h">4h</button>
+                </span>
+              </label>
             </div>
-            <label>Mô tả<textarea id="correctionDescription" rows="3"></textarea></label>
+            <label class="overtime-toggle correction-overtime">
+              <input id="correctionOvertime" type="checkbox" aria-describedby="correctionOvertimeHint correctionOvertimeScope" />
+              <span class="overtime-control" aria-hidden="true"></span>
+              <span class="overtime-copy"><strong>Overtime</strong><small id="correctionOvertimeHint"></small></span>
+            </label>
+            <small id="correctionOvertimeScope" class="field-help">Đổi Overtime sẽ áp dụng cho toàn bộ issue Jira.</small>
+            <label>Mô tả<textarea id="correctionDescription" rows="4" placeholder="Mô tả công việc đã thực hiện..."></textarea></label>
             <div class="correction-actions"><button id="deleteCorrectionBtn" class="danger-btn" type="button">XÓA WORKLOG</button><button id="saveCorrectionBtn" class="primary" type="button">LƯU CHỈNH SỬA</button></div>
           </div>
           </div>
@@ -383,7 +398,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.11.3</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.11.4</footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>

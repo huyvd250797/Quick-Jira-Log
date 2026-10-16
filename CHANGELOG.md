@@ -1,5 +1,15 @@
 # Changelog
 
+## V1.11.4 — Cool Project Colors & Unified Worklog Editor
+
+- Bảng màu mới ưu tiên mint/sky/lavender, chọn theo khoảng cách OKLab, đổi bảng màu cũ và giữ lựa chọn bật/tắt.
+- Nhãn Overtime thống nhất ở Logwork, Bulk và form sửa.
+- Form sửa có 5 preset nhanh, tăng/giảm 30 phút, công tắc OT và cùng kiểu trường nhập Logwork.
+- Preset không bật bàn phím và không ghi đè bản nháp Logwork mới.
+- Sửa OT dùng trường issue Jira, chỉ ghi khi đổi công tắc; kiểm tra giờ/overlap/quyền trước ghi.
+- Preflight OT, hoàn tác worklog nếu field thất bại và báo rõ trường hợp hoàn tác chưa đầy đủ.
+- Kiểm tra API bật/tắt/kiểu field/rollback và UI PC/mobile, sáng/tối, giữ nháp/đổi hướng.
+
 ## V1.11.3 — Adaptive Fullscreen, OT & Project Colors
 
 - PWA cho phép xoay ngang/dọc thay vì khóa portrait.

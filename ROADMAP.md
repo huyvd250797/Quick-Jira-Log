@@ -1,5 +1,12 @@
 # Trạng thái V1.11.2
 
+## Đã hoàn thành V1.11.4
+
+- Bảng màu dự án tươi sáng, ưu tiên màu lạnh và tách biệt bằng khoảng cách cảm nhận.
+- Đồng bộ form chi tiết với Logwork: preset giờ nhanh, tăng/giảm, công tắc Overtime.
+- Sửa field OT có preflight/hoàn tác và cảnh báo phạm vi issue.
+- Còn xác minh quyền/field trên Jira thật và bàn phím/xoay trên iPhone thật sau triển khai.
+
 ## Đã hoàn thành V1.11.3
 
 - Fullscreen thích ứng viewport và lưới tự giãn.

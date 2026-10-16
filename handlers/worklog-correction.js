@@ -2,7 +2,7 @@
 
 const { sendJson, readJson, assertSameOrigin, methodNotAllowed } = require('../lib/http');
 const { getSession, clearSessionCookie } = require('../lib/session');
-const { JiraError, getMyself, getIssueWorklogs, updateWorklog, deleteWorklog } = require('../lib/jira');
+const { JiraError, getMyself, getIssueWorklogs, updateWorklog, deleteWorklog, prepareOvertimeUpdate, applyOvertimeUpdate, restoreOvertimeUpdate } = require('../lib/jira');
 const {
   parseTimeSpent,
   jiraStarted,
@@ -53,6 +53,15 @@ module.exports = async function handler(req, res) {
     const start = String(body.start || '').trim();
     const timeSpent = String(body.timeSpent || '').trim();
     const description = String(body.description || '').trim();
+    if ((body.overtime !== undefined && typeof body.overtime !== 'boolean') ||
+        (body.updateOvertime !== undefined && typeof body.updateOvertime !== 'boolean') ||
+        (body.updateOvertime === true && typeof body.overtime !== 'boolean')) {
+      return sendJson(res, 400, { ok: false, error: 'Trạng thái Overtime không hợp lệ.' });
+    }
+    // Only an explicit switch change may edit the issue-level field. Merely opening
+    // and saving a historical worklog must not clear/set Overtime on the issue.
+    const updateOvertime = body.updateOvertime === true;
+    const overtime = body.overtime === true;
     if (!validDate(date) || !validTime(start) || !timeSpent || !description) {
       return sendJson(res, 400, { ok: false, error: 'Vui lòng nhập đúng Date, Start, TimeSpent và Description.' });
     }
@@ -64,22 +73,51 @@ module.exports = async function handler(req, res) {
     const startMinute = hhmmToMinute(start);
     const segment = { start: startMinute, end: startMinute + minutes, minutes };
     const guard = await loadOccupiedRanges(date, [key], me, session, { excludeWorklogIds: [worklogId] });
-    const allowedWindows = isWeekendDate(date)
+    const allowedWindows = updateOvertime ? workWindowsFor(date, overtime) : isWeekendDate(date)
       ? workWindowsFor(date, false)
       : [...workWindowsFor(date, false), ...workWindowsFor(date, true)];
     try { validateScheduledSegments([segment], guard.occupied, allowedWindows); }
     catch (error) {
       if (error.message === 'SEGMENT_OVERLAP') return sendJson(res, 409, { ok: false, error: 'Khoảng giờ sửa bị trùng với worklog khác trong ngày.' });
-      if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') return sendJson(res, 409, { ok: false, error: 'Worklog phải nằm trong 08:00–12:00, 13:30–17:30; ngày Thứ 2–Thứ 6 cho phép OT từ 17:30–23:59.' });
+      if (error.message === 'SEGMENT_OUTSIDE_WORK_WINDOWS') return sendJson(res, 409, { ok: false, error: updateOvertime
+        ? overtime ? 'Overtime ngày thường phải nằm trong 17:30–23:59; cuối tuần dùng 08:00–12:00, 13:30–17:30. Hãy chỉnh giờ bắt đầu phù hợp.' : 'Khi tắt Overtime, worklog phải nằm trong 08:00–12:00 hoặc 13:30–17:30. Hãy chỉnh giờ bắt đầu phù hợp.'
+        : 'Worklog phải nằm trong 08:00–12:00, 13:30–17:30; ngày Thứ 2–Thứ 6 cho phép OT từ 17:30–23:59.' });
       throw error;
     }
 
     const oldParsed = parseJiraStartedAtWorkTimezone(current?.started || '');
+    const overtimePrepared = updateOvertime ? await perf.step('otPreflight', () => prepareOvertimeUpdate(key, session, overtime)) : null;
+    if (overtimePrepared && overtimePrepared.previousValue === undefined) {
+      return sendJson(res, 409, { ok: false, error: 'Không đọc được trạng thái Overtime hiện tại trên Jira; chưa lưu thay đổi. Hãy tải lại rồi thử lại.' });
+    }
     const updated = await perf.step('updateWorklog', () => updateWorklog(key, worklogId, {
       started: jiraStarted(date, startMinute),
       seconds: minutes * 60,
       description
     }, session));
+
+    if (overtimePrepared) {
+      try {
+        await perf.step('applyOvertime', () => applyOvertimeUpdate(overtimePrepared, session));
+      } catch (error) {
+        // Jira has no transaction across these two endpoints. Restore the worklog
+        // if its paired field update fails; ambiguous network/server errors also
+        // require restoring the previous field value.
+        const jobs = [updateWorklog(key, worklogId, {
+          started: current.started,
+          seconds: Number(current.timeSpentSeconds),
+          description: current.comment ?? ''
+        }, session)];
+        if (!error.status || error.status >= 500) jobs.push(restoreOvertimeUpdate(overtimePrepared, session));
+        const rollback = await Promise.allSettled(jobs);
+        const rollbackOk = rollback.every(result => result.status === 'fulfilled' && result.value !== false);
+        await Promise.all([invalidateWorklogCaches(session, date, [key]), oldParsed?.date ? invalidateWorklogCaches(session, oldParsed.date, [key]) : Promise.resolve()]);
+        if (error.status === 401) res.setHeader('Set-Cookie', clearSessionCookie());
+        return sendJson(res, error.status || 502, { ok: false, partial: !rollbackOk,
+          error: rollbackOk ? `Không cập nhật được Overtime; đã hoàn tác worklog. ${error.message || ''}`
+            : 'Không hoàn tác được đầy đủ. Worklog hoặc Overtime có thể đã thay đổi; tải lại lịch và kiểm tra Jira trước khi lưu tiếp.' });
+      }
+    }
 
     const parsed = parseJiraStartedAtWorkTimezone(updated?.started || jiraStarted(date, startMinute));
     const newDate = parsed?.date || date;
@@ -97,6 +135,7 @@ module.exports = async function handler(req, res) {
       start,
       minutes,
       description,
+      overtimeUpdated: updateOvertime,
       performance
     });
   } catch (error) {

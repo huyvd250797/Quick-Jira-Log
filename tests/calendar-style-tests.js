@@ -1,14 +1,18 @@
 'use strict';
-const assert=require('node:assert/strict');const {displayDuration,projectKey,overtimeValue,isOvertime,paletteFor}=require('../lib/calendar-style');
+const assert=require('node:assert/strict');const {displayDuration,projectKey,overtimeValue,isOvertime,paletteFor,colorDistance}=require('../lib/calendar-style');
 assert.equal(JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname,'../manifest.webmanifest'),'utf8')).orientation,'any','installed PWA allows landscape rotation');
 assert.equal(displayDuration(0),'—');assert.equal(displayDuration(480),'8h');assert.equal(displayDuration(30),'30m');assert.equal(displayDuration(90),'1h 30m');assert.equal(displayDuration(-1),'—');
 for(const x of [true,1,'OT','Overtime','Có',{value:'Overtime'},[{value:'Yes'}]])assert(overtimeValue(x));
 for(const x of [false,0,'No','Not Overtime','false',null,{id:'1'}])assert(!overtimeValue(x));
 assert.equal(isOvertime({start:'17:29'}),false);assert.equal(isOvertime({start:'17:30'}),true);assert.equal(isOvertime({date:'2026-10-17',start:'08:00'}),false);assert(isOvertime({start:'08:00',issueOvertime:true}));assert.equal(isOvertime({start:'18:00',overtime:false}),false);
 assert.equal(projectKey({key:'EPU01-12'}),'EPU01');assert.equal(projectKey({project:'<script>'}),'OTHER');
-let registry={};const used=new Set();for(let i=0;i<120;i++){const result=paletteFor(`PROJECT${i}`,registry);registry=result.registry;const c=result.color;assert(c.h>=120&&c.h<=340);const token=`${c.h}:${c.s}`;assert(!used.has(token));used.add(token);assert.deepEqual(paletteFor(`PROJECT${i}`,registry).color,c);}
+let registry={};const used=new Set();for(let i=0;i<120;i++){const result=paletteFor(`PROJECT${i}`,registry);registry=result.registry;const c=result.color;assert(c.h>=120&&c.h<=340);const token=`${c.h}:${c.s}:${c.l}`;assert(!used.has(token));used.add(token);assert.deepEqual(paletteFor(`PROJECT${i}`,registry).color,c);}
 const corrupted=paletteFor('EPU',JSON.parse('{"__proto__":{"h":50,"s":55},"X":{"h":50,"s":55}}'));assert(corrupted.color.h>=120);assert.equal(corrupted.registry.X,undefined);
-console.log('V1.11.3 compact duration, OT classification and distinct persistent project palette passed');
+const first=[];let fresh={};for(let i=0;i<8;i++){const next=paletteFor(`COOL${i}`,fresh);fresh=next.registry;first.push(next.color);}
+assert.deepEqual(first.slice(0,3).map(c=>c.h),[145,210,270]);
+for(let i=0;i<first.length;i++)for(let j=0;j<i;j++)assert(colorDistance(first[i],first[j])>.09,'initial colors must be perceptually separated');
+assert(first.every(c=>c.h<35||c.h>95));
+console.log('V1.11.4 compact duration, OT classification and distinct persistent project palette passed');
 
 const history=require('../handlers/worklog-history');const {createSessionCookie}=require('../lib/session');const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;
 (async()=>{let fieldCalls=0,batchFields=[];process.env.APP_SESSION_SECRET='calendar-style-tests-at-least-32-secret';const cookie=createSessionCookie({mode:'basic',username:'style-user',password:'test-only',me:{name:'style-user'}}).split(';')[0];

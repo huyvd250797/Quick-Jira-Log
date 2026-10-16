@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.11.3';
+const APP_VERSION = '1.11.4';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -8,7 +8,7 @@ const STORAGE = {
   audit: 'quick-jira-log:audit:v1',
   theme: 'quick-jira-log:theme:v1',
   projectColors: 'quick-jira-log:project-colors:v1',
-  projectPalette: 'quick-jira-log:project-palette:v1',
+  projectPalette: 'quick-jira-log:project-palette:v2',
   sessionDate: 'quick-jira-log:session-log-date:v1'
 };
 
@@ -89,6 +89,7 @@ const uiAnimationTimers = new WeakMap();
 const correctionDesktopQuery = window.matchMedia('(min-width: 900px)');
 const correctionPanelHome = $('worklogCorrectionPanel').parentElement;
 let correctionSource = null;
+let correctionInitialOvertime = false;
 let correctionMotion = null;
 let correctionMotionSeq = 0;
 let correctionCloseJob = null;
@@ -1394,7 +1395,7 @@ function calendarAppearance(item) {
     const palette = QuickJiraCalendar.paletteFor(project, state.projectPalette);
     state.projectPalette = palette.registry;
     if (palette.changed) writeStorage(STORAGE.projectPalette, palette.registry);
-    style = `--project-hue:${palette.color.h};--project-saturation:${palette.color.s}%;`;
+    style = `--project-hue:${palette.color.h};--project-saturation:${palette.color.s}%;--project-lightness:${palette.color.l}%;--project-dark-lightness:${(palette.color.l * .6 - 24).toFixed(1)}%;`;
     classes += ' has-project-color';
   }
   return { ot, project, style, classes, badge: ot ? '<span class="ot-ribbon" aria-hidden="true">OT</span>' : '' };
@@ -1867,6 +1868,9 @@ function openCorrection(item) {
   $('correctionStart').value = item.start;
   $('correctionTimeSpent').value = formatHistoryTimeSpent(item.minutes);
   $('correctionTimeSpent')._syncDurationStepper?.();
+  correctionInitialOvertime = QuickJiraCalendar.isOvertime(item);
+  $('correctionOvertime').checked = correctionInitialOvertime;
+  syncCorrectionFields();
   $('correctionDescription').value = item.description || item.summary || '';
   $('correctionTitle').textContent = `Sửa ${item.key}`;
   $('correctionMeta').textContent = `${item.start}–${item.end} · ${formatHistoryTimeSpent(item.minutes)}`;
@@ -2031,6 +2035,19 @@ function showCorrectionFeedback(message) {
   $('correctionFeedback').scrollIntoView({ block: 'nearest' });
 }
 
+function syncCorrectionFields() {
+  const minutes = QuickJiraUi.durationMinutes($('correctionTimeSpent').value);
+  document.querySelectorAll('.correction-preset-btn').forEach(button => {
+    const active = QuickJiraUi.durationMinutes(button.dataset.time) === minutes;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  $('correctionTimeSpent')._syncDurationStepper?.();
+  $('correctionOvertimeHint').textContent = $('correctionOvertime').checked
+    ? `Khung Overtime: ${overtimeWindowLabel($('correctionDate').value)}. Khi đổi loại, hãy chọn giờ bắt đầu phù hợp.`
+    : 'Giờ thường: 08:00–12:00 · 13:30–17:30.';
+}
+
 async function saveCorrection() {
   const payload = {
     key: $('correctionKey').value,
@@ -2038,7 +2055,9 @@ async function saveCorrection() {
     date: $('correctionDate').value,
     start: $('correctionStart').value,
     timeSpent: $('correctionTimeSpent').value.trim(),
-    description: $('correctionDescription').value.trim()
+    description: $('correctionDescription').value.trim(),
+    overtime: $('correctionOvertime').checked,
+    updateOvertime: $('correctionOvertime').checked !== correctionInitialOvertime
   };
   if (!validateDurationFields($('worklogCorrectionPanel'))) return;
   if (!QuickJiraUi.validDate(payload.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(payload.start)) return showCorrectionFeedback('Vui lòng chọn ngày và giờ bắt đầu hợp lệ.');
@@ -2461,7 +2480,7 @@ function renderBulkItems() {
         <label class="bulk-overtime-toggle">
           <input class="bulk-overtime" type="checkbox" ${item.overtime ? 'checked' : ''} />
           <span class="overtime-control" aria-hidden="true"></span>
-          <span class="overtime-copy"><strong>Làm thêm (OT)</strong><small>${escapeHtml(overtimeWindowLabel($('bulkDate')?.value || todayLocal()))}</small></span>
+          <span class="overtime-copy"><strong>Overtime</strong><small>${escapeHtml(overtimeWindowLabel($('bulkDate')?.value || todayLocal()))}</small></span>
         </label>
         <details class="bulk-description-details">
           <summary>Sửa mô tả <span>${escapeHtml((item.description || item.summary || '').slice(0, 72))}${(item.description || item.summary || '').length > 72 ? '…' : ''}</span></summary>
@@ -2713,6 +2732,19 @@ $('timeSpent').addEventListener('change', () => {
   syncSinglePresetState();
   updateSingleCapacity();
 });
+
+document.querySelectorAll('.correction-preset-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    $('correctionTimeSpent').value = button.dataset.time;
+    $('correctionTimeSpent').dispatchEvent(new Event('input', { bubbles: true }));
+    // A preset is a button action; it must not open the mobile keyboard.
+    button.focus({ preventScroll: true });
+  });
+});
+$('correctionTimeSpent').addEventListener('input', syncCorrectionFields);
+$('correctionTimeSpent').addEventListener('change', syncCorrectionFields);
+$('correctionDate').addEventListener('change', syncCorrectionFields);
+$('correctionOvertime').addEventListener('change', syncCorrectionFields);
 
 document.querySelectorAll('.preset-btn').forEach(button => {
   button.addEventListener('click', () => {

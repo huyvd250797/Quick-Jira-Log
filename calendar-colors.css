@@ -5,10 +5,10 @@
 #historyOverlay .week-day-heading.is-complete i { background: #dff3e8; }
 #historyOverlay .week-day-heading.is-complete i b { background: #249b5e; }
 html[data-theme="dark"] #historyOverlay .week-day-heading.is-complete i { background: #173e2b; }
-#historyOverlay .has-project-color { background: hsl(var(--project-hue) var(--project-saturation) 94%); border-color: hsl(var(--project-hue) 45% 72%); border-left-color: hsl(var(--project-hue) 58% 43%); }
-#historyOverlay .has-project-color strong { color: hsl(var(--project-hue) 65% 29%); }
+#historyOverlay .has-project-color { background: hsl(var(--project-hue) var(--project-saturation) var(--project-lightness, 80%)); border-color: hsl(var(--project-hue) 45% 72%); border-left-color: hsl(var(--project-hue) 58% 43%); }
+#historyOverlay .has-project-color strong { color: hsl(var(--project-hue) 70% 20%); }
 #historyOverlay .has-project-color .calendar-event-copy { border-left-color: hsl(var(--project-hue) 58% 43%); }
-html[data-theme="dark"] #historyOverlay .has-project-color { background: hsl(var(--project-hue) calc(var(--project-saturation) - 20%) 22%); border-color: hsl(var(--project-hue) 35% 40%); border-left-color: hsl(var(--project-hue) 65% 68%); }
+html[data-theme="dark"] #historyOverlay .has-project-color { background: hsl(var(--project-hue) calc(var(--project-saturation) - 25%) var(--project-dark-lightness, 24%)); border-color: hsl(var(--project-hue) 35% 40%); border-left-color: hsl(var(--project-hue) 65% 68%); }
 html[data-theme="dark"] #historyOverlay .has-project-color strong { color: hsl(var(--project-hue) 75% 82%); }
 #historyOverlay .is-ot { background: #fff3b0; border-color: #d8b846; border-left-color: #b58a16; color: #493b14; }
 #historyOverlay .is-ot strong { color: #674a04; }
@@ -51,3 +51,12 @@ html[data-theme="dark"] #historyOverlay .has-project-color strong { color: hsl(v
   #historyOverlay.is-calendar-fullscreen .calendar-mode-toolbar { gap: 3px; }
   #historyOverlay.is-calendar-fullscreen .calendar-mode-switch button { padding-left: 8px; padding-right: 8px; }
 }
+/* V1.11.4 — Use the same duration presets, input rhythm and Overtime switch as Logwork. */
+#worklogCorrectionDialog .correction-grid > label.correction-duration-field { width: 100%; max-width: none; }
+#worklogCorrectionDialog .correction-duration-field .duration-stepper { width: min(100%, 232px); }
+#worklogCorrectionDialog .correction-presets { margin-top: 2px; gap: 6px; flex-wrap: wrap; }
+.correction-preset-btn { min-width: 40px; min-height: 34px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--muted); font-size: 12px; font-weight: 650; line-height: 1; cursor: pointer; }
+.correction-preset-btn:hover, .correction-preset-btn.active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+.correction-preset-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+#worklogCorrectionDialog .correction-overtime { margin: 0; }
+#worklogCorrectionDialog #correctionOvertimeScope { margin-top: -6px; line-height: 1.5; }
