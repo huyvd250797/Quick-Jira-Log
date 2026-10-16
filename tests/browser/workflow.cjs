@@ -46,7 +46,7 @@ const ui=require('../../lib/ui-tools');
   await capture(page,`${name}-v111-workflow-dashboard.png`);
   await page.locator(name==='iphone'?'#mobileHistoryBtn':'#historyBtn').click();
   await page.waitForFunction(()=>!state.historyLoading);
-  await page.locator('#historyCalendarViewBtn').click();
+  if(!(await page.locator('#historyCalendarViewBtn').isVisible()))await page.locator('#calendarOptionsBtn').click();await page.locator('#historyCalendarViewBtn').click();
   await page.locator('.week-worklog-block').first().waitFor();
   assert.equal(await page.locator('.week-day-heading').count(),5);
   assert((await page.locator('#calendarWeekSummary').textContent()).includes('33h 0m'));
@@ -99,7 +99,7 @@ const ui=require('../../lib/ui-tools');
   assert((await page.locator('#dashboardTodayRemaining').textContent()).includes('Tạm tính'));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   assert.deepEqual(errors,[]);
-  console.log(name,'V1.11.0 dashboard, week/month, proportional blocks, edit/delete, streaming progress and interrupted response passed');
+  console.log(name,'V1.11.1 dashboard, week/month, proportional blocks, edit/delete, streaming progress and interrupted response passed');
   await context.close();
  }
  await browser.close();await new Promise(r=>server.close(r));

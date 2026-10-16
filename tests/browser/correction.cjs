@@ -27,12 +27,12 @@ const {server}=require('./serve.cjs');
    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
   });
   await page.goto('http://127.0.0.1:4179');await page.locator(desktop?'#historyBtn':'#mobileHistoryBtn').click();await page.waitForFunction(()=>!state.historyLoading);
-  await page.locator('#historyCalendarViewBtn').click();await page.locator('.week-worklog-block').waitFor();await page.waitForTimeout(220);
+  if(!(await page.locator('#historyCalendarViewBtn').isVisible()))await page.locator('#calendarOptionsBtn').click();await page.locator('#historyCalendarViewBtn').click();await page.locator('.week-worklog-block').waitFor();await page.waitForTimeout(220);
   const block=page.locator('.week-worklog-block');
   const scroll=await page.locator('#historyResults').evaluate(e=>e.scrollTop);
   await block.click();await page.locator('#worklogCorrectionPanel').waitFor({state:'visible'});
-  assert.equal(await page.locator('#worklogCorrectionDialog').evaluate(e=>e.open),desktop);
-  assert.equal(await page.locator('#worklogCorrectionPanel').evaluate(e=>e.parentElement.id),desktop?'worklogCorrectionDialog':'historyResults');
+  assert.equal(await page.locator('#worklogCorrectionDialog').evaluate(e=>e.open),true);
+  assert.equal(await page.locator('#worklogCorrectionPanel').evaluate(e=>e.parentElement.id),'worklogCorrectionDialog');
   assert.equal(await page.locator('#correctionKey').inputValue(),'EPU01-2810');
   assert.equal(await page.locator('#correctionDescription').inputValue(),item.description);
   if(desktop){
@@ -56,8 +56,8 @@ const {server}=require('./serve.cjs');
    assert.equal(mutations.at(-1).body.date,'2026-10-13');assert.equal(mutations.at(-1).body.start,'08:30');assert.equal(mutations.at(-1).body.timeSpent,'1h 30m');assert.equal(mutations.at(-1).body.description,'Nội dung đã chỉnh từ popup.');
    await page.locator('.week-worklog-block').click();
    await page.locator('#correctionDescription').fill('Bản nháp giữ khi đổi kích thước.');
-   await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>!document.getElementById('worklogCorrectionDialog').open);
-   assert.equal(await page.locator('#worklogCorrectionPanel').evaluate(e=>e.parentElement.id),'historyResults');
+   await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>document.getElementById('worklogCorrectionDialog').open);
+   assert.equal(await page.locator('#worklogCorrectionPanel').evaluate(e=>e.parentElement.id),'worklogCorrectionDialog');
    assert.equal(await page.locator('#correctionDescription').inputValue(),'Bản nháp giữ khi đổi kích thước.');
    await page.setViewportSize(viewport);await page.waitForFunction(()=>document.getElementById('worklogCorrectionDialog').open);
    assert.equal(await page.locator('#correctionDescription').inputValue(),'Bản nháp giữ khi đổi kích thước.');
@@ -71,17 +71,17 @@ const {server}=require('./serve.cjs');
    fail=false;page.once('dialog',d=>d.accept());await page.locator('#deleteCorrectionBtn').click();await page.waitForFunction(()=>!state.historyLoading&&!document.getElementById('worklogCorrectionDialog').open);assert.equal(item,null);
    assert.equal(await page.locator('#worklogCorrectionPanel').evaluate(e=>e.parentElement.id),'historyResults');
   }else{
-   assert.equal(await page.locator('#correctionIssueSummary').isVisible(),false);assert.equal(await page.locator('#correctionTitle').innerText(),'Sửa EPU01-2810');
+   assert.equal(await page.locator('#correctionIssueSummary').isVisible(),true);assert.equal(await page.locator('#correctionTitle').innerText(),'Chi tiết worklog · EPU01-2810');
    await page.locator('#correctionTimeSpent').fill('1h 30m');await page.locator('#saveCorrectionBtn').click();await page.waitForFunction(()=>!state.historyLoading);await page.locator('#worklogCorrectionPanel').waitFor({state:'hidden'});assert.equal(mutations.at(-1).body.timeSpent,'1h 30m');
   }
   // Capture popup on desktop and inline form on mobile with a fresh fixture.
   item={id:'log-2',key:'EPU01-2810',date:'2026-10-12',start:'08:00',end:'09:00',minutes:60,summary:'Hướng dẫn & hỗ trợ xuất mẫu khảo sát giảng viên',description:'Nội dung chi tiết worklog, có thể sửa trực tiếp hoặc xóa sau khi xác nhận.'};
-  await page.locator('#historyCalendarViewBtn').click();await page.locator('#calendarDate').fill('2026-10-12');await page.locator('#calendarDate').dispatchEvent('change');await page.locator('#calendarWeekBtn').click();await page.waitForFunction(()=>!state.historyLoading);await page.locator('#calendarRefreshBtn').click();await page.waitForFunction(()=>!state.historyLoading);
+  if(!(await page.locator('#historyCalendarViewBtn').isVisible()))await page.locator('#calendarOptionsBtn').click();await page.locator('#historyCalendarViewBtn').click();await page.locator('#calendarDate').fill('2026-10-12');await page.locator('#calendarDate').dispatchEvent('change');await page.locator('#calendarWeekBtn').click();await page.waitForFunction(()=>!state.historyLoading);await page.locator('#calendarRefreshBtn').click();await page.waitForFunction(()=>!state.historyLoading);
   await page.locator('.week-worklog-block').click();
   for(const theme of ['light','dark']){await page.evaluate(t=>applyTheme(t),theme);await page.waitForTimeout(220);await capture(page,`${viewport.width}-v111-correction-${theme}.png`);}
   await page.locator('#cancelCorrectionBtn').click();await page.locator('#closeHistoryBtn').click();await page.locator('#historyOverlay').waitFor({state:'hidden'});
   assert.equal(await page.locator('#worklogCorrectionDialog').evaluate(e=>e.open),false);
-  assert.deepEqual(errors,[]);console.log('Popup/inline correction passed',viewport);await context.close();
+  assert.deepEqual(errors,[]);console.log('Popup/sheet correction passed',viewport);await context.close();
  }
  await browser.close();await new Promise(r=>server.close(r));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});

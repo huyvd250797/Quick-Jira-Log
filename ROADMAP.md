@@ -1,3 +1,7 @@
+# Trạng thái V1.11.1
+
+Đã bổ sung bottom sheet chi tiết mobile, bỏ tự bật bàn phím khi mở, tăng diện tích lịch và thêm chế độ toàn màn hình/ngang theo yêu cầu. Các roadmap mở rộng bên dưới giữ làm tham khảo lịch sử; phiên bản này không thay đổi nghiệp vụ Jira.
+
 # Trạng thái V1.11.0
 
 Đã triển khai gói Professional UI & Calendar First theo kế hoạch thống nhất: nền giao diện, các màn PC/mobile và kiểm tra hồi quy. Phiên bản này tập trung vào trải nghiệm, không thay đổi API Jira hoặc cơ chế tính giờ. Chưa kích hoạt các chức năng mở rộng của roadmap lịch sử bên dưới.

@@ -1,5 +1,16 @@
 # Changelog
 
+## V1.11.1 — Mobile Worklog Sheet & Fullscreen Calendar
+
+- Chi tiết worklog mobile chuyển thành native dialog dạng bottom sheet; PC giữ popup.
+- Bỏ tự focus vào thời lượng khi mở/đổi hướng màn hình; chạm trường mới nhập.
+- Sheet rộng, nội dung cuộn, tiêu đề và lưu/xóa cố định; thích ứng visual viewport khi bàn phím thay đổi.
+- Thu gọn thanh lịch mobile, chuyển Danh sách/Lịch vào icon tùy chọn; giữ tải lại, chọn ngày, Tuần/Tháng, T7/CN và tổng giờ.
+- Thêm icon toàn màn hình với Native Fullscreen/landscape lock nếu được hỗ trợ; dự phòng chế độ tràn màn hình trong trang nếu bị từ chối.
+- Điều hướng ngang gọn, 5 ngày vừa màn 844px; giữ lịch và vị trí cuộn khi thoát.
+- Thêm kiểm tra tự động bottom sheet, focus, xoay màn hình, fullscreen, native/denied/unsupported và giữ nháp.
+
+
 ## V1.11.0 — Professional UI & Calendar First
 
 - Mặc định mở Lịch tuần hiện tại, tự tải và giữ tìm KEY khi chuyển chế độ.

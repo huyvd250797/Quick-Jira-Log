@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.11.0';
+const APP_VERSION = '1.11.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -38,6 +38,10 @@ const state = {
   historyView: 'calendar',
   calendarMode: 'week',
   calendarWeekends: false,
+  calendarFullscreen: false,
+  calendarNativeFullscreen: false,
+  calendarFullscreenSeq: 0,
+  calendarScrollBeforeFullscreen: null,
   dashboardSeq: 0,
   dashboardDate: '',
   dashboardUpdated: 0,
@@ -1192,6 +1196,7 @@ function openHistory() {
 }
 
 function closeHistory() {
+  void exitCalendarFullscreen();
   closeCorrection();
   closeOverlay('historyOverlay');
 }
@@ -1539,7 +1544,8 @@ function syncCalendarControls() {
   if (weekly && (state.historyLoading || !state.historyLoaded || state.historyError)) $('calendarWeekSummary').innerHTML = '<strong>— <small>/ 40h</small></strong><span>Chưa xác định tổng giờ</span>';
   $('calendarWeekendBtn').classList.toggle('hidden', !weekly);
   $('calendarWeekendBtn').setAttribute('aria-pressed', String(state.calendarWeekends));
-  $('calendarWeekendBtn').textContent = state.calendarWeekends ? 'Ẩn T7/CN' : 'Hiện T7/CN';
+  $('calendarWeekendBtn').textContent = 'T7/CN';
+  $('calendarWeekendBtn').setAttribute('aria-label', state.calendarWeekends ? 'Ẩn thứ 7 và chủ nhật' : 'Hiện thứ 7 và chủ nhật');
   $('calendarHelp').textContent = weekly ? 'Chiều cao block theo đúng thời lượng · Bấm block để xem, sửa hoặc xóa · Cuộn ngang để xem đủ ngày trên điện thoại.' : 'Số giờ trong ô là tổng worklog đã ghi. Chọn ngày để xem chi tiết.';
   return { date, weekly };
 }
@@ -1592,6 +1598,9 @@ function renderWorklogHistory() {
   $('historyListFilters').classList.toggle('hidden', calendar);
   $('refreshWorklogHistoryBtn').classList.toggle('hidden', calendar);
   $('historyOverlay').classList.toggle('is-calendar-view', calendar);
+  $('calendarFullscreenBtn').classList.toggle('hidden', !calendar);
+  $('calendarOptionsBtn').classList.toggle('hidden', !calendar);
+  $('calendarOptionsBtn').setAttribute('aria-expanded', String($('historyOverlay').classList.contains('calendar-options-open')));
   $('calendarRefreshBtn').disabled = state.historyLoading;
   $('calendarControls').classList.toggle('hidden', !calendar);
   if (calendar) syncCalendarControls();
@@ -1714,6 +1723,8 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
 }
 
 function setHistoryView(view) {
+  if (view !== 'calendar') void exitCalendarFullscreen();
+  $('historyOverlay').classList.remove('calendar-options-open');
   if (state.historyView === view && state.historyLoaded) return;
   state.historyView = view;
   renderWorklogHistory();
@@ -1723,6 +1734,62 @@ function setHistoryView(view) {
 function moveHistoryMonth(delta) {
   $('historyDate').value = delta === 0 ? vietnamToday() : state.calendarMode === 'week' ? QuickJiraUi.shiftDate($('historyDate').value || vietnamToday(), delta * 7) : QuickJiraUi.shiftMonth($('historyDate').value || vietnamToday(), delta);
   void loadWorklogHistory({ quiet: true });
+}
+
+function syncCalendarFullscreenButton() {
+  const button = $('calendarFullscreenBtn');
+  button.setAttribute('aria-pressed', String(state.calendarFullscreen));
+  button.setAttribute('aria-label', state.calendarFullscreen ? 'Thoát lịch toàn màn hình' : 'Xem lịch toàn màn hình');
+  button.title = button.getAttribute('aria-label');
+  $('historyOverlay').classList.toggle('is-calendar-fullscreen', state.calendarFullscreen);
+}
+
+async function enterCalendarFullscreen() {
+  if (state.calendarFullscreen || state.historyView !== 'calendar') return;
+  const sequence = ++state.calendarFullscreenSeq;
+  const results = $('historyResults');
+  state.calendarScrollBeforeFullscreen = { top: results.scrollTop, left: results.scrollLeft };
+  state.calendarFullscreen = true;
+  $('historyOverlay').classList.remove('calendar-options-open');
+  document.activeElement?.blur?.();
+  syncCalendarFullscreenButton();
+  $('calendarFullscreenBtn').focus({ preventScroll: true });
+  let orientationLocked = false;
+  try {
+    // Fullscreen the document so native worklog dialogs stay in the same top layer.
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen();
+      if (sequence !== state.calendarFullscreenSeq || !state.calendarFullscreen) {
+        if (!state.calendarFullscreen) await document.exitFullscreen?.();
+        else state.calendarNativeFullscreen = true;
+        return;
+      }
+      state.calendarNativeFullscreen = true;
+    }
+    if (sequence === state.calendarFullscreenSeq && state.calendarFullscreen && screen.orientation?.lock) {
+      try { await screen.orientation.lock('landscape'); orientationLocked = true; } catch { /* CSS immersive mode remains usable. */ }
+    }
+  } catch { /* iPhone and restricted contexts still get an edge-to-edge calendar. */ }
+  if (sequence !== state.calendarFullscreenSeq || !state.calendarFullscreen) {
+    if (!state.calendarFullscreen && orientationLocked) { try { screen.orientation?.unlock?.(); } catch {} }
+    return;
+  }
+  if (!orientationLocked && window.innerHeight > window.innerWidth) showToast('Đã mở lịch toàn màn hình. Xoay máy ngang để xem rộng hơn; tắt khóa xoay nếu cần.');
+}
+
+async function exitCalendarFullscreen({ nativeEnded = false } = {}) {
+  if (!state.calendarFullscreen) return;
+  ++state.calendarFullscreenSeq;
+  state.calendarFullscreen = false;
+  const owned = state.calendarNativeFullscreen;
+  state.calendarNativeFullscreen = false;
+  syncCalendarFullscreenButton();
+  try { screen.orientation?.unlock?.(); } catch { /* Not supported on every browser. */ }
+  if (owned && !nativeEnded && document.fullscreenElement) {
+    try { await document.exitFullscreen(); } catch { /* Local immersive mode already closed. */ }
+  }
+  const scroll = state.calendarScrollBeforeFullscreen;
+  requestAnimationFrame(() => { if (!state.calendarFullscreen && scroll) $('historyResults').scrollTo(scroll.left, scroll.top); });
 }
 
 function openCorrection(item) {
@@ -1741,28 +1808,28 @@ function openCorrection(item) {
   $('correctionFeedback').classList.add('hidden');
   showAnimated($('worklogCorrectionPanel'));
   syncCorrectionPresentation();
-  $('correctionTimeSpent').focus({ preventScroll: true });
-  requestAnimationFrame(() => {
-    if ($('worklogCorrectionPanel').classList.contains('hidden')) return;
-    if (!$('worklogCorrectionDialog').open) $('worklogCorrectionPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  // Focus a non-input immediately: opening details must never summon the mobile keyboard.
+  $('cancelCorrectionBtn').focus({ preventScroll: true });
 }
 
 function syncCorrectionPresentation() {
   const panel = $('worklogCorrectionPanel');
   if (panel.classList.contains('hidden') || panel.classList.contains('qjl-closing')) return;
   const dialog = $('worklogCorrectionDialog');
-  if (correctionDesktopQuery.matches) {
-    if (!dialog.open) {
-      dialog.append(panel);
-      dialog.showModal();
-    }
-    $('correctionTitle').textContent = `Chi tiết worklog · ${$('correctionKey').value}`;
-  } else {
-    if (dialog.open) dialog.close();
-    if (panel.parentElement !== correctionPanelHome) correctionPanelHome.append(panel);
-    $('correctionTitle').textContent = `Sửa ${$('correctionKey').value}`;
+  if (!dialog.open) {
+    dialog.append(panel);
+    dialog.showModal();
   }
+  $('correctionTitle').textContent = `Chi tiết worklog · ${$('correctionKey').value}`;
+  syncCorrectionViewport();
+}
+
+function syncCorrectionViewport() {
+  const viewport = window.visualViewport;
+  const height = viewport?.height || window.innerHeight;
+  const inset = Math.max(0, window.innerHeight - height - (viewport?.offsetTop || 0));
+  $('worklogCorrectionDialog').style.setProperty('--correction-vvh', `${height}px`);
+  $('worklogCorrectionDialog').style.setProperty('--correction-keyboard-inset', `${inset}px`);
 }
 
 function closeCorrection({ restoreFocus = true } = {}) {
@@ -2528,6 +2595,17 @@ $('calendarDate').addEventListener('change', () => {
   $('historyDate').value = $('calendarDate').value;
   void loadWorklogHistory({ quiet: true });
 });
+$('calendarFullscreenBtn').addEventListener('click', () => { void (state.calendarFullscreen ? exitCalendarFullscreen() : enterCalendarFullscreen()); });
+$('calendarOptionsBtn').addEventListener('click', () => {
+  const open = $('historyOverlay').classList.toggle('calendar-options-open');
+  $('calendarOptionsBtn').setAttribute('aria-expanded', String(open));
+});
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && state.calendarNativeFullscreen) void exitCalendarFullscreen({ nativeEnded: true });
+});
+window.visualViewport?.addEventListener('resize', syncCorrectionViewport);
+window.visualViewport?.addEventListener('scroll', syncCorrectionViewport);
+window.addEventListener('resize', syncCorrectionViewport);
 $('calendarRefreshBtn').addEventListener('click', () => loadWorklogHistory({ quiet: true, force: true }));
 $('historyDate').addEventListener('change', () => loadWorklogHistory({ quiet: true }));
 $('togglePasswordBtn').addEventListener('click', () => setPasswordVisible($('password').type === 'password'));
@@ -2566,10 +2644,7 @@ correctionDesktopQuery.addEventListener('change', () => {
   const panel = $('worklogCorrectionPanel');
   if (panel.classList.contains('hidden') || panel.classList.contains('qjl-closing')) return;
   syncCorrectionPresentation();
-  requestAnimationFrame(() => {
-    if (!$('worklogCorrectionDialog').open) panel.scrollIntoView({ block: 'nearest' });
-    $('correctionTimeSpent').focus({ preventScroll: true });
-  });
+  syncCorrectionViewport();
 });
 $('saveCorrectionBtn').addEventListener('click', saveCorrection);
 $('deleteCorrectionBtn').addEventListener('click', deleteCurrentCorrection);
@@ -2595,7 +2670,10 @@ document.addEventListener('keydown', event => {
     return;
   }
   if (!$('plannerOverlay')?.classList.contains('hidden')) return closePlanner();
-  if (!$('historyOverlay')?.classList.contains('hidden')) return closeHistory();
+  if (!$('historyOverlay')?.classList.contains('hidden')) {
+    if (state.calendarFullscreen) { event.preventDefault(); void exitCalendarFullscreen(); return; }
+    return closeHistory();
+  }
   if (!$('settingsOverlay')?.classList.contains('hidden')) closeSettings();
 });
 

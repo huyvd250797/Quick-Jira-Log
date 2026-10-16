@@ -1,23 +1,26 @@
-# Kiểm tra V1.11.0
+# Kiểm tra V1.11.1
 
-## Phạm vi và kết quả
+## Kết quả và phạm vi
 
-- `npm test`: các bộ kiểm tra logic/API hiện có đều đạt, gồm phân bổ giờ, OT, xác thực, cache, idempotency, truy vấn lịch sử, mốc tuần và tiến trình HTTP streaming.
-- Kiểm tra trình duyệt Chromium headless bằng Jira giả lập, không dùng tài khoản thật.
-- Desktop: 1920×1080, 1440×900, 1366×768, 1024×600, 900×720.
-- Mobile mô phỏng: 315×683, 390×844, 430×932; màn hình ngang 844×390. Luồng nghiệp vụ có thêm cấu hình thiết bị iPhone 13.
-- Giao diện Sáng/Tối được chụp và rà soát sau khi trạng thái đã ổn định; ảnh QA chỉ dùng nội bộ, không kèm source.
+- `npm test`: các bộ kiểm tra logic/API hiện có đạt, gồm xác thực, lịch sử, cache/idempotency, phân bổ giờ/OT, mốc tuần, tiến trình HTTP streaming và xử lý mất phản hồi.
+- Kiểm tra giao diện bằng Chromium headless và API Jira giả lập. Không dùng tài khoản Jira thật.
+- Giữ các bộ kiểm tra bố cục, thời lượng và nghiệp vụ trước; cập nhật kỳ vọng mobile thành dialog dạng bottom sheet.
+- Bộ mới `mobile-calendar.cjs` chạy ở 315×683, 390×844, 430×932, 844×390, 667×375 và 1440×900; rà cả Sáng/Tối.
+- Kiểm tra bố cục chung còn gồm 1920×1080, 1024×600 và 900×720; ô giờ Bulk có thêm 1366×768.
 
-| Bộ kiểm tra | Các hành vi đã xác minh |
+| Nhóm | Đã xác minh |
 |---|---|
-| `layout.cjs` | Mở mặc định Lịch tuần/ngày Việt Nam; ẩn bộ lọc Danh sách; giữ KEY khi đổi chế độ; mở lại về tuần hiện tại; điều hướng vừa màn; cột giờ và tiêu đề ngày cố định; tối đa một vùng cuộn dọc; toolbar ổn định khi tải; khôi phục vị trí cuộn khi tải lại; lỗi có Thử lại; dữ liệu thiếu báo Tạm tính; đổi Tuần/Tháng; không tràn ngang trang |
-| `correction.cjs` | Popup PC/form dưới lịch trên mobile; focus trong popup; mở lại nhanh rồi nhập không bị lấy mất focus; Escape/nền ngoài; lỗi mô tả trống; tăng/giảm 30m; lưu, lỗi lưu, thử lại; xác nhận xóa, hủy và lỗi xóa; cập nhật lịch; chuyển PC/mobile giữ nội dung nháp |
-| `duration.cjs` | Đo chiều rộng chữ `3h 30m`, `12h 30m`, `16h` so với chiều rộng nhập thực tế; preset/tăng giảm đồng bộ nháp; lỗi thời lượng sai ngay cạnh trường và xóa lỗi khi nhập đúng; không tràn trang; Sáng/Tối |
-| `workflow.cjs` | Tổng ngày/tuần/cuối tuần; chiều cao block 30m/1h/2h đúng tỷ lệ; sửa/xóa cập nhật dashboard; tuần giao tháng; ghi đơn và Bulk; tiến trình/ETA; mất phản hồi không báo 100%; dashboard lỗi và dữ liệu thiếu |
+| Bottom sheet | Mở bằng block lịch; nội dung và tên công việc đầy đủ; panel nằm trong dialog, không nằm dưới lịch; mobile rộng gần hết màn hình, PC giữ popup |
+| Bàn phím/focus | Khi mở, phần tử đang focus là nút Đóng, không phải input/textarea; chạm trường mới chuyển focus để nhập; đổi hướng giữ bản nháp và không gọi autofocus vào trường |
+| Sửa/xóa | Thời lượng tăng/giảm; sửa nội dung, ngày/giờ; lỗi giữ dữ liệu để thử lại; lưu cập nhật lịch/dashboard; xóa có xác nhận, hủy/lỗi xóa xử lý đúng |
+| Diện tích lịch | Bộ điều khiển vừa chiều ngang màn hình nhỏ; thu gọn Danh sách/Lịch vào icon tùy chọn; tiêu đề ngày/cột giờ cố định; một vùng cuộn; normal/landscape/fullscreen không làm tràn trang |
+| Toàn màn hình | Icon không chứa chữ; bật/tắt có aria-label; giữ kỳ xem, khôi phục cuộn; mở worklog trong fullscreen; Escape thoát chế độ xem rồi vẫn giữ cửa sổ lịch |
+| API trình duyệt | Giả lập Fullscreen + lock landscape thành công, thoát từ hệ thống, API thiếu và request bị từ chối; dùng Chromium Fullscreen API thật để kiểm tra vào/thoát nếu môi trường cho phép |
+| Nghiệp vụ cũ | Tổng ngày/tuần/cuối tuần, Tuần/Tháng, dữ liệu thiếu, lỗi/Thử lại, 30m/1h/2h đúng tỷ lệ, ghi đơn/Bulk, tiến trình và mất phản hồi không báo hoàn tất |
 
-Các bộ kiểm tra cũ dùng đối chiếu chuỗi CSS/nhãn đã được cập nhật theo phiên bản, hàng dashboard hiện tại và nhãn tiếng Việt. Kiểm tra tương tác trình duyệt bổ sung xác minh hành vi thực tế.
+Ảnh QA được dùng để kiểm tra nội bộ, không kèm source. Với cấu hình 315×683, vùng lịch thường cao khoảng 520px; ở fullscreen ngang 844×390, lịch cao trên 320px và đủ 5 cột T2–T6 cùng lúc. Con số thực tế thay đổi theo vùng an toàn, thanh trình duyệt, font và phiên bản hệ điều hành.
 
-## Chạy lại logic
+## Chạy kiểm tra logic
 
 Yêu cầu Node.js 24.x:
 
@@ -25,9 +28,9 @@ Yêu cầu Node.js 24.x:
 npm test
 ```
 
-## Chạy lại giao diện với dữ liệu giả lập
+## Chạy kiểm tra giao diện
 
-Chỉ cần cài Playwright trên máy kiểm tra. Thư viện này không phải dependency khi triển khai ứng dụng:
+Playwright chỉ phục vụ phát triển, không phải dependency khi triển khai Vercel:
 
 ```bash
 npm install --no-save --package-lock=false playwright@1.62.1
@@ -35,22 +38,20 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-Nếu đã có Chromium, đặt biến `QJL_CHROMIUM_PATH` trỏ đến file thực thi. Đặt `QJL_QA_OUTPUT` nếu muốn lưu ảnh mô phỏng; mặc định bài kiểm tra không tạo ảnh. Các cổng localhost 4174, 4176, 4179 và 4182 cần đang trống. Mỗi fixture chạy và đóng cùng bộ kiểm tra.
+Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã có. `QJL_QA_OUTPUT` là thư mục lưu ảnh giả lập tùy chọn; mặc định không tạo ảnh. Các fixture dùng localhost 4174, 4176, 4179, 4182, 4184 và 4186 rồi đóng khi xong.
 
-Các bài kiểm tra này phục vụ phát triển, không bắt buộc chạy trên Vercel và không cần cấu hình tài khoản Jira. Thay đổi `ui.css` thì cần kiểm tra cả Sáng/Tối, màn nhỏ/ngang và đưa phiên bản mới vào `sw.js`.
+## Kiểm tra sau triển khai trên iPhone thật
 
-## Kiểm tra sau deploy
+1. Kiểm tra đầu trang/footer V1.11.1. Nếu dùng PWA, bấm Cập nhật hoặc tải lại trang sau deploy.
+2. Vào Worklog đã log → bấm block. Sheet phải nổi riêng, bàn phím chưa hiện. Chạm Thời lượng/Mô tả để nhập, chạm ngày/giờ để dùng bộ chọn native.
+3. Thu/mở bàn phím, thử cuộn các trường; đảm bảo nút lưu/xóa còn tiếp cận được.
+4. Bấm icon toàn màn hình. Nếu máy chưa tự xoay, tắt khóa xoay rồi xoay ngang. Kiểm tra T2–T6, chọn ngày, Tuần/Tháng, T7/CN và thoát bằng icon.
+5. Mở chi tiết trong fullscreen, sửa một worklog thử với quyền Jira thực tế. Đối chiếu lịch và tổng giờ với Jira.
 
-1. Xác nhận đầu trang/footer là V1.11.0; dùng nút Cập nhật của PWA nếu còn cache cũ.
-2. Đăng nhập, kiểm tra dashboard với giờ trên Jira.
-3. Mở Worklog đã log: phải tự vào tuần hiện tại; đổi ngày/Tuần/Tháng và thử cuộn.
-4. PC bấm block mở popup; mobile mở form dưới lịch. Dùng một worklog thử để kiểm tra lưu/xóa với quyền Jira của tài khoản.
-5. Kiểm tra bàn phím, zoom và vùng an toàn trên iPhone Safari thật.
+## Giới hạn rõ ràng
 
-## Giới hạn
-
-- Chưa kiểm tra trên Jira thật, quyền tài khoản thực tế, iPhone Safari/WebKit vật lý hoặc triển khai Vercel thật trong lượt này.
-- Mốc 8h/ngày, 40h/tuần T2–T6 và cách tính/ghi Jira giữ như bản nền; đây không phải phiên bản thay đổi nghiệp vụ.
-- Lịch tuần giữ tỷ lệ một phút bằng một pixel; block rất ngắn chỉ có thể hiển thị mã task, nội dung đầy đủ nằm trong tên truy cập/popup/form.
-- Ô tháng trên màn hẹp có thể xuống dòng thời lượng. Số giờ chưa tải đầy đủ phải đọc là tạm tính.
-- Safari có cách hiển thị ngày/giờ native tùy thiết lập ngôn ngữ của máy.
+- Chưa kiểm tra trên iPhone Safari/WebKit vật lý, bàn phím phần mềm thật, Jira thật hoặc triển khai Vercel thật trong lượt này. Kiểm tra focus trên Chromium giả lập không thay thế kiểm tra bàn phím iOS.
+- Trình duyệt quyết định việc cho phép fullscreen thật, ẩn thanh trình duyệt và khóa hướng màn hình. App chỉ yêu cầu xoay ngang; khi không hỗ trợ hoặc bị từ chối, dùng giao diện tràn màn hình trong trang và hướng dẫn xoay máy.
+- Tham chiếu API: https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock và https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen .
+- Native date/time có định dạng theo thiết lập ngôn ngữ của máy. Sheet dùng visualViewport để thích ứng bàn phím; cần xác nhận lại trên iPhone thật.
+- API Jira, phân bổ giờ, 8h/ngày, 40h/tuần T2–T6, OT và tiến trình giữ logic bản nền.
