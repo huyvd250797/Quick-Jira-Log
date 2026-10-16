@@ -1,5 +1,18 @@
 # Changelog
 
+## V1.11.0 — Professional UI & Calendar First
+
+- Mặc định mở Lịch tuần hiện tại, tự tải và giữ tìm KEY khi chuyển chế độ.
+- Chuẩn hóa theme, màu chữ, kích thước, nhãn form, dashboard và Sub-task.
+- Thời lượng Bulk 208px; preset tách hàng, kiểm tra lỗi ngay cạnh trường.
+- Lịch có cột giờ cố định và một vùng cuộn trên PC/mobile; PC dùng popup, mobile giữ form dưới lịch.
+- Giữ vị trí cuộn sau tải lại/sửa/xóa cùng kỳ; có nút Thử lại, báo dữ liệu tạm tính, toolbar ổn định khi tải/lỗi.
+- Footer Bulk gọn, dễ tiếp cận; cho phóng to trang mobile và focus bàn phím rõ.
+- Gom 155 khai báo CSS trùng, gỡ khóa kích thước input PC, đưa ui.css vào PWA shell.
+- Sửa đặt focus trễ khi mở nhanh popup chi tiết để không ngắt thao tác nhập.
+- Giữ logic API Jira, phân bổ giờ, OT, xác nhận và tiến trình hiện có.
+
+
 ## V1.10.5 — Desktop Worklog Details Popup
 
 - Hiển thị cùng form chi tiết/sửa/xóa trong native dialog trên PC từ 900px; mobile giữ form inline.

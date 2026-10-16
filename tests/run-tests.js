@@ -126,13 +126,13 @@ assert(WORKLOG_SUBTASK_JQL.includes('(timespent is EMPTY OR timespent = 0)'));
 console.log('V1.0.1 fixed Sub-task JQL tests passed.');
 
 const packageJson = require('../package.json');
-assert.equal(packageJson.version, '1.10.5');
-console.log('V1.10.5 version test passed.');
+assert.equal(packageJson.version, '1.11.0');
+console.log('V1.11.0 version test passed.');
 
 const styles = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
-assert.match(styles, /#filterCard\s*\{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/s);
-assert.match(styles, /#worklogCard\s*\{[^}]*grid-column:\s*2;[^}]*grid-row:\s*3;/s);
-assert.match(styles, /#bulkCard\s*\{[^}]*grid-column:\s*1 \/ -1;[^}]*grid-row:\s*4;/s);
+assert.match(styles, /#filterCard\s*\{[^}]*grid-row:\s*4;/s);
+assert.match(styles, /#worklogCard\s*\{[^}]*grid-row:\s*4;/s);
+assert.match(styles, /#bulkCard\s*\{[^}]*grid-row:\s*5;/s);
 assert.match(styles, /\.issue-main\s*\{[^}]*flex:\s*1 1 auto;/s);
 console.log('V1.0.6 stable desktop grid/alignment tests passed.');
 
@@ -167,12 +167,12 @@ assert(appJs.includes('openHistory'));
 console.log('V1.2.0 streamlined navigation & bulk selection tests passed.');
 
 // V1.3.2 - mobile taskbar visible, login labels, OT controls.
-assert(indexHtml.includes('<label>Username'));
-assert(indexHtml.includes('<label>Password'));
+assert(indexHtml.includes('<label>Tên đăng nhập'));
+assert(indexHtml.includes('<label>Mật khẩu'));
 assert(indexHtml.includes('id="overtime"'));
 assert(appJs.includes('overtime: $(\'overtime\')?.checked === true'));
 assert(appJs.includes('bulk-overtime'));
-assert(styles.includes('.mobile-taskbar:not(.hidden) { display: grid; }'));
+assert.match(styles, /\.mobile-taskbar:not\(\.hidden\)\s*\{[^}]*display: grid;/);
 console.log('V1.3.2 mobile taskbar + overtime UI tests passed.');
 
 
@@ -485,10 +485,10 @@ const bulkHandlerV180 = fs.readFileSync(path.join(root, 'handlers', 'bulk-worklo
 const dayAuditHandlerV180 = fs.readFileSync(path.join(root, 'handlers', 'day-audit.js'), 'utf8');
 const historyHandlerV180 = fs.readFileSync(path.join(root, 'handlers', 'worklog-history.js'), 'utf8');
 const swV180 = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
-assert(indexHtml.includes('V1.10.5'));
+assert(indexHtml.includes('V1.11.0'));
 assert(indexHtml.includes('id="appUpdateBanner"'));
 assert(indexHtml.includes('id="appUpdateBtn"'));
-assert(appJs.includes("const APP_VERSION = '1.10.5'"));
+assert(appJs.includes("const APP_VERSION = '1.11.0'"));
 assert(appJs.includes('dayAuditCache: new Map()'));
 assert(appJs.includes('apiInflight: new Map()'));
 assert(appJs.includes("event.key.toLowerCase() === 'k'"));
@@ -501,7 +501,7 @@ assert(dayAuditHandlerV180.includes('DAY_AUDIT_CACHE_MS'));
 assert(dayAuditHandlerV180.includes('cacheGet(cacheKey)'));
 assert(historyHandlerV180.includes('HISTORY_CACHE_MS'));
 assert(historyHandlerV180.includes('mapWithConcurrency(keys, 12'));
-assert(swV180.includes("quick-jira-log-v1.10.5-shell"));
+assert(swV180.includes("quick-jira-log-v1.11.0-shell"));
 assert(swV180.includes("event.data?.type === 'SKIP_WAITING'"));
 assert(!swV180.includes('.then(() => self.skipWaiting())'));
 console.log('Performance + reliability hardening regression tests passed.');

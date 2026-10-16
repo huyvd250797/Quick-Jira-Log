@@ -1,0 +1,294 @@
+/* V1.11.0 — Shared interface system. Component rules live here; styles.css is the consolidated base. */
+:root {
+  --bg: #f3f6fa;
+  --card: #fff;
+  --text: #20324b;
+  --muted: #596b82;
+  --line: #dce4ee;
+  --primary: #2164ca;
+  --primary2: #1953ad;
+  --primary-soft: #edf3fd;
+  --shadow: 0 4px 18px rgba(23, 44, 75, .05);
+  --shadow-soft: 0 2px 8px rgba(23, 44, 75, .03);
+  --qjl-focus-ring: 0 0 0 3px rgba(33, 100, 202, .18);
+  --radius-control: 10px;
+  --radius-panel: 16px;
+}
+html[data-theme="dark"] {
+  --bg: #0c1421; --card: #142033; --text: #e0e9f6;
+  --muted: #a4b5ce; --line: #2d3d55; --primary: #8ab9ff;
+  --primary2: #2864bc; --primary-soft: #1a3152;
+  --shadow: 0 4px 18px rgba(0,0,0,.15);
+  --shadow-soft: none;
+}
+body { background: var(--bg); font-size: 14px; line-height: 1.5; }
+button, input, textarea, select { letter-spacing: normal; }
+button { font-weight: 650; }
+button:focus-visible, a:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+label { font-size: 13px; font-weight: 650; color: var(--text); letter-spacing: normal; min-width: 0; }
+input, textarea, select { border-radius: var(--radius-control); }
+textarea { line-height: 1.5; }
+.primary { background: #2164ca; box-shadow: none; font-weight: 700; letter-spacing: normal; border-radius: var(--radius-control); }
+.primary:hover:not(:disabled) { background: #1953ad; }
+.secondary, .soft-btn, .icon-btn, .header-tool-btn, .header-icon-btn { border-radius: var(--radius-control); box-shadow: none; }
+.card, .status-card, .result, .hours-card { border-color: var(--line); border-radius: var(--radius-panel); box-shadow: var(--shadow); }
+.card-title h2, .settings-head h2 { font-weight: 700; }
+.brand-icon { box-shadow: none; }
+.brand-title-row h1 { font-size: 24px; font-weight: 750; }
+.version-badge { font-size: 11px; font-weight: 650; }
+.status-card { padding: 10px 14px; }
+.status-left > div { display: flex; align-items: center; flex-wrap: wrap; gap: 5px 12px; }
+.status-left strong { font-size: 13px; }
+.status-left small, .connection-state { font-size: 12px; }
+.connection-state { position: static; }
+.dashboard-heading { margin-bottom: 10px; }
+.dashboard-heading h2 { font-size: 16px; font-weight: 700; }
+.dashboard-heading p, .dashboard-state { font-size: 12px; }
+.dashboard-state:empty { display: none; }
+.hours-card { padding: 14px 18px; }
+.hours-card > span { font-size: 13px; font-weight: 650; }
+.hours-card strong { font-size: 30px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.hours-card small, .hours-card > p { font-size: 13px; }
+.hours-card > p { font-weight: 600; }
+.hours-card > small:empty { display: none; }
+.issue-row { border-radius: 10px; padding: 12px; box-shadow: none; }
+.issue-row:hover { transform: none; box-shadow: none; background: var(--primary-soft); }
+.issue-row.is-active, .issue-row.is-selected { border-color: var(--primary); background: var(--primary-soft); }
+.issue-key-line strong { font-size: 14px; font-weight: 700; }
+.issue-summary { font-size: 14px; line-height: 1.5; font-weight: 500; -webkit-line-clamp: 2; }
+.issue-meta, .status-pill, .count-pill, .issue-pick { font-size: 12px; }
+.issue-meta { color: var(--muted); }
+.filter-head-actions { flex-shrink: 0; }
+.filter-state, .history-state, .calendar-empty { font-size: 14px; }
+.search-wrap input { padding-left: 38px; }
+.work-hours-pill, .selected-issue-meta, .field-help { font-size: 12px; font-weight: 500; }
+.selected-issue-summary { font-size: 14px; line-height: 1.5; font-weight: 500; }
+.selected-issue-top strong { font-size: 16px; }
+.bulk-capacity-card { box-shadow: none; border-radius: 12px; }
+.bulk-capacity-head, .bulk-capacity-breakdown, .bulk-capacity-status, .bulk-capacity-ot { font-size: 12px; line-height: 1.5; }
+.bulk-capacity-head strong { font-size: 14px; }
+.overtime-copy strong { font-size: 13px; font-weight: 650; }
+.overtime-copy small { font-size: 12px; line-height: 1.5; }
+.preset-btn, .bulk-preset-btn { min-width: 40px; min-height: 34px; font-size: 12px; font-weight: 650; }
+.preset-row, .bulk-preset-row { flex-wrap: wrap; gap: 6px; }
+.duration-stepper { border-radius: var(--radius-control); min-width: 192px; max-width: 100%; }
+.duration-stepper > input { padding: 10px 12px; font-size: 16px; font-weight: 600; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.duration-step-controls { flex-basis: 44px; width: 44px; }
+.duration-step-controls button { min-height: 24px; }
+#bulkCard .bulk-item { padding: 16px; border-radius: 12px; }
+#bulkCard .bulk-item-title strong { font-size: 14px; }
+#bulkCard .bulk-item-title > span { font-size: 14px; line-height: 1.5; font-weight: 500; -webkit-line-clamp: 2; }
+#bulkCard .bulk-item-title small { font-size: 12px; }
+#bulkCard .bulk-item-fields { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+#bulkCard .bulk-time-field { grid-template-columns: minmax(0, 1fr); grid-template-areas: "label" "input" "presets"; gap: 6px; }
+#bulkCard .bulk-time-field > .duration-stepper { grid-area: input; width: 208px; }
+#bulkCard .bulk-time-field .bulk-preset-row { grid-area: presets; flex-wrap: wrap; overflow: visible; gap: 6px; }
+#bulkCard .bulk-time-field .field-error { grid-column: 1 / -1; }
+#bulkCard .bulk-description-details { grid-column: 1 / -1; }
+#bulkCard .bulk-description-details summary { font-size: 13px; font-weight: 650; padding: 9px 0; }
+#bulkCard .bulk-description-details summary span { font-size: 12px; font-weight: 400; }
+#bulkCard .bulk-selection-count { font-size: 12px; }
+#bulkCard .bulk-actions { gap: 12px; }
+.field-error { font-size: 12px; font-weight: 500; line-height: 1.5; color: var(--danger); }
+.duration-stepper:has([aria-invalid="true"]) { border-color: var(--danger); }
+/* Calendar controls are outside the results scroll on every viewport. */
+#historyOverlay .settings-head p { font-size: 12px; }
+#historyOverlay .history-view-switch button { font-size: 13px; font-weight: 650; }
+#historyOverlay .history-summary { font-size: 12px; min-height: 18px; }
+#historyOverlay .history-state { font-size: 13px; line-height: 1.5; }
+.history-retry-btn { margin-left: 12px; min-height: 36px; padding: 7px 12px; }
+#historyOverlay .history-toolbar label, #historyOverlay .history-search-btn { font-size: 13px; }
+#historyOverlay .calendar-date-field { flex: 0 1 154px; width: 154px; }
+.calendar-date-field > span { font-size: 12px; }
+.calendar-period-heading strong { font-size: 13px; font-weight: 650; }
+.calendar-mode-switch button, .calendar-today-btn { font-size: 13px; font-weight: 650; }
+.calendar-week-summary > span { font-size: 12px; }
+.weekly-inner { min-width: calc(60px + var(--week-days) * 170px); }
+.week-grid-heading, .week-grid-body { grid-template-columns: 60px repeat(var(--week-days), minmax(0, 1fr)); }
+.week-time-heading { position: sticky; left: 0; z-index: 7; background: var(--card); font-size: 12px; border-right: 1px solid var(--line); }
+.week-time-ruler { position: sticky; left: 0; z-index: 4; border-right: 1px solid var(--line); }
+.week-time-ruler span { font-size: 12px; right: 6px; }
+.week-day-heading { min-height: 72px; gap: 5px; }
+.week-day-heading > span { font-size: 12px; }
+.week-day-heading > strong { font-size: 14px; }
+.week-day-heading small { font-size: 12px; }
+.week-day-heading.is-selected { box-shadow: inset 0 -3px var(--primary); }
+.week-day-heading.is-today > span { color: var(--primary); font-weight: 750; }
+.week-worklog-block { padding: 5px 7px; gap: 2px; }
+.week-worklog-block strong { font-size: 12px; line-height: 1.25; font-weight: 700; }
+.week-worklog-block > span { font-size: 11px; line-height: 1.3; }
+.week-worklog-block small { font-size: 12px; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.week-worklog-block.is-short { padding: 2px 5px; gap: 0; }
+.week-worklog-block.is-short > span { font-size: 10px; line-height: 1.1; }
+.week-worklog-block.is-tiny > span { display: none; }
+.week-worklog-block.is-tiny strong { font-size: 11px; line-height: 1; }
+.calendar-day small { font-size: 12px; }
+.calendar-day strong { font-size: 14px; }
+.calendar-day.is-today .calendar-day-number { display: grid; place-items: center; min-width: 24px; height: 24px; border-radius: 50%; color: #fff; background: #2164ca; text-decoration: none; }
+.calendar-event-copy strong, .calendar-day-heading strong { font-size: 14px; }
+.calendar-event-copy > span, .calendar-event-time, .calendar-day-heading > span { font-size: 13px; }
+.calendar-event-copy em, .calendar-event-time small { font-size: 12px; }
+#historyOverlay .worklog-history-key small, #historyOverlay .worklog-history-desc { font-size: 14px; line-height: 1.5; }
+#worklogCorrectionDialog label, #worklogCorrectionDialog .correction-head small { font-size: 13px; }
+#worklogCorrectionDialog .correction-grid { grid-template-columns: 1fr 1fr; }
+#worklogCorrectionDialog .correction-grid > label:last-child { grid-column: 1 / -1; max-width: 232px; }
+.correction-feedback { font-size: 13px; }
+.log-progress-panel > p, .log-progress-time { font-size: 12px; }
+.log-progress-panel { border-radius: 14px; }
+.app-update-banner { bottom: max(16px, env(safe-area-inset-bottom)); }
+body:has(.log-progress-panel:not(.hidden)) .app-update-banner,
+body:has(.settings-overlay:not(.hidden)) .app-update-banner { display: none; }
+body:has(.log-progress-panel:not(.hidden)) .toast { bottom: 200px; }
+@media (min-width: 900px) {
+  .shell { width: min(100%, 1280px); padding-top: 22px; row-gap: 14px; }
+  .brand { min-height: 52px; }
+  .status-card { min-height: 46px; }
+  .card { padding: 20px; }
+  #filterCard { min-height: 360px; }
+  #worklogCard .worklog-primary-fields { grid-template-columns: minmax(150px, .8fr) minmax(208px, 1fr); align-items: start; }
+  #worklogCard .preset-row { margin-top: 2px; }
+  .search-wrap input { padding-left: 38px; }
+  #historyOverlay.is-calendar-view .settings-head { min-height: 62px; }
+  #historyOverlay.is-calendar-view .history-view-switch button { font-size: 13px; }
+  #historyOverlay.is-calendar-view #calendarControls { grid-template-columns: minmax(200px, 1fr) auto minmax(370px, 1.3fr); gap: 8px 14px; min-height: 54px; }
+  #historyOverlay.is-calendar-view .calendar-date-field { width: 154px; flex-basis: 154px; }
+  #historyOverlay.is-calendar-view .calendar-date-field input { font-size: 14px; height: 38px; min-height: 38px; }
+  #historyOverlay.is-calendar-view .calendar-nav-btn, #historyOverlay.is-calendar-view .calendar-today-btn { height: 38px; }
+  #historyOverlay.is-calendar-view .calendar-mode-switch button { font-size: 13px; min-height: 32px; }
+  #historyOverlay.is-calendar-view #calendarWeekendBtn { font-size: 12px; }
+  #historyOverlay.is-calendar-view .calendar-week-summary > span { font-size: 12px; }
+  #historyOverlay.is-calendar-view #historySummary { font-size: 12px; }
+  #historyOverlay.is-calendar-view .weekly-inner { min-width: calc(60px + var(--week-days) * 138px); }
+  #historyOverlay.is-calendar-view .week-day-heading { min-height: 68px; }
+  #historyOverlay.is-calendar-view .week-worklog-block strong { font-size: 12px; }
+  #historyOverlay.is-calendar-view .week-worklog-block > span { font-size: 11px; }
+  #historyOverlay.is-calendar-view .week-worklog-block small { font-size: 12px; }
+}
+@media (min-width: 900px) and (max-width: 1199px) {
+  #historyOverlay.is-calendar-view #calendarControls { grid-template-columns: minmax(220px, 1fr) auto; }
+  #historyOverlay.is-calendar-view .calendar-mode-toolbar { grid-column: 1 / -1; }
+  #historyOverlay.is-calendar-view .calendar-week-summary { min-height: 42px; }
+}
+@media (max-width: 899px) {
+  .brand-title-row h1 { font-size: 21px; }
+  .status-left > div { gap: 2px 8px; }
+  .status-left small { max-width: 190px; }
+  .hours-card { padding: 12px; }
+  .hours-card strong { font-size: clamp(21px, 5.3vw, 28px); }
+  .hours-card small, .hours-card > p, .hours-card > span { font-size: 12px; }
+  .dashboard-heading p { font-size: 12px; }
+  .work-hours-pill { font-size: 11px; white-space: normal; }
+  #historyOverlay .settings-head p { display: none; }
+  #historyOverlay .settings-head { padding: 10px 12px; }
+  #historyOverlay .settings-head h2 { font-size: 18px; }
+  #historyOverlay .tool-modal-body { padding-top: 8px; gap: 6px; }
+  #historyOverlay .calendar-controls { display: grid; grid-template-columns: 1fr; gap: 5px; padding-bottom: 6px; }
+  #calendarControls .calendar-navigation { justify-content: flex-start; align-items: center; padding: 0; gap: 5px; }
+  #calendarControls .calendar-date-field { width: 150px; flex: 0 1 150px; }
+  #calendarControls .calendar-date-field > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  #calendarControls .calendar-date-field input { min-height: 40px; height: 40px; padding: 5px 7px; font-size: 16px; }
+  .calendar-nav-btn, .calendar-today-btn { height: 40px; min-width: 36px; padding: 0 8px; }
+  .calendar-today-btn { font-size: 12px; white-space: nowrap; }
+  .calendar-mode-toolbar { gap: 6px; }
+  .calendar-mode-switch button { min-height: 36px; padding: 7px 15px; }
+  #calendarWeekendBtn { font-size: 12px; }
+  #calendarControls .calendar-week-summary { flex: 1 0 100%; min-height: 24px; padding: 0; gap: 4px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-start; }
+  .calendar-week-summary > strong { font-size: 16px; }
+  .calendar-week-summary > span { font-size: 12px; }
+  .calendar-week-summary > span::before { content: "· "; }
+  #calendarHelp { display: none; }
+  #historyOverlay .history-results { overflow: auto; padding: 0 0 6px; border: 1px solid var(--line); border-radius: 10px; }
+  #historyOverlay .weekly-scroll { overflow: visible; max-height: none; border: 0; border-radius: 0; scrollbar-gutter: auto; }
+  #historyOverlay .worklog-calendar { min-width: 0; }
+  #historyOverlay #monthlyCalendar { padding: 8px; }
+  #historyOverlay #calendarDayHeading, #historyOverlay #calendarAgenda { margin: 0 8px; }
+  #historyOverlay #worklogCorrectionPanel { margin: 10px 8px; }
+  .calendar-day { padding: 6px 3px; min-height: 78px; }
+  .calendar-day strong { font-size: 12px; letter-spacing: -.2px; }
+  .calendar-day small { font-size: 10px; }
+  .calendar-day-number { font-size: 12px; }
+  #historyOverlay .correction-grid { grid-template-columns: 1fr 1fr; }
+  #historyOverlay .correction-grid > label:last-child { grid-column: 1 / -1; max-width: 232px; }
+  #bulkCard.mobile-bottom-sheet .bulk-time-field > .duration-stepper { width: min(100%, 208px); }
+  #bulkCard.mobile-bottom-sheet .bulk-item-title > span { font-size: 14px; }
+  .mobile-taskbar-btn { min-height: 44px; font-size: 12px; }
+  .log-progress-panel { bottom: max(84px, calc(env(safe-area-inset-bottom) + 72px)); }
+  body.mobile-editor-open .log-progress-panel { bottom: max(14px, env(safe-area-inset-bottom)); }
+  body:has(.log-progress-panel:not(.hidden)) .toast { bottom: 270px; }
+}
+@media (max-height: 560px) and (max-width: 899px) and (min-width: 600px) {
+  #historyOverlay .settings-head { padding-top: 6px; padding-bottom: 6px; }
+  #historyOverlay.is-calendar-view .history-controls { position: absolute; top: 8px; right: 62px; width: 230px; }
+  #historyOverlay.is-calendar-view .settings-head { padding-right: 300px; min-height: 48px; }
+  #historyOverlay.is-calendar-view .history-view-switch { width: auto; }
+  #historyOverlay .calendar-controls { grid-template-columns: minmax(180px, 1fr) auto; gap: 4px 10px; }
+  #calendarControls .calendar-mode-toolbar { grid-column: 1 / -1; }
+  #calendarControls .calendar-week-summary { flex: 1; min-height: 0; justify-content: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hours-meter > span { transition: none; }
+}
+/* Content weights and labels are explicit so legacy compact rules cannot shrink them. */
+.week-worklog-block { font-weight: 500; }
+.week-worklog-block > span { font-weight: 500; }
+.week-worklog-block small { font-weight: 400; }
+#bulkCard .bulk-time-field > span:first-child,
+#bulkCard .bulk-header-date > span,
+#bulkCard .bulk-redistribute-btn,
+#worklogCard .worklog-primary-fields > label { font-size: 13px; font-weight: 650; }
+#worklogCard .selected-issue-summary { font-size: 14px; font-weight: 500; }
+#bulkCard .bulk-capacity-head, #worklogCard .bulk-capacity-head,
+#bulkCard .bulk-capacity-breakdown, #worklogCard .bulk-capacity-breakdown,
+#bulkCard .bulk-capacity-status, #worklogCard .bulk-capacity-status { font-size: 12px; font-weight: 500; }
+#bulkCard .bulk-capacity-head strong, #worklogCard .bulk-capacity-head strong { font-size: 14px; font-weight: 700; }
+@media (max-width: 899px) {
+  #historyOverlay.is-calendar-view #historySummary { display: none; }
+  #historyOverlay .worklog-history-time strong { font-size: 13px; }
+  #historyOverlay .worklog-history-time span { font-size: 12px; }
+}
+.week-worklog-block.is-short { padding: 1px 5px; }
+.week-worklog-block.is-short strong { font-size: 12px; line-height: 13px; }
+.week-worklog-block.is-short > span { font-size: 10px; line-height: 11px; }
+#bulkCard .bulk-footer { position: sticky; bottom: -20px; z-index: 5; padding: 12px 20px 20px; margin: 0 -20px -20px; border-top: 1px solid var(--line); background: var(--card); display: grid; gap: 12px; }
+#bulkCard .bulk-summary { padding: 0; border: 0; background: transparent; font-size: 13px; }
+#bulkCard .bulk-summary strong { font-size: 18px; }
+#bulkCard .bulk-actions { position: static; margin: 0; padding: 0; box-shadow: none; background: none; }
+@media (max-width: 899px) {
+  #bulkCard.mobile-bottom-sheet .bulk-footer { bottom: -16px; margin: 0 -15px -16px; padding: 10px 15px max(16px, env(safe-area-inset-bottom)); }
+  #bulkCard.mobile-bottom-sheet .bulk-actions { position: static; margin: 0; padding: 0; box-shadow: none; background: none; grid-template-columns: 1fr 1.5fr; }
+  #bulkCard.mobile-bottom-sheet .bulk-actions .primary { order: initial; }
+}
+@media (max-height: 500px) and (max-width: 899px) {
+  #bulkCard.mobile-bottom-sheet .bulk-footer { position: static; }
+}
+@media (max-height: 560px) and (max-width: 899px) and (min-width: 600px) {
+  #historyOverlay.is-calendar-view .history-controls { z-index: 8; }
+}
+@media (max-width: 899px) {
+  #bulkCard.mobile-bottom-sheet .bulk-header-controls { display: grid; grid-template-columns: 154px minmax(0, 1fr); align-items: end; }
+  #bulkCard.mobile-bottom-sheet .bulk-header-date { width: 154px; min-width: 154px; }
+  #bulkCard.mobile-bottom-sheet .bulk-header-date > span { white-space: nowrap; font-size: 12px; }
+  #bulkCard.mobile-bottom-sheet .bulk-header-date input { font-size: 16px; padding: 8px; }
+  #bulkCard.mobile-bottom-sheet .bulk-title-meta { min-width: 0; }
+  #bulkCard.mobile-bottom-sheet .bulk-title-meta .work-hours-pill { display: none; }
+  #bulkCard.mobile-bottom-sheet .bulk-selection-count { font-size: 11px; }
+  #bulkCard.mobile-bottom-sheet .bulk-redistribute-btn { font-size: 11px; }
+}
+.calendar-day strong { max-width: 100%; overflow-wrap: anywhere; line-height: 1.3; }
+@media (max-width: 899px) {
+  #historyOverlay .calendar-controls { grid-template-columns: minmax(0, 1fr); }
+  #calendarControls .calendar-navigation, .calendar-period-heading { min-width: 0; }
+}
+@media (max-width: 359px) {
+  #calendarControls .calendar-date-field { width: 132px; flex: 0 1 132px; }
+  #calendarControls .calendar-nav-btn { min-width: 32px; width: 32px; padding: 0 5px; }
+  #calendarControls .calendar-today-btn { font-size: 11px; padding: 0 6px; }
+}
+/* Switch themes without a flash of pale text on the previous control background. */
+#historyOverlay button, #historyOverlay input { transition: none; }
+@media (max-width: 359px) {
+  #calendarControls .calendar-period-heading { min-height: 32px; }
+  #calendarControls .calendar-period-heading strong { font-size: 12px; white-space: nowrap; }
+  #calendarControls .calendar-today-btn { position: absolute; right: 42px; top: 0; width: 56px; height: 32px; }
+  #calendarControls .calendar-date-field { flex: 1 1 150px; width: auto; }
+}

@@ -1,0 +1,39 @@
+const fs=require('node:fs');
+async function capture(page,name){if(!process.env.QJL_QA_OUTPUT)return;fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:require('node:path').join(process.env.QJL_QA_OUTPUT,require('node:path').basename(name))});}
+const {chromium,devices}=require('playwright'),assert=require('node:assert/strict'),path=require('path');
+const {server}=require('./serve.cjs');
+(async()=>{await new Promise(r=>server.listen(4182,'127.0.0.1',r));const browser=await chromium.launch({...(process.env.QJL_CHROMIUM_PATH?{executablePath:process.env.QJL_CHROMIUM_PATH}:{}),headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
+for(const viewport of [{width:1920,height:1080},{width:1440,height:900},{width:1024,height:600},{width:900,height:720},{width:844,height:390},{width:390,height:844},{width:315,height:683}]){
+const desktop=viewport.width>=900;const context=await browser.newContext({viewport,serviceWorkers:'block',timezoneId:'Asia/Ho_Chi_Minh'});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+await page.addInitScript(()=>{const D=Date;window.Date=class extends D{constructor(...a){super(...a.length?a:['2026-10-16T02:00:00Z']);}static now(){return D.parse('2026-10-16T02:00:00Z');}};});
+let fail=false,partial=false,slow=false;
+const items=[{id:'1',key:'EPU01-2835',date:'2026-10-16',start:'08:00',end:'11:30',minutes:210,summary:'Kiểm tra và hỗ trợ công tác quản lý lịch giảng dạy, xác nhận đầy đủ các thông tin với phòng đào tạo',description:'Phân tích yêu cầu và kiểm tra các tình huống nghiệp vụ'},{id:'2',key:'HIUCR-1210',date:'2026-10-15',start:'13:30',end:'14:00',minutes:30,summary:'Họp trao đổi với phòng đào tạo'},{id:'3',key:'EPU01-2836',date:'2026-10-14',start:'08:00',end:'10:00',minutes:120,summary:'Phân tích yêu cầu điều chỉnh chương trình đào tạo'}];
+await page.route('**/api?*',async route=>{const u=new URL(route.request().url()),a=u.searchParams.get('action');let status=200,data={ok:true};
+if(a==='status')data={ok:true,authenticated:true,user:{displayName:'Boss',username:'boss'}};
+if(a==='subtasks')data={ok:true,issues:items.map(x=>({...x,project:'EPU01',status:'In Progress'}))};
+if(a==='day-audit')data={ok:true,regularOccupiedMinutes:0,occupiedMinutes:0,freeMinutes:480,occupied:[],available:[]};
+if(a==='worklog-history'){if(slow)await new Promise(r=>setTimeout(r,500)); if(fail){status=502;data={ok:false,error:'Jira tạm lỗi — vui lòng thử lại.'};}else data={ok:true,items:items.filter(x=>x.date>=u.searchParams.get('date')&&x.date<=(u.searchParams.get('endDate')||u.searchParams.get('date'))),skipped:partial?[{key:'MISSING-1'}]:[]};}
+await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});});
+await page.goto('http://127.0.0.1:4182');await page.waitForFunction(()=>!document.body.classList.contains('booting'));await page.waitForTimeout(300);
+assert(!(await page.locator('meta[name="viewport"]').getAttribute('content')).includes('user-scalable=no'));
+await page.locator(desktop?'#historyBtn':'#mobileHistoryBtn').click();await page.waitForFunction(()=>state.historyLoaded&&!state.historyLoading);
+assert.equal(await page.evaluate(()=>state.historyView),'calendar');assert.equal(await page.evaluate(()=>state.calendarMode),'week');assert.equal(await page.locator('#calendarDate').inputValue(),'2026-10-16');assert.equal(await page.locator('#historyListFilters').isVisible(),false);
+await page.waitForTimeout(300);
+const controlsFit=await page.locator('#calendarControls').evaluate(e=>{const r=e.getBoundingClientRect();return [...e.querySelectorAll('button,input')].filter(x=>x.getClientRects().length).every(x=>{const b=x.getBoundingClientRect();return b.right<=r.right+1&&b.left>=r.left-1;});});assert(controlsFit,'Calendar controls must fit width');
+const top=await page.locator('#calendarControls').evaluate(e=>e.getBoundingClientRect().top);
+const before=await page.locator('#historyResults').evaluate(e=>e.getBoundingClientRect().toJSON());
+await page.locator('#historyResults').evaluate(e=>{e.scrollTop=170;e.scrollLeft=100;});await page.waitForTimeout(150);
+const g=await page.evaluate(()=>{const ids=['historyResults','weeklyCalendar'];const r=document.getElementById('historyResults').getBoundingClientRect(),t=document.querySelector('.week-time-ruler').getBoundingClientRect(),h=document.querySelector('.week-grid-heading').getBoundingClientRect();return {rulerLeft:t.left,left:r.left,headingTop:h.top,top:r.top,scrollers:[...document.querySelectorAll('#historyResults,#historyResults *')].filter(e=>['auto','scroll'].includes(getComputedStyle(e).overflowY)&&e.scrollHeight>e.clientHeight+1).map(e=>e.id||e.className)};});
+assert(Math.abs(g.rulerLeft-g.left)<3,JSON.stringify(g));assert(Math.abs(g.headingTop-g.top)<3,JSON.stringify(g));assert(g.scrollers.length<=1,JSON.stringify(g));assert.equal(await page.locator('#calendarControls').evaluate(e=>e.getBoundingClientRect().top),top);
+for(const theme of ['light','dark']){await page.evaluate(t=>applyTheme(t),theme);await page.waitForTimeout(220);await capture(page,`qa/v111-layout-${viewport.width}-${theme}.png`);}
+// Loading must not collapse the fixed toolbar or totals row.
+const saved=await page.locator('#historyResults').evaluate(e=>({top:e.scrollTop,left:e.scrollLeft}));
+slow=true;await page.locator('#calendarRefreshBtn').click();await page.waitForFunction(()=>state.historyLoading);assert(Math.abs((await page.locator('#historyResults').boundingBox()).y-before.y)<3);await page.waitForFunction(()=>!state.historyLoading);await page.waitForTimeout(80);const restored=await page.locator('#historyResults').evaluate(e=>({top:e.scrollTop,left:e.scrollLeft}));assert(Math.abs(restored.top-saved.top)<2);assert(Math.abs(restored.left-saved.left)<2);slow=false;
+fail=true;await page.locator('#calendarRefreshBtn').click();await page.waitForFunction(()=>!!state.historyError&&!state.historyLoading);assert(await page.locator('.history-retry-btn').isVisible());assert.equal(await page.locator('#calendarDate').isVisible(),true);
+fail=false;await page.locator('.history-retry-btn').click();await page.waitForFunction(()=>state.historyLoaded&&!state.historyLoading);assert.equal(await page.locator('.week-day-heading').count(),5);
+partial=true;await page.locator('#calendarRefreshBtn').click();await page.waitForFunction(()=>!!state.historyNotice&&!state.historyLoading);assert((await page.locator('#calendarWeekSummary').textContent()).includes('Tạm tính'));partial=false;
+await page.locator('#calendarMonthBtn').click();await page.waitForFunction(()=>!state.historyLoading);assert.equal(await page.locator('.calendar-day').count(),31);
+await page.locator('#historyListViewBtn').click();await page.waitForFunction(()=>!state.historyLoading);await page.locator('#historyKey').fill('EPU01-2835');await page.locator('#historyCalendarViewBtn').click();await page.waitForFunction(()=>!state.historyLoading);await page.locator('#historyListViewBtn').click();assert.equal(await page.locator('#historyKey').inputValue(),'EPU01-2835');
+await page.locator('#closeHistoryBtn').click();await page.locator(desktop?'#historyBtn':'#mobileHistoryBtn').click();await page.waitForFunction(()=>!state.historyLoading);assert.equal(await page.evaluate(()=>state.historyView),'calendar');assert.equal(await page.evaluate(()=>state.calendarMode),'week');
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);console.log('Layout/defaults/sticky/range/loading/error/partial passed',viewport);await context.close();
+}await browser.close();await new Promise(r=>server.close(r));})().catch(e=>{console.error(e);server.close();process.exit(1)});

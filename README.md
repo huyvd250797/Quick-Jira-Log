@@ -1,22 +1,30 @@
-# Quick Jira Log V1.10.5 — Desktop Worklog Details Popup
-
-Chi tiết worklog trên PC hiển thị trong popup, phát triển từ V1.10.4. Source triển khai Vercel với cấu hình hiện có.
+# Quick Jira Log V1.11.0 — Professional UI & Calendar First
 
 © 2026 HuyVo. All rights reserved.
 
-## Cải tiến V1.10.5
+## Cải tiến V1.11.0
 
-- PC từ 900px: bấm block lịch tuần hoặc worklog trong danh sách chi tiết ngày để mở popup; không cuộn lịch xuống form sửa bên dưới.
-- Popup hiển thị mã task, tên công việc đầy đủ, khung giờ, ngày, thời lượng và mô tả; cho phép chỉnh ngày/giờ/thời lượng/mô tả rồi lưu, hoặc xóa sau xác nhận.
-- Nút Sửa trong chế độ Danh sách trên PC cũng dùng cùng popup.
-- Đóng bằng nút Đóng, Escape hoặc bấm nền bên ngoài; giữ vị trí cuộn của lịch và trả focus về worklog. Tab/Shift+Tab nằm trong popup.
-- Lỗi lưu/xóa hiển thị ngay trong popup, giữ nội dung đang sửa để thử lại. Sau lưu/xóa thành công, làm mới lịch và tổng giờ như trước.
-- Mobile dưới 900px giữ form chi tiết bên dưới và giao diện TimeSpent V1.10.4. Đổi kích thước PC/mobile khi đang sửa chuyển cùng form, giữ nội dung nháp.
-- Sau triển khai, bấm CẬP NHẬT trên PWA hoặc tải lại trang để nhận bản V1.10.5.
+- Mỗi lần mở **Worklog đã log** sẽ vào **Lịch → Tuần hiện tại**, tự tải theo ngày Việt Nam. Danh sách vẫn dùng để tra cứu ngày/KEY; KEY được giữ khi chuyển qua lại trong cửa sổ.
+- PC tận dụng chiều ngang với thanh điều hướng gọn, ngày đủ ngắn và một vùng cuộn lịch. Tiêu đề ngày cố định; bấm worklog mở popup xem/sửa/xóa.
+- Mobile giữ form sửa dưới lịch. Cột giờ cố định khi kéo ngang, tiêu đề ngày cố định khi cuộn dọc; thanh chuyển Tuần/Tháng và chọn ngày nằm ngoài vùng cuộn. Khi mở tuần mới, điện thoại đưa ngày đang chọn vào vùng nhìn nếu ngày đó có trong lưới.
+- Ô thời lượng Bulk rộng 208px trên PC/mobile, preset nằm riêng, tăng/giảm mỗi lần 30 phút. Các giá trị `3h 30m`, `12h 30m` hiển thị đủ. Dữ liệu nhập sai có lỗi cạnh ô và vẫn được giữ để sửa.
+- Chuẩn hóa màu xanh dịu, độ tương phản Sáng/Tối, viền, bo góc, khoảng cách và phân cấp chữ. Nội dung chính ưu tiên 14–16px; thông tin phụ thường 12–13px. Các block ngắn và ô tháng trên màn nhỏ rút gọn để giữ tỷ lệ thời gian.
+- Dashboard, Sub-task, log đơn/Bulk, chi tiết worklog được đồng bộ nhãn tiếng Việt và kích thước. Footer Bulk giữ tổng giờ và nút thao tác dễ tiếp cận, màn hình ngang thấp cho cuộn đầy đủ.
+- Giữ vị trí cuộn sau tải lại/sửa/xóa trong cùng kỳ lịch. Lỗi/tải thiếu có nút **Thử lại**; tổng giờ luôn báo **Tạm tính** nếu dữ liệu thiếu. Trạng thái tải/lỗi nằm trong vùng kết quả, không đẩy thanh điều hướng.
+- Bàn phím có focus rõ; bỏ giới hạn phóng to trang trên mobile. Thông báo cập nhật tạm ẩn khi mở form hoặc đang log để tránh chồng lên thao tác.
+- Gộp 155 khai báo CSS trùng theo đúng selector/điều kiện; bỏ khóa kích thước `!important` áp dụng chung cho input PC. Các quy tắc giao diện chung đặt trong `ui.css`, được đưa vào cache PWA.
+
+## Triển khai nhanh
+
+Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.11.0`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
+
+App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp giao diện không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.11.0**.
+
+Đã kiểm tra bằng dữ liệu Jira giả lập; **chưa đăng nhập/ghi giờ lên Jira thật và chưa kiểm tra trên iPhone Safari vật lý**. Xem `TESTING.md` để biết phạm vi, cách chạy và giới hạn.
 
 ## 1. Lịch Tuần / Tháng
 
-Mở **Worklog đã log → Lịch**, chọn **Tuần** hoặc **Tháng**. Chế độ mặc định khi mở Lịch là Tuần.
+Mở **Worklog đã log** để vào thẳng tuần hiện tại; chọn **Tuần** hoặc **Tháng** để đổi cách xem.
 
 ### Lịch tuần
 
@@ -97,14 +105,14 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.10.5` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.11.0` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.
 5. Framework Preset: **Other**. Build Command để trống. Output Directory dùng mặc định/root của project, không chọn `dist` vì source không có bước build.
 6. Node.js Version: **24.x**.
 7. Cấu hình biến môi trường bên dưới rồi redeploy.
-8. Mở app, kiểm tra footer V1.10.5. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
+8. Mở app, kiểm tra footer V1.11.0. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
 
 ### Biến môi trường
 
@@ -152,6 +160,6 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Block rất ngắn có thể không đủ chỗ hiển thị mô tả; title, nhãn trợ năng và danh sách ngày vẫn cho đọc/mở chi tiết.
 - ETA là ước tính, không phải thời gian cam kết. Hiệu năng thật phụ thuộc Jira và hosting.
 - Chưa deploy production hoặc xác minh Safari trên iPhone vật lý trong lần phát triển này.
-- Sau deploy, kiểm tra footer V1.10.5, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
+- Sau deploy, kiểm tra footer V1.11.0, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.

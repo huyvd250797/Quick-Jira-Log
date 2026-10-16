@@ -1,99 +1,56 @@
-# Kiểm tra V1.10.5
+# Kiểm tra V1.11.0
 
-Ngày: 16/10/2026. Runtime: Node.js v24.19.0.
+## Phạm vi và kết quả
 
-## Desktop Worklog Details Popup V1.10.5
+- `npm test`: các bộ kiểm tra logic/API hiện có đều đạt, gồm phân bổ giờ, OT, xác thực, cache, idempotency, truy vấn lịch sử, mốc tuần và tiến trình HTTP streaming.
+- Kiểm tra trình duyệt Chromium headless bằng Jira giả lập, không dùng tài khoản thật.
+- Desktop: 1920×1080, 1440×900, 1366×768, 1024×600, 900×720.
+- Mobile mô phỏng: 315×683, 390×844, 430×932; màn hình ngang 844×390. Luồng nghiệp vụ có thêm cấu hình thiết bị iPhone 13.
+- Giao diện Sáng/Tối được chụp và rà soát sau khi trạng thái đã ổn định; ảnh QA chỉ dùng nội bộ, không kèm source.
 
-- Playwright/Chromium với API giả lập: PC 1440×900, 1024×600, biên 900×720; mobile 390×844 và 315×683. Không có lỗi JavaScript.
-- PC bấm block mở native dialog, form được đưa vào popup; lịch không tự cuộn xuống. Mobile vẫn đưa form vào historyResults và tiêu đề/nội dung như trước.
-- Kiểm tra mã task, tên công việc, ngày/giờ/thời lượng/mô tả. Sửa ngày, giờ bắt đầu, tăng 30m và mô tả: payload PATCH đúng, đóng popup và tải lại dữ liệu.
-- Description rỗng không gửi PATCH; API lỗi giữ popup và dữ liệu nháp, thông báo lỗi tại chỗ; sửa lỗi rồi lưu lại thành công.
-- Xóa có xác nhận: Hủy không gửi DELETE, API lỗi giữ popup, thử lại thành công đóng popup và làm mới lịch.
-- Lịch tuần, agenda trong lịch tháng và nút Sửa ở Danh sách đều mở popup trên PC.
-- Tab đi vòng trong popup, Escape chỉ đóng popup; bấm nền hoặc Đóng cũng quay lại lịch, giữ scroll và trả focus về block.
-- Đổi từ PC → mobile → PC trong khi sửa giữ nội dung nháp, chỉ một form/handler và không có ID trùng.
-- Đã xem ảnh popup sáng/tối trên PC và ảnh form inline mobile. Kiểm tra dùng dữ liệu giả lập, chưa xác minh Jira thật hoặc Safari/iPhone vật lý.
-- npm test và node --check app.js đều đạt.
+| Bộ kiểm tra | Các hành vi đã xác minh |
+|---|---|
+| `layout.cjs` | Mở mặc định Lịch tuần/ngày Việt Nam; ẩn bộ lọc Danh sách; giữ KEY khi đổi chế độ; mở lại về tuần hiện tại; điều hướng vừa màn; cột giờ và tiêu đề ngày cố định; tối đa một vùng cuộn dọc; toolbar ổn định khi tải; khôi phục vị trí cuộn khi tải lại; lỗi có Thử lại; dữ liệu thiếu báo Tạm tính; đổi Tuần/Tháng; không tràn ngang trang |
+| `correction.cjs` | Popup PC/form dưới lịch trên mobile; focus trong popup; mở lại nhanh rồi nhập không bị lấy mất focus; Escape/nền ngoài; lỗi mô tả trống; tăng/giảm 30m; lưu, lỗi lưu, thử lại; xác nhận xóa, hủy và lỗi xóa; cập nhật lịch; chuyển PC/mobile giữ nội dung nháp |
+| `duration.cjs` | Đo chiều rộng chữ `3h 30m`, `12h 30m`, `16h` so với chiều rộng nhập thực tế; preset/tăng giảm đồng bộ nháp; lỗi thời lượng sai ngay cạnh trường và xóa lỗi khi nhập đúng; không tràn trang; Sáng/Tối |
+| `workflow.cjs` | Tổng ngày/tuần/cuối tuần; chiều cao block 30m/1h/2h đúng tỷ lệ; sửa/xóa cập nhật dashboard; tuần giao tháng; ghi đơn và Bulk; tiến trình/ETA; mất phản hồi không báo 100%; dashboard lỗi và dữ liệu thiếu |
 
-## Mobile TimeSpent V1.10.4
+Các bộ kiểm tra cũ dùng đối chiếu chuỗi CSS/nhãn đã được cập nhật theo phiên bản, hàng dashboard hiện tại và nhãn tiếng Việt. Kiểm tra tương tác trình duyệt bổ sung xác minh hành vi thực tế.
 
-- npm test đạt toàn bộ kiểm tra hiện có.
-- Playwright/Chromium với dữ liệu/API giả lập: mobile 315×683, 390×844, 430×932, ngang 844×390 và PC 1366×768; không có lỗi JavaScript.
-- Đo kích thước chữ thực tế với canvas theo font input: trên mobile, 3h 30m cần khoảng 67px, 12h 30m khoảng 78px; vùng chữ khả dụng 124px, group rộng 192px. Kiểm tra thêm 16h.
-- Preset 3h → tăng thành 3h 30m → 4h → giảm thành 3h 30m; draft nhận đúng giá trị. 16h vô hiệu nút tăng theo giới hạn hiện có.
-- Preset nằm dưới ô nhập và đều nhìn thấy; không tràn ngang trang. Kiểm tra thao tác thực qua click, không dùng force click.
-- Mobile ngang thấp: header/footer cuộn khỏi vùng nhập, bấm preset và tăng/giảm thành công.
-- Đã xem ảnh render mobile sáng/tối; PC giữ CSS bố cục cũ. Chưa kiểm tra Safari/iPhone vật lý hoặc ghi lên Jira thật.
+## Chạy lại logic
 
-## Desktop Calendar Workspace V1.10.3
+Yêu cầu Node.js 24.x:
 
-- npm test đạt toàn bộ kiểm tra hiện có; node --check app.js đạt.
-- Playwright/Chromium với API giả lập: PC 1440×900, 1366×768, 960×720, 1920×1080; thêm iPhone 13, 315×683 và 844×390.
-- PC chỉ có một phần tử nội dung cuộn dọc (#historyResults), không có cuộn lồng ở lưới tuần. Header ngày giữ ở đầu vùng lịch khi cuộn.
-- Ô chọn ngày rộng 144px. Chiều cao vùng kết quả lần lượt khoảng 699px, 567px, 476px và 879px trên bốn kích thước PC nêu trên, khi tải xong dữ liệu thông thường.
-- Chọn ngày giao tháng, trước/sau, Hôm nay, đổi Tuần/Tháng, mở/đóng sửa, API lỗi/tải thiếu và thử lại đều đạt.
-- Workflow desktop/iPhone: dashboard, block đúng tỷ lệ giờ, tăng 30m rồi lưu, xóa từ block, tiến trình log đơn/Bulk và stream bị ngắt đều đạt.
-- Danh sách/Lịch trên header PC hiển thị và bấm được; quay lại Danh sách vẫn giữ KEY, tìm kiếm và bố cục cũ.
-- Đối chiếu tự động V1.10.2 và V1.10.3 ở 390×844, 315×683, 844×390 cho cả Tuần và Tháng: tọa độ, kích thước, hiển thị, cỡ chữ, padding, màu và overflow của các phần chính giống nhau. Tắt animation trong bài đối chiếu để lấy trạng thái ổn định.
-- Đã kiểm tra ảnh PC sáng/tối; không có lỗi JavaScript hoặc tràn ngang toàn trang. Các thử nghiệm dùng dữ liệu giả lập, chưa xác minh Safari/iPhone vật lý hoặc Jira thật.
+```bash
+npm test
+```
 
-## Giao diện lịch V1.10.2
+## Chạy lại giao diện với dữ liệu giả lập
 
-- Đã chạy npm test và node --check app.js: đạt toàn bộ bộ kiểm tra hiện có.
-- Playwright/Chromium với API giả lập: desktop 1440×1000, iPhone 13, mobile 315×683, ngang 844×390; không có lỗi JavaScript.
-- Danh sách hiển thị bộ lọc ngày/KEY và nút Tìm; Lịch ẩn cả cụm này và hiển thị ô Đến ngày trong thanh cố định.
-- KEY giữ nguyên khi chuyển qua lại; yêu cầu lịch tuần/tháng không gửi KEY ẩn, yêu cầu Danh sách gửi lại đúng KEY.
-- Chọn 01/11/2026: lịch tuần tải 26/10–01/11; lịch tháng tải 01/11–30/11. Chọn 15/12 chuyển đúng tháng 12.
-- Nút trước/sau, Hôm nay, chọn ô ngày tháng và tiêu đề ngày tuần đồng bộ ô Đến ngày.
-- Nút ↻ tải lại thành công; kiểm tra dữ liệu thiếu, API lỗi và thử lại. Thông báo lịch không hướng dẫn bấm nút Tìm đã ẩn.
-- Cuộn dọc/ngang: Tuần/Tháng, ô chọn ngày và nút tải lại giữ nguyên vị trí, vẫn hiển thị và hit-test được; mở/đóng form sửa vẫn thành công.
-- Đã kiểm tra ảnh giao diện sáng/tối. Màn hình ngang dùng thanh điều hướng hai cột để tăng vùng xem lịch; không tràn ngang toàn trang.
-- Dữ liệu giả lập, chưa kiểm tra Jira thật hoặc Safari trên iPhone vật lý.
+Chỉ cần cài Playwright trên máy kiểm tra. Thư viện này không phải dependency khi triển khai ứng dụng:
 
-## Hotfix V1.10.1
+```bash
+npm install --no-save --package-lock=false playwright@1.62.1
+npx playwright install chromium
+npm run test:ui
+```
 
-- Đã chạy npm test: toàn bộ kiểm tra logic/API trước đây đều đạt.
-- Kiểm tra vị trí và hit-test bằng Playwright/Chromium: desktop 1440×1000, cấu hình iPhone 13, mobile 315×683 và landscape 844×390.
-- Cuộn historyResults đến cuối, cuộn dọc/ngang lưới tuần: tọa độ hai nút Tuần/Tháng giữ nguyên, luôn nằm trong viewport và không bị phần tử khác che.
-- Chuyển sang Tháng khi đang cuộn ở cuối; cuộn lịch tháng rồi chuyển về Tuần thành công.
-- Chuyển Danh sách ẩn thanh điều khiển lịch.
-- Đã xem ảnh render giao diện tối trên màn hình mobile nhỏ. Không có lỗi JavaScript hoặc trùng ID.
-- Kiểm tra dùng dữ liệu giả lập; chưa xác minh Safari trên iPhone vật lý hoặc Jira thật.
+Nếu đã có Chromium, đặt biến `QJL_CHROMIUM_PATH` trỏ đến file thực thi. Đặt `QJL_QA_OUTPUT` nếu muốn lưu ảnh mô phỏng; mặc định bài kiểm tra không tạo ảnh. Các cổng localhost 4174, 4176, 4179 và 4182 cần đang trống. Mỗi fixture chạy và đóng cùng bộ kiểm tra.
 
-## Kiểm tra tự động
+Các bài kiểm tra này phục vụ phát triển, không bắt buộc chạy trên Vercel và không cần cấu hình tài khoản Jira. Thay đổi `ui.css` thì cần kiểm tra cả Sáng/Tối, màn nhỏ/ngang và đưa phiên bản mới vào `sw.js`.
 
-`npm test` đã chạy đạt toàn bộ regression V1.8/V1.9 và test mới V1.10.0.
+## Kiểm tra sau deploy
 
-- Scheduling, OT, overlap/timezone, auth/CAPTCHA, workflow transition, bulk allocation, idempotency/cache và API lịch sử.
-- Tuần qua biên tháng/năm; tuần bắt đầu T2; định dạng Xh Ym và các giá trị 0h 0m.
-- Dashboard đúng mục tiêu 8h/ngày T2–T6 và 40h/tuần; giờ cuối tuần riêng; số giờ còn thiếu không âm.
-- Geometry block đúng số phút, và các block trùng giờ được phân lane.
-- HTTP stream thực qua Node server cục bộ với Jira giả lập: Log đơn/Bulk, dữ liệu progress về trước kết quả cuối, phần trăm không giảm, lỗi không có 100%, idempotent replay không tạo worklog lại, API JSON vẫn tương thích.
-- `node --check` cho app.js, handlers/worklog.js, handlers/bulk-worklog.js, lib/ui-tools.js và các module thay đổi.
-- HTML có 171 ID duy nhất, không trùng.
+1. Xác nhận đầu trang/footer là V1.11.0; dùng nút Cập nhật của PWA nếu còn cache cũ.
+2. Đăng nhập, kiểm tra dashboard với giờ trên Jira.
+3. Mở Worklog đã log: phải tự vào tuần hiện tại; đổi ngày/Tuần/Tháng và thử cuộn.
+4. PC bấm block mở popup; mobile mở form dưới lịch. Dùng một worklog thử để kiểm tra lưu/xóa với quyền Jira của tài khoản.
+5. Kiểm tra bàn phím, zoom và vùng an toàn trên iPhone Safari thật.
 
-## Kiểm tra trình duyệt
+## Giới hạn
 
-Playwright và Chromium headless, cấu hình desktop 1440×1000 và iPhone 13, timezone Asia/Ho_Chi_Minh. Các API đọc dùng dữ liệu giả lập; API POST trong bài kiểm tra UI dùng local HTTP server truyền từng chunk progress.
-
-Các kịch bản đã đạt trên cả hai cấu hình:
-
-1. Dashboard 3h 30m hôm nay → cần thêm 4h 30m; 33h 0m tuần → cần thêm 7h 0m; cuối tuần 2h riêng.
-2. Lịch tuần mặc định 5 ngày, tiêu đề ngày /8h và tổng tuần /40h.
-3. Block 30m/1h/2h lần lượt cao 30/60/120 CSS pixel, đúng vị trí trên trục giờ.
-4. Mở block, tăng 30 phút rồi lưu; dashboard và lịch tải lại sau sửa.
-5. Xóa từ block qua xác nhận; tải lại dữ liệu sau xóa.
-6. Bật T7/CN, đổi Tuần/Tháng, tháng 10 có 31 ngày.
-7. Tuần chứa 01/11/2026 hiển thị từ 26/10/2026; Hôm nay quay về tuần hiện tại.
-8. Log đơn/Bulk hiển thị % khi server còn đang xử lý; ETA có nhãn ước tính; chỉ đạt 100% sau kết quả cuối.
-9. Stream kết thúc thiếu kết quả cuối: dừng trước 100%, thông báo chưa xác định, không tự POST lại.
-10. Dashboard tải lỗi hiển thị —; dữ liệu tải một phần hiển thị tạm tính và không kết luận số giờ còn thiếu chính xác.
-11. Không có lỗi JavaScript chưa xử lý hoặc tràn ngang toàn trang; lưới tuần cuộn ngang trong vùng riêng.
-12. Kiểm tra ảnh render desktop/mobile cho dashboard, tuần và tiến trình; lịch sáng/tối có độ tương phản và bố cục phù hợp.
-
-## Phạm vi xác minh
-
-- Các kiểm tra dùng tài khoản/dữ liệu giả lập; không đăng nhập hoặc ghi lên Jira thật.
-- Chưa deploy production hoặc chạy Safari/PWA trên iPhone vật lý.
-- Số đo kích thước block không phải số đo hiệu năng Jira. ETA và mức phản hồi stream cần được kiểm tra trên kết nối Jira/hosting thực tế sau triển khai.
-- Giới hạn worklog qua nửa đêm, mục tiêu ngày nghỉ và dữ liệu tải thiếu được ghi trong README.md.
+- Chưa kiểm tra trên Jira thật, quyền tài khoản thực tế, iPhone Safari/WebKit vật lý hoặc triển khai Vercel thật trong lượt này.
+- Mốc 8h/ngày, 40h/tuần T2–T6 và cách tính/ghi Jira giữ như bản nền; đây không phải phiên bản thay đổi nghiệp vụ.
+- Lịch tuần giữ tỷ lệ một phút bằng một pixel; block rất ngắn chỉ có thể hiển thị mã task, nội dung đầy đủ nằm trong tên truy cập/popup/form.
+- Ô tháng trên màn hẹp có thể xuống dòng thời lượng. Số giờ chưa tải đầy đủ phải đọc là tạm tính.
+- Safari có cách hiển thị ngày/giờ native tùy thiết lập ngôn ngữ của máy.

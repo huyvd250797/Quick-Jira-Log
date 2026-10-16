@@ -2,25 +2,26 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#0f5bd8" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.10.5</title>
+  <title>Quick Jira Log · V1.11.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/ui.css" />
 </head>
 <body class="booting">
   <div id="bootSplash" class="boot-splash" role="status" aria-live="polite">
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.10.5</div>
+      <div class="boot-version">V1.11.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -29,7 +30,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.10.5</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.11.0</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -73,8 +74,8 @@
     <section id="loginCard" class="card hidden">
       <div class="card-title"><h2>Đăng nhập Jira</h2></div>
       <form id="loginForm" autocomplete="on">
-        <label>Username<input id="username" name="username" autocomplete="username" autocapitalize="none" required /></label>
-        <label>Password
+        <label>Tên đăng nhập<input id="username" name="username" autocomplete="username" autocapitalize="none" required /></label>
+        <label>Mật khẩu
           <span class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" required />
             <button id="togglePasswordBtn" class="password-toggle" type="button" aria-label="Hiện mật khẩu" aria-pressed="false" aria-controls="password" title="Hiện mật khẩu">
               <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -112,7 +113,7 @@
       </div>
 
       <div class="filter-tools">
-        <div class="search-wrap"><span class="search-icon">⌕</span><input id="filterIssueSearch" type="search" placeholder="Tìm KEY hoặc Summary..." autocomplete="off" /></div>
+        <div class="search-wrap"><span class="search-icon">⌕</span><input id="filterIssueSearch" type="search" placeholder="Tìm mã task hoặc tên công việc…" aria-label="Tìm mã task hoặc tên công việc" autocomplete="off" /></div>
         <span id="filterCount" class="count-pill">0</span>
       </div>
 
@@ -154,12 +155,14 @@
       </div>
       <form id="bulkForm">
         <div id="bulkItems" class="bulk-items"></div>
+        <div class="bulk-footer">
         <div class="bulk-summary">
           <span>Tổng yêu cầu lần này</span><strong id="bulkTotal">0m</strong>
         </div>
         <div class="bulk-actions">
           <button id="cancelBulkBtn" type="button" class="secondary">HỦY</button>
           <button id="bulkLogBtn" type="submit" class="primary">LOG TẤT CẢ</button>
+        </div>
         </div>
       </form>
     </section>
@@ -168,7 +171,7 @@
       <button class="bottom-sheet-drag-handle" type="button" aria-label="Kéo xuống để đóng" title="Kéo xuống để đóng"><span></span></button>
       <div class="worklog-sticky-header">
         <div class="card-title worklog-title">
-          <div><h2>Logwork Sub-task</h2><p class="card-subtitle">KEY/Project/Summary lấy từ Jira. Bạn chỉ cần chọn Ngày logwork, nhập TimeSpent và Description.</p></div>
+          <div><h2>Logwork Sub-task</h2><p class="card-subtitle">Chọn ngày, thời lượng và mô tả công việc đã thực hiện.</p></div>
           <button id="closeWorklogBtn" class="icon-btn compact-close" type="button" aria-label="Đóng form logwork" title="Đóng">×</button>
         </div>
         <div id="singleCapacityCard" class="single-capacity-card bulk-capacity-card is-loading" aria-live="polite">
@@ -198,7 +201,7 @@
             <input id="date" type="date" required />
           </label>
           <label>
-          TimeSpent
+          Thời lượng
           <input id="timeSpent" placeholder="2h30m" inputmode="text" required />
           <span class="preset-row" aria-label="TimeSpent nhanh">
             <button type="button" class="preset-btn" data-time="30m">30m</button>
@@ -213,10 +216,10 @@
         <label class="overtime-toggle">
           <input id="overtime" type="checkbox" />
           <span class="overtime-control" aria-hidden="true"></span>
-          <span class="overtime-copy"><strong>Overtime (OT)</strong><small id="overtimeHint">Ngày thường: log từ 17:30 trở đi. Thứ 7/CN: dùng khung giờ ban ngày.</small></span>
+          <span class="overtime-copy"><strong>Làm thêm (OT)</strong><small id="overtimeHint">Ngày thường: log từ 17:30 trở đi. Thứ 7/CN: dùng khung giờ ban ngày.</small></span>
         </label>
 
-        <label>Description
+        <label>Mô tả
           <textarea id="description" rows="4" placeholder="Mô tả công việc đã thực hiện..." required></textarea>
         </label>
 
@@ -299,14 +302,14 @@
       <div class="settings-backdrop" data-close-history></div>
       <section class="settings-sheet tool-sheet history-tool-sheet" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
         <div class="settings-head">
-          <div><h2 id="historyTitle">Worklog đã log</h2><p>Xem theo danh sách hoặc lịch; chọn worklog để sửa.</p></div>
+          <div><h2 id="historyTitle">Worklog đã log</h2><p>Theo dõi giờ đã ghi · Bấm worklog để xem, sửa hoặc xóa.</p></div>
           <button id="closeHistoryBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
         </div>
         <div class="tool-modal-body">
           <div class="history-controls">
           <div class="history-view-switch" role="group" aria-label="Kiểu xem worklog">
-            <button id="historyListViewBtn" type="button" class="is-active" aria-pressed="true">☷ Danh sách</button>
-            <button id="historyCalendarViewBtn" type="button" aria-pressed="false">▦ Lịch</button>
+            <button id="historyCalendarViewBtn" type="button" class="is-active" aria-pressed="true">▦ Lịch</button>
+            <button id="historyListViewBtn" type="button" aria-pressed="false">☷ Danh sách</button>
           </div>
           <div id="historyListFilters" class="history-toolbar">
             <label>Ngày<input id="historyDate" type="date" /></label>
@@ -315,7 +318,6 @@
           <button id="refreshWorklogHistoryBtn" class="secondary history-search-btn" type="button">TÌM WORKLOG ĐÃ LOG</button>
           </div>
           <div id="historySummary" class="history-summary hidden" aria-live="polite"></div>
-          <div id="worklogHistoryState" class="history-state">Chọn ngày hoặc nhập KEY, sau đó bấm “Tìm worklog đã log”.</div>
           <div id="calendarControls" class="calendar-controls hidden">
             <div class="calendar-period-heading">
               <strong id="calendarMonthLabel"></strong>
@@ -330,6 +332,7 @@
             <div class="calendar-mode-toolbar"><div class="calendar-mode-switch" role="group" aria-label="Khoảng lịch"><button id="calendarWeekBtn" type="button" class="is-active" aria-pressed="true">Tuần</button><button id="calendarMonthBtn" type="button" aria-pressed="false">Tháng</button></div><button id="calendarWeekendBtn" class="text-btn" type="button" aria-pressed="false">Hiện T7/CN</button><div id="calendarWeekSummary" class="calendar-week-summary"></div></div>
           </div>
           <div id="historyResults" class="history-results">
+          <div id="worklogHistoryState" class="history-state" role="status" aria-live="polite">Chọn ngày hoặc nhập KEY, sau đó bấm “Tìm worklog đã log”.</div>
           <div id="worklogHistoryList" class="worklog-history-list"></div>
           <div id="worklogCalendar" class="worklog-calendar hidden">
             <p id="calendarHelp" class="calendar-help">Bấm block worklog để xem, sửa hoặc xóa.</p>
@@ -348,11 +351,11 @@
             <input id="correctionWorklogId" type="hidden" />
             <input id="correctionKey" type="hidden" />
             <div class="correction-grid">
-              <label>Date<input id="correctionDate" type="date" /></label>
-              <label>Start<input id="correctionStart" type="time" step="60" /></label>
-              <label>TimeSpent<input id="correctionTimeSpent" placeholder="1h" /></label>
+              <label>Ngày<input id="correctionDate" type="date" /></label>
+              <label>Giờ bắt đầu<input id="correctionStart" type="time" step="60" /></label>
+              <label>Thời lượng<input id="correctionTimeSpent" placeholder="1h" /></label>
             </div>
-            <label>Description<textarea id="correctionDescription" rows="3"></textarea></label>
+            <label>Mô tả<textarea id="correctionDescription" rows="3"></textarea></label>
             <div class="correction-actions"><button id="deleteCorrectionBtn" class="danger-btn" type="button">XÓA WORKLOG</button><button id="saveCorrectionBtn" class="primary" type="button">LƯU CHỈNH SỬA</button></div>
           </div>
           </div>
@@ -372,7 +375,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.10.5</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.11.0</footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>

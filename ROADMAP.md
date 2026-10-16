@@ -1,3 +1,7 @@
+# Trạng thái V1.11.0
+
+Đã triển khai gói Professional UI & Calendar First theo kế hoạch thống nhất: nền giao diện, các màn PC/mobile và kiểm tra hồi quy. Phiên bản này tập trung vào trải nghiệm, không thay đổi API Jira hoặc cơ chế tính giờ. Chưa kích hoạt các chức năng mở rộng của roadmap lịch sử bên dưới.
+
 # Quick Jira Log Roadmap
 
 - ✅ V1.0.6 – Desktop Alignment & Stable Columns Fix

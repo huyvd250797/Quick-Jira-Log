@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.10.5';
+const APP_VERSION = '1.11.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -35,7 +35,7 @@ const state = {
   bootFinished: false,
   historyItems: [],
   historyLoading: false,
-  historyView: 'list',
+  historyView: 'calendar',
   calendarMode: 'week',
   calendarWeekends: false,
   dashboardSeq: 0,
@@ -897,11 +897,11 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   updateSingleOvertimeHint();
   $('selectedIssueKey').textContent = normalizedKey;
   $('selectedIssueProject').textContent = normalizedProject || '—';
-  $('selectedIssueSummary').textContent = summary || 'Issue không có Summary.';
+  $('selectedIssueSummary').textContent = summary || 'Task chưa có tên công việc.';
   state.currentIssueSummary = summary || '';
   state.lastAutoIssueKey = normalizedKey;
   markSelectedIssue(normalizedKey);
-  setIssueLookupState(summary ? `Summary: ${summary}` : 'Issue không có Summary.', 'ok');
+  setIssueLookupState(summary ? `Tên công việc: ${summary}` : 'Task chưa có tên công việc.', 'ok');
   resetBulkState();
   $('resultCard').classList.add('hidden');
   showAnimated($('worklogCard'));
@@ -980,7 +980,7 @@ function renderFilterIssues() {
       <button class="issue-row${String($('key')?.value || '').toUpperCase() === String(issue.key || '').toUpperCase() ? ' is-selected' : ''}" type="button" data-key="${escapeHtml(issue.key)}" data-project="${escapeHtml(issue.project)}" data-summary="${escapeHtml(issue.summary || '')}">
         <div class="issue-main">
           <div class="issue-key-line"><strong>${escapeHtml(issue.key)}</strong>${issue.status ? `<span class="status-pill">${escapeHtml(issue.status)}</span>` : ''}</div>
-          <div class="issue-summary">${escapeHtml(issue.summary || 'Không có summary')}</div>
+          <div class="issue-summary">${escapeHtml(issue.summary || 'Chưa có tên công việc')}</div>
           <div class="issue-meta">${escapeHtml([issue.project, issue.issueType, issue.priority].filter(Boolean).join(' · '))}</div>
         </div>
         <span class="issue-chevron" aria-hidden="true">›</span>
@@ -1046,7 +1046,7 @@ async function loadIssueByKey(rawKey, { preserveDescription = false } = {}) {
   }
 
   const seq = ++state.issueLookupSeq;
-  setIssueLookupState('Đang lấy Summary từ Jira...', 'loading');
+  setIssueLookupState('Đang lấy tên công việc từ Jira…', 'loading');
   try {
     const data = await api(`/api?action=issue-info&key=${encodeURIComponent(key)}`, { method: 'GET', cache: 'no-store' });
     if (seq !== state.issueLookupSeq) return;
@@ -1058,7 +1058,7 @@ async function loadIssueByKey(rawKey, { preserveDescription = false } = {}) {
     state.currentIssueSummary = issue.summary || '';
     if (!preserveDescription) $('description').value = issue.summary || '';
     state.lastAutoIssueKey = key;
-    setIssueLookupState(issue.summary ? `Summary: ${issue.summary}` : 'Issue không có Summary.', 'ok');
+    setIssueLookupState(issue.summary ? `Tên công việc: ${issue.summary}` : 'Task chưa có tên công việc.', 'ok');
     return issue;
   } catch (error) {
     if (seq !== state.issueLookupSeq) return;
@@ -1181,7 +1181,11 @@ function closePlanner() {
 }
 
 function openHistory() {
-  if (!$('historyDate').value) $('historyDate').value = $('date').value || $('bulkDate').value || todayLocal();
+  closeCorrection();
+  state.historyView = 'calendar';
+  state.calendarMode = 'week';
+  state.historyScrollScope = '';
+  $('historyDate').value = vietnamToday();
   renderWorklogHistory();
   openOverlay('historyOverlay', 'closeHistoryBtn');
   void loadWorklogHistory({ quiet: true });
@@ -1248,7 +1252,7 @@ function enhanceDurationInputs(root = document) {
     };
     const step = direction => {
       const next = QuickJiraUi.stepDuration(input.value, direction);
-      if (next === null) return showToast('Thời lượng chưa hợp lệ. Ví dụ: 30m, 1h hoặc 1h 30m.');
+      if (next === null) { validateDurationField(input); return; }
       input.value = next;
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1263,9 +1267,35 @@ function enhanceDurationInputs(root = document) {
     });
     input.addEventListener('input', sync);
     input.addEventListener('change', sync);
-    input._syncDurationStepper = sync;
+    input.addEventListener('blur', () => { if (input.value.trim()) validateDurationField(input); });
+    input.addEventListener('input', () => { if (input.getAttribute('aria-invalid') === 'true') validateDurationField(input); });
+    input._syncDurationStepper = () => { sync(); if (input.getAttribute('aria-invalid') === 'true') validateDurationField(input); };
     sync();
   });
+}
+
+function validateDurationField(input) {
+  const minutes = QuickJiraUi.durationMinutes(input.value);
+  const valid = Number.isFinite(minutes) && minutes > 0;
+  const id = `${input.id}-error`;
+  let error = $(id);
+  if (!error) {
+    error = document.createElement('small');
+    error.id = id; error.className = 'field-error hidden'; error.setAttribute('aria-live', 'polite');
+    input.closest('.duration-stepper').after(error);
+    input.setAttribute('aria-describedby', [input.getAttribute('aria-describedby'), id].filter(Boolean).join(' '));
+  }
+  error.textContent = valid ? '' : 'Nhập thời lượng hợp lệ, ví dụ 30m, 1h hoặc 1h 30m.';
+  error.classList.toggle('hidden', valid);
+  input.setAttribute('aria-invalid', String(!valid));
+  return valid;
+}
+
+function validateDurationFields(root) {
+  const inputs = [...root.querySelectorAll('#timeSpent, #correctionTimeSpent, .bulk-time')];
+  const invalid = inputs.filter(input => !validateDurationField(input));
+  if (invalid.length) invalid[0].focus();
+  return !invalid.length;
 }
 
 function setPasswordVisible(visible) {
@@ -1356,14 +1386,14 @@ function renderWeeklyCalendar(date) {
   const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:${index * 60}px">${timeText(from + index * 60)}</span>`).join('');
   const headers = days.map((day, index) => {
     const total = state.historyItems.filter(item => item.date === day).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-    return `<button type="button" class="week-day-heading${day === vietnamToday() ? ' is-today' : ''}" data-week-day="${day}" title="Xem chi tiết ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
+    return `<button type="button" class="week-day-heading${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Xem chi tiết ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
   }).join('');
   const columns = days.map(day => {
     const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
     return `<div class="week-day-column">${events.map(event => {
       const globalIndex = state.historyItems.indexOf(event.item);
       const label = `${event.item.key} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
-      return `<button type="button" class="week-worklog-block${event.end - event.start < 40 ? ' is-short' : ''}" data-week-event="${globalIndex}" style="top:${event.start - from}px;height:${event.end - event.start}px;left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small></button>`;
+      return `<button type="button" class="week-worklog-block${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="top:${event.start - from}px;height:${event.end - event.start}px;left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small></button>`;
     }).join('')}</div>`;
   }).join('');
   $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length}"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" style="height:${height}px"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
@@ -1371,6 +1401,11 @@ function renderWeeklyCalendar(date) {
   $('weeklyCalendar').querySelectorAll('[data-week-day]').forEach(button => button.addEventListener('click', () => {
     $('historyDate').value = button.dataset.weekDay;
     syncCalendarControls();
+    $('weeklyCalendar').querySelectorAll('[data-week-day]').forEach(el => {
+      const selected = el.dataset.weekDay === button.dataset.weekDay;
+      el.classList.toggle('is-selected', selected);
+      el.setAttribute('aria-pressed', String(selected));
+    });
     renderCalendarAgenda(button.dataset.weekDay);
     $('calendarDayHeading').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }));
@@ -1500,7 +1535,8 @@ function syncCalendarControls() {
   $('calendarMonthBtn').setAttribute('aria-pressed', String(!weekly));
   $('weeklyCalendar').classList.toggle('hidden', !weekly);
   $('monthlyCalendar').classList.toggle('hidden', weekly);
-  $('calendarWeekSummary').classList.toggle('hidden', !weekly || state.historyLoading || !state.historyLoaded || !!state.historyError);
+  $('calendarWeekSummary').classList.toggle('hidden', !weekly);
+  if (weekly && (state.historyLoading || !state.historyLoaded || state.historyError)) $('calendarWeekSummary').innerHTML = '<strong>— <small>/ 40h</small></strong><span>Chưa xác định tổng giờ</span>';
   $('calendarWeekendBtn').classList.toggle('hidden', !weekly);
   $('calendarWeekendBtn').setAttribute('aria-pressed', String(state.calendarWeekends));
   $('calendarWeekendBtn').textContent = state.calendarWeekends ? 'Ẩn T7/CN' : 'Hiện T7/CN';
@@ -1565,7 +1601,8 @@ function renderWorklogHistory() {
   $('historyCalendarViewBtn').classList.toggle('is-active', calendar);
   $('historyListViewBtn').setAttribute('aria-pressed', String(!calendar));
   $('historyCalendarViewBtn').setAttribute('aria-pressed', String(calendar));
-  $('historySummary').classList.toggle('hidden', state.historyLoading || !state.historyLoaded || !!state.historyError);
+  $('historySummary').classList.toggle('hidden', !calendar && (state.historyLoading || !state.historyLoaded || !!state.historyError));
+  if (calendar && (state.historyLoading || !state.historyLoaded || state.historyError)) $('historySummary').textContent = 'Worklog cá nhân · Giờ Việt Nam';
   let message = '';
   if (state.historyLoading) message = calendar ? `Đang tải worklog trong ${state.calendarMode === 'week' ? 'tuần' : 'tháng'} từ Jira...` : 'Đang tải worklog từ Jira...';
   else if (state.historyError) message = state.historyError;
@@ -1573,6 +1610,12 @@ function renderWorklogHistory() {
   else if (state.historyNotice) message = state.historyNotice;
   else if (!state.historyItems.length && !calendar) message = 'Không có worklog của bạn trong ngày này.';
   stateEl.textContent = message;
+  if (state.historyError || (state.historyNotice && !state.historyLoading)) {
+    const retry = document.createElement('button');
+    retry.type = 'button'; retry.className = 'soft-btn history-retry-btn'; retry.textContent = 'Thử lại';
+    retry.addEventListener('click', () => loadWorklogHistory({ quiet: true, force: true }));
+    stateEl.append(retry);
+  }
   stateEl.classList.toggle('hidden', !message);
   stateEl.classList.toggle('is-warning', !!state.historyNotice && !state.historyError);
   stateEl.classList.toggle('is-error', !!state.historyError);
@@ -1617,6 +1660,11 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
   if (!QuickJiraUi.validDate(selectedDate)) return showToast('Vui lòng chọn ngày hợp lệ.');
   const range = state.historyView === 'calendar' ? (state.calendarMode === 'week' ? QuickJiraUi.weekRange(selectedDate) : QuickJiraUi.monthRange(selectedDate)) : { start: selectedDate, end: selectedDate };
   const key = state.historyView === 'calendar' ? '' : $('historyKey').value.trim().toUpperCase();
+  const scope = `${state.historyView}|${state.calendarMode}|${range.start}|${range.end}|${key}`;
+  const results = $('historyResults');
+  const weeklyScroll = $('weeklyCalendar').querySelector('.weekly-scroll');
+  const sameScope = scope === state.historyScrollScope;
+  const scroll = sameScope ? { top: results.scrollTop, left: results.scrollLeft, weekTop: weeklyScroll?.scrollTop || 0, weekLeft: weeklyScroll?.scrollLeft || 0 } : { top: 0, left: 0, weekTop: 0, weekLeft: 0 };
   const sequence = ++state.historySeq;
   closeCorrection();
   state.historyError = '';
@@ -1651,6 +1699,16 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
       searchBtn.classList.remove('is-loading');
       searchBtn.textContent = 'TÌM WORKLOG ĐÃ LOG';
       renderWorklogHistory();
+      state.historyScrollScope = scope;
+      requestAnimationFrame(() => {
+        if (sequence !== state.historySeq) return;
+        results.scrollTo(scroll.left, scroll.top);
+        $('weeklyCalendar').querySelector('.weekly-scroll')?.scrollTo(scroll.weekLeft, scroll.weekTop);
+        if (!sameScope && state.historyView === 'calendar' && state.calendarMode === 'week' && window.innerWidth < 900) {
+          const heading = $('weeklyCalendar').querySelector(`[data-week-day="${selectedDate}"]`);
+          if (heading) results.scrollLeft = Math.max(0, heading.offsetLeft - 60);
+        }
+      });
     }
   }
 }
@@ -1683,10 +1741,10 @@ function openCorrection(item) {
   $('correctionFeedback').classList.add('hidden');
   showAnimated($('worklogCorrectionPanel'));
   syncCorrectionPresentation();
+  $('correctionTimeSpent').focus({ preventScroll: true });
   requestAnimationFrame(() => {
     if ($('worklogCorrectionPanel').classList.contains('hidden')) return;
     if (!$('worklogCorrectionDialog').open) $('worklogCorrectionPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    $('correctionTimeSpent').focus({ preventScroll: true });
   });
 }
 
@@ -1718,7 +1776,7 @@ function closeCorrection({ restoreFocus = true } = {}) {
     if (restoreFocus) {
       const source = correctionSource;
       requestAnimationFrame(() => {
-        if ($('historyOverlay').classList.contains('hidden') || $('historyOverlay').classList.contains('qjl-closing')) return;
+        if (dialog.open || $('historyOverlay').classList.contains('hidden') || $('historyOverlay').classList.contains('qjl-closing')) return;
         const target = source?.isConnected && source.getClientRects().length ? source : $(state.historyView === 'calendar' ? 'historyCalendarViewBtn' : 'historyListViewBtn');
         target?.focus({ preventScroll: true });
       });
@@ -1728,11 +1786,9 @@ function closeCorrection({ restoreFocus = true } = {}) {
 }
 
 function showCorrectionFeedback(message) {
-  if ($('worklogCorrectionDialog').open) {
-    $('correctionFeedback').textContent = message;
-    $('correctionFeedback').classList.remove('hidden');
-    $('correctionFeedback').scrollIntoView({ block: 'nearest' });
-  } else showToast(message);
+  $('correctionFeedback').textContent = message;
+  $('correctionFeedback').classList.remove('hidden');
+  $('correctionFeedback').scrollIntoView({ block: 'nearest' });
 }
 
 async function saveCorrection() {
@@ -1744,7 +1800,9 @@ async function saveCorrection() {
     timeSpent: $('correctionTimeSpent').value.trim(),
     description: $('correctionDescription').value.trim()
   };
-  if (!payload.description) return showCorrectionFeedback('Description không được để trống.');
+  if (!validateDurationFields($('worklogCorrectionPanel'))) return;
+  if (!QuickJiraUi.validDate(payload.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(payload.start)) return showCorrectionFeedback('Vui lòng chọn ngày và giờ bắt đầu hợp lệ.');
+  if (!payload.description) return showCorrectionFeedback('Mô tả không được để trống.');
   $('correctionFeedback').classList.add('hidden');
   const btn = $('saveCorrectionBtn');
   btn.disabled = true;
@@ -2121,9 +2179,9 @@ async function requestBulkSmartAllocation() {
     state.bulkAllocation.userEdited = false;
     state.bulkAllocation.autoApplied = false;
     if (!applyBulkSmartAllocation({ force: true })) {
-      showToast('Chưa thể tự động phân bổ TimeSpent cho danh sách hiện tại.');
+      showToast('Chưa thể tự động phân bổ thời lượng cho danh sách hiện tại.');
     } else {
-      showToast('Đã tự động phân bổ TimeSpent.');
+      showToast('Đã tự động phân bổ thời lượng.');
     }
   } finally {
     if (btn) {
@@ -2147,27 +2205,27 @@ function renderBulkItems() {
       <div class="bulk-item-head">
         <div class="bulk-item-title">
           <strong>${index + 1}. ${escapeHtml(item.key)}${item.autoAllocated ? '<span class="auto-time-badge">AUTO</span>' : ''}</strong>
-          <span>${escapeHtml(item.summary || 'Không có summary')}</span>
+          <span>${escapeHtml(item.summary || 'Chưa có tên công việc')}</span>
           <small>${escapeHtml(item.project)}</small>
         </div>
         <button class="bulk-remove-btn" type="button" aria-label="Bỏ ${escapeHtml(item.key)} khỏi danh sách log" title="Bỏ Sub-task này">×</button>
       </div>
       <div class="bulk-item-fields">
         <label class="bulk-time-field">
-          <span>TimeSpent</span>
+          <span>Thời lượng</span>
           <input class="bulk-time" value="${escapeHtml(item.timeSpent || '')}" placeholder="VD: 1h" inputmode="text" required />
-          <span class="bulk-preset-row" aria-label="Preset TimeSpent">
+          <span class="bulk-preset-row" aria-label="Thời lượng nhanh">
             ${['30m', '1h', '2h', '3h', '4h'].map(value => `<button class="bulk-preset-btn${String(item.timeSpent || '') === value ? ' active' : ''}" type="button" data-time="${value}">${value}</button>`).join('')}
           </span>
         </label>
         <label class="bulk-overtime-toggle">
           <input class="bulk-overtime" type="checkbox" ${item.overtime ? 'checked' : ''} />
           <span class="overtime-control" aria-hidden="true"></span>
-          <span class="overtime-copy"><strong>Overtime (OT)</strong><small>${escapeHtml(overtimeWindowLabel($('bulkDate')?.value || todayLocal()))}</small></span>
+          <span class="overtime-copy"><strong>Làm thêm (OT)</strong><small>${escapeHtml(overtimeWindowLabel($('bulkDate')?.value || todayLocal()))}</small></span>
         </label>
         <details class="bulk-description-details">
-          <summary>Sửa Description <span>${escapeHtml((item.description || item.summary || '').slice(0, 72))}${(item.description || item.summary || '').length > 72 ? '…' : ''}</span></summary>
-          <label class="bulk-description-field">Description<textarea class="bulk-description" rows="2">${escapeHtml(item.description || item.summary || '')}</textarea></label>
+          <summary>Sửa mô tả <span>${escapeHtml((item.description || item.summary || '').slice(0, 72))}${(item.description || item.summary || '').length > 72 ? '…' : ''}</span></summary>
+          <label class="bulk-description-field">Mô tả<textarea class="bulk-description" rows="2">${escapeHtml(item.description || item.summary || '')}</textarea></label>
         </details>
       </div>
     </div>
@@ -2244,6 +2302,7 @@ function renderBulkSuccess(data) {
 async function submitBulkWorklog(event) {
   event.preventDefault();
   if (state.bulkSubmitInFlight) return;
+  if (!validateDurationFields($('bulkForm'))) return;
   const items = bulkDraftList().map(item => ({
     key: item.key,
     project: item.project,
@@ -2252,7 +2311,7 @@ async function submitBulkWorklog(event) {
     overtime: item.overtime === true
   }));
   if (!items.length) return showToast('Chưa có issue để Bulk Logwork.');
-  if (items.some(item => !item.timeSpent || !item.description)) return showToast('Vui lòng nhập đủ TimeSpent và Description cho từng issue.');
+  if (items.some(item => !item.timeSpent || !item.description)) return showToast('Vui lòng nhập đủ thời lượng và mô tả cho từng issue.');
 
   const date = $('bulkDate').value;
   const totalMinutes = items.reduce((sum, item) => sum + parseTimeSpentClient(item.timeSpent), 0);
@@ -2585,9 +2644,10 @@ document.addEventListener('keydown', event => {
 $('worklogForm').addEventListener('submit', async event => {
   event.preventDefault();
   if (state.submitInFlight || state.bulkSubmitInFlight) return;
+  if (!validateDurationFields($('worklogForm'))) return;
   if (singleCapacityExceeded()) {
     updateSingleCapacity();
-    return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm TimeSpent hoặc bật OT.');
+    return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm thời lượng hoặc bật OT.');
   }
   const logAndNext = state.logAndNextRequested === true;
   state.logAndNextRequested = false;
@@ -2605,7 +2665,7 @@ $('worklogForm').addEventListener('submit', async event => {
     rows: [
       ['Sub-task', payload.key || '—'],
       ['Ngày logwork', payload.date || '—'],
-      ['TimeSpent', payload.timeSpent || '—'],
+      ['Thời lượng', payload.timeSpent || '—'],
       ['Loại', payload.overtime ? 'Overtime (OT)' : 'Giờ thường']
     ],
     confirmLabel: logAndNext ? 'XÁC NHẬN LOG & NEXT' : 'XÁC NHẬN LOG'
