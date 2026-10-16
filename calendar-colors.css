@@ -1,0 +1,53 @@
+/* V1.11.3 — Responsive fullscreen scale, OT priority and stable project colors. */
+#historyOverlay .week-day-column { background-image: linear-gradient(to bottom, transparent calc(100% - 1px), var(--line) 0); background-size: 100% calc(30 * var(--week-minute-px, 1px)); }
+#calendarProjectColorsBtn { width: 34px; min-width: 34px; height: 34px; flex: 0 0 34px; padding: 7px; }
+#calendarProjectColorsBtn[aria-pressed="true"] { color: var(--primary); background: var(--primary-soft); border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+#historyOverlay .week-day-heading.is-complete i { background: #dff3e8; }
+#historyOverlay .week-day-heading.is-complete i b { background: #249b5e; }
+html[data-theme="dark"] #historyOverlay .week-day-heading.is-complete i { background: #173e2b; }
+#historyOverlay .has-project-color { background: hsl(var(--project-hue) var(--project-saturation) 94%); border-color: hsl(var(--project-hue) 45% 72%); border-left-color: hsl(var(--project-hue) 58% 43%); }
+#historyOverlay .has-project-color strong { color: hsl(var(--project-hue) 65% 29%); }
+#historyOverlay .has-project-color .calendar-event-copy { border-left-color: hsl(var(--project-hue) 58% 43%); }
+html[data-theme="dark"] #historyOverlay .has-project-color { background: hsl(var(--project-hue) calc(var(--project-saturation) - 20%) 22%); border-color: hsl(var(--project-hue) 35% 40%); border-left-color: hsl(var(--project-hue) 65% 68%); }
+html[data-theme="dark"] #historyOverlay .has-project-color strong { color: hsl(var(--project-hue) 75% 82%); }
+#historyOverlay .is-ot { background: #fff3b0; border-color: #d8b846; border-left-color: #b58a16; color: #493b14; }
+#historyOverlay .is-ot strong { color: #674a04; }
+#historyOverlay .is-ot small, #historyOverlay .is-ot em, #historyOverlay .is-ot .calendar-event-time small { color: #685923; }
+#historyOverlay .is-ot .calendar-event-copy { border-left-color: #b58a16; }
+#historyOverlay .week-worklog-block.is-ot > strong { padding-right: 23px; }
+#historyOverlay .ot-ribbon, #historyOverlay.is-calendar-view .week-worklog-block > .ot-ribbon { display: block; position: absolute; right: -17px; top: 4px; width: 61px; height: 15px; line-height: 15px; text-align: center; transform: rotate(38deg); background: #dcb33b; color: #352600; font-size: 9px; font-weight: 800; letter-spacing: .5px; z-index: 2; pointer-events: none; }
+#historyOverlay.is-calendar-view .week-worklog-block.is-short .ot-ribbon, #historyOverlay.is-calendar-view .week-worklog-block.is-tiny .ot-ribbon { right: 1px; top: 1px; width: 21px; height: 12px; line-height: 12px; font-size: 8px; transform: none; border-radius: 2px; }
+#historyOverlay .calendar-event { position: relative; overflow: hidden; }
+#historyOverlay .calendar-event .ot-ribbon { top: 5px; }
+/* The in-page fallback uses the actual visual viewport, while native fullscreen
+   receives the same layout after its resize/fullscreenchange event. */
+#historyOverlay.is-calendar-fullscreen { width: var(--calendar-viewport-width, 100vw); height: var(--calendar-viewport-height, 100dvh); min-height: 0; }
+#historyOverlay.is-calendar-fullscreen .history-tool-sheet { width: 100%; height: 100%; max-height: none; }
+#historyOverlay.is-calendar-fullscreen .tool-modal-body { padding: max(2px, env(safe-area-inset-top)) max(2px, env(safe-area-inset-right)) max(2px, env(safe-area-inset-bottom)) max(2px, env(safe-area-inset-left)); gap: 3px; }
+#historyOverlay.is-calendar-fullscreen #calendarControls { padding-bottom: 3px; }
+#historyOverlay.is-calendar-fullscreen #historyResults { width: 100%; border-radius: 4px; }
+#historyOverlay.is-calendar-fullscreen .weekly-inner { min-width: calc(48px + var(--week-days) * 136px); }
+#historyOverlay.is-calendar-fullscreen .week-grid-heading, #historyOverlay.is-calendar-fullscreen .week-grid-body { grid-template-columns: 48px repeat(var(--week-days), minmax(0, 1fr)); }
+#historyOverlay.is-calendar-fullscreen .week-day-heading { min-height: 50px; }
+#historyOverlay.is-calendar-fullscreen .week-time-ruler span { font-size: 11px; }
+@media (orientation: landscape) {
+  #historyOverlay.is-calendar-fullscreen .weekly-inner { min-width: calc(48px + var(--week-days) * 110px); }
+}
+@media (max-width: 899px) {
+  #calendarControls .calendar-mode-toolbar { gap: 5px; }
+  #calendarControls .calendar-week-summary { min-width: 0; }
+  #calendarControls .calendar-week-summary > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  #calendarControls .calendar-mode-switch button { padding-left: 10px; padding-right: 10px; }
+  #calendarControls #calendarWeekendBtn { padding-left: 3px; padding-right: 3px; }
+}
+@media (max-width: 359px) {
+  #calendarControls .calendar-mode-toolbar { gap: 3px; }
+  #calendarControls .calendar-mode-switch button { padding-left: 8px; padding-right: 8px; }
+  #calendarProjectColorsBtn { width: 30px; min-width: 30px; height: 32px; flex-basis: 30px; padding: 6px; }
+  #calendarControls .calendar-week-summary > strong { font-size: 13px; }
+  #calendarControls .calendar-week-summary small { font-size: 10px; }
+}
+@media (orientation: landscape) and (max-width: 700px) {
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-toolbar { gap: 3px; }
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-switch button { padding-left: 8px; padding-right: 8px; }
+}

@@ -1,13 +1,13 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.11.2 – Desktop Worklog Details Popup.",
+  "description": "Quick Jira Log V1.11.3 – Adaptive Fullscreen Calendar, OT and Project Colors.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#07111f",
   "theme_color": "#0f63e6",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "icons": [
     {
       "src": "/icons/icon-192.png",

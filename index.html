@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.11.2</title>
+  <title>Quick Jira Log · V1.11.3</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -17,13 +17,14 @@
   <link rel="stylesheet" href="/ui.css" />
   <link rel="stylesheet" href="/mobile-calendar.css" />
   <link rel="stylesheet" href="/motion.css" />
+  <link rel="stylesheet" href="/calendar-colors.css" />
 </head>
 <body class="booting">
   <div id="bootSplash" class="boot-splash" role="status" aria-live="polite">
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.11.2</div>
+      <div class="boot-version">V1.11.3</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -32,7 +33,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.11.2</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.11.3</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -336,7 +337,7 @@
               <button id="calendarTodayBtn" class="calendar-today-btn" type="button">Hôm nay</button>
               <button id="calendarNextBtn" class="calendar-nav-btn" type="button" aria-label="Tháng sau" title="Tháng sau">›</button>
             </div>
-            <div class="calendar-mode-toolbar"><div class="calendar-mode-switch" role="group" aria-label="Khoảng lịch"><button id="calendarWeekBtn" type="button" class="is-active" aria-pressed="true">Tuần</button><button id="calendarMonthBtn" type="button" aria-pressed="false">Tháng</button></div><button id="calendarWeekendBtn" class="text-btn" type="button" aria-label="Hiện thứ 7 và chủ nhật" aria-pressed="false">T7/CN</button><div id="calendarWeekSummary" class="calendar-week-summary"></div></div>
+            <div class="calendar-mode-toolbar"><div class="calendar-mode-switch" role="group" aria-label="Khoảng lịch"><button id="calendarWeekBtn" type="button" class="is-active" aria-pressed="true">Tuần</button><button id="calendarMonthBtn" type="button" aria-pressed="false">Tháng</button></div><button id="calendarProjectColorsBtn" class="calendar-icon-btn" type="button" aria-label="Bật màu theo dự án" title="Bật màu theo dự án" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.3a2.2 2.2 0 0 0 1.6-3.8c-.7-.8-.2-2.2.9-2.2H18a3 3 0 0 0 3-3 9 9 0 0 0-9-9Z"/><circle cx="7.5" cy="11" r=".7"/><circle cx="10" cy="7" r=".7"/><circle cx="15" cy="7.5" r=".7"/></svg></button><button id="calendarWeekendBtn" class="text-btn" type="button" aria-label="Hiện thứ 7 và chủ nhật" aria-pressed="false">T7/CN</button><div id="calendarWeekSummary" class="calendar-week-summary"></div></div>
           </div>
           <div id="historyResults" class="history-results">
           <div id="worklogHistoryState" class="history-state" role="status" aria-live="polite">Chọn ngày hoặc nhập KEY, sau đó bấm “Tìm worklog đã log”.</div>
@@ -382,7 +383,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.11.2</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.11.3</footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -398,6 +399,7 @@
   <script src="/lib/bulk-allocation.js" defer></script>
   <script src="/lib/late-log-warning.js" defer></script>
   <script src="/lib/ui-tools.js" defer></script>
+  <script src="/lib/calendar-style.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>

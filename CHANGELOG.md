@@ -1,5 +1,15 @@
 # Changelog
 
+## V1.11.3 — Adaptive Fullscreen, OT & Project Colors
+
+- PWA cho phép xoay ngang/dọc thay vì khóa portrait.
+- Giãn lưới fullscreen theo viewport thực tế, giảm lề/cột giờ và giữ đúng tỷ lệ block.
+- OT vàng nhạt cố định ở cả hai theme; ribbon góc và nhãn gọn cho block ngắn.
+- Đọc trường OverTime cấp issue theo lô, cache ID trường; fallback theo giờ bắt đầu 17:30, không suy OT chỉ từ cuối tuần.
+- Progress T2–T6 xanh lá khi đạt 8h; thời lượng gọn và bỏ block 0 phút.
+- Icon bật/tắt màu dự án, cấp màu ổn định/persist, loại dải vàng và ưu tiên OT.
+- Thêm kiểm tra metadata/cache OT, bảng màu, thời lượng và fullscreen trên nhiều màn hình.
+
 ## V1.11.2 — Fixed Week Calendar, Scroll Lock & Motion
 
 - Bỏ hoàn toàn agenda/danh sách chi tiết dưới lịch tuần; giữ agenda ở lịch tháng.

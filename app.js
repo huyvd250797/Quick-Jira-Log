@@ -1,12 +1,14 @@
 'use strict';
 
-const APP_VERSION = '1.11.2';
+const APP_VERSION = '1.11.3';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
   lastLog: 'quick-jira-log:last-log:v1',
   audit: 'quick-jira-log:audit:v1',
   theme: 'quick-jira-log:theme:v1',
+  projectColors: 'quick-jira-log:project-colors:v1',
+  projectPalette: 'quick-jira-log:project-palette:v1',
   sessionDate: 'quick-jira-log:session-log-date:v1'
 };
 
@@ -38,6 +40,8 @@ const state = {
   historyView: 'calendar',
   calendarMode: 'week',
   calendarWeekends: false,
+  projectColors: readStorage(STORAGE.projectColors, false) === true,
+  projectPalette: readStorage(STORAGE.projectPalette, {}),
   calendarFullscreen: false,
   calendarNativeFullscreen: false,
   calendarFullscreenSeq: 0,
@@ -1238,7 +1242,7 @@ function renderAuditHistory() {
 
 
 function formatHistoryTimeSpent(minutes) {
-  return QuickJiraUi.durationLabel(minutes);
+  return QuickJiraCalendar.displayDuration(minutes);
 }
 
 function enhanceDurationInputs(root = document) {
@@ -1360,14 +1364,14 @@ async function refreshDashboard({ force = false } = {}) {
     const partial = historyIsPartial(data);
     state.dashboardDate = date;
     state.dashboardUpdated = Date.now();
-    $('dashboardToday').textContent = QuickJiraUi.exactDuration(summary.daily);
+    $('dashboardToday').textContent = QuickJiraCalendar.displayDuration(summary.daily);
     $('dashboardTodayTarget').textContent = summary.dayTarget ? '/ 8h' : '· Cuối tuần';
-    $('dashboardWeek').textContent = QuickJiraUi.exactDuration(summary.weekly);
+    $('dashboardWeek').textContent = QuickJiraCalendar.displayDuration(summary.weekly);
     $('dashboardTodayBar').style.width = `${summary.dayTarget ? Math.min(100, summary.daily / 480 * 100) : 0}%`;
     $('dashboardWeekBar').style.width = `${Math.min(100, summary.weekly / 2400 * 100)}%`;
-    $('dashboardTodayRemaining').textContent = partial ? 'Tạm tính · cần kiểm tra dữ liệu' : !summary.dayTarget ? 'Không đặt mục tiêu 8h vào T7/CN' : summary.dayRemaining ? `Cần log thêm ${QuickJiraUi.exactDuration(summary.dayRemaining)}` : summary.daily > 480 ? `Đã đủ 8h · vượt ${QuickJiraUi.exactDuration(summary.daily - 480)}` : 'Đã đủ 8h hôm nay';
-    $('dashboardWeekRemaining').textContent = partial ? 'Tạm tính · cần kiểm tra dữ liệu' : summary.weekRemaining ? `Cần log thêm ${QuickJiraUi.exactDuration(summary.weekRemaining)}` : summary.weekly > 2400 ? `Đã đủ 40h · vượt ${QuickJiraUi.exactDuration(summary.weekly - 2400)}` : 'Đã đủ 40h trong tuần';
-    $('dashboardWeekend').textContent = summary.weekend ? `T7/CN: ${QuickJiraUi.exactDuration(summary.weekend)} · theo dõi riêng` : '';
+    $('dashboardTodayRemaining').textContent = partial ? 'Tạm tính · cần kiểm tra dữ liệu' : !summary.dayTarget ? 'Không đặt mục tiêu 8h vào T7/CN' : summary.dayRemaining ? `Cần log thêm ${QuickJiraCalendar.displayDuration(summary.dayRemaining)}` : summary.daily > 480 ? `Đã đủ 8h · vượt ${QuickJiraCalendar.displayDuration(summary.daily - 480)}` : 'Đã đủ 8h hôm nay';
+    $('dashboardWeekRemaining').textContent = partial ? 'Tạm tính · cần kiểm tra dữ liệu' : summary.weekRemaining ? `Cần log thêm ${QuickJiraCalendar.displayDuration(summary.weekRemaining)}` : summary.weekly > 2400 ? `Đã đủ 40h · vượt ${QuickJiraCalendar.displayDuration(summary.weekly - 2400)}` : 'Đã đủ 40h trong tuần';
+    $('dashboardWeekend').textContent = summary.weekend ? `T7/CN: ${QuickJiraCalendar.displayDuration(summary.weekend)} · theo dõi riêng` : '';
     $('dashboardRange').textContent = `${date.split('-').reverse().join('/')} · Tuần ${range.start.split('-').reverse().join('/')} – ${range.workEnd.split('-').reverse().join('/')}`;
     $('dashboardState').textContent = partial ? 'Dữ liệu chưa đầy đủ; các tổng giờ chỉ là tạm tính. Bấm cập nhật để thử lại.' : `Cập nhật ${new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' }).format(new Date())} · Tổng tuần tính T2–T6 · Giờ Việt Nam`;
   } catch (error) {
@@ -1382,31 +1386,63 @@ async function refreshDashboard({ force = false } = {}) {
   }
 }
 
+function calendarAppearance(item) {
+  const ot = QuickJiraCalendar.isOvertime(item);
+  const project = QuickJiraCalendar.projectKey(item);
+  let style = '', classes = ot ? ' is-ot' : '';
+  if (state.projectColors && !ot) {
+    const palette = QuickJiraCalendar.paletteFor(project, state.projectPalette);
+    state.projectPalette = palette.registry;
+    if (palette.changed) writeStorage(STORAGE.projectPalette, palette.registry);
+    style = `--project-hue:${palette.color.h};--project-saturation:${palette.color.s}%;`;
+    classes += ' has-project-color';
+  }
+  return { ot, project, style, classes, badge: ot ? '<span class="ot-ribbon" aria-hidden="true">OT</span>' : '' };
+}
+
+let weekFitFrame = 0;
+function fitWeekToViewport() {
+  const inner = $('weeklyCalendar').querySelector('.weekly-inner');
+  const body = inner?.querySelector('.week-grid-body');
+  if (!inner || !body) return;
+  const minutes = Number(body.dataset.minuteRange) || 600;
+  const header = inner.querySelector('.week-grid-heading');
+  const space = $('historyResults').clientHeight - (header?.offsetHeight || 0) - 2;
+  const scale = state.calendarFullscreen ? Math.max(1, Math.floor(space / minutes * 10000) / 10000) : 1;
+  inner.style.setProperty('--week-minute-px', `${scale}px`);
+}
+function scheduleWeekFit() {
+  cancelAnimationFrame(weekFitFrame);
+  weekFitFrame = requestAnimationFrame(fitWeekToViewport);
+}
+
 function renderWeeklyCalendar(date) {
   const week = QuickJiraUi.weekRange(date);
   const days = state.calendarWeekends ? week.days : week.days.slice(0, 5);
-  const items = state.historyItems.filter(item => days.includes(item.date));
+  const items = state.historyItems.filter(item => days.includes(item.date) && Number(item.minutes) > 0);
   const summary = QuickJiraUi.workSummary(state.historyItems, date);
-  const format = QuickJiraUi.exactDuration;
+  const format = QuickJiraCalendar.displayDuration;
   $('calendarWeekSummary').innerHTML = `<strong>${format(summary.weekly)} <small>/ 40h</small></strong><span>${state.historyNotice ? 'Tạm tính · dữ liệu chưa đầy đủ' : summary.weekRemaining ? `Còn ${format(summary.weekRemaining)}` : 'Đã đủ mục tiêu tuần'}${summary.weekend ? ` · T7/CN ${format(summary.weekend)}` : ''}</span>`;
   let from = 8 * 60, to = 18 * 60;
   for (const item of items) { from = Math.min(from, Math.floor(QuickJiraUi.minuteOfDay(item.start) / 60) * 60); to = Math.max(to, Math.min(1440, Math.ceil((QuickJiraUi.minuteOfDay(item.start) + Number(item.minutes)) / 60) * 60)); }
-  const height = to - from; // 1 CSS pixel = 1 logged minute; blocks share one scale.
+  const height = to - from; // CSS scale stretches in fullscreen; all events keep the same minute ratio.
   const timeText = minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-  const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:${index * 60}px">${timeText(from + index * 60)}</span>`).join('');
+  const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:calc(${index * 60} * var(--week-minute-px, 1px))">${timeText(from + index * 60)}</span>`).join('');
   const headers = days.map((day, index) => {
     const total = state.historyItems.filter(item => item.date === day).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-    return `<button type="button" class="week-day-heading${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
+    return `<button type="button" class="week-day-heading${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}${index < 5 && total >= 480 ? ' is-complete' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
   }).join('');
   const columns = days.map(day => {
     const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
     return `<div class="week-day-column">${events.map(event => {
       const globalIndex = state.historyItems.indexOf(event.item);
-      const label = `${event.item.key} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
-      return `<button type="button" class="week-worklog-block${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="top:${event.start - from}px;height:${event.end - event.start}px;left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small></button>`;
+      const appearance = calendarAppearance(event.item);
+      const label = `${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
+      return `<button type="button" class="week-worklog-block${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small></button>`;
     }).join('')}</div>`;
   }).join('');
-  $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length}"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" style="height:${height}px"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
+  $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length};--week-minute-px:1px"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" data-minute-range="${height}" style="height:calc(${height} * var(--week-minute-px, 1px))"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
+  fitWeekToViewport();
   $('weeklyCalendar').querySelectorAll('[data-week-event]').forEach(button => button.addEventListener('click', () => openCorrection(state.historyItems[Number(button.dataset.weekEvent)])));
   $('weeklyCalendar').querySelectorAll('[data-week-day]').forEach(button => button.addEventListener('click', () => {
     $('historyDate').value = button.dataset.weekDay;
@@ -1550,6 +1586,9 @@ function syncCalendarControls() {
   $('calendarWeekSummary').classList.toggle('hidden', !weekly);
   if (weekly && (state.historyLoading || !state.historyLoaded || state.historyError)) $('calendarWeekSummary').innerHTML = '<strong>— <small>/ 40h</small></strong><span>Chưa xác định tổng giờ</span>';
   $('calendarWeekendBtn').classList.toggle('hidden', !weekly);
+  $('calendarProjectColorsBtn').setAttribute('aria-pressed', String(state.projectColors));
+  $('calendarProjectColorsBtn').setAttribute('aria-label', state.projectColors ? 'Tắt màu theo dự án' : 'Bật màu theo dự án');
+  $('calendarProjectColorsBtn').title = $('calendarProjectColorsBtn').getAttribute('aria-label');
   $('calendarWeekendBtn').setAttribute('aria-pressed', String(state.calendarWeekends));
   $('calendarWeekendBtn').textContent = 'T7/CN';
   $('calendarWeekendBtn').setAttribute('aria-label', state.calendarWeekends ? 'Ẩn thứ 7 và chủ nhật' : 'Hiện thứ 7 và chủ nhật');
@@ -1598,7 +1637,7 @@ function renderCalendarAgenda(date) {
   const items = state.historyItems.filter(item => item.date === date).sort((a, b) => a.start.localeCompare(b.start) || a.key.localeCompare(b.key));
   const minutes = items.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
   $('calendarDayHeading').innerHTML = `<strong>${escapeHtml(historyDayLabel(date))}</strong><span>${items.length} worklog · ${escapeHtml(formatHistoryTimeSpent(minutes))}</span>`;
-  $('calendarAgenda').innerHTML = items.length ? items.map((item, index) => `<button class="calendar-event" type="button" data-event-index="${index}" title="Xem và sửa ${escapeHtml(item.key)}"><span class="calendar-event-time">${escapeHtml(item.start)}<small>${escapeHtml(item.end)}</small></span><span class="calendar-event-copy"><strong>${escapeHtml(item.key)} <em>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</em></strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="calendar-event-arrow" aria-hidden="true">›</span></button>`).join('') : '<p class="calendar-empty">Chưa có worklog trong ngày này.</p>';
+  $('calendarAgenda').innerHTML = items.length ? items.map((item, index) => { const appearance = calendarAppearance(item); return `<button class="calendar-event${appearance.classes}" style="${appearance.style}" type="button" data-event-index="${index}" title="Xem và sửa ${escapeHtml(item.key)}${appearance.ot ? ' · OT' : ''}">${appearance.badge}<span class="calendar-event-time">${escapeHtml(item.start)}<small>${escapeHtml(item.end)}</small></span><span class="calendar-event-copy"><strong>${escapeHtml(item.key)} <em>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</em></strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="calendar-event-arrow" aria-hidden="true">›</span></button>`; }).join('') : '<p class="calendar-empty">Chưa có worklog trong ngày này.</p>';
   $('calendarAgenda').querySelectorAll('[data-event-index]').forEach(button => button.addEventListener('click', () => openCorrection(items[Number(button.dataset.eventIndex)])));
 }
 
@@ -1649,7 +1688,7 @@ function renderWorklogHistory() {
   const visibleWeekDays = calendar && state.calendarMode === 'week' ? QuickJiraUi.weekRange($('historyDate').value || vietnamToday()).days.slice(0, state.calendarWeekends ? 7 : 5) : [];
   $('historySummary').textContent = calendar && state.calendarMode === 'week'
     ? `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.filter(item => visibleWeekDays.includes(item.date)).length} worklog · ${state.calendarWeekends ? 'T2–CN' : 'T2–T6'} · Giờ Việt Nam`
-    : `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.length} worklog · ${calendar ? QuickJiraUi.exactDuration(total) : formatHistoryTimeSpent(total)}${calendar ? ' trong tháng' : ' trong ngày'} · Giờ Việt Nam`;
+    : `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.length} worklog · ${calendar ? QuickJiraCalendar.displayDuration(total) : formatHistoryTimeSpent(total)}${calendar ? ' trong tháng' : ' trong ngày'} · Giờ Việt Nam`;
   if (calendar) {
     wrap.innerHTML = '';
     renderWorklogCalendar();
@@ -1701,7 +1740,7 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
   try {
     const data = await fetchHistoryRange(range, key, force);
     if (sequence !== state.historySeq || !state.user) return;
-    state.historyItems = Array.isArray(data.items) ? data.items : [];
+    state.historyItems = Array.isArray(data.items) ? data.items.filter(item => Number(item.minutes) > 0) : [];
     state.historyLoaded = true;
     const notices = [];
     if (data.skipped?.length) notices.push(`${data.skipped.length} task chưa đọc được worklog`);
@@ -1749,12 +1788,25 @@ function moveHistoryMonth(delta) {
   void loadWorklogHistory({ quiet: true });
 }
 
+function syncCalendarViewport() {
+  const viewport = window.visualViewport;
+  const overlay = $('historyOverlay');
+  const hasKeyboard = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && $('worklogCorrectionDialog').open;
+  if (!hasKeyboard) {
+    overlay.style.setProperty('--calendar-viewport-height', `${viewport?.height || window.innerHeight}px`);
+    overlay.style.setProperty('--calendar-viewport-width', `${viewport?.width || window.innerWidth}px`);
+  }
+  scheduleWeekFit();
+}
+
 function syncCalendarFullscreenButton() {
   const button = $('calendarFullscreenBtn');
   button.setAttribute('aria-pressed', String(state.calendarFullscreen));
   button.setAttribute('aria-label', state.calendarFullscreen ? 'Thoát lịch toàn màn hình' : 'Xem lịch toàn màn hình');
   button.title = button.getAttribute('aria-label');
   $('historyOverlay').classList.toggle('is-calendar-fullscreen', state.calendarFullscreen);
+  syncCalendarViewport();
+  scheduleWeekFit();
 }
 
 async function enterCalendarFullscreen() {
@@ -2716,6 +2768,17 @@ $('calendarDate').addEventListener('change', () => {
   $('historyDate').value = $('calendarDate').value;
   void loadWorklogHistory({ quiet: true });
 });
+$('calendarProjectColorsBtn').addEventListener('click', () => {
+  const results = $('historyResults'), top = results.scrollTop, left = results.scrollLeft;
+  state.projectColors = !state.projectColors;
+  writeStorage(STORAGE.projectColors, state.projectColors);
+  renderWorklogHistory();
+  results.scrollTo(left, top);
+  scheduleWeekFit();
+});
+if (window.ResizeObserver) new ResizeObserver(scheduleWeekFit).observe($('historyResults'));
+window.addEventListener('resize', syncCalendarViewport);
+window.visualViewport?.addEventListener('resize', syncCalendarViewport);
 $('calendarFullscreenBtn').addEventListener('click', () => { void (state.calendarFullscreen ? exitCalendarFullscreen() : enterCalendarFullscreen()); });
 $('calendarOptionsBtn').addEventListener('click', () => {
   const open = $('historyOverlay').classList.toggle('calendar-options-open');

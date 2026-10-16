@@ -1,5 +1,12 @@
 # Trạng thái V1.11.2
 
+## Đã hoàn thành V1.11.3
+
+- Fullscreen thích ứng viewport và lưới tự giãn.
+- OT vàng nhạt/nhãn góc, progress xanh đủ 8h, thời lượng không hiện 0m.
+- Icon bật/tắt màu dự án có lưu lựa chọn.
+- Kiểm tra tự động logic/API và giao diện. Còn xác minh trên iPhone/Jira thật sau triển khai.
+
 Đã hoàn thành gói sửa trải nghiệm: lịch tuần chỉ còn lưới giờ, khóa nền khi mở sheet, animation trượt/fade cho sheet và fade cho cửa sổ. Không bổ sung nghiệp vụ Jira mới.
 
 # Trạng thái V1.11.1

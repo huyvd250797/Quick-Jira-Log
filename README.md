@@ -1,23 +1,28 @@
-# Quick Jira Log V1.11.2 — Professional UI & Calendar First
+# Quick Jira Log V1.11.3 — Professional UI & Calendar First
 
 © 2026 HuyVo. All rights reserved.
 
-## Cải tiến V1.11.2
+## Cải tiến V1.11.3
 
-- **Lịch tuần chỉ còn lưới theo khung giờ**, không dựng hoặc hiển thị danh sách worklog từng ngày bên dưới. Chạm tiêu đề ngày chỉ đổi ngày đang chọn, không kéo xuống một danh sách khác; chạm block để xem/sửa/xóa.
-- Khung lịch giữ chiều cao theo vùng màn hình; bộ điều khiển và đầu ngày/cột giờ vẫn cố định. **Lịch Tháng** giữ danh sách chi tiết của ngày đang chọn; chế độ Danh sách vẫn tra cứu như trước.
-- Khi mở chi tiết worklog, khóa cuộn/kéo ngang của nền bằng inert, khóa overflow và chặn touch/wheel ở nền hoặc khi vượt biên. Chỉ nội dung sheet/textarea có thể cuộn dọc; sheet không kéo ngang.
-- **Bottom sheet trượt lên và rõ dần khi mở (240ms), trượt xuống và mờ dần khi đóng (190ms)**. Nền vẫn được khóa đến hết hiệu ứng đóng rồi mới khôi phục vị trí lịch. PC dùng popup fade nhẹ.
-- Các cửa sổ công cụ (Lịch, Cài đặt, Kiểm tra) fade in khi mở, fade out trước khi ẩn. Các sheet nhập giờ mobile cũng trượt/fade; khi chuyển kỳ hoặc cách xem lịch, kết quả hiện bằng fade nhẹ.
-- Đóng/mở nhanh không để hiệu ứng cũ đóng nhầm sheet mới. Khi lưu/xóa thành công, chờ sheet đóng xong rồi cập nhật lịch. Lỗi vẫn giữ nội dung để thử lại.
-- Tôn trọng **Giảm chuyển động / Reduce Motion**: bỏ animation và đóng/mở ngay. Giữ hành vi không tự mở bàn phím; chạm trường mới nhập.
-- Giữ icon fullscreen, bố cục ngang và xử lý dự phòng trình duyệt từ V1.11.1; không thay đổi API Jira hoặc cách tính giờ.
+- PWA cho phép xoay màn hình (`orientation: any`), không còn khóa chiều dọc.
+- Fullscreen bám kích thước visual viewport và vùng an toàn, giảm lề/đầu ngày/cột giờ. Lưới tự giãn theo chiều cao còn trống; block và trục giờ dùng cùng tỷ lệ. Màn hình thấp vẫn cuộn để giữ nội dung dễ đọc; không ép chữ nhỏ để nhét toàn bộ lịch.
+- Worklog OT dùng **màu vàng nhạt cố định**, chữ tối và nhãn OT ở góc. Block dài có ribbon chéo; block ngắn dùng nhãn gọn.
+- Thanh progress ngày T2–T6 chuyển **xanh lá khi đạt hoặc vượt 8h**; ngày chưa đủ giữ màu mặc định.
+- Thời lượng bỏ thành phần bằng 0: **8h**, **30m**, **1h 30m**. Tổng bằng 0 hiện **—**; không dựng block worklog có thời lượng bằng 0.
+- Icon bảng màu bật/tắt màu theo dự án, không có chữ trên nút. Cùng dự án cùng màu, dự án khác tự được cấp màu; lựa chọn và bảng màu được nhớ trong trình duyệt. Dải màu tránh vàng OT; OT luôn được ưu tiên.
+- Giữ lịch tuần chỉ có lưới, bottom sheet/popup không tự mở bàn phím, khóa nền và animation từ bản trước.
+
+### Nhận diện OT
+
+Ưu tiên cờ OT riêng của worklog nếu nguồn có cung cấp. Với Jira đang dùng, app đọc trường **Overtime** của issue trong truy vấn metadata theo lô, có cache ID trường. Nếu không có cờ phù hợp, worklog bắt đầu từ **17:30** được nhận diện theo khung OT hiện có. Không tự xem mọi worklog cuối tuần là OT.
+
+**Trường Overtime hiện có nằm ở cấp issue**, nên khi issue được đánh dấu OT, các worklog thuộc issue đó sẽ được hiển thị OT. Jira không cung cấp lịch sử OT riêng cho từng worklog qua trường này; cần đối chiếu với dữ liệu Jira nếu một issue có cả giờ thường và OT. Thay đổi này chỉ đọc dữ liệu để tô màu, không sửa worklog hoặc quy tắc phân bổ giờ.
 
 ## Triển khai nhanh
 
-Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.11.2`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
+Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.11.3`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
 
-App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp giao diện không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.11.2**.
+App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp giao diện không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.11.3**.
 
 Đã kiểm tra bằng dữ liệu Jira giả lập; **chưa đăng nhập/ghi giờ lên Jira thật và chưa kiểm tra trên iPhone Safari vật lý**. Xem `TESTING.md` để biết phạm vi, cách chạy và giới hạn.
 
@@ -30,7 +35,7 @@ Mở **Worklog đã log** để vào thẳng tuần hiện tại; chọn **Tuầ
 - Hiển thị T2–T6, trục giờ ở bên trái. Phần đầu mỗi ngày có **[giờ đã log] / 8h** và thanh mức hoàn thành.
 - Tổng tuần nằm phía trên lưới, cùng hàng nút Tuần/Tháng trên desktop; mobile đặt tổng bên phải Tuần/Tháng để tiết kiệm diện tích: **[giờ đã log] / 40h**, kèm số giờ còn thiếu.
 - Bấm **Hiện T7/CN** để xem thêm cuối tuần. Giờ cuối tuần hiển thị riêng và không cộng vào mục tiêu T2–T6.
-- Mỗi worklog Jira là một block riêng, bám đúng giờ bắt đầu và thời lượng. Trong lưới hiện tại, 1 phút tương ứng 1 CSS pixel: block 30 phút cao 30px, 1 giờ cao 60px và 2 giờ cao 120px.
+- Mỗi worklog Jira là một block riêng, bám đúng giờ bắt đầu và thời lượng. Ở chế độ thường, 1 phút tương ứng 1 CSS pixel: block 30 phút cao 30px, 1 giờ cao 60px và 2 giờ cao 120px. Fullscreen có thể giãn đồng đều theo chiều cao màn hình; tỷ lệ 1h/2h vẫn là 1:2.
 - Khoảng nghỉ trưa vẫn chiếm đúng khoảng trống trên trục giờ; không rút ngắn trục thời gian.
 - Nếu có worklog trùng thời gian từ Jira, các block được chia cột trong ngày để có thể bấm từng worklog.
 - Bấm block để mở popup PC hoặc bottom sheet mobile, chỉnh sửa/xóa tại đó. Lịch tuần không có danh sách chi tiết bên dưới; bấm tiêu đề ngày chỉ đổi ngày đang chọn.
@@ -53,7 +58,7 @@ Hai thẻ hiển thị ngay dưới trạng thái đăng nhập:
 | Hôm nay | Tổng worklog hôm nay / 8h, số giờ cần log thêm |
 | Tuần này | Tổng worklog T2–T6 / 40h, số giờ cần log thêm trong tuần |
 
-Thời lượng hiển thị dạng **Xh Ym**, ví dụ **3h 30m**, **0h 0m**, **33h 0m**. Giờ còn thiếu không âm; khi vượt mục tiêu, hiển thị đã đủ và số giờ vượt.
+Thời lượng hiển thị gọn, ví dụ **3h 30m**, **30m**, **33h**; tổng bằng 0 hiện **—**. Giờ còn thiếu không âm; khi vượt mục tiêu, hiển thị đã đủ và số giờ vượt.
 
 Quy tắc tính:
 
@@ -64,7 +69,7 @@ Quy tắc tính:
 - Nếu dữ liệu tải thiếu, số tổng được ghi tạm tính và không kết luận chính xác số giờ còn thiếu. Nếu tải lỗi, hiển thị dấu — thay vì số 0.
 - Dashboard tải khi đăng nhập, có nút cập nhật, tải lại sau log/sửa/xóa và khi quay lại app sau thời gian chờ. Trong lúc app đang mở, có kiểm tra đổi ngày theo múi giờ Việt Nam.
 
-Ví dụ: Hôm nay 3h 30m → cần log thêm 4h 30m. Tuần đã log 33h 0m → cần thêm 7h 0m. Nếu cuối tuần đã log 2h, dòng T7/CN hiển thị 2h 0m riêng.
+Ví dụ: Hôm nay 3h 30m → cần log thêm 4h 30m. Tuần đã log 33h → cần thêm 7h. Nếu cuối tuần đã log 2h, dòng T7/CN hiển thị 2h riêng.
 
 ## 3. Tiến trình log và thời gian dự kiến
 
@@ -104,14 +109,14 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.11.2` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.11.3` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.
 5. Framework Preset: **Other**. Build Command để trống. Output Directory dùng mặc định/root của project, không chọn `dist` vì source không có bước build.
 6. Node.js Version: **24.x**.
 7. Cấu hình biến môi trường bên dưới rồi redeploy.
-8. Mở app, kiểm tra footer V1.11.2. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
+8. Mở app, kiểm tra footer V1.11.3. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
 
 ### Biến môi trường
 
@@ -159,6 +164,6 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Block rất ngắn có thể không đủ chỗ hiển thị mô tả; title, nhãn trợ năng và danh sách ngày vẫn cho đọc/mở chi tiết.
 - ETA là ước tính, không phải thời gian cam kết. Hiệu năng thật phụ thuộc Jira và hosting.
 - Chưa deploy production hoặc xác minh Safari trên iPhone vật lý trong lần phát triển này.
-- Sau deploy, kiểm tra footer V1.11.2, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
+- Sau deploy, kiểm tra footer V1.11.3, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.

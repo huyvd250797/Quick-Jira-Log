@@ -7,6 +7,7 @@ const {
   getMyself,
   getIssueWorklogs,
   getIssuesByKeys,
+  getOvertimeFieldId,
   searchIssuesWorkedOnDate,
   searchIssuesWithWorklogDate,
   searchRecentlyWorkedIssues
@@ -18,6 +19,7 @@ const { createPerf } = require('../lib/perf');
 
 const HISTORY_CACHE_MS = 15 * 1000;
 const { validDate } = require('../lib/ui-tools');
+const { isOvertime, overtimeValue } = require('../lib/calendar-style');
 
 
 function commentText(comment) {
@@ -130,7 +132,11 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });
     }
 
-    const metadataPromise = perf.step('metadataBatch', () => getIssuesByKeys(keys, session))
+    const metadataPromise = perf.step('metadataBatch', () => (async () => {
+        const fieldId = await getOvertimeFieldId(session);
+        sourceDetails.overtimeFieldId = fieldId || null;
+        return getIssuesByKeys(keys, session, { extraFields: fieldId ? [fieldId] : [] });
+      })())
       .then(issues => ({ ok: true, issues }))
       .catch(error => {
         return { ok: false, issues: [], error: error?.message || String(error), fatal: error?.status === 401 ? error : null };
@@ -159,7 +165,10 @@ module.exports = async function handler(req, res) {
         if (!authorMatches(worklog, me)) continue;
         const parsed = parseJiraStartedAtWorkTimezone(worklog.started);
         if (!parsed || parsed.date < date || parsed.date > endDate) continue;
-        const minutes = Math.max(1, Math.ceil(Number(worklog.timeSpentSeconds || 0) / 60));
+        const seconds = Number(worklog.timeSpentSeconds || 0);
+        if (!Number.isFinite(seconds) || seconds <= 0) continue;
+        const minutes = Math.ceil(seconds / 60);
+        const issueOvertime = overtimeValue(issue?.fields?.[sourceDetails.overtimeFieldId]);
         const endMinute = parsed.minute + minutes;
         items.push({
           id: String(worklog.id || ''),
@@ -171,6 +180,8 @@ module.exports = async function handler(req, res) {
           start: minuteToHHMM(parsed.minute),
           end: minuteToHHMM(endMinute),
           minutes,
+          overtime: isOvertime({ overtime: typeof worklog.overtime === 'boolean' ? worklog.overtime : undefined, issueOvertime, start: minuteToHHMM(parsed.minute) }),
+          overtimeSource: typeof worklog.overtime === 'boolean' ? 'worklog' : issueOvertime ? 'jira-issue' : parsed.minute >= 1050 ? 'time-window' : '',
           timeSpentSeconds: Number(worklog.timeSpentSeconds || 0),
           description: commentText(worklog.comment),
           started: String(worklog.started || '')

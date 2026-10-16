@@ -1,4 +1,14 @@
-# Kiểm tra V1.11.2
+# Kiểm tra V1.11.3
+
+## Kiểm tra bổ sung V1.11.3
+
+- Xác minh manifest PWA cho phép orientation `any`; việc xoay thực tế còn phụ thuộc thiết bị/trình duyệt.
+- `calendar-style-tests.js`: định dạng 0/15/30/60/480 phút; cờ OT boolean/options và giờ bắt đầu; không suy OT từ cuối tuần; dự án chuẩn hóa và bảng màu ổn định với 120 dự án; bỏ registry màu sai.
+- Tích hợp handler lịch sử bằng Jira giả lập: tìm trường OverTime, thêm vào truy vấn metadata theo lô, cache ID qua hai lần gọi, phân loại OT từ issue/thời gian và loại worklog 0 phút.
+- `calendar-colors.cjs`: 315×683, 390×844, 430×1200, 568×320, 667×375, 844×390, 1440×1000. Cả Sáng/Tối; khung fullscreen tràn viewport, lưới giãn hết chiều cao khi đủ chỗ, tỷ lệ block 1h/2h giữ đúng.
+- Kiểm tra màu OT cố định/ribbon cả block ngắn và nhỏ, vị trí OT vẫn bám trục giờ, OT ưu tiên hơn màu dự án, agenda Tháng cũng có nhãn/màu OT.
+- Kiểm tra progress xanh khi đạt 8h; không có thành phần `0m`, không dựng block 0 phút; cùng dự án cùng màu, dự án khác khác màu; icon không có chữ, bấm không gọi API và lựa chọn/bảng màu giữ sau reload.
+- Khắc phục tổng giờ xuống dòng khi tải trên màn hình 315px, giữ khung lịch đứng yên.
 
 ## Kiểm tra bổ sung V1.11.2
 
@@ -53,11 +63,11 @@ npx playwright install chromium
 npm run test:ui
 ```
 
-Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã có. `QJL_QA_OUTPUT` là thư mục lưu ảnh giả lập tùy chọn; mặc định không tạo ảnh. Các fixture dùng localhost 4174, 4176, 4179, 4182, 4184, 4186 và 4188 rồi đóng khi xong.
+Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã có. `QJL_QA_OUTPUT` là thư mục lưu ảnh giả lập tùy chọn; mặc định không tạo ảnh. Các fixture dùng localhost 4174, 4176, 4179, 4182, 4184, 4186, 4188 và 4190 rồi đóng khi xong.
 
 ## Kiểm tra sau triển khai trên iPhone thật
 
-1. Kiểm tra đầu trang/footer V1.11.2. Nếu dùng PWA, bấm Cập nhật hoặc tải lại trang sau deploy.
+1. Kiểm tra đầu trang/footer V1.11.3. Nếu dùng PWA, bấm Cập nhật hoặc tải lại trang sau deploy.
 2. Vào Worklog đã log → bấm block. Sheet phải nổi riêng, bàn phím chưa hiện. Chạm Thời lượng/Mô tả để nhập, chạm ngày/giờ để dùng bộ chọn native. Khi sheet mở, thử kéo ngang/dọc ngoài sheet: nền lịch phải đứng yên; cuộn trong sheet vẫn được.
 3. Thu/mở bàn phím, thử cuộn các trường; đảm bảo nút lưu/xóa còn tiếp cận được.
 4. Bấm icon toàn màn hình. Nếu máy chưa tự xoay, tắt khóa xoay rồi xoay ngang. Kiểm tra T2–T6, chọn ngày, Tuần/Tháng, T7/CN và thoát bằng icon.
@@ -69,4 +79,4 @@ Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã có. `QJL_QA_OUTP
 - Trình duyệt quyết định việc cho phép fullscreen thật, ẩn thanh trình duyệt và khóa hướng màn hình. App chỉ yêu cầu xoay ngang; khi không hỗ trợ hoặc bị từ chối, dùng giao diện tràn màn hình trong trang và hướng dẫn xoay máy.
 - Tham chiếu API: https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock và https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen .
 - Native date/time có định dạng theo thiết lập ngôn ngữ của máy. Sheet dùng visualViewport để thích ứng bàn phím; cần xác nhận lại trên iPhone thật.
-- API Jira, phân bổ giờ, 8h/ngày, 40h/tuần T2–T6, OT và tiến trình giữ logic bản nền.
+- Các API ghi Jira, phân bổ giờ, 8h/ngày, 40h/tuần T2–T6 và tiến trình giữ logic bản nền. Đọc lịch sử thêm metadata OverTime. Cờ này ở cấp issue nên không phân biệt được từng worklog giờ thường/OT cùng issue; xem README.
