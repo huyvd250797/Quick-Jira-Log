@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.10.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -36,6 +36,14 @@ const state = {
   historyItems: [],
   historyLoading: false,
   historyView: 'list',
+  calendarMode: 'week',
+  calendarWeekends: false,
+  dashboardSeq: 0,
+  dashboardDate: '',
+  dashboardUpdated: 0,
+  logProgress: null,
+  logProgressTimer: null,
+  logProgressHideTimer: null,
   historyLoaded: false,
   historyError: '',
   historyNotice: '',
@@ -58,6 +66,7 @@ const state = {
   loginCooldownTimer: null,
   captchaRequired: false,
   historyCache: new Map(),
+  historyRevision: 0,
   dayAuditCache: new Map(),
   apiInflight: new Map(),
   swUpdateRegistration: null,
@@ -150,6 +159,7 @@ function confirmLogAction({ title, message, rows = [], confirmLabel = 'XÁC NH�
 
 function invalidateHistoryCache() {
   state.historyCache.clear();
+  state.historyRevision += 1;
   state.historySeq += 1;
   state.historyLoading = false;
   state.historyItems = [];
@@ -662,6 +672,7 @@ function setLoggedIn(user) {
   document.body.classList.add('has-mobile-taskbar');
   $('userLabel').textContent = user?.displayName || user?.username || '';
   hydrateQuickInputs();
+  void refreshDashboard();
   if (!state.filterLoaded && !state.filterLoading) loadFilterIssues();
   updateConnectionState();
   handleQuickLaunch();
@@ -673,6 +684,9 @@ function setLoggedOut() {
   setLoginError('');
   closeDesktopEditor();
   state.user = null;
+  state.dashboardSeq += 1;
+  state.dashboardDate = '';
+  $('dashboardCard').classList.add('hidden');
   setPasswordVisible(false);
   invalidateHistoryCache();
   invalidateDayAuditCache();
@@ -763,7 +777,7 @@ async function installPwa() {
 }
 
 async function api(path, options = {}) {
-  const { requestId, ...fetchOptions } = options;
+  const { requestId, onProgress, ...fetchOptions } = options;
   const method = String(fetchOptions.method || 'GET').toUpperCase();
   const dedupeKey = method === 'GET' ? `${method}:${path}` : '';
   if (dedupeKey && state.apiInflight.has(dedupeKey)) return state.apiInflight.get(dedupeKey);
@@ -776,23 +790,37 @@ async function api(path, options = {}) {
       headers: {
         'Content-Type': 'application/json',
         ...(requestId ? { 'X-Request-ID': requestId } : {}),
+        ...(onProgress ? { Accept: 'application/x-ndjson' } : {}),
         ...(fetchOptions.headers || {})
       },
       ...fetchOptions
+    }).catch(error => {
+      if (onProgress) {
+        const unknown = new Error('Kết nối gián đoạn; chưa xác định kết quả log. Hãy kiểm tra lịch sử trước khi gửi lại.');
+        unknown.code = 'RESULT_UNKNOWN';
+        throw unknown;
+      }
+      throw error;
     });
-    let data = null;
-    try { data = await response.json(); }
-    catch { data = { ok: false, error: 'Server trả về dữ liệu không hợp lệ.' }; }
+    const decoded = await consumeApiResponse(response, onProgress);
+    let data = decoded.data;
+    const resultStatus = decoded.status;
     data = data && typeof data === 'object' ? data : { ok: false, error: 'Server trả về dữ liệu không hợp lệ.' };
     data.clientElapsedMs = Math.round(performance.now() - startedAt);
-    if (response.status === 401) setLoggedOut();
-    if (!response.ok || !data?.ok) {
+    if (resultStatus === 401) {
+      setLoggedOut();
+      // A streamed response has already sent its headers; clear the expired cookie separately.
+      if (response.headers.get('content-type')?.includes('application/x-ndjson')) {
+        void fetch('/api?action=logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+      }
+    }
+    if (resultStatus >= 400 || !data?.ok) {
       const error = new Error(data?.error || 'Có lỗi xảy ra.');
       error.details = data?.details;
       error.code = data?.code || '';
       error.jiraUrl = data?.jiraUrl || '';
       error.retryAfterSeconds = Number(data?.retryAfterSeconds || response.headers.get('retry-after') || 0) || 0;
-      error.status = response.status;
+      error.status = resultStatus;
       throw error;
     }
     let debugPerformance = false;
@@ -1244,6 +1272,208 @@ function setPasswordVisible(visible) {
   button.title = visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
 }
 
+function vietnamToday() {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+async function fetchHistoryRange(range, key = '', force = false) {
+  const user = state.user;
+  const revision = state.historyRevision;
+  const cacheKey = `${range.start}|${range.end}|${key}`;
+  const cached = state.historyCache.get(cacheKey);
+  if (!force && cached && Date.now() - cached.at < 20000) return cached.data;
+  const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(range.start)}${range.end !== range.start ? `&endDate=${encodeURIComponent(range.end)}` : ''}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? `&force=1&revision=${revision}` : ''}`, { method: 'GET', cache: 'no-store' });
+  if (state.user === user && state.historyRevision === revision) state.historyCache.set(cacheKey, { at: Date.now(), data });
+  return data;
+}
+
+function historyIsPartial(data) {
+  return !!(data.skipped?.length || data.truncated || data.sourceDetails?.metadataError);
+}
+
+async function refreshDashboard({ force = false } = {}) {
+  if (!state.user) return;
+  const seq = ++state.dashboardSeq;
+  const date = vietnamToday();
+  const range = QuickJiraUi.weekRange(date);
+  $('dashboardCard').classList.remove('hidden');
+  $('refreshDashboardBtn').disabled = true;
+  $('dashboardState').textContent = 'Đang cập nhật giờ từ Jira…';
+  $('dashboardCard').setAttribute('aria-busy', 'true');
+  // Never present old values as the totals for a new day/week.
+  if (state.dashboardDate !== date) {
+    $('dashboardToday').textContent = '—'; $('dashboardWeek').textContent = '—';
+    $('dashboardTodayRemaining').textContent = 'Đang tải…'; $('dashboardWeekRemaining').textContent = 'Đang tải…';
+    $('dashboardTodayBar').style.width = '0%'; $('dashboardWeekBar').style.width = '0%';
+    $('dashboardWeekend').textContent = '';
+  }
+  try {
+    const data = await fetchHistoryRange(range, '', force);
+    if (seq !== state.dashboardSeq || !state.user) return;
+    const summary = QuickJiraUi.workSummary(data.items || [], date);
+    const partial = historyIsPartial(data);
+    state.dashboardDate = date;
+    state.dashboardUpdated = Date.now();
+    $('dashboardToday').textContent = QuickJiraUi.exactDuration(summary.daily);
+    $('dashboardTodayTarget').textContent = summary.dayTarget ? '/ 8h' : '· Cuối tuần';
+    $('dashboardWeek').textContent = QuickJiraUi.exactDuration(summary.weekly);
+    $('dashboardTodayBar').style.width = `${summary.dayTarget ? Math.min(100, summary.daily / 480 * 100) : 0}%`;
+    $('dashboardWeekBar').style.width = `${Math.min(100, summary.weekly / 2400 * 100)}%`;
+    $('dashboardTodayRemaining').textContent = partial ? 'Tạm tính · cần kiểm tra dữ liệu' : !summary.dayTarget ? 'Không đặt mục tiêu 8h vào T7/CN' : summary.dayRemaining ? `Cần log thêm ${QuickJiraUi.exactDuration(summary.dayRemaining)}` : summary.daily > 480 ? `Đã đủ 8h · vượt ${QuickJiraUi.exactDuration(summary.daily - 480)}` : 'Đã đủ 8h hôm nay';
+    $('dashboardWeekRemaining').textContent = partial ? 'Tạm tính · cần kiểm tra dữ liệu' : summary.weekRemaining ? `Cần log thêm ${QuickJiraUi.exactDuration(summary.weekRemaining)}` : summary.weekly > 2400 ? `Đã đủ 40h · vượt ${QuickJiraUi.exactDuration(summary.weekly - 2400)}` : 'Đã đủ 40h trong tuần';
+    $('dashboardWeekend').textContent = summary.weekend ? `T7/CN: ${QuickJiraUi.exactDuration(summary.weekend)} · theo dõi riêng` : '';
+    $('dashboardRange').textContent = `${date.split('-').reverse().join('/')} · Tuần ${range.start.split('-').reverse().join('/')} – ${range.workEnd.split('-').reverse().join('/')}`;
+    $('dashboardState').textContent = partial ? 'Dữ liệu chưa đầy đủ; các tổng giờ chỉ là tạm tính. Bấm cập nhật để thử lại.' : `Cập nhật ${new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' }).format(new Date())} · Tổng tuần tính T2–T6 · Giờ Việt Nam`;
+  } catch (error) {
+    if (seq !== state.dashboardSeq || !state.user) return;
+    $('dashboardToday').textContent = '—'; $('dashboardWeek').textContent = '—';
+    $('dashboardTodayRemaining').textContent = 'Chưa xác định giờ còn thiếu'; $('dashboardWeekRemaining').textContent = 'Chưa xác định giờ còn thiếu';
+    $('dashboardTodayBar').style.width = '0%'; $('dashboardWeekBar').style.width = '0%';
+    $('dashboardWeekend').textContent = '';
+    $('dashboardState').textContent = `Chưa tải được tổng giờ. ${error.message}`;
+  } finally {
+    if (seq === state.dashboardSeq) { $('refreshDashboardBtn').disabled = false; $('dashboardCard').setAttribute('aria-busy', 'false'); }
+  }
+}
+
+function renderWeeklyCalendar(date) {
+  const week = QuickJiraUi.weekRange(date);
+  const days = state.calendarWeekends ? week.days : week.days.slice(0, 5);
+  const items = state.historyItems.filter(item => days.includes(item.date));
+  const summary = QuickJiraUi.workSummary(state.historyItems, date);
+  const format = QuickJiraUi.exactDuration;
+  $('calendarWeekSummary').innerHTML = `<strong>${format(summary.weekly)} <small>/ 40h</small></strong><span>${state.historyNotice ? 'Tạm tính · dữ liệu chưa đầy đủ' : summary.weekRemaining ? `Còn ${format(summary.weekRemaining)}` : 'Đã đủ mục tiêu tuần'}${summary.weekend ? ` · T7/CN ${format(summary.weekend)}` : ''}</span>`;
+  let from = 8 * 60, to = 18 * 60;
+  for (const item of items) { from = Math.min(from, Math.floor(QuickJiraUi.minuteOfDay(item.start) / 60) * 60); to = Math.max(to, Math.min(1440, Math.ceil((QuickJiraUi.minuteOfDay(item.start) + Number(item.minutes)) / 60) * 60)); }
+  const height = to - from; // 1 CSS pixel = 1 logged minute; blocks share one scale.
+  const timeText = minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+  const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:${index * 60}px">${timeText(from + index * 60)}</span>`).join('');
+  const headers = days.map((day, index) => {
+    const total = state.historyItems.filter(item => item.date === day).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+    return `<button type="button" class="week-day-heading${day === vietnamToday() ? ' is-today' : ''}" data-week-day="${day}" title="Xem chi tiết ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
+  }).join('');
+  const columns = days.map(day => {
+    const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
+    return `<div class="week-day-column">${events.map(event => {
+      const globalIndex = state.historyItems.indexOf(event.item);
+      const label = `${event.item.key} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
+      return `<button type="button" class="week-worklog-block${event.end - event.start < 40 ? ' is-short' : ''}" data-week-event="${globalIndex}" style="top:${event.start - from}px;height:${event.end - event.start}px;left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small></button>`;
+    }).join('')}</div>`;
+  }).join('');
+  $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length}"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" style="height:${height}px"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
+  $('weeklyCalendar').querySelectorAll('[data-week-event]').forEach(button => button.addEventListener('click', () => openCorrection(state.historyItems[Number(button.dataset.weekEvent)])));
+  $('weeklyCalendar').querySelectorAll('[data-week-day]').forEach(button => button.addEventListener('click', () => {
+    $('historyDate').value = button.dataset.weekDay;
+    renderCalendarAgenda(button.dataset.weekDay);
+    $('calendarDayHeading').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }));
+}
+
+function setCalendarMode(mode) {
+  if (state.calendarMode === mode) return;
+  state.calendarMode = mode;
+  void loadWorklogHistory({ quiet: true });
+}
+
+async function consumeApiResponse(response, onProgress) {
+  if (!response.headers.get('content-type')?.includes('application/x-ndjson')) {
+    let data;
+    try { data = await response.json(); } catch { data = { ok: false, error: 'Server trả về dữ liệu không hợp lệ.' }; }
+    return { data, status: response.status };
+  }
+  let final = null, pending = '';
+  const decoder = new TextDecoder();
+  const readLine = line => {
+    if (!line.trim()) return;
+    const event = JSON.parse(line);
+    if (event.type === 'progress') onProgress?.(event);
+    if (event.type === 'result') final = { data: event.data, status: Number(event.status || response.status) };
+  };
+  try {
+    if (response.body?.getReader) {
+      const reader = response.body.getReader();
+      while (true) {
+        const { value, done } = await reader.read();
+        pending += done ? decoder.decode() : decoder.decode(value, { stream: true });
+        const lines = pending.split('\n'); pending = lines.pop();
+        for (const line of lines) readLine(line);
+        if (pending.length > 2 * 1024 * 1024) throw new Error('INVALID_STREAM');
+        if (done) break;
+      }
+      if (pending.trim()) readLine(pending);
+    } else {
+      for (const line of (await response.text()).split('\n')) readLine(line);
+    }
+    if (!final) throw new Error('MISSING_RESULT');
+    return final;
+  } catch {
+    const error = new Error('Kết nối gián đoạn; chưa xác định kết quả log. Hãy kiểm tra lịch sử trước khi gửi lại.');
+    error.code = 'RESULT_UNKNOWN';
+    throw error;
+  }
+}
+
+function startLogProgress(mode, count = 1) {
+  clearInterval(state.logProgressTimer); clearTimeout(state.logProgressHideTimer);
+  const identity = state.user?.username || 'current-user';
+  const storageKey = `quick-jira-log:eta:${identity}:${mode}`;
+  const saved = readStorage(storageKey, []);
+  const samples = Array.isArray(saved) ? saved.filter(value => Number.isFinite(value) && value > 200).slice(-8) : [];
+  const baseline = mode === 'bulk' ? 12000 + count * 1800 : 12000;
+  const expected = samples.length ? [...samples].sort((a,b)=>a-b)[Math.floor(samples.length / 2)] : baseline;
+  state.logProgress = { mode, count, storageKey, samples, expected, started: Date.now(), percent: 0, phase: 'Đang gửi yêu cầu…', active: true };
+  $('logProgressPanel').classList.remove('hidden', 'is-error', 'is-complete');
+  $('logProgressTitle').textContent = mode === 'bulk' ? `Đang log ${count} task` : 'Đang logwork';
+  $('closeLogProgressBtn').classList.add('hidden');
+  paintLogProgress();
+  state.logProgressTimer = setInterval(paintLogProgress, 500);
+}
+
+function updateLogProgress(event) {
+  const progress = state.logProgress;
+  if (!progress?.active) return;
+  progress.percent = Math.max(progress.percent, Math.min(99, Number(event.percent) || 0));
+  progress.phase = String(event.phase || progress.phase);
+  paintLogProgress();
+}
+
+function paintLogProgress() {
+  const progress = state.logProgress;
+  if (!progress) return;
+  const elapsed = Date.now() - progress.started;
+  $('logProgressPercent').textContent = `${progress.percent}%`;
+  $('logProgressBar').style.width = `${progress.percent}%`;
+  $('logProgressMeter').setAttribute('aria-valuenow', String(progress.percent));
+  $('logProgressPhase').textContent = progress.phase;
+  $('logProgressElapsed').textContent = `Đã chạy ${Math.floor(elapsed / 1000)}s`;
+  if (!progress.active) return;
+  const phaseEstimate = progress.percent >= 15 ? elapsed * (100 - progress.percent) / progress.percent : progress.expected;
+  const remaining = Math.max(1000, (progress.expected * (100 - progress.percent) / 100 + phaseEstimate) / 2);
+  const finish = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(Date.now() + remaining));
+  $('logProgressEta').textContent = elapsed > progress.expected * 1.5 ? 'Jira chậm hơn dự kiến · đang cập nhật ước tính' : `Ước tính còn ~${Math.ceil(remaining / 1000)}s · khoảng ${finish}`;
+}
+
+function finishLogProgress(success, error) {
+  const progress = state.logProgress;
+  if (!progress) return;
+  clearInterval(state.logProgressTimer);
+  progress.active = false;
+  progress.phase = success ? 'Đã nhận kết quả hoàn tất từ Jira' : error?.code === 'RESULT_UNKNOWN' ? 'Chưa xác định kết quả; hãy kiểm tra lịch sử trước khi gửi lại' : `Chưa hoàn tất: ${error?.message || 'Có lỗi xảy ra'}`;
+  if (success) {
+    progress.percent = 100;
+    writeStorage(progress.storageKey, [...progress.samples, Date.now() - progress.started].slice(-8));
+  }
+  $('logProgressTitle').textContent = success ? 'Logwork hoàn tất' : error?.code === 'RESULT_UNKNOWN' ? 'Cần kiểm tra kết quả' : 'Logwork chưa hoàn tất';
+  $('logProgressEta').textContent = success ? 'Hoàn tất' : 'Không có thời gian hoàn thành dự kiến';
+  $('logProgressPanel').classList.toggle('is-error', !success);
+  $('logProgressPanel').classList.toggle('is-complete', success);
+  $('closeLogProgressBtn').classList.remove('hidden');
+  paintLogProgress();
+  if (success) state.logProgressHideTimer = setTimeout(() => $('logProgressPanel').classList.add('hidden'), 4500);
+}
+
 function historyDayLabel(date, monthOnly = false) {
   return new Intl.DateTimeFormat('vi-VN', monthOnly ? { month: 'long', year: 'numeric', timeZone: 'UTC' } : { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
 }
@@ -1251,7 +1481,28 @@ function historyDayLabel(date, monthOnly = false) {
 function renderWorklogCalendar() {
   const date = $('historyDate').value || todayLocal();
   if (!QuickJiraUi.validDate(date)) return;
-  $('calendarMonthLabel').textContent = historyDayLabel(date, true);
+  const weekly = state.calendarMode === 'week';
+  const week = QuickJiraUi.weekRange(date);
+  $('calendarMonthLabel').textContent = weekly ? `${week.start.split('-').reverse().join('/')} – ${(state.calendarWeekends ? week.end : week.workEnd).split('-').reverse().join('/')}` : historyDayLabel(date, true);
+  $('calendarPrevBtn').setAttribute('aria-label', weekly ? 'Tuần trước' : 'Tháng trước');
+  $('calendarNextBtn').setAttribute('aria-label', weekly ? 'Tuần sau' : 'Tháng sau');
+  $('calendarWeekBtn').classList.toggle('is-active', weekly);
+  $('calendarMonthBtn').classList.toggle('is-active', !weekly);
+  $('calendarWeekBtn').setAttribute('aria-pressed', String(weekly));
+  $('calendarMonthBtn').setAttribute('aria-pressed', String(!weekly));
+  $('weeklyCalendar').classList.toggle('hidden', !weekly);
+  $('monthlyCalendar').classList.toggle('hidden', weekly);
+  $('calendarWeekSummary').classList.toggle('hidden', !weekly);
+  $('calendarWeekendBtn').classList.toggle('hidden', !weekly);
+  $('calendarWeekendBtn').setAttribute('aria-pressed', String(state.calendarWeekends));
+  $('calendarWeekendBtn').textContent = state.calendarWeekends ? 'Ẩn T7/CN' : 'Hiện T7/CN';
+  $('calendarHelp').textContent = weekly ? 'Chiều cao block theo đúng thời lượng · Bấm block để xem, sửa hoặc xóa · Cuộn ngang để xem đủ ngày trên điện thoại.' : 'Số giờ trong ô là tổng worklog đã ghi. Chọn ngày để xem chi tiết.';
+  if (weekly) renderWeeklyCalendar(date);
+  else renderMonthlyCalendar(date);
+  renderCalendarAgenda(date);
+}
+
+function renderMonthlyCalendar(date) {
   const totals = new Map();
   for (const item of state.historyItems) {
     const current = totals.get(item.date) || { minutes: 0, count: 0 };
@@ -1272,6 +1523,9 @@ function renderWorklogCalendar() {
     // Keep keyboard focus on the chosen day after replacing calendar buttons.
     $('calendarGrid').querySelector(`[data-date="${button.dataset.date}"]`)?.focus({ preventScroll: true });
   }));
+}
+
+function renderCalendarAgenda(date) {
   const items = state.historyItems.filter(item => item.date === date).sort((a, b) => a.start.localeCompare(b.start) || a.key.localeCompare(b.key));
   const minutes = items.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
   $('calendarDayHeading').innerHTML = `<strong>${escapeHtml(historyDayLabel(date))}</strong><span>${items.length} worklog · ${escapeHtml(formatHistoryTimeSpent(minutes))}</span>`;
@@ -1292,7 +1546,7 @@ function renderWorklogHistory() {
   $('historyCalendarViewBtn').setAttribute('aria-pressed', String(calendar));
   $('historySummary').classList.toggle('hidden', state.historyLoading || !state.historyLoaded || !!state.historyError);
   let message = '';
-  if (state.historyLoading) message = calendar ? 'Đang tải worklog trong tháng từ Jira...' : 'Đang tải worklog từ Jira...';
+  if (state.historyLoading) message = calendar ? `Đang tải worklog trong ${state.calendarMode === 'week' ? 'tuần' : 'tháng'} từ Jira...` : 'Đang tải worklog từ Jira...';
   else if (state.historyError) message = state.historyError;
   else if (!state.historyLoaded) message = 'Chọn ngày hoặc KEY rồi tìm worklog.';
   else if (state.historyNotice) message = state.historyNotice;
@@ -1307,7 +1561,10 @@ function renderWorklogHistory() {
     return;
   }
   const total = state.historyItems.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-  $('historySummary').textContent = `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.length} worklog · ${formatHistoryTimeSpent(total)}${calendar ? ' trong tháng' : ' trong ngày'} · Giờ Việt Nam`;
+  const visibleWeekDays = calendar && state.calendarMode === 'week' ? QuickJiraUi.weekRange($('historyDate').value || vietnamToday()).days.slice(0, state.calendarWeekends ? 7 : 5) : [];
+  $('historySummary').textContent = calendar && state.calendarMode === 'week'
+    ? `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.filter(item => visibleWeekDays.includes(item.date)).length} worklog · ${state.calendarWeekends ? 'T2–CN' : 'T2–T6'} · Giờ Việt Nam`
+    : `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.length} worklog · ${calendar ? QuickJiraUi.exactDuration(total) : formatHistoryTimeSpent(total)}${calendar ? ' trong tháng' : ' trong ngày'} · Giờ Việt Nam`;
   if (calendar) {
     wrap.innerHTML = '';
     renderWorklogCalendar();
@@ -1337,11 +1594,9 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
   if (!state.user) return;
   const selectedDate = $('historyDate').value || todayLocal();
   if (!QuickJiraUi.validDate(selectedDate)) return showToast('Vui lòng chọn ngày hợp lệ.');
-  const range = state.historyView === 'calendar' ? QuickJiraUi.monthRange(selectedDate) : { start: selectedDate, end: selectedDate };
+  const range = state.historyView === 'calendar' ? (state.calendarMode === 'week' ? QuickJiraUi.weekRange(selectedDate) : QuickJiraUi.monthRange(selectedDate)) : { start: selectedDate, end: selectedDate };
   const key = $('historyKey').value.trim().toUpperCase();
-  const cacheKey = `${range.start}|${range.end}|${key}`;
   const sequence = ++state.historySeq;
-  const cached = state.historyCache.get(cacheKey);
   closeCorrection();
   state.historyError = '';
   state.historyNotice = '';
@@ -1354,7 +1609,7 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
   searchBtn.textContent = 'ĐANG TẢI...';
   renderWorklogHistory();
   try {
-    const data = !force && cached && Date.now() - cached.at < 20000 ? cached.data : await api(`/api?action=worklog-history&date=${encodeURIComponent(range.start)}${range.end !== range.start ? `&endDate=${encodeURIComponent(range.end)}` : ''}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? '&force=1' : ''}`, { method: 'GET', cache: 'no-store' });
+    const data = await fetchHistoryRange(range, key, force);
     if (sequence !== state.historySeq || !state.user) return;
     state.historyItems = Array.isArray(data.items) ? data.items : [];
     state.historyLoaded = true;
@@ -1363,7 +1618,6 @@ async function loadWorklogHistory({ quiet = false, force = false } = {}) {
     if (data.truncated) notices.push('Đang giới hạn 500 task; hãy thu hẹp bằng KEY');
     if (data.sourceDetails?.metadataError) notices.push('Một số thông tin task chưa tải được');
     state.historyNotice = notices.length ? `Dữ liệu chưa đầy đủ: ${notices.join(' · ')}. Bấm Tìm worklog để tải lại.` : '';
-    state.historyCache.set(cacheKey, { at: cached?.data === data ? cached.at : Date.now(), data });
     if (!quiet) showToast(`Đã tải ${state.historyItems.length} worklog.`);
   } catch (error) {
     if (sequence !== state.historySeq || !state.user) return;
@@ -1388,7 +1642,7 @@ function setHistoryView(view) {
 }
 
 function moveHistoryMonth(delta) {
-  $('historyDate').value = delta === 0 ? todayLocal() : QuickJiraUi.shiftMonth($('historyDate').value || todayLocal(), delta);
+  $('historyDate').value = delta === 0 ? vietnamToday() : state.calendarMode === 'week' ? QuickJiraUi.shiftDate($('historyDate').value || vietnamToday(), delta * 7) : QuickJiraUi.shiftMonth($('historyDate').value || vietnamToday(), delta);
   void loadWorklogHistory({ quiet: true });
 }
 
@@ -1432,6 +1686,7 @@ async function saveCorrection() {
     showToast('Đã cập nhật worklog trên Jira.');
     invalidateHistoryCache();
     invalidateDayAuditCache();
+    void refreshDashboard({ force: true });
     closeCorrection();
     await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
@@ -1450,6 +1705,7 @@ async function deleteHistoryItem(item) {
     showToast('Đã xóa worklog trên Jira.');
     invalidateHistoryCache();
     invalidateDayAuditCache();
+    void refreshDashboard({ force: true });
     if ($('correctionWorklogId').value === item.id) closeCorrection();
     await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
@@ -1777,7 +2033,7 @@ async function loadBulkCapacity({ force = false } = {}) {
 }
 
 async function requestBulkSmartAllocation() {
-  if (state.bulkSubmitInFlight) return;
+  if (state.bulkSubmitInFlight || state.submitInFlight) return;
   const btn = $('bulkRedistributeBtn');
   const originalText = btn?.textContent || 'TỰ ĐỘNG PHÂN BỔ';
   if (btn) {
@@ -1952,12 +2208,15 @@ async function submitBulkWorklog(event) {
   btn.disabled = true;
   btn.textContent = 'ĐANG LOG TẤT CẢ...';
   $('resultCard').classList.add('hidden');
+  startLogProgress('bulk', items.length);
   try {
     const data = await api('/api?action=bulk-worklog', {
       method: 'POST',
       body: JSON.stringify({ date, items, requestId }),
-      requestId
+      requestId,
+      onProgress: updateLogProgress
     });
+    finishLogProgress(true);
     for (const item of data.items || []) {
       addRecentIssue({ key: item.key, project: item.project, summary: item.summary });
     }
@@ -1976,6 +2235,7 @@ async function submitBulkWorklog(event) {
     showLateLogWarning(date);
     invalidateHistoryCache();
     invalidateDayAuditCache(date);
+    void refreshDashboard({ force: true });
     const loggedKeys = new Set((data.items || []).map(item => String(item.key || '').toUpperCase()));
     state.filterIssues = state.filterIssues.filter(item => !loggedKeys.has(String(item.key || '').toUpperCase()));
     state.filterLoaded = true;
@@ -1985,7 +2245,8 @@ async function submitBulkWorklog(event) {
   } catch (error) {
     const result = $('resultCard');
     result.className = 'result error';
-    result.innerHTML = `<h3>Bulk Logwork chưa thành công</h3><div class="meta">${escapeHtml(error.message)}</div>`;
+    finishLogProgress(false, error);
+    result.innerHTML = `<h3>${error.code === 'RESULT_UNKNOWN' ? 'Chưa xác định kết quả Bulk' : 'Bulk Logwork chưa thành công'}</h3><div class="meta">${escapeHtml(error.message)}</div>`;
     showAnimated(result);
     addAuditEntry({ ok: false, type: 'Bulk', message: error.message });
     showToast(error.message);
@@ -2121,6 +2382,14 @@ $('runAuditBtn').addEventListener('click', runDayAudit);
 $('refreshWorklogHistoryBtn').addEventListener('click', () => loadWorklogHistory({ force: true }));
 $('historyListViewBtn').addEventListener('click', () => setHistoryView('list'));
 $('historyCalendarViewBtn').addEventListener('click', () => setHistoryView('calendar'));
+$('calendarWeekBtn').addEventListener('click', () => setCalendarMode('week'));
+$('calendarMonthBtn').addEventListener('click', () => setCalendarMode('month'));
+$('calendarWeekendBtn').addEventListener('click', () => { state.calendarWeekends = !state.calendarWeekends; renderWorklogHistory(); });
+$('refreshDashboardBtn').addEventListener('click', () => refreshDashboard({ force: true }));
+setInterval(() => { if (state.user && !document.hidden && vietnamToday() !== state.dashboardDate) void refreshDashboard({ force: true }); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && state.user && (vietnamToday() !== state.dashboardDate || Date.now() - state.dashboardUpdated > 60000)) void refreshDashboard({ force: true }); });
+$('closeLogProgressBtn').addEventListener('click', () => $('logProgressPanel').classList.add('hidden'));
+window.addEventListener('focus', () => { if (state.user && (vietnamToday() !== state.dashboardDate || Date.now() - state.dashboardUpdated > 60000)) void refreshDashboard({ force: true }); });
 $('calendarPrevBtn').addEventListener('click', () => moveHistoryMonth(-1));
 $('calendarNextBtn').addEventListener('click', () => moveHistoryMonth(1));
 $('calendarTodayBtn').addEventListener('click', () => moveHistoryMonth(0));
@@ -2199,7 +2468,7 @@ document.addEventListener('keydown', event => {
 
 $('worklogForm').addEventListener('submit', async event => {
   event.preventDefault();
-  if (state.submitInFlight) return;
+  if (state.submitInFlight || state.bulkSubmitInFlight) return;
   if (singleCapacityExceeded()) {
     updateSingleCapacity();
     return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm TimeSpent hoặc bật OT.');
@@ -2238,8 +2507,10 @@ $('worklogForm').addEventListener('submit', async event => {
   btn.textContent = 'ĐANG LOG WORK...';
   if (nextBtn && logAndNext) nextBtn.textContent = 'ĐANG LOG...';
   $('resultCard').classList.add('hidden');
+  startLogProgress('single');
   try {
-    const data = await api('/api?action=worklog', { method: 'POST', body: JSON.stringify({ ...payload, requestId }), requestId });
+    const data = await api('/api?action=worklog', { method: 'POST', body: JSON.stringify({ ...payload, requestId }), requestId, onProgress: updateLogProgress });
+    finishLogProgress(true);
 
     state.prefs.lastProject = payload.project;
     state.prefs.lastTimeSpent = payload.timeSpent;
@@ -2263,6 +2534,7 @@ $('worklogForm').addEventListener('submit', async event => {
     showLateLogWarning(payload.date);
     invalidateHistoryCache();
     invalidateDayAuditCache(payload.date);
+    void refreshDashboard({ force: true });
     state.singleCapacitySeq += 1;
     $('worklogCard').classList.add('hidden');
     document.body.classList.remove('single-log-open');
@@ -2298,7 +2570,8 @@ $('worklogForm').addEventListener('submit', async event => {
   } catch (error) {
     const result = $('resultCard');
     result.className = 'result error';
-    result.innerHTML = `<h3>Logwork chưa thành công</h3><div class="meta">${escapeHtml(error.message)}</div>`;
+    finishLogProgress(false, error);
+    result.innerHTML = `<h3>${error.code === 'RESULT_UNKNOWN' ? 'Chưa xác định kết quả log' : 'Logwork chưa thành công'}</h3><div class="meta">${escapeHtml(error.message)}</div>`;
     showAnimated(result);
     addAuditEntry({ ok: false, key: $('key').value.trim().toUpperCase(), message: error.message });
     showToast(error.message);

@@ -1,66 +1,100 @@
-# Quick Jira Log V1.9.0 — Time Stepper & Worklog Calendar
+# Quick Jira Log V1.10.0 — Weekly Calendar, Dashboard & Live Progress
 
-Nâng cấp từ V1.8.0 theo yêu cầu của Boss: tăng/giảm thời lượng bằng nút bấm, hiện/ẩn mật khẩu, mở rộng màn hình Worklog đã log và thêm lịch tháng.
+Nâng cấp trực tiếp từ V1.9.0 theo yêu cầu của Boss. Source có thể triển khai Vercel với cấu hình hiện có; không thêm database hoặc thư viện runtime.
 
 © 2026 HuyVo. All rights reserved.
 
-## 1. Chức năng mới và cách dùng
+## 1. Lịch Tuần / Tháng
 
-### Tăng/giảm mỗi lần 30 phút
+Mở **Worklog đã log → Lịch**, chọn **Tuần** hoặc **Tháng**. Chế độ mặc định khi mở Lịch là Tuần.
 
-Ô TimeSpent có hai nút mũi tên lên/xuống bên phải, dùng được trong:
+### Lịch tuần
 
-- Form Logwork một Sub-task.
-- Mỗi dòng Log tất cả.
-- Form sửa worklog đã log, kể cả khi mở từ lịch.
+- Hiển thị T2–T6, trục giờ ở bên trái. Phần đầu mỗi ngày có **[giờ đã log] / 8h** và thanh mức hoàn thành.
+- Tổng tuần nằm phía trên lưới, cùng hàng nút Tuần/Tháng trên desktop; mobile đưa tổng xuống hàng riêng để dễ đọc: **[giờ đã log] / 40h**, kèm số giờ còn thiếu.
+- Bấm **Hiện T7/CN** để xem thêm cuối tuần. Giờ cuối tuần hiển thị riêng và không cộng vào mục tiêu T2–T6.
+- Mỗi worklog Jira là một block riêng, bám đúng giờ bắt đầu và thời lượng. Trong lưới hiện tại, 1 phút tương ứng 1 CSS pixel: block 30 phút cao 30px, 1 giờ cao 60px và 2 giờ cao 120px.
+- Khoảng nghỉ trưa vẫn chiếm đúng khoảng trống trên trục giờ; không rút ngắn trục thời gian.
+- Nếu có worklog trùng thời gian từ Jira, các block được chia cột trong ngày để có thể bấm từng worklog.
+- Bấm block để mở chi tiết và form sửa/xóa. Bấm tiêu đề ngày để xem danh sách chi tiết của ngày bên dưới lưới.
+- Có nút tuần trước/tuần sau và Hôm nay. Tuần giao tháng hoặc năm được tính theo ngày Thứ 2, không giới hạn trong một tháng.
+- Trên điện thoại, cuộn ngang trong lưới để xem đủ ngày. Tiêu đề ngày được giữ ở đầu vùng cuộn lịch.
 
-Ví dụ: bấm preset `1h` → mũi tên lên → `1h 30m` → lên tiếp → `2h`. Bấm xuống để giảm 30 phút. Trên bàn phím có thể dùng ArrowUp/ArrowDown khi đang ở ô thời lượng.
+### Lịch tháng
 
-Nút bấm có giới hạn từ 30 phút đến 16 giờ, phù hợp giới hạn nhập hiện tại của app. Nếu giá trị đang nhập dưới 30 phút thì nút giảm bị khóa; nhập tay vẫn hỗ trợ các định dạng hợp lệ như `15m`, `1h`, `1h30m`, `1h 30m`, `1.5h`. Giá trị nhập tay không hợp lệ sẽ được nhắc khi bấm tăng/giảm. Preset, tổng Bulk và tiến độ ngày cập nhật ngay khi bấm nút.
+- Giữ lịch tháng từ T2 đến CN, tổng thời lượng và số worklog trong từng ô ngày.
+- Bấm ngày để xem danh sách worklog bên dưới và mở form sửa/xóa.
+- Bộ lọc KEY áp dụng cho cả hai chế độ; tổng trên lịch khi có KEY chỉ là tổng của KEY đang lọc.
+- Trên lịch tuần, lưới mặc định chỉ có T2–T6. Số worklog trong dòng tóm tắt chỉ đếm những ngày đang hiển thị; tổng mục tiêu 40h vẫn chỉ tính T2–T6.
 
-Mốc 16 giờ là trần nhập của điều khiển; quy tắc giờ thường tối đa 8 giờ, OT và kiểm tra khung giờ trên server vẫn được áp dụng.
+## 2. Dashboard hôm nay và tuần này
 
-### Hiện/ẩn mật khẩu
+Hai thẻ hiển thị ngay dưới trạng thái đăng nhập:
 
-Bấm icon con mắt trong ô Password để hiện/ẩn nội dung. Nút có nhãn trợ năng thay đổi theo trạng thái. Mật khẩu tự trở về dạng ẩn khi gửi đăng nhập hoặc đăng xuất; chức năng này không thêm lưu mật khẩu vào localStorage.
+| Thẻ | Nội dung |
+|---|---|
+| Hôm nay | Tổng worklog hôm nay / 8h, số giờ cần log thêm |
+| Tuần này | Tổng worklog T2–T6 / 40h, số giờ cần log thêm trong tuần |
 
-### Worklog đã log cao hơn, dễ cuộn
+Thời lượng hiển thị dạng **Xh Ym**, ví dụ **3h 30m**, **0h 0m**, **33h 0m**. Giờ còn thiếu không âm; khi vượt mục tiêu, hiển thị đã đủ và số giờ vượt.
 
-- Điện thoại: cửa sổ gần toàn màn hình, có tính đến safe area; bộ lọc ngày/KEY nằm cùng hàng để dành chỗ cho dữ liệu.
-- Desktop: cửa sổ rộng hơn và cao tối đa 94% vùng hiển thị.
-- Danh sách và form sửa nằm trong một vùng cuộn chính, bỏ giới hạn danh sách 38–46vh trước đây.
-- Nội dung mô tả trùng hoàn toàn Summary chỉ hiển thị một lần để giảm chiều cao thẻ.
-- Mở Worklog đã log tự tải ngày đang chọn; nút Tìm worklog dùng để làm mới dữ liệu.
+Quy tắc tính:
 
-### Xem dạng lịch
+- Ngày hiện tại và tuần được xác định theo **Asia/Ho_Chi_Minh**.
+- Tuần bắt đầu T2. Mục tiêu cố định 8h/ngày làm việc, 40h/T2–T6, chưa trừ lễ/phép.
+- Tổng là số phút của các worklog thực tế của tài khoản đang đăng nhập. Worklog ngoài giờ nhưng bắt đầu trong T2–T6 vẫn nằm trong tổng ngày/tuần; đây là tổng worklog, không phải số giờ chấm công hoặc tổng giờ thường riêng.
+- T7/CN theo dõi riêng; dashboard ngày cuối tuần không đặt mục tiêu 8h.
+- Nếu dữ liệu tải thiếu, số tổng được ghi tạm tính và không kết luận chính xác số giờ còn thiếu. Nếu tải lỗi, hiển thị dấu — thay vì số 0.
+- Dashboard tải khi đăng nhập, có nút cập nhật, tải lại sau log/sửa/xóa và khi quay lại app sau thời gian chờ. Trong lúc app đang mở, có kiểm tra đổi ngày theo múi giờ Việt Nam.
 
-1. Mở **Worklog đã log**.
-2. Chọn **Lịch** cạnh **Danh sách**.
-3. Lịch tháng hiển thị từ Thứ 2 đến Chủ nhật, tổng thời lượng và số worklog mỗi ngày.
-4. Bấm ngày để xem worklog theo giờ tăng dần ở dưới lịch.
-5. Bấm worklog để mở form sửa/xóa hiện có.
-6. Dùng mũi tên tháng trước/tháng sau hoặc **Hôm nay** để điều hướng.
-7. KEY là bộ lọc tùy chọn, áp dụng cho cả danh sách lẫn lịch.
+Ví dụ: Hôm nay 3h 30m → cần log thêm 4h 30m. Tuần đã log 33h 0m → cần thêm 7h 0m. Nếu cuối tuần đã log 2h, dòng T7/CN hiển thị 2h 0m riêng.
 
-Tổng giờ hiển thị là tổng thời lượng worklog đã ghi, không phải số giờ chấm công. Lịch đánh dấu ngày có worklog và ngày hiện tại, không suy luận ngày nghỉ/thiếu công. Múi giờ hiển thị là Asia/Ho_Chi_Minh.
+## 3. Tiến trình log và thời gian dự kiến
 
-## 2. Yêu cầu chạy
+Áp dụng cho **Logwork**, **Log & Next** và **Log tất cả**. Sau khi xác nhận, app hiển thị:
+
+- Thanh tiến trình và phần trăm.
+- Bước xử lý hiện tại: đọc task → kiểm tra giờ trống/OT → ghi worklog → cập nhật trạng thái → hoàn tất.
+- Thời gian đã chạy.
+- Số giây còn lại ước tính và giờ hoàn thành dự kiến.
+
+Cách hoạt động:
+
+- Server truyền tiến độ qua NDJSON trong chính POST đang ghi. Không cần function polling hoặc Redis riêng cho tiến trình.
+- % là mức hoàn thành theo các giai đoạn có trọng số, không phải % thời gian cam kết. Giai đoạn ghi worklog cập nhật theo số worklog đã nhận kết quả tạo thành công.
+- Client chỉ cho 100% sau khi đọc được kết quả cuối cùng thành công. Không dùng timer tự tăng % khi server chưa xác nhận.
+- ETA dựa trên các lần log thành công trước của tài khoản/trình duyệt và tiến độ hiện tại. Chưa có lịch sử thì dùng ước tính khởi tạo; khi Jira chậm hơn dự kiến, app thông báo đang cập nhật ước tính.
+- Khi lỗi, thanh dừng trước 100% và hiển thị lý do. Khi mất phản hồi cuối, thông báo **chưa xác định kết quả** và yêu cầu kiểm tra lịch sử trước khi gửi lại; không tự retry POST.
+- Đóng form hoặc mất kết nối không đồng nghĩa thao tác server đã hủy. Hãy đối soát Jira/lịch sử nếu kết quả chưa xác định.
+- Nếu lớp proxy/hosting đệm dữ liệu, cập nhật có thể về theo đợt. Kết quả JSON cũ vẫn được hỗ trợ, và app không tạo % giả để bù việc thiếu stream.
+
+Đối chiếu nền tảng: https://vercel.com/docs/functions/streaming-functions và https://vercel.com/kb/guide/ship-a-express-app-on-vercel . Vercel Function Node dùng res.write/res.end để stream; source vẫn giữ API index duy nhất và maxDuration 60 giây hiện tại.
+
+## 4. Các tiện ích V1.9.0 được giữ lại
+
+- Mũi tên tăng/giảm 30 phút ở Log đơn, Bulk và sửa worklog; ArrowUp/ArrowDown khi đang ở ô giờ.
+- Preset 1h → tăng → 1h 30m → tăng → 2h. Nút bấm giới hạn 30m–16h; nhập tay định dạng hợp lệ vẫn được hỗ trợ.
+- Icon hiện/ẩn mật khẩu.
+- Cửa sổ Worklog đã log cao hơn, hỗ trợ sáng/tối và mobile.
+- Guard giờ thường/OT/overlap, xác nhận trước log, log muộn, cache và idempotency theo cấu hình đã có.
+
+## 5. Yêu cầu chạy
 
 - Node.js 24.x (đã khai báo trong package.json).
 - Server/Vercel có thể truy cập Jira được cấu hình trong `lib/config.js`.
 - Tài khoản Jira có quyền đọc issue/worklog; quyền ghi/sửa/xóa và chuyển trạng thái theo cấu hình Jira.
-- Không cần cài thêm thư viện runtime hoặc database cho các chức năng V1.9.0.
+- Không cần cài thêm thư viện runtime hoặc database cho các chức năng V1.10.0.
 
-## 3. Triển khai Vercel
+## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.9.0` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.10.0` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.
 5. Framework Preset: **Other**. Build Command để trống. Output Directory dùng mặc định/root của project, không chọn `dist` vì source không có bước build.
 6. Node.js Version: **24.x**.
 7. Cấu hình biến môi trường bên dưới rồi redeploy.
-8. Mở app, kiểm tra footer V1.9.0. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
+8. Mở app, kiểm tra footer V1.10.0. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
 
 ### Biến môi trường
 
@@ -84,42 +118,30 @@ Hoặc dùng `KV_REST_API_URL` / `KV_REST_API_TOKEN`. Khi đã cấu hình nhưn
 
 API vẫn gom trong `api/index.js`. File `vercel.json` đã cấu hình thời gian tối đa 60 giây cho function này.
 
-## 4. Kiểm tra tự động
+## 7. Kiểm tra
 
 ```bash
 node --version
 npm test
 ```
 
-Bộ kiểm tra gồm scheduling, overlap/timezone, OT, auth/CAPTCHA, chuyển trạng thái, bulk allocation, idempotency/cache và V1.9.0:
+Bộ test có các kiểm tra V1.8/V1.9 và V1.10.0:
 
-- Giá trị tăng/giảm tương thích parser server.
-- Biên 30m/16h, định dạng giờ hỗn hợp và dữ liệu không hợp lệ.
-- Lịch bắt đầu Thứ 2, tháng nhuận, chuyển tháng giữ ngày hợp lệ.
-- API tháng lọc đúng tác giả/ngày theo múi giờ Việt Nam.
-- Mỗi issue ứng viên chỉ đọc worklog một lần cho khoảng tháng, thay vì lặp API từng ngày.
-- Lỗi tìm kiếm và dữ liệu tải một phần được phân biệt với lịch rỗng.
+- Biên tuần qua tháng/năm, định dạng Xh Ym, mục tiêu ngày/tuần và giờ cuối tuần.
+- Vị trí, thời lượng và cột của các block trùng giờ.
+- HTTP stream thực qua Node server cục bộ: log đơn/Bulk, lỗi không có 100%, replay idempotent và tương thích JSON.
+- API lịch sử lọc tác giả/ngày theo giờ Việt Nam.
 
-Các test API dùng phản hồi Jira giả lập, không ghi dữ liệu lên Jira thật.
+Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kết quả kiểm tra giao diện mô phỏng được ghi tại TESTING.md.
 
-## 5. Checklist khi kiểm tra trên hệ thống thật
+## 8. Giới hạn và kiểm tra sau triển khai
 
-- Đăng nhập: hiện/ẩn mật khẩu; đăng nhập đúng/sai và CAPTCHA.
-- Log đơn: preset 1h → tăng thành 1h 30m; tổng giờ cập nhật; ghi đúng giá trị.
-- Bulk: tăng/giảm từng task; tổng thời gian và tiến độ đồng bộ.
-- Lịch sử: cửa sổ cao hơn, cuộn tới dòng cuối trên iPhone/desktop.
-- Lịch: đối chiếu ngày có worklog với Jira; lọc KEY; tháng trước/sau; bấm ngày và mở form sửa.
-- Sửa/xóa: kết quả được tải lại trên lịch và danh sách.
-- Mạng lỗi: hiển thị thông báo lỗi thay vì báo không có worklog.
-- PWA: banner cập nhật hoạt động, app hiển thị V1.9.0.
+- Lịch và dashboard phụ thuộc quyền đọc và chỉ mục Jira; giữ giới hạn 500 issue ứng viên/lần tải. Nếu thiếu dữ liệu sẽ có cảnh báo.
+- Cache kết quả ngày kế thừa cơ chế server cũ. Khoảng tuần/tháng dùng cache client ngắn 20 giây; cache xóa sau ghi/sửa/xóa trong app.
+- Lưới thời gian giới hạn trong 00:00–24:00 của ngày bắt đầu. Worklog nhập tay trực tiếp trong Jira mà kéo qua nửa đêm có thể bị cắt tại mép lưới; tổng thời lượng và form chi tiết vẫn giữ dữ liệu thật. Luồng log hiện có trong app xếp trong các khung giờ cùng ngày.
+- Block rất ngắn có thể không đủ chỗ hiển thị mô tả; title, nhãn trợ năng và danh sách ngày vẫn cho đọc/mở chi tiết.
+- ETA là ước tính, không phải thời gian cam kết. Hiệu năng thật phụ thuộc Jira và hosting.
+- Chưa deploy production hoặc xác minh Safari trên iPhone vật lý trong lần phát triển này.
+- Sau deploy, kiểm tra footer V1.10.0, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
-## 6. Phạm vi và lưu ý
-
-- API lịch nhận `date` và `endDate`, tối đa 31 ngày; truy vấn issue bằng JQL rồi lọc từng worklog thực theo tác giả và timestamp.
-- Giới hạn đọc tối đa 500 issue ứng viên cho mỗi lần tải. Nếu vượt hoặc có issue không đọc được, UI thông báo dữ liệu chưa đầy đủ và tổng tạm tính.
-- Kết quả ngày giữ cache server ngắn như V1.8.0. Kết quả tháng chỉ cache client 20 giây, xóa sau các thao tác ghi/sửa/xóa trong app để không làm sai cơ chế invalidation theo ngày.
-- Truy vấn lịch sử phụ thuộc quyền và chỉ mục Jira. Nút Tìm worklog làm mới; có thể nhập KEY để tìm trực tiếp một issue.
-- Lịch tháng có thể chậm với tài khoản có nhiều issue/worklog; tốc độ phụ thuộc Jira và giới hạn function.
-- PWA cache app shell; việc đọc/ghi dữ liệu Jira cần kết nối mạng và phiên đăng nhập hợp lệ.
-
-Chi tiết thay đổi: `CHANGELOG.md`. Các phiên bản trước: `ROADMAP.md`.
+Xem thêm CHANGELOG.md và ROADMAP.md.

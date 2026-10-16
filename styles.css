@@ -2408,3 +2408,92 @@ html[data-theme="dark"] #historyOverlay .history-state.is-warning { color: #edc6
 /* Keep the invisible OT checkbox from widening the scrollable editor. */
 .overtime-toggle input, .bulk-overtime-toggle input { width: 1px !important; max-width: 1px !important; height: 1px !important; min-height: 0 !important; max-height: 1px !important; padding: 0 !important; border: 0; clip-path: inset(50%); }
 .overtime-toggle input:focus-visible + .overtime-control, .bulk-overtime-toggle input:focus-visible + .overtime-control { outline: 2px solid var(--primary); outline-offset: 3px; }
+
+/* V1.10.0 — Week time grid, worklog dashboard and real server progress. */
+.dashboard { margin-bottom: 16px; min-width: 0; }
+.dashboard-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.dashboard-heading h2 { font-size: 16px; }
+.dashboard-heading p { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.dashboard-heading .icon-btn { flex: 0 0 36px; width: 36px; height: 36px; }
+.dashboard-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hours-card { min-width: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); box-shadow: var(--shadow-soft); }
+.hours-card > span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; }
+.hours-card > div:first-of-type { display: flex; align-items: baseline; flex-wrap: wrap; gap: 7px; margin: 9px 0 12px; }
+.hours-card strong { font-size: 28px; line-height: 1.2; letter-spacing: -.7px; }
+.hours-card small { color: var(--muted); font-size: 11px; }
+.hours-card > p { margin-top: 10px; font-size: 12px; font-weight: 750; color: var(--primary); }
+.hours-card > small { display: block; margin-top: 6px; }
+.hours-meter { height: 5px; overflow: hidden; border-radius: 10px; background: var(--primary-soft); }
+.hours-meter > span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--primary); transition: width .2s ease; }
+.dashboard-state { font-size: 10px; color: var(--muted); margin: 9px 2px 0; line-height: 1.5; }
+.calendar-mode-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 0 0 12px; }
+.calendar-mode-switch { display: flex; padding: 3px; gap: 3px; border-radius: 11px; background: var(--primary-soft); }
+.calendar-mode-switch button { min-height: 34px; padding: 7px 16px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 800; cursor: pointer; }
+.calendar-mode-switch button.is-active { background: var(--card); color: var(--primary); box-shadow: 0 1px 5px rgba(0,0,0,.1); }
+.calendar-week-summary { margin-left: auto; display: grid; gap: 3px; text-align: right; }
+.calendar-week-summary > strong { font-size: 18px; color: var(--primary); }
+.calendar-week-summary small { font-size: 12px; color: var(--muted); font-weight: 600; }
+.calendar-week-summary > span { font-size: 10px; color: var(--muted); }
+.weekly-calendar { min-width: 0; }
+.weekly-scroll { max-height: min(60dvh, 680px); overflow: auto; overscroll-behavior: contain; border: 1px solid var(--line); border-radius: 14px; position: relative; scrollbar-gutter: stable; }
+.weekly-inner { min-width: calc(54px + var(--week-days) * 154px); }
+.week-grid-heading, .week-grid-body { display: grid; grid-template-columns: 54px repeat(var(--week-days), minmax(0, 1fr)); }
+.week-grid-heading { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); box-shadow: 0 3px 8px rgba(0,0,0,.04); }
+.week-time-heading { display: grid; place-items: center; font-size: 10px; color: var(--muted); }
+.week-day-heading { min-width: 0; min-height: 76px; border: 0; border-left: 1px solid var(--line); background: var(--card); color: var(--text); padding: 9px 7px; display: grid; align-content: center; gap: 6px; cursor: pointer; text-align: center; }
+.week-day-heading > span { font-size: 11px; color: var(--muted); }
+.week-day-heading > strong { font-size: 12px; white-space: nowrap; }
+.week-day-heading small { font-size: 10px; color: var(--muted); font-weight: 600; }
+.week-day-heading.is-today { background: var(--primary-soft); color: var(--primary); }
+.week-day-heading i { display: block; margin: 0 12px; height: 3px; border-radius: 5px; overflow: hidden; background: var(--primary-soft); }
+.week-day-heading i b { display: block; height: 100%; background: var(--primary); }
+.week-time-ruler { position: relative; color: var(--muted); background: var(--card); z-index: 2; }
+.week-time-ruler span { position: absolute; right: 7px; transform: translateY(-50%); font-size: 9px; }
+.week-time-ruler span:first-child { transform: translateY(4px); }
+.week-time-ruler span:last-child { transform: translateY(-100%); }
+.week-day-column { position: relative; min-width: 0; border-left: 1px solid var(--line); background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 29px, var(--line) 29px, var(--line) 30px, transparent 30px, transparent 59px, var(--line) 59px, var(--line) 60px); }
+.week-worklog-block { position: absolute; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; overflow: hidden; min-height: 0; padding: 5px 6px; border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--line)); border-left: 3px solid var(--primary); border-radius: 7px; background: var(--primary-soft); color: var(--text); text-align: left; cursor: pointer; box-shadow: none; }
+.week-worklog-block:hover { filter: brightness(.96); z-index: 3; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+.week-worklog-block strong { font-size: 10px; line-height: 1.15; color: var(--primary); white-space: nowrap; max-width: 100%; text-overflow: ellipsis; overflow: hidden; flex: 0 0 auto; }
+.week-worklog-block > span { font-size: 9px; line-height: 1.2; flex: 0 0 auto; }
+.week-worklog-block small { font-size: 9px; line-height: 1.35; }
+.week-worklog-block.is-short { padding: 2px 5px; gap: 1px; }
+.week-worklog-block.is-short small { display: none; }
+.log-progress-panel { position: fixed; right: 18px; bottom: max(18px, env(safe-area-inset-bottom)); z-index: 400; width: min(440px, calc(100vw - 24px)); padding: 15px 17px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); box-shadow: 0 12px 48px rgba(0,0,0,.22); }
+.log-progress-head { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.log-progress-head strong { flex: 1; font-size: 14px; }
+.log-progress-head > span { font-size: 18px; font-weight: 900; color: var(--primary); }
+.log-progress-head .text-btn { font-size: 23px; padding: 0 3px; line-height: 1; }
+.log-progress-meter { height: 7px; overflow: hidden; border-radius: 9px; background: var(--primary-soft); }
+.log-progress-meter span { display: block; height: 100%; width: 0; background: var(--primary); border-radius: inherit; transition: width .25s ease; }
+.log-progress-panel > p { margin-top: 10px; font-size: 11px; line-height: 1.5; }
+.log-progress-time { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; margin-top: 8px; font-size: 10px; line-height: 1.4; color: var(--muted); }
+.log-progress-panel.is-complete .log-progress-head > span { color: var(--ok); }
+.log-progress-panel.is-complete .log-progress-meter span { background: var(--ok); }
+.log-progress-panel.is-error { border-color: var(--danger); }
+.log-progress-panel.is-error .log-progress-head > span { color: var(--danger); }
+@media (min-width: 900px) {
+  #dashboardCard { grid-column: 1 / -1; grid-row: 3; margin: 0; }
+  #filterCard { grid-row: 4; }
+  #worklogCard { grid-row: 4; }
+  #bulkCard { grid-row: 5; }
+  #resultCard { grid-row: 6; }
+  .app-footer { grid-row: 7; }
+}
+@media (max-width: 899px) {
+  .dashboard-cards { gap: 8px; }
+  .hours-card { padding: 13px 12px; border-radius: 15px; }
+  .hours-card strong { font-size: 22px; }
+  .hours-card > p { font-size: 10px; line-height: 1.5; }
+  .hours-card small { font-size: 9px; }
+  .dashboard-heading p { font-size: 9px; }
+  .calendar-navigation strong { font-size: 11px; }
+  .calendar-mode-toolbar { gap: 6px; }
+  .calendar-week-summary { flex: 1 0 100%; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 5px; text-align: left; padding: 6px 2px 2px; }
+  .calendar-week-summary > strong { font-size: 17px; }
+  .calendar-week-summary > span { font-size: 10px; }
+  .weekly-scroll { max-height: 52dvh; }
+  .log-progress-panel { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); padding: 13px 14px; }
+}
+.log-progress-meter span { transition: none; }
+#calendarHelp { margin: 0 0 10px; }

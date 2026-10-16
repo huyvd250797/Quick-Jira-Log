@@ -29,6 +29,7 @@ const { normalizeRequestId, runIdempotent } = require('../lib/idempotency');
 const { settleMapWithConcurrency } = require('../lib/async');
 const { invalidateWorklogCaches } = require('../lib/app-cache');
 const { createPerf } = require('../lib/perf');
+const { createProgressChannel } = require('../lib/progress');
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
@@ -80,6 +81,7 @@ async function performWorklog(body, session, perf) {
     throw new JiraError('Worklog thường tối đa 8h. Nếu cần log ngoài giờ, hãy bật Overtime cho Sub-task.', 400);
   }
 
+  perf.report?.(5, 'Đang đọc thông tin task');
   const mePromise = session.me ? Promise.resolve(session.me) : perf.step('myself', () => getMyself(session));
   const issuePromise = perf.step('issue', () => getIssue(key, session));
   const [me, issue] = await Promise.all([mePromise, issuePromise]);
@@ -89,6 +91,7 @@ async function performWorklog(body, session, perf) {
     throw new JiraError(`Issue ${key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${project}.`, 400);
   }
 
+  perf.report?.(20, 'Đang kiểm tra giờ trống và dữ liệu OT');
   // Chạy kiểm tra timeline và preflight OT song song để giảm thời gian chờ Jira.
   const [guard, overtimePrepared] = await Promise.all([
     perf.step('guard', () => loadOccupiedRangesStable(date, [key], me, session)),
@@ -109,6 +112,8 @@ async function performWorklog(body, session, perf) {
     throw planningError(error, date, overtime);
   }
 
+  perf.report?.(40, 'Đã kiểm tra xong; đang ghi worklog');
+  let completedSegments = 0;
   const created = [];
   let overtimeApplied = false;
   try {
@@ -118,6 +123,8 @@ async function performWorklog(body, session, perf) {
         seconds: seg.minutes * 60,
         description
       }, session);
+      completedSegments += 1;
+      perf.report?.(40 + 40 * completedSegments / plan.length, `Đã ghi ${completedSegments}/${plan.length} worklog`);
       return { id: worklog?.id, segment: seg };
     }));
     created.push(...creationResults.filter(x => x.status === 'fulfilled').map(x => x.value));
@@ -125,15 +132,18 @@ async function performWorklog(body, session, perf) {
     if (failedCreation) throw failedCreation.reason;
 
     if (overtimePrepared) {
+      perf.report?.(84, 'Đang cập nhật Overtime');
       await perf.step('applyOvertime', () => applyOvertimeUpdate(overtimePrepared, session));
       overtimeApplied = true;
     }
   } catch (error) {
+    perf.report?.(80, 'Có lỗi; đang xử lý hoàn tác, vui lòng chờ');
     await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(key, x.id, session)));
     if (overtimeApplied && overtimePrepared) await restoreOvertimeUpdate(overtimePrepared, session);
     throw error;
   }
 
+  perf.report?.(90, 'Đang cập nhật trạng thái task');
   let transition = { ok: false, message: 'Chưa kiểm tra transition.' };
   try {
     transition = await perf.step('transition', () => transitionIssueToDone(key, session, issue));
@@ -174,11 +184,13 @@ module.exports = async function handler(req, res) {
   try {
     const perf = createPerf();
     const body = await perf.step('readRequest', () => readJson(req));
+    perf.report = createProgressChannel(req, res);
     const requestId = normalizeRequestId(body.requestId || req.headers['x-request-id']);
     const result = await runIdempotent('worklog', requestId, () => performWorklog(body, session, perf));
+    perf.report?.(98, 'Đang cập nhật dữ liệu và hoàn tất');
     await invalidateWorklogCaches(session, result.value.date, [result.value.issue?.key]);
     const performance = perf.snapshot({ replayed: result.replayed ? 1 : 0 });
-    res.setHeader('Server-Timing', perf.serverTimingHeader({ replayed: result.replayed ? 1 : 0 }));
+    if (!res.headersSent) res.setHeader('Server-Timing', perf.serverTimingHeader({ replayed: result.replayed ? 1 : 0 }));
     return sendJson(res, 200, { ...result.value, performance, idempotencyStore: result.store, requestId: result.requestId || undefined, replayed: result.replayed || undefined });
   } catch (error) {
     if (error?.message === 'PAYLOAD_TOO_LARGE') return sendJson(res, 413, { ok: false, error: 'Dữ liệu gửi lên quá lớn.' });
@@ -186,7 +198,7 @@ module.exports = async function handler(req, res) {
     if (error?.code === 'IDEMPOTENCY_IN_PROGRESS') return sendJson(res, 409, { ok: false, error: error.message, code: error.code });
     if (error?.code === 'IDEMPOTENCY_STORE_UNAVAILABLE') return sendJson(res, 503, { ok: false, error: error.message, code: error.code });
     if (error instanceof JiraError) {
-      if (error.status === 401) res.setHeader('Set-Cookie', clearSessionCookie());
+      if (error.status === 401 && !res.headersSent) res.setHeader('Set-Cookie', clearSessionCookie());
       return sendJson(res, error.status || 500, { ok: false, error: error.message, details: error.details || undefined });
     }
     return sendJson(res, 500, { ok: false, error: 'Logwork thất bại. Vui lòng thử lại.' });

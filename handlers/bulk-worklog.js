@@ -21,6 +21,7 @@ const { normalizeRequestId, runIdempotent } = require('../lib/idempotency');
 const { mapWithConcurrency, settleMapWithConcurrency } = require('../lib/async');
 const { invalidateWorklogCaches } = require('../lib/app-cache');
 const { createPerf } = require('../lib/perf');
+const { createProgressChannel } = require('../lib/progress');
 
 function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
@@ -83,6 +84,7 @@ async function performBulk(body, session, perf) {
   if (!validDate(date)) throw new JiraError('Ngày Bulk Logwork không hợp lệ.', 400);
 
   const items = normalizeItems(body.items);
+  perf.report?.(5, 'Đang đọc thông tin các task');
   const mePromise = session.me ? Promise.resolve(session.me) : perf.step('myself', () => getMyself(session));
   const issueDetailsPromise = perf.step('issueBatch', () => getIssuesByKeys(items.map(item => item.key), session));
   const [me, issueDetails] = await Promise.all([mePromise, issueDetailsPromise]);
@@ -100,6 +102,7 @@ async function performBulk(body, session, perf) {
   });
   if (verified.some(item => !item.description)) throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
 
+  perf.report?.(15, 'Đang kiểm tra cấu hình OT');
   // Preflight toàn bộ field OT song song có giới hạn trước khi tạo bất kỳ worklog nào.
   const overtimePrepared = new Map();
   const overtimeItems = verified.filter(item => item.overtime);
@@ -107,6 +110,7 @@ async function performBulk(body, session, perf) {
   overtimeItems.forEach((item, index) => overtimePrepared.set(item.key, preparedOvertime[index]));
 
   const targetKeys = verified.map(item => item.key);
+  perf.report?.(25, 'Đang kiểm tra giờ trống và phân lịch');
   const initialGuard = await perf.step('guard', () => loadOccupiedRangesStable(date, targetKeys, me, session));
   const alreadyRegular = minutesInsideWindows(initialGuard.occupied, workWindowsFor(date, false));
   const requestedRegular = verified.filter(item => !item.overtime).reduce((sum, item) => sum + item.minutes, 0);
@@ -125,18 +129,23 @@ async function performBulk(body, session, perf) {
   const appliedOvertime = [];
   try {
     const creationJobs = actualPlans.flatMap(item => item.segments.map(segment => ({ item, segment })));
+    let completedSegments = 0;
+    perf.report?.(40, `Đang ghi ${creationJobs.length} worklog`);
     const creationResults = await perf.step('createWorklogs', () => settleMapWithConcurrency(creationJobs, 4, async ({ item, segment }) => {
       const worklog = await createWorklog(item.key, {
         started: jiraStarted(date, segment.start),
         seconds: segment.minutes * 60,
         description: item.description
       }, session);
+      completedSegments += 1;
+      perf.report?.(40 + 40 * completedSegments / creationJobs.length, `Đã ghi ${completedSegments}/${creationJobs.length} worklog`);
       return { key: item.key, id: worklog?.id, segment };
     }));
     created.push(...creationResults.filter(x => x.status === 'fulfilled').map(x => x.value));
     const failedCreation = creationResults.find(x => x.status === 'rejected');
     if (failedCreation) throw failedCreation.reason;
 
+    perf.report?.(84, 'Đang cập nhật Overtime');
     const otApplyResults = await perf.step('applyOvertime', () => settleMapWithConcurrency(overtimeItems, 4, async item => {
       const prepared = overtimePrepared.get(item.key);
       await applyOvertimeUpdate(prepared, session);
@@ -146,11 +155,13 @@ async function performBulk(body, session, perf) {
     const failedOt = otApplyResults.find(x => x.status === 'rejected');
     if (failedOt) throw failedOt.reason;
   } catch (error) {
+    perf.report?.(80, 'Có lỗi; đang xử lý hoàn tác, vui lòng chờ');
     await Promise.allSettled(created.filter(x => x.id).map(x => deleteWorklog(x.key, x.id, session)));
     await Promise.allSettled(appliedOvertime.map(prepared => restoreOvertimeUpdate(prepared, session)));
     throw error;
   }
 
+  perf.report?.(90, 'Đang cập nhật trạng thái các task');
   const transitionResults = await perf.step('transitions', () => settleMapWithConcurrency(verified, 4, async (item) => ({
     key: item.key,
     ...(await transitionIssueToDone(item.key, session, issueMap.get(item.key)))
@@ -195,11 +206,13 @@ module.exports = async function handler(req, res) {
   try {
     const perf = createPerf();
     const body = await perf.step('readRequest', () => readJson(req, 96 * 1024));
+    perf.report = createProgressChannel(req, res);
     const requestId = normalizeRequestId(body.requestId || req.headers['x-request-id']);
     const result = await runIdempotent('bulk-worklog', requestId, () => performBulk(body, session, perf));
+    perf.report?.(98, 'Đang cập nhật dữ liệu và hoàn tất');
     await invalidateWorklogCaches(session, result.value.date, (result.value.items || []).map(item => item.key));
     const performance = perf.snapshot({ replayed: result.replayed ? 1 : 0 });
-    res.setHeader('Server-Timing', perf.serverTimingHeader({ replayed: result.replayed ? 1 : 0 }));
+    if (!res.headersSent) res.setHeader('Server-Timing', perf.serverTimingHeader({ replayed: result.replayed ? 1 : 0 }));
     return sendJson(res, 200, { ...result.value, performance, idempotencyStore: result.store, requestId: result.requestId || undefined, replayed: result.replayed || undefined });
   } catch (error) {
     if (error?.message === 'PAYLOAD_TOO_LARGE') return sendJson(res, 413, { ok: false, error: 'Dữ liệu Bulk quá lớn.' });
@@ -207,7 +220,7 @@ module.exports = async function handler(req, res) {
     if (error?.code === 'IDEMPOTENCY_IN_PROGRESS') return sendJson(res, 409, { ok: false, error: error.message, code: error.code });
     if (error?.code === 'IDEMPOTENCY_STORE_UNAVAILABLE') return sendJson(res, 503, { ok: false, error: error.message, code: error.code });
     if (error instanceof JiraError) {
-      if (error.status === 401) res.setHeader('Set-Cookie', clearSessionCookie());
+      if (error.status === 401 && !res.headersSent) res.setHeader('Set-Cookie', clearSessionCookie());
       return sendJson(res, error.status || 500, { ok: false, error: error.message, details: error.details || undefined });
     }
     return sendJson(res, 500, { ok: false, error: 'Bulk Logwork thất bại. Các worklog vừa tạo (nếu có) đã được rollback.' });

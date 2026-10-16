@@ -35,3 +35,5 @@
 - ✅ **V1.8.0 – Performance & Reliability Hardening**: Batch Jira metadata cho Bulk, cache ngắn Day Audit/History có invalidate sau mutation, request dedupe phía client, optional Redis/KV idempotency + login rate-limit cho Vercel multi-instance, Server-Timing diagnostics, Ctrl/Cmd+K và PWA update banner an toàn.
 
 - ✅ **V1.9.0 – Time Stepper & Worklog Calendar**: bổ sung mũi tên tăng/giảm mỗi lần 30 phút ở Log đơn/Bulk/Sửa, icon hiện/ẩn mật khẩu, Worklog đã log cao hơn với bộ lọc gọn, chế độ Lịch tháng và chi tiết worklog theo ngày. Phạm vi theo yêu cầu Boss; xem CHANGELOG.md và README.md.
+
+- ✅ **V1.10.0 – Weekly Calendar, Dashboard & Live Progress**: lịch Tuần/Tháng, block tỷ lệ thời lượng và sửa/xóa trực tiếp; tổng ngày /8h, tuần /40h; dashboard giờ còn thiếu; tiến trình server và ETA cho Log đơn/Bulk.
