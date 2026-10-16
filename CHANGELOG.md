@@ -1,5 +1,12 @@
 # Changelog
 
+## V1.10.4 — Readable Mobile Duration
+
+- Tăng chiều rộng ô TimeSpent trong Bulk mobile lên tối đa 192px để không cắt giá trị giờ/phút.
+- Chuyển preset giờ xuống hàng riêng, cho phép xuống dòng, giữ nút tăng/giảm 30 phút.
+- Trên mobile ngang thấp, cho header/footer Bulk cuộn theo nội dung để vẫn thao tác được ô nhập.
+- Giữ nguyên giao diện PC và nghiệp vụ/API. Đồng bộ version và cache PWA.
+
 ## V1.10.3 — Desktop Calendar Workspace
 
 - Tái bố cục lịch PC từ 900px: chuyển kiểu xem lên header, toolbar ngang và ô ngày 144px.

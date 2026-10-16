@@ -1,6 +1,16 @@
-# Kiểm tra V1.10.3
+# Kiểm tra V1.10.4
 
 Ngày: 16/10/2026. Runtime: Node.js v24.19.0.
+
+## Mobile TimeSpent V1.10.4
+
+- npm test đạt toàn bộ kiểm tra hiện có.
+- Playwright/Chromium với dữ liệu/API giả lập: mobile 315×683, 390×844, 430×932, ngang 844×390 và PC 1366×768; không có lỗi JavaScript.
+- Đo kích thước chữ thực tế với canvas theo font input: trên mobile, 3h 30m cần khoảng 67px, 12h 30m khoảng 78px; vùng chữ khả dụng 124px, group rộng 192px. Kiểm tra thêm 16h.
+- Preset 3h → tăng thành 3h 30m → 4h → giảm thành 3h 30m; draft nhận đúng giá trị. 16h vô hiệu nút tăng theo giới hạn hiện có.
+- Preset nằm dưới ô nhập và đều nhìn thấy; không tràn ngang trang. Kiểm tra thao tác thực qua click, không dùng force click.
+- Mobile ngang thấp: header/footer cuộn khỏi vùng nhập, bấm preset và tăng/giảm thành công.
+- Đã xem ảnh render mobile sáng/tối; PC giữ CSS bố cục cũ. Chưa kiểm tra Safari/iPhone vật lý hoặc ghi lên Jira thật.
 
 ## Desktop Calendar Workspace V1.10.3
 

@@ -2590,3 +2590,27 @@ html[data-theme="dark"] #historyOverlay .history-state.is-warning { color: #edc6
   #historyOverlay.is-calendar-view #calendarControls { grid-template-columns: minmax(220px, 1fr) auto; gap: 7px 16px; }
   #historyOverlay.is-calendar-view .calendar-mode-toolbar { grid-column: 1 / -1; }
 }
+
+/* V1.10.4 — Keep the entire duration visible beside the mobile step buttons. */
+@media (max-width: 899px) {
+  #bulkCard.mobile-bottom-sheet .bulk-time-field {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "label" "input" "presets";
+    gap: 6px;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-time-field > .duration-stepper {
+    grid-area: input;
+    width: min(100%, 192px);
+    min-width: 0;
+  }
+  #bulkCard.mobile-bottom-sheet .bulk-time-field .bulk-preset-row {
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: 5px;
+  }
+}
+@media (max-width: 899px) and (max-height: 500px) {
+  /* Let short landscape screens scroll past the header and footer to reach inputs. */
+  #bulkCard.mobile-bottom-sheet .bulk-sticky-header,
+  #bulkCard.mobile-bottom-sheet .bulk-actions { position: static; }
+}

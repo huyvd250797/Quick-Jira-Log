@@ -43,3 +43,5 @@
 - ✅ **V1.10.2 – Compact Calendar Navigation**: ẩn bộ lọc Danh sách khi xem lịch, chọn ngày gọn trong thanh cố định, tự tải tuần/tháng và tải lại bằng ↻.
 
 - ✅ **V1.10.3 – Desktop Calendar Workspace**: lịch PC gần toàn màn hình, toolbar gọn, chọn ngày 144px, một vùng cuộn và giữ nguyên mobile.
+
+- ✅ **V1.10.4 – Readable Mobile Duration**: tăng chiều rộng TimeSpent mobile Bulk, tách hàng preset để hiển thị rõ giờ/phút.

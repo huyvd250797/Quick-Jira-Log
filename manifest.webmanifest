@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.10.3 – Desktop Calendar Workspace.",
+  "description": "Quick Jira Log V1.10.4 – Readable Mobile Duration Inputs.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
