@@ -1,3 +1,12 @@
+# V1.12.1 — Correct Native Edit Action & Token Bootstrap
+
+- Sửa lỗi GET action POST `.jspa` khi mở form: dùng native `!update.jspa` theo tài nguyên WorklogPRO.
+- Bootstrap token mới từ trang issue, giữ cookie giữa các bước và token lưu từ form thực tế.
+- Bổ sung header AJAX/Origin/Referer, xử lý read redirect cùng origin có giới hạn.
+- Phân biệt bước bootstrap, mở form và lưu; phát hiện login/anonymous/XSRF mà không lộ token/cookie/HTML.
+- Regression fixture từ chối GET action lưu bằng 403, chỉ cho mở `!update` có token. Giữ tạo OT đơn/Bulk và read-back sau lưu.
+- Chưa kiểm tra trực tiếp Jira của Boss; không khẳng định mọi nguyên nhân HTTP 403 đã được loại bỏ.
+
 # V1.12.0 — Native WorklogPRO Form & Overtime Creation
 
 - Thay REST PUT cập nhật OT bằng form native có token/cookie động và GET xác minh.

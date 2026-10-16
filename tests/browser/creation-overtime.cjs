@@ -37,6 +37,6 @@ const fits=async(page,root)=>page.locator(root).evaluate(e=>{const r=e.getBoundi
   await page.waitForFunction(()=>getComputedStyle(document.querySelector('#bulkItems .bulk-ot-toggle:last-of-type .overtime-control') || document.querySelector('#bulkItems .bulk-ot-toggle .overtime-control')).backgroundColor==='rgb(245, 158, 11)');
   if(process.env.QJL_QA_OUTPUT)await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`${viewport.width}-v1120-bulk-ot.png`)});
   await page.locator('#bulkLogBtn').click();await page.locator('#confirmLogBtn').click();await page.waitForFunction(()=>!state.bulkSubmitInFlight);const bulk=mutations.find(m=>m.a==='bulk-worklog');assert(bulk);assert(bulk.body.items.every(x=>x.overtime===true&&x.overtimeStart==='18:30'));assert.deepEqual(errors,[]);
-  console.log('V1.12.0 UI full-day capacity → single/Bulk OT controls, selected start, verified payloads and bounded inputs passed',viewport);await context.close();
+  console.log('V1.12.1 UI full-day capacity → single/Bulk OT controls, selected start, verified payloads and bounded inputs passed',viewport);await context.close();
  }
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();await new Promise(r=>server.close(r));});

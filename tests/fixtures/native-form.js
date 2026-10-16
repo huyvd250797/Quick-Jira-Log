@@ -18,4 +18,6 @@ function values(fields, record) {
  comment:fields.get('comment'),adjustEstimate:fields.get('adjustEstimate'),authorUserKey:record.authorUserKey,
  workLogAttributes:record.workLogAttributes.map(a=>({...a,attrValue:['yes','no'].includes(a.attrValue)?fields.has(`wa_${a.attrTypeId}`)?'yes':'no':fields.get(`wa_${a.attrTypeId}`)}))};
 }
-module.exports={action,render,values};
+const openAction=action.replace('.jspa','!update.jspa');
+const bootstrap='<input type="hidden" name="WP_atl_token" value="issue-page-token">';
+module.exports={action,openAction,bootstrap,render,values};

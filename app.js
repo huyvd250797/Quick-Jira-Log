@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.12.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -2148,7 +2148,7 @@ function showCorrectionFeedback(message, details) {
   $('correctionFeedback').textContent = message;
   $('correctionFeedback').classList.remove('hidden');
   const extra = $('correctionErrorDetails');
-  const stages = { readWorklogForm: 'Đọc form sửa WorklogPRO', readOvertimeAttribute: 'Đọc danh sách thuộc tính Overtime', readOvertime: 'Đọc Overtime của worklog', updateOvertime: 'Lưu Overtime', verifyOvertime: 'Xác nhận Overtime sau lưu', updateWorklog: 'Lưu thông tin worklog', verifyWorklog: 'Xác nhận thông tin sau lưu' };
+  const stages = { bootstrapWorklogForm: 'Đọc trang Jira và token mở form', readWorklogForm: 'Đọc form sửa WorklogPRO', readOvertimeAttribute: 'Đọc danh sách thuộc tính Overtime', readOvertime: 'Đọc Overtime của worklog', updateOvertime: 'Lưu Overtime', verifyOvertime: 'Xác nhận Overtime sau lưu', updateWorklog: 'Lưu thông tin worklog', verifyWorklog: 'Xác nhận thông tin sau lưu' };
   const lines = details && typeof details === 'object' ? [
     details.code ? `Mã: ${details.code}` : '',
     details.stage ? `Bước: ${stages[details.stage] || details.stage}` : '',

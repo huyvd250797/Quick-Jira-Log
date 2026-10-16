@@ -1,4 +1,11 @@
-# Trạng thái V1.12.0
+# Trạng thái V1.12.1
+
+## Đã triển khai V1.12.1
+
+- Mở form native bằng !update.jspa; GET trang issue lấy token/cookie, POST action lưu riêng.
+- Kiểm thử hồi quy GET action lưu bị 403; kiểm tra phiên/token/redirect và không ghi khi bootstrap lỗi.
+- Giữ tạo Overtime đơn/Bulk và xác minh sau lưu từ V1.12.0.
+- Còn đối soát hệ thống Jira thực tế sau deploy; bản plugin công khai là căn cứ cho action, không phải bằng chứng kiểm thử server thực tế.
 
 ## Đã triển khai V1.12.0
 
@@ -9,7 +16,7 @@
 - Core 403 khi sửa thông tin thường có thể chuyển sang native form, giữ OT thực.
 - Cần đối soát Jira thật sau triển khai; chưa có xác minh quyền/session/form trên deployment thực tế.
 
-## Phiên bản kế tiếp dự kiến — V1.12.1
+## Phiên bản kế tiếp dự kiến — V1.12.2
 
 - Củng cố adapter theo kết quả chạy thực tế trên Jira, đặc biệt token/phiên và thông báo form.
 - Cân nhắc cấu hình khung OT/ngày nghỉ theo quy định thay vì khung cố định, sau khi thống nhất nhu cầu.

@@ -1,0 +1,126 @@
+V1.12.1: Node.js 24 + Chromium headless; mocked Jira. Both test runs PASS.
+No live Jira, Vercel deployment or iPhone Safari test.
+
+API / logic / GET 403 regression
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> quick-jira-log@1.12.1 test
+> node tests/run-tests.js && node tests/auth-tests.js && node tests/history-tests.js && node tests/hardening-tests.js && node tests/ui-tools-tests.js && node tests/week-progress-tests.js && node tests/calendar-style-tests.js && node tests/correction-overtime-tests.js && node tests/creation-ot-tests.js && node tests/native-form-tests.js
+
+All tests passed.
+V0.6.2 reliability tests passed.
+V0.6.2 timezone guard tests passed.
+V1.3.2 overtime scheduling tests passed.
+V1.0.1 fixed Sub-task JQL tests passed.
+V1.12.1 version test passed.
+V1.0.6 stable desktop grid/alignment tests passed.
+V1.1.1 focused logwork UX + editable date tests passed.
+V1.2.0 streamlined navigation & bulk selection tests passed.
+V1.3.2 mobile taskbar + overtime UI tests passed.
+V1.0.3 sequential workflow transition selector tests passed.
+V1.4.0 zero-friction no-preview tests passed.
+V1.4.0 visual system + post-log result tests passed.
+V1.5.0/V1.5.2 one-tap workflow preset tests passed.
+V1.5.1 bulk TimeSpent presets tests passed.
+V1.5.2 unified TimeSpent preset UI tests passed.
+V1.6.0 daily capacity + fast logwork tests passed.
+V1.6.2 sticky capacity header tests passed.
+V1.6.2 desktop modal and single capacity sync tests passed.
+V1.6.3 auth UI + guard static tests passed.
+V1.6.4 late-worklog warning tests passed.
+V1.6.5 Jira auth classification static tests passed.
+V1.7.1 instant bulk defaults + manual smart allocation tests passed.
+V1.7.2 bulk layout optimization tests passed.
+V1.7.3 motion + safe submit + fast history tests passed.
+Performance + reliability hardening regression tests passed.
+V1.0.3 sequential To Do -> In Progress -> Done integration test passed.
+[QJL AUTH] {
+  phase: 'session',
+  status: 401,
+  loginReason: null,
+  category: 'JIRA_INVALID_CREDENTIALS',
+  durationMs: 3
+}
+[QJL AUTH] {
+  phase: 'session',
+  status: 401,
+  loginReason: 'AUTHENTICATED_FAILED',
+  category: 'JIRA_INVALID_CREDENTIALS',
+  durationMs: 0
+}
+[QJL AUTH] {
+  phase: 'session',
+  status: 401,
+  loginReason: 'AUTHENTICATION_FAILED',
+  category: 'JIRA_INVALID_CREDENTIALS',
+  durationMs: 0
+}
+[QJL AUTH] {
+  phase: 'session',
+  status: 403,
+  loginReason: 'AUTHENTICATION_DENIED',
+  category: 'JIRA_CAPTCHA_REQUIRED',
+  durationMs: 1
+}
+[QJL AUTH] {
+  phase: 'session',
+  status: 401,
+  loginReason: 'AUTHENTICATED_FAILED',
+  category: 'JIRA_INVALID_CREDENTIALS',
+  durationMs: 0
+}
+[QJL AUTH] {
+  phase: 'session',
+  status: 401,
+  loginReason: 'AUTHENTICATION_FAILED',
+  category: 'JIRA_INVALID_CREDENTIALS',
+  durationMs: 1
+}
+[QJL AUTH] {
+  phase: 'session',
+  status: 403,
+  loginReason: 'AUTHENTICATION_DENIED',
+  category: 'JIRA_CAPTCHA_REQUIRED',
+  durationMs: 0
+}
+[QJL AUTH] {
+  phase: 'basic-fallback',
+  status: 200,
+  loginReason: null,
+  category: 'SUCCESS',
+  durationMs: 1
+}
+[QJL AUTH] {
+  phase: 'session-profile',
+  status: 403,
+  category: 'JIRA_REST_PERMISSION_DENIED',
+  durationMs: 1
+}
+V1.6.5 Jira auth classification integration tests passed.
+V1.7.3 fast history batch metadata integration test passed.
+V1.8.0 idempotency/cache/performance hardening tests passed.
+V1.9.0 duration stepper and calendar date tests passed.
+V1.9.0 monthly worklog history, timezone, author filtering and error integration tests passed.
+V1.10.0 week boundaries, dashboard targets and timed block layout tests passed.
+V1.10.0 real HTTP streaming single/Bulk, failure, idempotent replay and JSON compatibility tests passed.
+V1.11.7 random hue families, optional green, session consistency, no repeat and reserved OT yellow passed
+V1.11.8 native WorklogPRO history OT, no issue-field lookup and zero-duration filtering passed
+[QJL AUTH] {
+  phase: 'session',
+  status: 200,
+  loginReason: null,
+  category: 'SUCCESS',
+  durationMs: 0
+}
+V1.12.1 independent edits and native WorklogPRO OT: field discovery, same-worklog form POST/readback, on/off/history, legacy marker cleanup, preserve attributes, rights/guards, ambiguity, unknown results and no write retries passed
+V1.12.1 single/bulk OT: full-day + overtime, mixed rows, start hint, overlap/windows, native checkbox readback, idempotency, rollback and incomplete rollback passed
+V1.12.1 native form regression: issue-page token/cookies → GET !update → single POST, rejects old GET/save route, login/anonymous/XSRF/missing token/redirect diagnostics, no token leaks, preservation and no write retries passed
+
+
+Related UI regressions
+V1.12.1 browser → real handler → WorklogPRO fixture: native on/off, independent date/time/duration/comment edits under plugin 403, diagnostics, readback failure and unknown OT preservation passed { width: 390, height: 844 }
+V1.12.1 browser → real handler → WorklogPRO fixture: native on/off, independent date/time/duration/comment edits under plugin 403, diagnostics, readback failure and unknown OT preservation passed { width: 1440, height: 900 }
+V1.12.1 UI full-day capacity → single/Bulk OT controls, selected start, verified payloads and bounded inputs passed { width: 315, height: 683 }
+V1.12.1 UI full-day capacity → single/Bulk OT controls, selected start, verified payloads and bounded inputs passed { width: 390, height: 844 }
+V1.12.1 UI full-day capacity → single/Bulk OT controls, selected start, verified payloads and bounded inputs passed { width: 844, height: 390 }
+V1.12.1 UI full-day capacity → single/Bulk OT controls, selected start, verified payloads and bounded inputs passed { width: 1440, height: 900 }

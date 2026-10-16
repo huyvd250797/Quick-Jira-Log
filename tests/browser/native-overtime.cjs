@@ -11,7 +11,9 @@ global.fetch=async(url,options={})=>{
  const u=new URL(String(url)),body=options.body?(u.pathname===fixture.action?Object.fromEntries(new URLSearchParams(options.body)):JSON.parse(options.body)):{};
  if(u.pathname===`${base}/attr`)return mode==='denied'?Response.json({}, {status:403}):Response.json([{id:23,name:'Over Time?',type:'BOOL',enabled:true}]);
  if(u.pathname==='/rest/com.deniz.jira.worklog/latest/worklog')return Response.json({projects:[{issues:[{key:'NATIVE-1',workLogs:[record]}]}]});
- if(u.pathname===fixture.action){
+ if(u.pathname==='/browse/NATIVE-1')return new Response(fixture.bootstrap);
+ if(u.pathname===fixture.action&&options.method!=='POST')return Response.json({}, {status:403});
+ if(u.pathname===fixture.action||u.pathname===fixture.openAction){
   if(options.method!=='POST')return new Response(fixture.render('NATIVE-1',record));
   writes++;const value=fixture.values(new URLSearchParams(options.body),record);
   if(mode==='ignored')value.workLogAttributes=record.workLogAttributes;
@@ -55,6 +57,6 @@ global.fetch=async(url,options={})=>{
   // Unknown checkbox untouched: a fresh native value must survive a content edit.
   mode='';record.workLogAttributes.find(a=>a.attrTypeId===23).attrValue='yes';await page.locator('#correctionDescription').fill('Content edit while checkbox unknown');await page.locator('#saveCorrectionBtn').click();await page.waitForFunction(()=>!state.historyLoading&&!document.getElementById('worklogCorrectionDialog').open);assert.equal(record.workLogAttributes.find(a=>a.attrTypeId===23).attrValue,'yes');
   mode='unverified-response';await block.click();await page.locator('#saveCorrectionBtn').click();await page.locator('#correctionFeedback').waitFor({state:'visible'});assert((await page.locator('#correctionFeedback').innerText()).includes('chưa xác nhận'));
-  assert.deepEqual(errors,[]);console.log('V1.12.0 browser → real handler → WorklogPRO fixture: native on/off, independent date/time/duration/comment edits under plugin 403, diagnostics, readback failure and unknown OT preservation passed',viewport);await context.close();
+  assert.deepEqual(errors,[]);console.log('V1.12.1 browser → real handler → WorklogPRO fixture: native on/off, independent date/time/duration/comment edits under plugin 403, diagnostics, readback failure and unknown OT preservation passed',viewport);await context.close();
  }
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();if(server)await new Promise(r=>server.close(r));global.fetch=oldFetch;if(oldSecret==null)delete process.env.APP_SESSION_SECRET;else process.env.APP_SESSION_SECRET=oldSecret;});

@@ -32,9 +32,11 @@ const originalFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET,oldId=
    const record=records[u.searchParams.get('id')];
    return Response.json({projects:[{issues:[{key:'EDIT-1',workLogs:record?[record]:[]}]}]});
   }
-  if(u.pathname===fixture.action){
+  if(u.pathname==='/browse/EDIT-1')return new Response(fixture.bootstrap,{headers:{'set-cookie':'issueRoute=one; Path=/'}});
+  if(u.pathname===fixture.action&&method==='GET')return Response.json({}, {status:403});
+  if(u.pathname===fixture.action||u.pathname===fixture.openAction){
    const id=method==='POST'?body.worklogId:u.searchParams.get('worklogId'),record=records[id];
-   if(method==='GET')return new Response(fixture.render('EDIT-1',record),{headers:{'set-cookie':'atlassian.xsrf.token=fresh-xsrf-token; Path=/'}});
+   if(method==='GET'){assert.equal(u.searchParams.get('atl_token'),'issue-page-token');return new Response(fixture.render('EDIT-1',record),{headers:{'set-cookie':'atlassian.xsrf.token=fresh-xsrf-token; Path=/'}});}
    assert.equal(u.searchParams.get('atl_token'),'fresh-xsrf-token');assert(options.headers.Cookie.includes('atlassian.xsrf.token=fresh-xsrf-token'));
    assert.equal(body.other,'PRESERVE');assert.equal(body.adjustEstimate,'leave');
    if(mode==='put-denied')return Response.json({}, {status:403});
@@ -94,5 +96,5 @@ const originalFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET,oldId=
  const sensitive=diagnostics({provider:'worklogpro',stage:'test',method:'GET',endpoint:'/attr',response:new Response('',{status:403}),data:{errorMessages:[`password=${auth.password} ${Buffer.from(auth.username+':'+auth.password).toString('base64')} old-cookie`],raw:'<input value=secret>'},auth:{...auth,cookie:'JSESSIONID=old-cookie'}});assert(!JSON.stringify(sensitive).includes(auth.password));assert(!JSON.stringify(sensitive).includes('old-cookie'));assert(!JSON.stringify(sensitive).includes('input'));
  logs[0].author.name='another-user';logs[0].author.key='OTHER';before=puts();r=await patch({overtime:true});assert.equal(r.status,403);assert.equal(puts(),before);
  assert(!calls.some(c=>/editmeta|\/field$/.test(c.path)||c.path.endsWith('/issue/EDIT-1')),'never uses issue-level OT fields');
- console.log('V1.12.0 independent edits and native WorklogPRO OT: field discovery, same-worklog form POST/readback, on/off/history, legacy marker cleanup, preserve attributes, rights/guards, ambiguity, unknown results and no write retries passed');
+ console.log('V1.12.1 independent edits and native WorklogPRO OT: field discovery, same-worklog form POST/readback, on/off/history, legacy marker cleanup, preserve attributes, rights/guards, ambiguity, unknown results and no write retries passed');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=originalFetch;if(oldSecret==null)delete process.env.APP_SESSION_SECRET;else process.env.APP_SESSION_SECRET=oldSecret;if(oldId==null)delete process.env.WORKLOGPRO_OVERTIME_ATTRIBUTE_ID;else process.env.WORKLOGPRO_OVERTIME_ATTRIBUTE_ID=oldId;if(server)await new Promise(r=>server.close(r));});

@@ -1,8 +1,22 @@
-# Quick Jira Log V1.12.0 — Native WorklogPRO Form & Overtime Creation
+# Quick Jira Log V1.12.1 — Correct Native Edit Action & Token Bootstrap
 
 © 2026 HuyVo. All rights reserved.
 
-## Cải tiến V1.12.0
+## Bản vá lỗi GET mở form HTTP 403
+
+V1.12.0 dùng GET `/secure/WPCreateWorklogOnIssueWithWorkLogAction.jspa` để mở form, trong khi đường này là action lưu POST. Đây là điểm tích hợp sai trong app. Nguồn tài nguyên chính thức của WorklogPRO 4.25.9-jira11 (`js/WorklogPRO_IssueTabPanelDynamic.js`, các template timesheet/calendar) dùng **GET `WPCreateWorklogOnIssueWithWorkLogAction!update.jspa?worklogId=...&atl_token=...`** khi mở sửa; form trả về vẫn dùng action POST `.jspa`.
+
+V1.12.1 thực hiện ba bước riêng:
+
+1. GET `/browse/{issueKey}` bằng cùng phiên Jira, giữ cookie trả về và đọc token đầy đủ từ `WP_atl_token`, meta `ajs-atl-token`/`atlassian-token`/`atl-token` hoặc edit link native.
+2. GET action **`!update.jspa`**, kèm worklog ID, token mới, tham số dialog và header AJAX. Parse đúng form/worklog/issue; lấy token lưu từ chính form trả về.
+3. POST `.jspa` một lần để lưu, rồi GET worklog để xác nhận dữ liệu như V1.12.0.
+
+Không còn GET vào action lưu; không tự gửi POST mở form, không lặp write sau lỗi chưa rõ kết quả. Nếu bước đọc trang issue/token thất bại, app dừng trước khi lưu và hiển thị đúng bước. Lỗi còn có tín hiệu anonymous/XSRF khi Jira trả về; query token, cookie và HTML gốc không xuất hiện trong Chi tiết lỗi.
+
+Đã kiểm tra nguồn tài nguyên plugin công khai và request/response Boss cung cấp. **Chưa đăng nhập Jira thực tế của Boss**, nên phiên bản plugin đang cài, cookie/session, proxy và khả năng lấy token từ trang issue cần đối soát sau deploy. Nếu vẫn bị chặn, cần request **mở** popup trên Jira gốc (khác request POST lưu đã cung cấp), không suy rằng thiếu quyền chỉ từ HTTP 403.
+
+## Chức năng Overtime và tạo worklog
 
 - **Sửa Overtime bằng form WorklogPRO gốc** `/secure/WPCreateWorklogOnIssueWithWorkLogAction.jspa`, thay cho REST PUT bị từ chối 403 trên hệ thống đã đối chiếu. Backend đọc form của đúng worklog, lấy token mới, giữ cookie Jira/XSRF và các trường/thuộc tính khác; không chép token từ ảnh hoặc bỏ qua quyền Jira.
 - **Log mới có lựa chọn Overtime cho từng sub-task**, cả log đơn và Log tất cả. Ngày đủ 8h thường vẫn tạo được OT. Không tự chuyển giờ vượt 8h sang OT.
@@ -15,7 +29,7 @@
 
 ### Cập nhật
 
-Giữ cấu hình Vercel và `APP_SESSION_SECRET` hiện có. Deploy source, cập nhật PWA/tải lại để đầu trang và footer hiện **V1.12.0**. Không cần database hay token Jira mới. Đăng nhập lại nếu phiên Jira đã hết hạn.
+Giữ cấu hình Vercel và `APP_SESSION_SECRET` hiện có. Deploy source, cập nhật PWA/tải lại để đầu trang và footer hiện **V1.12.1**. Không cần database hay token Jira mới. Đăng nhập lại nếu phiên Jira đã hết hạn.
 
 ### Cấu hình và giới hạn
 
@@ -72,9 +86,9 @@ Màu vàng chỉ phản ánh OT đã đọc được từ WorklogPRO. Không suy
 
 ## Triển khai nhanh
 
-Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.12.0`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
+Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.12.1`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
 
-App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp này không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.12.0**.
+App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp này không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.12.1**.
 
 Đã kiểm tra bằng dữ liệu Jira giả lập; **chưa đăng nhập/ghi giờ lên Jira thật và chưa kiểm tra trên iPhone Safari vật lý**. Xem `TESTING.md` để biết phạm vi, cách chạy và giới hạn.
 
@@ -162,14 +176,14 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.12.0` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.12.1` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.
 5. Framework Preset: **Other**. Build Command để trống. Output Directory dùng mặc định/root của project, không chọn `dist` vì source không có bước build.
 6. Node.js Version: **24.x**.
 7. Cấu hình biến môi trường bên dưới rồi redeploy.
-8. Mở app, kiểm tra footer V1.12.0. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
+8. Mở app, kiểm tra footer V1.12.1. Nếu đã cài PWA, bấm **CẬP NHẬT** khi xuất hiện banner bản mới; có thể đóng/mở lại app sau khi cập nhật.
 
 ### Biến môi trường
 
@@ -217,6 +231,6 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Block rất ngắn có thể không đủ chỗ hiển thị mô tả; title, nhãn trợ năng và danh sách ngày vẫn cho đọc/mở chi tiết.
 - Thời gian đã chạy là thời lượng thực tế của yêu cầu; tốc độ xử lý phụ thuộc Jira và hosting.
 - Chưa deploy production hoặc xác minh Safari trên iPhone vật lý trong lần phát triển này.
-- Sau deploy, kiểm tra footer V1.12.0, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
+- Sau deploy, kiểm tra footer V1.12.1, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.

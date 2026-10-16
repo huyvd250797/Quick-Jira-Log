@@ -19,8 +19,10 @@ const originalFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let se
   if(/\/issue\/EDIT-\d+$/.test(u.pathname))return Response.json(issue(u.pathname.split('/').at(-1)));
   if(u.pathname.endsWith('/1.0/attr'))return Response.json([{id:1,name:'Over Time?',type:'BOOL',enabled:true}]);
   if(u.pathname.endsWith('/latest/worklog')){const rec=records[u.searchParams.get('id')];return Response.json({projects:[{issues:[{key:rec?.issueKey,workLogs:rec?[rec]:[]}]}]});}
-  if(u.pathname===fixture.action){const wid=method==='POST'?body.worklogId:u.searchParams.get('worklogId'),rec=records[wid];
-   if(method==='GET')return new Response(fixture.render(rec.issueKey,rec),{headers:{'set-cookie':'xsrf=fresh; Path=/'}});
+  if(/^\/browse\/EDIT-\d+$/.test(u.pathname))return new Response(fixture.bootstrap,{headers:{'set-cookie':'issueRoute=one; Path=/'}});
+  if(u.pathname===fixture.action&&method==='GET')return Response.json({}, {status:403});
+  if(u.pathname===fixture.action||u.pathname===fixture.openAction){const wid=method==='POST'?body.worklogId:u.searchParams.get('worklogId'),rec=records[wid];
+   if(method==='GET'){assert.equal(u.searchParams.get('atl_token'),'issue-page-token');return new Response(fixture.render(rec.issueKey,rec),{headers:{'set-cookie':'xsrf=fresh; Path=/'}});}
    formWrites++;assert.equal(u.searchParams.get('atl_token'),'fresh-xsrf-token');assert.equal(body.wa_1,'on');assert.equal(body.adjustEstimate,'leave');assert.equal(body.wa_9,'CUSTOM');
    if(['denied','rollback-denied'].includes(mode))return Response.json({}, {status:403});
    const value=fixture.values(new URLSearchParams(options.body),rec);Object.assign(rec,value,{workStart:Date.parse(value.workStart)});
@@ -50,5 +52,5 @@ const originalFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let se
  r=await post('worklog',{...body,date:'2026-10-17',overtime:true,timeSpent:'30m'});assert.equal(r.status,200);assert.equal(r.data.segments[0].start,'08:00','weekend OT uses configured daytime windows');
  mode='rollback-denied';r=await post('worklog',{...body,overtime:true,timeSpent:'15m'});assert.equal(r.status,502);assert.equal(r.data.details.resultUnknown,true);assert.equal(r.data.details.remainingWorklogIds.length,1);
  assert(!calls.some(p=>/editmeta|\/field$/.test(p.path)));assert(!calls.some(p=>p.path.includes('/com.deniz.')&&p.method==='PUT'));
- console.log('V1.12.0 single/bulk OT: full-day + overtime, mixed rows, start hint, overlap/windows, native checkbox readback, idempotency, rollback and incomplete rollback passed');
+ console.log('V1.12.1 single/bulk OT: full-day + overtime, mixed rows, start hint, overlap/windows, native checkbox readback, idempotency, rollback and incomplete rollback passed');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=originalFetch;if(oldSecret==null)delete process.env.APP_SESSION_SECRET;else process.env.APP_SESSION_SECRET=oldSecret;if(server)await new Promise(r=>server.close(r));});
