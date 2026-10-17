@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.13.0';
+const APP_VERSION = '1.13.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -35,7 +35,7 @@ const state = {
   deferredInstallPrompt: null,
   quickHandled: false,
   bootFinished: false,
-  summary: { mode: 'week', date: '', project: '', items: [], loading: false, loaded: false, error: '', partial: false, seq: 0, detail: null, updated: '' },
+  summary: { mode: 'week', date: '', project: '', items: [], loading: false, loaded: false, error: '', partial: false, typeNotice: '', seq: 0, detail: null, updated: '' },
   historyItems: [],
   historyLoading: false,
   historyView: 'calendar',
@@ -1276,7 +1276,7 @@ async function loadSummary({ force = false } = {}) {
   if (!state.user) return;
   const summary = state.summary, sequence = ++summary.seq, user = state.user;
   const range = summaryRange();
-  summary.loading = true; summary.loaded = false; summary.error = ''; summary.partial = false; summary.items = [];
+  summary.loading = true; summary.loaded = false; summary.error = ''; summary.partial = false; summary.typeNotice = ''; summary.items = [];
   renderSummary();
   const parts = QuickJiraSummary.chunks(range), collected = [];
   let cursor = 0, completed = 0;
@@ -1289,6 +1289,8 @@ async function loadSummary({ force = false } = {}) {
         if (sequence !== summary.seq || user !== state.user) return;
         collected.push(...(data.items || []));
         summary.partial ||= historyIsPartial(data);
+        if (data.sourceDetails?.subtaskTypeField?.ok === false) summary.typeNotice = data.sourceDetails.subtaskTypeField.message;
+        else if (data.sourceDetails?.subtaskTypeUnavailable && !summary.typeNotice) summary.typeNotice = 'Một số worklog chưa đọc được Sub-task Type; được giữ trong nhóm Chưa xác định.';
         completed += 1;
         $('summaryState').textContent = `Đang tổng hợp từ Jira… ${Math.round(completed / parts.length * 100)}%`;
       }
@@ -1347,8 +1349,10 @@ function renderSummary() {
   $('summaryGoalHint').textContent = `${all.unknown || summary.partial ? 'Tạm tính · ' : ''}${all.remaining ? `Còn ${fmt(all.remaining)} giờ thường để đủ mục tiêu kỳ.` : 'Đã đủ mục tiêu giờ thường.'} T2–T6, 8h/ngày; chưa trừ ngày lễ/nghỉ phép. OT không bù giờ thường.${summary.project ? ' Bộ lọc dự án không thay đổi mục tiêu cá nhân.' : ''}`;
   const maxProject = data.projects[0]?.total || 1;
   $('summaryProjects').innerHTML = data.projects.length ? data.projects.map((row, index) => `<button type="button" class="summary-chart-row${summary.detail?.kind === 'project' && summary.detail.id === row.id ? ' is-selected' : ''}" data-summary-project="${index}" aria-label="Xem worklog dự án ${escapeHtml(row.name)}, ${escapeHtml(fmt(row.total))}"><span class="summary-row-title"><strong>${escapeHtml(row.name)}</strong><b>${escapeHtml(fmt(row.total))} <span aria-hidden="true">›</span></b></span><span class="summary-stacked" aria-hidden="true"><i class="regular" style="width:${row.regular / maxProject * 100}%"></i><i class="ot" style="width:${row.overtime / maxProject * 100}%"></i><i class="unknown" style="width:${row.unknown / maxProject * 100}%"></i></span><small>${[row.regular ? `${fmt(row.regular)} thường` : '', row.overtime ? `${fmt(row.overtime)} OT` : '', row.unknown ? `${fmt(row.unknown)} chưa rõ` : ''].filter(Boolean).join(' · ')}</small></button>`).join('') : '<p class="summary-empty">Chưa có worklog trong kỳ này.</p>';
+  $('summaryTypeNotice').textContent = summary.typeNotice || 'Theo trường Sub-task Type trên Jira · Cộng giờ worklog trong kỳ';
+  $('summaryTypeNotice').classList.toggle('is-warning', !!summary.typeNotice);
   const colors = ['#8b7de0', '#42a694', '#d17ba1', '#6488be', '#bb8b62', '#7d96a4'];
-  $('summaryTypes').innerHTML = data.types.length ? data.types.map((row, index) => `<button type="button" class="summary-chart-row${summary.detail?.kind === 'type' && summary.detail.id === row.id ? ' is-selected' : ''}" data-summary-type="${index}" aria-label="Xem worklog loại ${escapeHtml(row.name)}, ${escapeHtml(fmt(row.total))}"><span class="summary-row-title"><strong>${escapeHtml(row.name)}</strong><b>${escapeHtml(fmt(row.total))} <span aria-hidden="true">›</span></b></span><span class="summary-type-track" aria-hidden="true"><i style="width:${data.total ? row.total / data.total * 100 : 0}%;background:${colors[index % colors.length]}"></i></span><small>${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(data.total ? row.total / data.total * 100 : 0)}% tổng giờ${row.id === 'other' ? ' · Issue không phải sub-task' : row.id === 'unknown' ? ' · Chưa đọc đủ Issue Type' : ''}</small></button>`).join('') : '<p class="summary-empty">Chưa có dữ liệu phân loại.</p>';
+  $('summaryTypes').innerHTML = data.types.length ? data.types.map((row, index) => `<button type="button" class="summary-chart-row${summary.detail?.kind === 'type' && summary.detail.id === row.id ? ' is-selected' : ''}" data-summary-type="${index}" aria-label="Xem worklog loại ${escapeHtml(row.name)}, ${escapeHtml(fmt(row.total))}"><span class="summary-row-title"><strong>${escapeHtml(row.name)}</strong><b>${escapeHtml(fmt(row.total))} <span aria-hidden="true">›</span></b></span><span class="summary-type-track" aria-hidden="true"><i style="width:${data.total ? row.total / data.total * 100 : 0}%;background:${colors[index % colors.length]}"></i></span><small>${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(data.total ? row.total / data.total * 100 : 0)}% tổng giờ${row.id === 'other' ? ' · Issue không phải sub-task' : row.id === 'unknown' ? ' · Chưa đọc được Sub-task Type' : row.id === 'unassigned' ? ' · Chưa chọn giá trị trên Jira' : ''}</small></button>`).join('') : '<p class="summary-empty">Chưa có dữ liệu phân loại.</p>';
   $('summaryProjects').querySelectorAll('[data-summary-project]').forEach(button => button.addEventListener('click', () => showSummaryDetail('project', data.projects[Number(button.dataset.summaryProject)])));
   $('summaryTypes').querySelectorAll('[data-summary-type]').forEach(button => button.addEventListener('click', () => showSummaryDetail('type', data.types[Number(button.dataset.summaryType)])));
   const deficit = all.deficits[0];

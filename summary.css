@@ -115,3 +115,6 @@ html[data-theme="dark"] .summary-deficit, html[data-theme="dark"] .summary-state
 #summaryProject { background-size: 5px 5px, 5px 5px; background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%; background-repeat: no-repeat; }
 #summaryProject { height: 44px; min-height: 44px; line-height: normal; font-size: 14px; padding: 8px 34px 8px 12px !important; }
 .summary-date-label input { height: 44px; line-height: 1.4; font-size: 14px; }
+
+.summary-type-notice { margin: 10px 16px 0; font-size: 11px; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
+.summary-type-notice.is-warning { padding: 8px 10px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--primary-soft); color: var(--text); }

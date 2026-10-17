@@ -3,12 +3,12 @@ const assert = require('node:assert/strict');
 const summary = require('../lib/worklog-summary');
 const ui = require('../lib/ui-tools');
 const range = ui.weekRange('2026-10-16');
-const item = (id, seconds, extra = {}) => ({ id, key: `EPU01-${id}`, project: 'EPU01', date: '2026-10-16', timeSpentSeconds: seconds, minutes: seconds / 60, overtimeKnown: true, overtime: false, isSubtask: true, issueType: 'Support', issueTypeId: '10001', ...extra });
-const a = item('1', 7 * 3600), b = item('2', 2 * 3600, { overtime: true }), c = item('3', 3600, { overtimeKnown: false, legacyOvertime: true }), d = item('4', 3600, { project: 'INTRA', issueType: 'Review', issueTypeId: '10002' });
+const item = (id, seconds, extra = {}) => ({ id, key: `EPU01-${id}`, project: 'EPU01', date: '2026-10-16', timeSpentSeconds: seconds, minutes: seconds / 60, overtimeKnown: true, overtime: false, isSubtask: true, issueType: 'Sub-task', issueTypeId: '5', subtaskTypeKnown: true, subtaskType: 'Supporting', subtaskTypeId: '101', subtaskTypeFieldId: 'customfield_12345', ...extra });
+const a = item('1', 7 * 3600), b = item('2', 2 * 3600, { overtime: true }), c = item('3', 3600, { overtimeKnown: false, legacyOvertime: true }), d = item('4', 3600, { project: 'INTRA', subtaskType: 'Review Document', subtaskTypeId: '102' });
 let result = summary.aggregate([a, b, c, d, a, item('5', 9999, { date: '2026-09-01' })], range, '', '2026-10-16');
 assert.equal(result.regular, 8 * 3600); assert.equal(result.overtime, 7200); assert.equal(result.unknown, 3600); assert.equal(result.total, 11 * 3600);
 assert.equal(result.target, 40 * 3600); assert.equal(result.credited, 8 * 3600);
-assert.equal(result.types.length, 2); assert.equal(result.types[0].total, 10 * 3600);
+assert.equal(result.types.length, 2); assert.equal(result.types[0].name, 'Supporting'); assert(!result.types.some(x => x.name === 'Sub-task')); assert.equal(result.types[0].total, 10 * 3600);
 assert.equal(result.projects.reduce((s, row) => s + row.total, 0), result.total);
 assert.equal(result.types.reduce((s, row) => s + row.total, 0), result.total);
 assert.equal(summary.aggregate([a, b, c, d], range, 'INTRA').total, 3600);
@@ -37,15 +37,18 @@ let server;
 (async () => {
   process.env.APP_SESSION_SECRET = 'summary-integration-test-secret-at-least-32';
   const cookie = createSessionCookie({ mode: 'basic', username: 'boss', password: 'test-only', me: { name: 'boss' } }).split(';')[0];
-  let many = false, pluginFail = false, discoverCount = 2;
-  const metadata = key => ({ key, fields: { summary: key, project: { key: 'EPU01' }, status: { name: 'Done' }, issuetype: { id: '10001', name: 'Support', subtask: true } } });
+  let many = false, pluginFail = false, fieldDenied = false, discoverCount = 2, typeFieldRequests = 0;
+  const metadata = key => ({ key, fields: { summary: key, project: { key: 'EPU01' }, status: { name: 'Done' }, issuetype: { id: '5', name: 'Sub-task', subtask: true }, customfield_12345: { id: key === 'EPU01-1' ? '101' : '102', value: key === 'EPU01-1' ? 'Testing' : 'Supporting' } } });
   const log = (key, id, extra = {}) => ({ id: String(id), started: '2026-10-16T16:00:00.000+0700', timeSpentSeconds: 1800, author: { name: 'boss' }, comment: 'Test', ...extra });
   global.fetch = async (url, options = {}) => {
     const u = new URL(String(url)), body = options.body ? JSON.parse(options.body) : {};
+    if (u.pathname === '/rest/api/2/field' && fieldDenied) return new Response('{}', {status:403});
+    if (u.pathname === '/rest/api/2/field') return Response.json([{id:'issuetype',name:'Issue Type'},{id:'customfield_12345',name:'Sub-task Type',custom:true,schema:{type:'option'}}]);
     if (u.pathname.endsWith('/search')) {
       const jql = body.jql || u.searchParams.get('jql') || '';
       const start = Number(body.startAt || u.searchParams.get('startAt') || 0);
       if (jql.startsWith('key in')) {
+        if (body.fields?.includes('customfield_12345')) typeFieldRequests++;
         const keys = [...jql.matchAll(/"(EPU01-\d+)"/g)].map(x => x[1]);
         const page = keys.slice(start, start + (many ? 100 : 1)).map(metadata);
         return Response.json({ issues: page, total: keys.length, startAt: start });
@@ -77,11 +80,24 @@ let server;
   async function get(params = '') { const r = await originalFetch(base + params, { headers: { cookie } }); return { status: r.status, data: await r.json() }; }
   let response = await get('&scope=summary');
   assert.equal(response.status, 200); assert.equal(response.data.items.length, 4, 'paginate even when server returns one worklog of requested 1000; filter author and use Vietnam date');
-  assert(response.data.items.every(x => x.issueType === 'Support' && x.issueTypeId === '10001' && x.isSubtask));
+  assert(response.data.items.every(x => x.issueType === 'Sub-task' && x.issueTypeId === '5' && x.isSubtask));
+  assert(typeFieldRequests>0, 'request the resolved custom field in Jira issue metadata');
+  assert.equal(response.data.sourceDetails.subtaskTypeField.id, 'customfield_12345');
+  assert.equal(response.data.items.find(x=>x.key==='EPU01-1').subtaskType, 'Testing');
+  assert.equal(response.data.items.find(x=>x.key==='EPU01-2').subtaskType, 'Supporting');
+  const groups = summary.aggregate(response.data.items,range).types;
+  assert.deepEqual(groups.map(x=>x.name).sort(), ['Supporting','Testing']);
+  assert(groups.every(x=>x.total===3600), 'sum worklog seconds, not sub-task count');
   assert(response.data.items.find(x => x.id === '3').overtime);
   pluginFail = true; response = await get('&scope=summary');
   assert.equal(response.data.sourceDetails.overtimeUnavailable, 4); assert(response.data.items.every(x => x.overtimeKnown === false));
-  pluginFail = false; many = true; discoverCount = 501;
+  pluginFail = false; fieldDenied = true; response = await get('&scope=summary');
+  assert.equal(response.data.items.length,4); assert.equal(response.data.sourceDetails.subtaskTypeUnavailable,4);
+  assert.equal(response.data.sourceDetails.subtaskTypeField.ok,false);
+  assert(response.data.items.every(x=>!x.subtaskTypeKnown));
+  assert.deepEqual(summary.aggregate(response.data.items,range).types.map(x=>x.name),['Chưa xác định']);
+  assert.equal(summary.aggregate(response.data.items,range).total,7200,'field failure must not drop hours');
+  fieldDenied = false; many = true; discoverCount = 501;
   response = await get('&scope=summary'); assert.equal(response.data.items.length, 501); assert.equal(response.data.truncated, false);
   response = await get(); assert.equal(response.data.items.length, 500); assert.equal(response.data.truncated, true);
   // Limits are surfaced, never silently claimed as complete.

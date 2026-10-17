@@ -1,5 +1,11 @@
 # Quick Jira Log — Roadmap
 
+## V1.13.1 — Sửa Sub-task Type: đã xây dựng
+
+- Đọc custom field riêng thay vì Issue Type, cộng giờ theo giá trị Jira đang chọn.
+- Tự tìm field ID, xử lý trùng tên/field bị chặn, phân biệt null với chưa đọc được.
+- Kiểm thử cùng một Issue Type Sub-task nhưng nhiều giá trị Testing/Supporting/Developing.
+
 ## V1.13.0 — Tổng hợp giờ & Overtime: đã xây dựng
 
 - Thay Kiểm tra bằng Tổng hợp, giữ guard logwork.

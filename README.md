@@ -1,6 +1,20 @@
-# Quick Jira Log V1.13.0 — Tổng hợp giờ & Overtime
+# Quick Jira Log V1.13.1 — Sửa phân bổ theo Sub-task Type
 
 Ứng dụng PWA dùng Jira/WorklogPRO hiện có. Source sẵn sàng push GitHub và deploy Vercel; không thêm database hoặc dependency runtime.
+
+## Bản vá V1.13.1
+
+V1.13.0 đã dùng nhầm Issue Type nên mọi sub-task bị gộp thành một nhóm “Sub-task”. V1.13.1 đọc đúng custom field **Sub-task Type** trong ảnh Jira và tổng hợp giờ theo giá trị đã chọn.
+
+- Mặc định không cần cấu hình thêm: tự tìm field theo đúng tên, chấp nhận khác biệt khoảng trắng/dấu gạch ngang.
+- Nếu có nhiều custom field cùng tên hoặc tài khoản bị chặn danh sách field, đặt **`JIRA_SUBTASK_TYPE_FIELD_ID`** bằng ID thật của trường do quản trị Jira xác nhận (`customfield_` + số). Không dùng Issue Type ID hoặc ID thuộc tính Overtime. Không có ID cứng trong source.
+- Khi field thiếu/trùng/không đọc được, hiển thị thông báo ở biểu đồ và nhóm “Chưa xác định”, giữ đủ tổng giờ. Không fallback về Issue Type.
+- Phân biệt trường trả null (chưa chọn) với response thiếu trường (chưa đọc được). Không chia giờ vào nhiều nhóm khi giá trị trả về sai cấu trúc.
+- Giữ thống kê giờ thường/OT/dự án, drill-down, sửa/xóa và các guard hiện có. PWA và cache phiên bản được cập nhật để không dùng dữ liệu phân loại cũ.
+
+Ví dụ mọi issue đều có Type = Sub-task, nhưng custom field khác nhau: hai worklog Testing mỗi worklog 1h → **Testing 2h**; một worklog Developing 6h → **Developing 6h**. Không hiển thị “Sub-task 8h” hay số lượng 2/1 task.
+
+Tham khảo hợp đồng API: [Jira REST field](https://developer.atlassian.com/server/jira/platform/rest/v10000/api-group-field/), [Jira REST examples – custom fields](https://developer.atlassian.com/server/jira/platform/jira-rest-api-examples/).
 
 ## Nâng cấp V1.13.0
 
@@ -17,17 +31,17 @@
 1. Chỉ lấy worklog của tài khoản đăng nhập; ngày dựa trên thời điểm bắt đầu quy về **Asia/Ho_Chi_Minh**. Worklog qua đêm được tính vào ngày bắt đầu, cùng quy tắc lịch hiện có.
 2. Cộng `timeSpentSeconds` của worklog trong kỳ, không lấy `timespent` tích lũy trên issue. Khử trùng theo issue key và worklog ID; giữ chính xác giây khi thống kê.
 3. Overtime chỉ dựa vào checkbox WorklogPRO đã đọc được. Không suy đoán từ giờ làm, phần vượt 8h hoặc marker cũ trong mô tả. Khi chưa đọc được checkbox, hiển thị **giờ chưa xác nhận**, không tính vào giờ thường/OT. Tổng giờ và phân bổ theo loại vẫn gồm phần đó.
-4. **Sub-task Type** dùng `fields.issuetype.id/name/subtask` từ Jira. Gộp bằng ID; nhãn hiển thị đúng tên Jira, không đoán theo tên task. Nếu Jira chỉ có một loại Sub-task, biểu đồ sẽ có một nhóm. Issue không phải sub-task vào **Task khác**; thiếu metadata vào **Chưa xác định**. Không tự tạo loại hoặc chỉnh phân loại Jira.
+4. **Sub-task Type** là custom field riêng trên Jira, **khác** `fields.issuetype` (Type: Sub-task). App tự tìm trường có tên Sub-task Type bằng `GET /rest/api/2/field`, yêu cầu field ID đó trong metadata issue và đọc giá trị `{id, value}`. Ví dụ: Testing, Supporting, Developing, Review Document, Meeting… Gộp theo field ID + option ID và **cộng giây worklog**, không đếm số task. Một task có nhiều worklog thì cộng các worklog trong kỳ; tỷ trọng = giờ nhóm / tổng giờ lọc. Không suy đoán theo summary/mô tả. Trường trả null/None (chưa chọn option) vào **Chưa phân loại**; không đọc được trường/metadata vào **Chưa xác định**; issue không phải sub-task vào **Task khác**. Không sửa dữ liệu Jira.
 5. Mục tiêu cá nhân: **8h/ngày T2–T6**, tuần 40h; tháng tính số ngày T2–T6 thực tế. Chưa trừ ngày lễ/nghỉ phép. Mỗi ngày tối đa 8h được ghi nhận vào tiến độ kỳ, không dùng giờ dư/ngày cuối tuần để bù ngày khác. Bộ lọc dự án chỉ đổi KPI, biểu đồ và chi tiết, không thay mục tiêu cá nhân toàn dự án. Thông báo thiếu giờ chỉ xét ngày đến hôm nay, không nhắc ngày tương lai; dữ liệu chưa đủ thì không kết luận thiếu.
 6. Thống kê tuần/tháng chia khoảng 3 ngày, tối đa hai yêu cầu đồng thời để giảm ảnh hưởng giới hạn thời gian WorklogPRO. Jira trả ít bản ghi hơn yêu cầu vẫn được đọc tiếp đến đủ `total`. Giới hạn khám phá 2.000 issue/khoảng thống kê, lỗi metadata, issue bị chặn hoặc OT chưa xác nhận đều được báo **tạm tính**. Không âm thầm coi giới hạn là kết quả đầy đủ.
 7. Cache trình duyệt ngắn hạn 20 giây, tách phạm vi thống kê/lịch; tạo/sửa/xóa làm mất hiệu lực cache. Yêu cầu cũ không ghi đè kỳ mới hoặc phiên đăng nhập mới. Không lưu báo cáo hay mật khẩu vào database mới.
 
 ## Cập nhật từ V1.12.1
 
-1. Giải nén, dùng **nội dung bên trong thư mục `Quick-Jira-Log-V1.13.0`** làm root repository; không đẩy cả ZIP hoặc lồng thêm thư mục.
+1. Giải nén, dùng **nội dung bên trong thư mục `Quick-Jira-Log-V1.13.1`** làm root repository; không đẩy cả ZIP hoặc lồng thêm thư mục.
 2. Push GitHub rồi deploy project Vercel hiện có. Framework **Other**, không Build Command; Node.js **24.x**, giữ `vercel.json`.
-3. Giữ `APP_SESSION_SECRET` và các biến môi trường đang dùng. Không cần token, dịch vụ hoặc biến mới cho Tổng hợp.
-4. Sau deploy, chọn **Cập nhật** trong PWA hoặc tải lại trang để badge/footer hiện **V1.13.0**.
+3. Giữ `APP_SESSION_SECRET` và các biến môi trường đang dùng. Không cần token hay dịch vụ mới. Chỉ cấu hình `JIRA_SUBTASK_TYPE_FIELD_ID` nếu tự nhận diện trường không xác định được đúng một kết quả.
+4. Sau deploy, chọn **Cập nhật** trong PWA hoặc tải lại trang để badge/footer hiện **V1.13.1**.
 5. Mở **Tổng hợp**, đối chiếu một tuần và một tháng với Jira, sau đó thử sửa một worklog và xác nhận tổng được tải lại.
 
 ## Kiểm thử và giới hạn xác minh
@@ -65,7 +79,7 @@ Không còn GET vào action lưu; không tự gửi POST mở form, không lặp
 
 ### Cập nhật
 
-Giữ cấu hình Vercel và `APP_SESSION_SECRET` hiện có. Deploy source, cập nhật PWA/tải lại để đầu trang và footer hiện **V1.13.0**. Không cần database hay token Jira mới. Đăng nhập lại nếu phiên Jira đã hết hạn.
+Giữ cấu hình Vercel và `APP_SESSION_SECRET` hiện có. Deploy source, cập nhật PWA/tải lại để đầu trang và footer hiện **V1.13.1**. Không cần database hay token Jira mới. Đăng nhập lại nếu phiên Jira đã hết hạn.
 
 ### Cấu hình và giới hạn
 
@@ -122,9 +136,9 @@ Màu vàng chỉ phản ánh OT đã đọc được từ WorklogPRO. Không suy
 
 ## Triển khai nhanh
 
-Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.13.0`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
+Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.13.1`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
 
-App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp này không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.13.0**.
+App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp này không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.13.1**.
 
 Đã kiểm tra bằng dữ liệu Jira giả lập; **chưa đăng nhập/ghi giờ lên Jira thật và chưa kiểm tra trên iPhone Safari vật lý**. Xem `TESTING.md` để biết phạm vi, cách chạy và giới hạn.
 
@@ -212,7 +226,7 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.13.0` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.13.1` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.

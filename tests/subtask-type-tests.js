@@ -1,0 +1,64 @@
+'use strict';
+const assert = require('node:assert/strict');
+const { resolveSubtaskTypeField, readSubtaskType } = require('../lib/subtask-type');
+const summary = require('../lib/worklog-summary');
+const ui = require('../lib/ui-tools');
+const originalFetch = global.fetch, originalConfigured = process.env.JIRA_SUBTASK_TYPE_FIELD_ID;
+(async () => {
+  delete process.env.JIRA_SUBTASK_TYPE_FIELD_ID;
+  let calls = 0, status = 200;
+  let fields = [{ id: 'issuetype', name: 'Sub-task Type' }, { id: 'customfield_10200', name: 'Sub-task Type', schema: { type: 'option' } }];
+  global.fetch = async (url, options) => {
+    assert.equal(new URL(String(url)).pathname, '/rest/api/2/field');
+    assert.equal(options.method || 'GET', 'GET', 'discovery is read-only');
+    calls++;
+    await new Promise(r => setTimeout(r, 5));
+    return Response.json(fields, { status });
+  };
+  const auth = username => ({ mode: 'basic', username, password: 'fixture-only' });
+  let [a, b] = await Promise.all([resolveSubtaskTypeField(auth('boss')), resolveSubtaskTypeField(auth('boss'))]);
+  assert.equal(calls, 1); assert.equal(a.id, 'customfield_10200'); assert.equal(b.id, a.id);
+  await resolveSubtaskTypeField(auth('boss')); assert.equal(calls, 1, 'short user-scoped cache');
+  fields = [{ id: 'customfield_700', name: 'Sub task Type' }];
+  const other = await resolveSubtaskTypeField(auth('other')); assert.equal(other.id, 'customfield_700');
+  assert.equal((await resolveSubtaskTypeField(auth('boss'))).id, 'customfield_10200', 'do not mix per-user field lists');
+  fields = [{ id: 'customfield_10200', name: 'Sub-task Type' }, { id: 'customfield_10201', name: 'Sub–task Type' }];
+  a = await resolveSubtaskTypeField(auth('ambiguous')); assert.equal(a.ok, false); assert(a.message.includes('nhiều'));
+  fields = [{ id: 'customfield_10200', name: 'Parent Sub-task Type' }, { id: 'issuetype', name: 'Sub-task Type' }];
+  a = await resolveSubtaskTypeField(auth('missing')); assert.equal(a.ok, false);
+  status = 403; a = await resolveSubtaskTypeField(auth('denied')); assert.equal(a.ok, false);
+  status = 401; await assert.rejects(resolveSubtaskTypeField(auth('expired')), e => e.status === 401);
+  status = 200;
+  process.env.JIRA_SUBTASK_TYPE_FIELD_ID = 'customfield_45678'; const before = calls;
+  a = await resolveSubtaskTypeField(auth('configured')); assert.equal(a.id, 'customfield_45678'); assert.equal(calls, before);
+  process.env.JIRA_SUBTASK_TYPE_FIELD_ID = 'issuetype'; assert.equal((await resolveSubtaskTypeField(auth('configured'))).ok, false);
+  process.env.JIRA_SUBTASK_TYPE_FIELD_ID = 'customfield_1?fields=*'; assert.equal((await resolveSubtaskTypeField(auth('configured'))).ok, false);
+  delete process.env.JIRA_SUBTASK_TYPE_FIELD_ID;
+  const mapping = { ok: true, id: 'customfield_10200' };
+  const read = value => readSubtaskType({ fields: { customfield_10200: value } }, mapping);
+  assert.equal(read(null).subtaskTypeKnown, true); assert.equal(read(null).subtaskType, '');
+  assert.equal(readSubtaskType({ fields: {} }, mapping).subtaskTypeKnown, false);
+  assert.equal(readSubtaskType({ fields: { issuetype: { name: 'Testing' } } }, mapping).subtaskTypeKnown, false);
+  assert.equal(read({ id: '17', value: 'Testing' }).subtaskType, 'Testing');
+  assert.equal(read({ id: '18', value: "Review Customer's Requirement" }).subtaskTypeId, '18');
+  assert.equal(read('Supporting').subtaskTypeId, 'value:Supporting');
+  assert.equal(read([{ id: '17', value: 'Testing' }]).subtaskTypeKnown, false);
+  assert.equal(read({ id: '17' }).subtaskTypeKnown, false);
+  const make = (id, seconds, value, extra = {}) => ({ id, key: 'EPU01-1', project: 'EPU01', date: '2026-10-16', timeSpentSeconds: seconds, issueType: 'Sub-task', issueTypeId: '5', isSubtask: true, overtimeKnown: true, overtime: false, ...read(value), ...extra });
+  // Same issue type for every row, unequal worklog counts/hours: two Testing
+  // worklogs total 2h, one Developing worklog is 6h. No counting/splitting by title.
+  const items = [make('1', 3600, { id: '1', value: 'Testing' }), make('2', 3600, { id: '1', value: 'Testing' }), make('3', 21600, { id: '2', value: 'Developing' }), make('4', 1800, null), make('5', 1800, null, { subtaskTypeKnown: false })];
+  let totals = summary.aggregate(items, ui.weekRange('2026-10-16'));
+  assert.equal(totals.total, 9 * 3600);
+  assert.equal(totals.types[0].name, 'Developing'); assert.equal(totals.types[0].total, 21600);
+  assert.equal(totals.types[1].name, 'Testing'); assert.equal(totals.types[1].total, 7200);
+  assert.equal(totals.types.find(x => x.id === 'unassigned').total, 1800);
+  assert.equal(totals.types.find(x => x.id === 'unknown').total, 1800);
+  assert(!totals.types.some(x => x.name === 'Sub-task'));
+  assert.equal(summary.typeOf(make('6', 60, null, { isSubtask: false })).id, 'other');
+  assert.equal(summary.typeOf(make('6', 60, null, { subtaskTypeKnown: false })).id, 'unknown');
+  console.log('V1.13.1 custom Sub-task Type: real field discovery, exact matching, cache isolation, config, missing/ambiguous/403/401, option/null/missing, hours grouping with one Issue Type passed.');
+})().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => {
+  global.fetch = originalFetch;
+  if (originalConfigured === undefined) delete process.env.JIRA_SUBTASK_TYPE_FIELD_ID; else process.env.JIRA_SUBTASK_TYPE_FIELD_ID = originalConfigured;
+});

@@ -20,6 +20,7 @@ const HISTORY_CACHE_MS = 15 * 1000;
 const { validDate } = require('../lib/ui-tools');
 const { readLabel } = require('../lib/worklog-label');
 const { enrichHistory } = require('../lib/worklogpro');
+const { resolveSubtaskTypeField, readSubtaskType } = require('../lib/subtask-type');
 
 
 function vietnamToday() {
@@ -122,7 +123,9 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });
     }
 
-    const metadataPromise = perf.step('metadataBatch', () => getIssuesByKeys(keys, session, { extraFields: ['issuetype'] }))
+    const typeField = summaryScope ? await perf.step('subtaskTypeField', () => resolveSubtaskTypeField(session, { force })) : null;
+    if (typeField) sourceDetails.subtaskTypeField = typeField;
+    const metadataPromise = perf.step('metadataBatch', () => getIssuesByKeys(keys, session, { extraFields: ['issuetype', ...(typeField?.ok ? [typeField.id] : [])] }))
       .then(issues => ({ ok: true, issues }))
       .catch(error => {
         return { ok: false, issues: [], error: error?.message || String(error), fatal: error?.status === 401 ? error : null };
@@ -170,6 +173,7 @@ module.exports = async function handler(req, res) {
           issueType: String(issue?.fields?.issuetype?.name || ''),
           issueTypeId: String(issue?.fields?.issuetype?.id || ''),
           isSubtask: typeof issue?.fields?.issuetype?.subtask === 'boolean' ? issue.fields.issuetype.subtask : null,
+          ...readSubtaskType(issue, typeField),
           date: parsed.date,
           start: minuteToHHMM(parsed.minute),
           end: minuteToHHMM(endMinute),
@@ -185,6 +189,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (summaryScope) sourceDetails.subtaskTypeUnavailable = items.filter(item => item.isSubtask !== false && !item.subtaskTypeKnown).length;
     const nativeOvertime = await perf.step('worklogproOvertime', () => enrichHistory(items, session));
     if (nativeOvertime.unavailable) sourceDetails.overtimeUnavailable = nativeOvertime.unavailable;
     items.sort((a, b) => b.date.localeCompare(a.date) || b.start.localeCompare(a.start) || a.key.localeCompare(b.key));

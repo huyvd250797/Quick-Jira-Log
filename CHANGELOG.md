@@ -1,3 +1,11 @@
+# V1.13.1 — Đúng custom field Sub-task Type (2026-10-17)
+
+- Sửa nguyên nhân gộp mọi giờ thành “Sub-task”: dùng custom field Sub-task Type, không dùng Issue Type.
+- Tự phát hiện field ID theo tên qua GET /rest/api/2/field; tùy chọn mapping khi tên trùng/quyền hạn chế. Không đoán ID.
+- Request custom field trong metadata batch, đọc option id/value, cộng thời lượng worklog trong kỳ và drill-down đúng nhóm.
+- Null/None → Chưa phân loại; field thiếu/đọc lỗi → Chưa xác định kèm thông báo; không fallback issuetype, không mất giờ.
+- Giữ các tính năng và cơ chế native Overtime V1.13.0; cập nhật PWA, history cache, README và kiểm thử custom field.
+
 # V1.13.0 — Tổng hợp giờ & Overtime (2026-10-17)
 
 - Thay giao diện Kiểm tra bằng Tổng hợp tuần/tháng, lọc dự án và ba KPI giờ.
