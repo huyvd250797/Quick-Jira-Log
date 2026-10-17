@@ -10,6 +10,7 @@ const {
   getMyself,
   getIssue,
   createWorklog,
+  getWorklog,
   deleteWorklog,
   transitionIssueToDone
 } = require('../lib/jira');
@@ -21,6 +22,7 @@ const {
   validateScheduledSegments,
   workWindowsFor,
   windowsLabel,
+  hhmmToMinute,
   minutesInsideWindows
 } = require('../lib/scheduler');
 const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
@@ -63,6 +65,8 @@ async function performWorklog(body, session, perf) {
   const description = String(body.description || '').trim();
   const overtime = toBoolean(body.overtime);
   const overtimeStart = overtime ? String(body.overtimeStart || '') : '';
+  const startTime = body.startTime === undefined ? '' : String(body.startTime);
+  if (body.startTime !== undefined && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(startTime)) throw new JiraError('Giờ bắt đầu đã chọn không hợp lệ.', 400);
   if (overtimeStart && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(overtimeStart)) throw new JiraError('Giờ bắt đầu Overtime không hợp lệ.', 400);
 
   if (!key || !project || !timeSpent || !date || !description) {
@@ -103,7 +107,10 @@ async function performWorklog(body, session, perf) {
   }
   let plan;
   try {
-    plan = scheduleForDate(minutes, overtime ? overtimeBusy(guard.occupied, overtimeStart) : guard.occupied, date, overtime);
+    if (startTime) {
+      const start = hhmmToMinute(startTime);
+      plan = [{ start, end: start + minutes, minutes }];
+    } else plan = scheduleForDate(minutes, overtime ? overtimeBusy(guard.occupied, overtimeStart) : guard.occupied, date, overtime);
     validateScheduledSegments(plan, guard.occupied, windows);
   } catch (error) {
     throw planningError(error, date, overtime);
@@ -126,6 +133,12 @@ async function performWorklog(body, session, perf) {
         const current = await worklogpro.getWorklog(worklog.id, session);
         await worklogpro.updateNativeWorklog({ key, worklogId: worklog.id, current, attribute, overtime: true,
           started: jiraStarted(date, seg.start), seconds: seg.minutes * 60, description }, session);
+      }
+      if (startTime) {
+        const verified = await getWorklog(key, worklog.id, session);
+        if (String(verified?.id) !== String(worklog.id) || Date.parse(verified.started) !== Date.parse(jiraStarted(date, seg.start)) || Number(verified.timeSpentSeconds) !== seg.minutes * 60) {
+          throw new JiraError('Jira chưa xác nhận worklog đúng giờ đã chọn.', 502);
+        }
       }
       completedSegments += 1;
       perf.report?.(40 + 40 * completedSegments / plan.length, `Đã ghi ${completedSegments}/${plan.length} worklog`);
@@ -163,6 +176,7 @@ async function performWorklog(body, session, perf) {
     overtimeVerified: overtime,
     overtimeSource: overtime ? 'worklogpro' : '',
     workWindow: windowsLabel(date, overtime),
+    ...(startTime ? { startTime, exactStart: true } : {}),
     totalMinutes: minutes,
     segments: displaySegments(plan),
     worklogIds: created.map(x => String(x.id || '')).filter(Boolean),

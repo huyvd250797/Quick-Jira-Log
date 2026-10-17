@@ -1,9 +1,23 @@
 # Quick Jira Log — Roadmap
 
+## V1.14.0 — Logwork trực tiếp trên lịch: đã xây dựng
+
+- Bấm giờ trống → Sub-task → form logwork hiện có → lưu đúng giờ chọn.
+- Kéo thả block PC; mobile giữ để bật chế độ rung, kéo rồi chạm ngoài để thoát.
+- Cập nhật giờ/ngày thật trên Jira, giữ thời lượng/mô tả/OT; guard và readback; bảo vệ stale và kết quả chưa xác định.
+- Tương tác trên lịch tuần; giữ xem/sửa lịch tháng, tổng hợp và log đơn/Bulk.
+
+## Định hướng tiếp theo — chưa xây dựng
+
+- V1.15.0: khôi phục bản nháp logtime (log đơn/Bulk).
+- V1.16.0: bộ đếm thời gian theo task, chuyển sang form logwork để người dùng kiểm tra trước khi lưu.
+- Không phát triển bàn làm việc/lập kế hoạch công việc hoặc xuất Excel trong phạm vi hiện tại.
+
+
 ## V1.13.2 — Tỷ trọng dự án: đã xây dựng
 
 - Nhãn dưới thanh dự án thể hiện % tổng giờ, thanh có độ dài tương ứng tỷ trọng; giữ tổng giờ bên phải.
-- Phạm vi bản vá giao diện thống kê. Chưa triển khai xuất báo cáo V1.14.0.
+- Phạm vi bản vá giao diện thống kê. Chưa triển khai xuất báo cáo.
 
 ## V1.13.1 — Sửa Sub-task Type: đã xây dựng
 

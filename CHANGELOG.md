@@ -1,3 +1,13 @@
+# V1.14.0 — Logwork trực tiếp trên lịch (2026-10-18)
+
+- Bấm khoảng trống lịch tuần, chọn Sub-task và dùng lại form logwork với ngày/giờ bắt đầu được điền sẵn.
+- Single-worklog API hỗ trợ giờ bắt đầu chính xác; guard và đọc lại Jira, không auto-shift/split qua giờ nghỉ. Giữ luồng tự xếp và log đơn/Bulk hiện có khi không chọn giờ từ lịch.
+- PC kéo thả đổi giờ/ngày thật; mobile giữ 550ms bật chế độ rung rồi kéo; chạm ngoài block để thoát.
+- Preview snap 30 phút, tự cuộn sát mép, cảnh báo trùng/ngoài khung; server kiểm tra lại trước khi ghi.
+- Move-only giữ giây, mô tả và OT; kiểm tra dữ liệu gốc để phát hiện stale; xác minh readback, không optimistic move hoặc auto retry kết quả chưa rõ.
+- Native form trong dialog, không autofocus input, feedback chế độ sửa không xê dịch grid. Cập nhật lịch/dashboard/Tổng hợp sau tạo và di chuyển.
+- PWA/cache assets và nhãn phiên bản V1.14.0. README/TESTING có hướng dẫn và giới hạn xác minh.
+
 # V1.13.2 — Tỷ trọng tổng giờ theo dự án (2026-10-17)
 
 - Thay nhãn thời lượng dưới thanh dự án bằng phần trăm tổng giờ của kỳ/bộ lọc hiện tại.

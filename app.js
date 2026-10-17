@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.13.2';
+const APP_VERSION = '1.14.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -36,6 +36,8 @@ const state = {
   quickHandled: false,
   bootFinished: false,
   summary: { mode: 'week', date: '', project: '', items: [], loading: false, loaded: false, error: '', partial: false, typeNotice: '', seq: 0, detail: null, updated: '' },
+  calendarLogContext: null,
+  calendarMovePending: false,
   historyItems: [],
   historyLoading: false,
   historyView: 'calendar',
@@ -265,7 +267,7 @@ function updateSingleOvertimeHint() {
   const hint = $('overtimeHint');
   if (!hint) return;
   const date = $('date')?.value || todayLocal();
-  $('overtimeStartField')?.classList.toggle('hidden', !$('overtime')?.checked);
+  $('overtimeStartField')?.classList.toggle('hidden', !$('overtime')?.checked || !!state.calendarLogContext);
   hint.textContent = $('overtime')?.checked ? `Overtime: ${overtimeWindowLabel(date)}. App sẽ đồng bộ ô OT trên Jira và kiểm tra lại sau lưu.` : 'Giờ thường: 08:00–12:00 · 13:30–17:30, tối đa 8h. Chọn Overtime để log thêm ngoài giờ.';
 }
 
@@ -462,6 +464,7 @@ function isDesktopEditorMode() {
 }
 
 function openDesktopEditor(cardId) {
+  if (state.calendarLogContext && cardId === 'worklogCard') return true;
   const card = $(cardId);
   if (!card || !isDesktopEditorMode()) return false;
   document.body.classList.add('desktop-editor-open');
@@ -486,6 +489,7 @@ window.visualViewport?.addEventListener('resize', syncMobileEditorViewport);
 window.visualViewport?.addEventListener('scroll', syncMobileEditorViewport);
 
 function openMobileEditor(cardId) {
+  if (state.calendarLogContext && cardId === 'worklogCard') return true;
   const card = $(cardId);
   if (!card || !isMobileEditorMode()) return false;
   card._sheetSettleToken = (card._sheetSettleToken || 0) + 1;
@@ -528,6 +532,7 @@ function closeMobileEditor() {
 }
 
 function closeSingleEditorAnimated({ hideResult = true } = {}) {
+  if (state.calendarLogContext) return closeCalendarLog();
   state.singleCapacitySeq += 1;
   const card = $('worklogCard');
   const finish = () => {
@@ -758,6 +763,8 @@ function setLoggedIn(user) {
 }
 
 function setLoggedOut() {
+  closeCalendarLog({ force: true });
+  resetCalendarInteraction();
   closeMobileEditor();
   setCaptchaPanel(false);
   setLoginError('');
@@ -965,13 +972,16 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   const normalizedKey = String(key || '').trim().toUpperCase();
   if (!normalizedKey) return;
   const normalizedProject = project || normalizedKey.split('-')[0] || state.prefs.lastProject || '';
-  const logDate = getSessionLogDate();
+  const logDate = state.calendarLogContext?.date || getSessionLogDate();
   $('key').value = normalizedKey;
   $('project').value = normalizedProject;
   $('date').value = logDate;
   $('description').value = summary || '';
   if ($('overtime')) $('overtime').checked = false;
   if ($('overtimeStart')) $('overtimeStart').value = '';
+  $('calendarStartField').classList.toggle('hidden', !state.calendarLogContext);
+  if (state.calendarLogContext) $('calendarStart').value = state.calendarLogContext.start;
+  $('logNextBtn').classList.toggle('hidden', !!state.calendarLogContext);
   updateSingleOvertimeHint();
   $('selectedIssueKey').textContent = normalizedKey;
   $('selectedIssueProject').textContent = normalizedProject || '—';
@@ -1103,6 +1113,9 @@ async function loadFilterIssues({ quiet = false } = {}) {
     state.filterLoading = false;
     btn.disabled = false;
     btn.classList.remove('spinning');
+    if (state.calendarLogContext && !$('calendarTaskPicker').classList.contains('hidden')) {
+      if (state.filterLoaded) renderCalendarPicker(); else $('calendarTaskState').textContent = $('filterError').textContent || 'Không tải được Sub-task. Bấm ↻ để thử lại.';
+    }
   }
 }
 
@@ -1425,6 +1438,7 @@ function openHistory() {
 }
 
 function closeHistory() {
+  resetCalendarInteraction();
   void exitCalendarFullscreen();
   closeCorrection({ immediate: true });
   closeOverlay('historyOverlay');
@@ -1654,7 +1668,7 @@ function renderWeeklyCalendar(date) {
   }).join('');
   const columns = days.map(day => {
     const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
-    return `<div class="week-day-column">${events.map(event => {
+    return `<div class="week-day-column" data-calendar-date="${day}" data-from-minute="${from}">${events.map(event => {
       const globalIndex = state.historyItems.indexOf(event.item);
       const appearance = calendarAppearance(event.item);
       const label = `${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
@@ -1663,7 +1677,7 @@ function renderWeeklyCalendar(date) {
   }).join('');
   $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length};--week-minute-px:1px"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" data-minute-range="${height}" style="height:calc(${height} * var(--week-minute-px, 1px))"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
   fitWeekToViewport();
-  $('weeklyCalendar').querySelectorAll('[data-week-event]').forEach(button => button.addEventListener('click', () => openCorrection(state.historyItems[Number(button.dataset.weekEvent)])));
+  $('weeklyCalendar').querySelectorAll('[data-week-event]').forEach(button => button.addEventListener('click', event => calendarBlockClick(event, state.historyItems[Number(button.dataset.weekEvent)])));
   $('weeklyCalendar').querySelectorAll('[data-week-day]').forEach(button => button.addEventListener('click', () => {
     $('historyDate').value = button.dataset.weekDay;
     syncCalendarControls();
@@ -1819,7 +1833,7 @@ function syncCalendarControls() {
   $('calendarWeekendBtn').setAttribute('aria-pressed', String(state.calendarWeekends));
   $('calendarWeekendBtn').textContent = 'T7/CN';
   $('calendarWeekendBtn').setAttribute('aria-label', state.calendarWeekends ? 'Ẩn thứ 7 và chủ nhật' : 'Hiện thứ 7 và chủ nhật');
-  $('calendarHelp').textContent = weekly ? 'Chiều cao block theo đúng thời lượng · Bấm block để xem, sửa hoặc xóa · Cuộn ngang để xem đủ ngày trên điện thoại.' : 'Số giờ trong ô là tổng worklog đã ghi. Chọn ngày để xem chi tiết.';
+  $('calendarHelp').textContent = weekly ? 'Bấm chỗ trống để log đúng giờ · Kéo block để đổi giờ; mobile nhấn giữ để chỉnh sửa · Chạm block để xem chi tiết.' : 'Số giờ trong ô là tổng worklog đã ghi. Chọn ngày để xem chi tiết.';
   return { date, weekly };
 }
 
@@ -1873,6 +1887,7 @@ function renderWorklogHistory() {
   const stateEl = $('worklogHistoryState');
   if (!wrap || !stateEl) return;
   const calendar = state.historyView === 'calendar';
+  $('historyTitle').nextElementSibling.textContent = calendar && state.calendarMode === 'week' ? 'Bấm chỗ trống để log · Kéo block để đổi giờ; mobile nhấn giữ.' : 'Chọn ngày để xem worklog · Bấm worklog để xem, sửa hoặc xóa.';
   $('historyListFilters').classList.toggle('hidden', calendar);
   $('refreshWorklogHistoryBtn').classList.toggle('hidden', calendar);
   $('historyOverlay').classList.toggle('is-calendar-view', calendar);
@@ -1943,6 +1958,7 @@ function renderWorklogHistory() {
 
 async function loadWorklogHistory({ quiet = false, force = false, preserveCorrection = false } = {}) {
   if (!state.user) return;
+  if (!state.calendarMovePending) resetCalendarInteraction();
   const selectedDate = $('historyDate').value || todayLocal();
   if (!QuickJiraUi.validDate(selectedDate)) return showToast('Vui lòng chọn ngày hợp lệ.');
   const range = state.historyView === 'calendar' ? (state.calendarMode === 'week' ? QuickJiraUi.weekRange(selectedDate) : QuickJiraUi.monthRange(selectedDate)) : { start: selectedDate, end: selectedDate };
@@ -3249,7 +3265,9 @@ $('worklogForm').addEventListener('submit', async event => {
     updateSingleCapacity();
     return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm thời lượng hoặc chọn Overtime để log ngoài giờ.');
   }
-  const logAndNext = state.logAndNextRequested === true;
+  const calendarSubmission = !!state.calendarLogContext;
+  if (calendarSubmission && !/^([01]\d|2[0-3]):[0-5]\d$/.test($('calendarStart').value)) return showCalendarLogError('Vui lòng chọn giờ bắt đầu hợp lệ.');
+  const logAndNext = !calendarSubmission && state.logAndNextRequested === true;
   state.logAndNextRequested = false;
   const payload = {
     key: $('key').value.trim(),
@@ -3258,7 +3276,8 @@ $('worklogForm').addEventListener('submit', async event => {
     date: $('date').value,
     description: $('description').value.trim(),
     overtime: $('overtime').checked,
-    overtimeStart: $('overtime').checked ? $('overtimeStart').value : ''
+    overtimeStart: $('overtime').checked ? $('overtimeStart').value : '',
+    ...(calendarSubmission ? { startTime: $('calendarStart').value } : {})
   };
   const confirmed = await confirmLogAction({
     title: logAndNext ? 'Xác nhận Log & Next?' : 'Xác nhận Logwork?',
@@ -3266,6 +3285,7 @@ $('worklogForm').addEventListener('submit', async event => {
     rows: [
       ['Sub-task', payload.key || '—'],
       ['Ngày logwork', payload.date || '—'],
+      ...(calendarSubmission ? [['Giờ bắt đầu', payload.startTime || '—']] : []),
       ['Thời lượng', payload.timeSpent || '—'],
       ['Loại', payload.overtime ? 'Overtime (OT)' : 'Giờ thường']
     ],
@@ -3287,6 +3307,7 @@ $('worklogForm').addEventListener('submit', async event => {
   startLogProgress('single');
   try {
     const data = await api('/api?action=worklog', { method: 'POST', body: JSON.stringify({ ...payload, requestId }), requestId, onProgress: updateLogProgress });
+    if (calendarSubmission && (data.exactStart !== true || data.segments?.length !== 1 || data.segments[0].start !== payload.startTime)) throw new Error('Chưa xác nhận worklog đúng giờ đã chọn. Hãy tải lại lịch/Jira trước khi log lại.');
     if (payload.overtime && (data.overtime !== true || data.overtimeVerified !== true)) throw new Error('Chưa xác nhận Overtime trên Jira. Hãy tải lại lịch/Jira trước khi log lại.');
     finishLogProgress(true);
 
@@ -3331,7 +3352,12 @@ $('worklogForm').addEventListener('submit', async event => {
     state.filterLoaded = true;
     renderFilterIssues();
 
-    if (logAndNext) {
+    if (calendarSubmission) {
+      closeLogProgress();
+      closeCalendarLog({ force: true });
+      await loadWorklogHistory({ quiet: true, force: true });
+      setTimeout(() => loadFilterIssues({ quiet: true }), 650);
+    } else if (logAndNext) {
       const nextIndex = currentIndexBeforeLog >= 0 ? Math.min(currentIndexBeforeLog, Math.max(0, state.filterIssues.length - 1)) : 0;
       const nextIssue = state.filterIssues[nextIndex] || state.filterIssues[0];
       if (nextIssue) {
@@ -3350,6 +3376,7 @@ $('worklogForm').addEventListener('submit', async event => {
     const result = $('resultCard');
     result.className = 'result error';
     finishLogProgress(false, error);
+    if (calendarSubmission) showCalendarLogError(error.message);
     result.innerHTML = `<h3>${error.code === 'RESULT_UNKNOWN' ? 'Chưa xác định kết quả log' : 'Logwork chưa thành công'}</h3><div class="meta">${escapeHtml(error.message)}</div>`;
     showAnimated(result);
     addAuditEntry({ ok: false, key: $('key').value.trim().toUpperCase(), message: error.message });

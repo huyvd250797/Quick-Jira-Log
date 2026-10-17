@@ -1,4 +1,16 @@
-# Kiểm thử V1.13.2
+# Kiểm thử V1.14.0
+
+## V1.14.0 — Luồng tạo và kéo thả từ lịch
+
+- `npm test`: **PASS** toàn bộ logic/API và các hồi quy trước, thêm `tests/calendar-edit-tests.js`.
+- `npm run test:ui`: **PASS** toàn bộ UI regression, gồm luồng Tổng hợp và Calendar Interactions mới.
+- Tạo tại 15:00, đọc lại đúng started/duration; idempotency tạo; trùng không auto-shift; giờ nghỉ/lunch crossing/giờ sai không ghi; OT native; readback mismatch hoàn tác worklog mới.
+- Move-only: 15:00 → 08:00, đổi ngày, giữ 3661 giây và mô tả/marker, không thay OT/custom attribute; từ chối stale expected-start/seconds, người khác, trùng/ngoài khung.
+- Native WorklogPRO fallback khi core 403; giữ thuộc tính; response mất sau commit không retry ghi. Fixture mới hỗ trợ số phút lẻ để kiểm tra giữ giây.
+- `tests/browser/calendar-interactions.cjs`: picker → form cũ → payload startTime → lịch; input nằm trong khung và không autofocus bàn phím. Desktop 1440×1100; touch mobile 390×1000, 320×900 qua CDP touchStart/move/end.
+- Kiểm tra kéo 15:00–16:00 sang 08:00–09:00, đổi ngày PC, mobile hold/jiggle/drag/thoát, chạm nhanh mở chi tiết, cuộn trước long-press không bật edit; trùng/403 không đổi block lạc quan.
+- Dùng ảnh UI nội bộ để rà form, nút đóng/nút lưu và feedback không làm xê dịch lưới.
+- Chưa đăng nhập Jira thật hoặc kiểm tra Safari/iPhone vật lý. Cần đối chiếu một worklog thử nghiệm được phép sửa sau deploy.
 
 ## Bản vá tỷ trọng dự án V1.13.2
 

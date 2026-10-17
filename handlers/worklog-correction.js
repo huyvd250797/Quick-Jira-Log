@@ -16,7 +16,7 @@ const {
 const { loadOccupiedRanges } = require('../lib/worklog-guard');
 const { invalidateWorklogCaches } = require('../lib/app-cache');
 const { createPerf } = require('../lib/perf');
-const { readLabel } = require('../lib/worklog-label');
+const { readLabel, textOf } = require('../lib/worklog-label');
 const worklogpro = require('../lib/worklogpro');
 
 const { validDate } = require('../lib/ui-tools');
@@ -51,27 +51,36 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { ok: true, deleted: true, key, worklogId, performance });
     }
 
+    const moveOnly = body.moveOnly === true;
+    if (body.moveOnly !== undefined && typeof body.moveOnly !== 'boolean') return sendJson(res, 400, { ok: false, error: 'Thao tác di chuyển không hợp lệ.' });
+    if (moveOnly && (!Number.isFinite(Date.parse(body.expectedStarted)) || !Number.isSafeInteger(body.expectedSeconds) || body.expectedSeconds <= 0)) {
+      return sendJson(res, 400, { ok: false, error: 'Thiếu thông tin worklog gốc. Hãy tải lại lịch.' });
+    }
+    if (moveOnly && (Date.parse(body.expectedStarted) !== Date.parse(current.started) || body.expectedSeconds !== Number(current.timeSpentSeconds))) {
+      return sendJson(res, 409, { ok: false, error: 'Worklog đã thay đổi trên Jira. Hãy tải lại lịch trước khi kéo thả.', code: 'WORKLOG_STALE' });
+    }
     const date = String(body.date || '').trim();
     const start = String(body.start || '').trim();
     const timeSpent = String(body.timeSpent || '').trim();
-    const description = readLabel(String(body.description || '')).description.trim();
+    const description = moveOnly ? textOf(current.comment) : readLabel(String(body.description || '')).description.trim();
     if ((body.overtime !== undefined && typeof body.overtime !== 'boolean') ||
         (body.updateOvertime !== undefined && typeof body.updateOvertime !== 'boolean') ||
         (body.updateOvertime === true && typeof body.overtime !== 'boolean')) {
       return sendJson(res, 400, { ok: false, error: 'Trạng thái Overtime không hợp lệ.' });
     }
-    if (!validDate(date) || !validTime(start) || !timeSpent || !description) {
+    if (!validDate(date) || !validTime(start) || (!moveOnly && (!timeSpent || !description))) {
       return sendJson(res, 400, { ok: false, error: 'Vui lòng nhập đúng Date, Start, TimeSpent và Description.' });
     }
 
     let minutes;
-    try { minutes = parseTimeSpent(timeSpent); }
+    try { minutes = moveOnly ? Number(current.timeSpentSeconds) / 60 : parseTimeSpent(timeSpent); }
     catch { return sendJson(res, 400, { ok: false, error: 'TimeSpent không hợp lệ.' }); }
 
+    const seconds = moveOnly ? Number(current.timeSpentSeconds) : minutes * 60;
     const startMinute = hhmmToMinute(start);
     const segment = { start: startMinute, end: startMinute + minutes, minutes };
     const oldParsed = parseJiraStartedAtWorkTimezone(current?.started || '');
-    const scheduleChanged = oldParsed?.date !== date || oldParsed?.minute !== startMinute || Number(current.timeSpentSeconds) !== minutes * 60;
+    const scheduleChanged = oldParsed?.date !== date || oldParsed?.minute !== startMinute || Number(current.timeSpentSeconds) !== seconds;
     if (scheduleChanged) {
       const guard = await loadOccupiedRanges(date, [key], me, session, { excludeWorklogIds: [worklogId] });
       const allowedWindows = isWeekendDate(date)
@@ -90,7 +99,7 @@ module.exports = async function handler(req, res) {
       oldParsed?.date ? invalidateWorklogCaches(session, oldParsed.date, [key]) : Promise.resolve(),
       date !== oldParsed?.date ? invalidateWorklogCaches(session, date, [key]) : Promise.resolve()
     ]);
-    const overtimeChangeRequested = typeof body.overtime === 'boolean' && body.updateOvertime !== false;
+    const overtimeChangeRequested = !moveOnly && typeof body.overtime === 'boolean' && body.updateOvertime !== false;
     if (overtimeChangeRequested) {
       // Resolve the worklog BOOL field from WorklogPRO, not Jira /field or editmeta.
       const attribute = await perf.step('worklogproAttribute', () => worklogpro.getOvertimeAttribute(session));
@@ -101,7 +110,7 @@ module.exports = async function handler(req, res) {
       overtime = body.overtime;
       try {
         await perf.step('worklogproUpdateAndVerify', () => worklogpro.updateNativeWorklog({
-          key, worklogId, current: native, attribute, overtime, started, seconds: minutes * 60, description
+          key, worklogId, current: native, attribute, overtime, started, seconds: seconds, description
         }, session));
       } finally {
         // Invalidate even after an interrupted response: the write may already be committed.
@@ -116,7 +125,7 @@ module.exports = async function handler(req, res) {
       try {
         try {
           await perf.step('updateWorklog', () => updateWorklog(key, worklogId, {
-            started, seconds: minutes * 60, description
+            started, seconds: seconds, description
           }, session));
         } catch (error) {
           // Retry through another provider only after a definite rejection, never a timeout.
@@ -125,14 +134,14 @@ module.exports = async function handler(req, res) {
           const native = await worklogpro.getWorklog(worklogId, session);
           if (current.author?.key && String(current.author.key) !== String(native.authorUserKey)) throw new JiraError('Tác giả worklog không khớp.', 409);
           overtime = worklogpro.overtimeOf(native, attribute);
-          await worklogpro.updateNativeWorklog({ key, worklogId, current: native, attribute, overtime, started, seconds: minutes * 60, description }, session);
+          await worklogpro.updateNativeWorklog({ key, worklogId, current: native, attribute, overtime, started, seconds: seconds, description }, session);
           overtimeVerified = true;
           editProvider = 'worklogpro-form';
         }
         written = true;
         updated = await perf.step('verifyWorklog', () => getWorklog(key, worklogId, session));
         if (String(updated?.id) !== worklogId || Date.parse(updated.started) !== Date.parse(started) ||
-            Number(updated.timeSpentSeconds) !== minutes * 60 || readLabel(updated.comment).description !== description || !authorMatches(updated, me)) {
+            Number(updated.timeSpentSeconds) !== seconds || (moveOnly ? textOf(updated.comment) : readLabel(updated.comment).description) !== description || !authorMatches(updated, me)) {
           throw new JiraError('Dữ liệu đọc lại từ Jira chưa khớp yêu cầu.', 502, { provider: 'jira', stage: 'verifyWorklog' }, 'JIRA_WORKLOG_VERIFY_FAILED');
         }
       } catch (error) {
@@ -161,6 +170,7 @@ module.exports = async function handler(req, res) {
       minutes,
       description,
       worklogVerified: true,
+      ...(moveOnly ? { moved: true, timeSpentSeconds: seconds } : {}),
       editProvider,
       overtimeChangeRequested,
       ...(overtimeVerified ? { overtime, overtimeKnown: true, overtimeVerified: true, overtimeSource: 'worklogpro' } : { overtimeKnown: false }),
