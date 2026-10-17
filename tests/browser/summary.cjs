@@ -44,6 +44,28 @@ const { server } = require('./serve.cjs');
     assert.equal(await page.locator('#summaryRegular').textContent(), '40h'); assert.equal(await page.locator('#summaryOvertime').textContent(), '2h'); assert.equal(await page.locator('#summaryTotal').textContent(), '42h');
     assert.equal(await page.locator('#summaryTypes .summary-chart-row').count(), 2);
     assert.equal(await page.locator('#runAuditBtn').count(), 0);
+    assert.equal(await page.locator('#summaryProjects .summary-chart-row > small').nth(0).textContent(), '95,24% tổng giờ');
+    assert.equal(await page.locator('#summaryProjects .summary-chart-row > small').nth(1).textContent(), '4,76% tổng giờ');
+    const example = await page.evaluate(() => {
+      const original = state.summary.items;
+      const base = original[0];
+      state.summary.items = [
+        {...base,id:'percent-1',key:'EPU01-1',project:'EPU01',minutes:1890,timeSpentSeconds:113400},
+        {...base,id:'percent-2',key:'INTRACOM01-1',project:'INTRACOM01',minutes:510,timeSpentSeconds:30600}
+      ];
+      renderSummary();
+      const rows = [...document.querySelectorAll('#summaryProjects .summary-chart-row')].map(row => ({
+        caption: row.querySelector('small').textContent,
+        hours: row.querySelector('.summary-row-title > b').textContent,
+        width: parseFloat(row.querySelector('.summary-stacked .regular').style.width)
+      }));
+      state.summary.items = original; renderSummary();
+      return rows;
+    });
+    assert.equal(example[0].caption, '78,75% tổng giờ'); assert.equal(example[1].caption, '21,25% tổng giờ');
+    assert(example[0].hours.includes('31h 30m')); assert(example[1].hours.includes('8h 30m'));
+    assert.equal(example[0].width,78.75); assert.equal(example[1].width,21.25);
+
     assert((await page.locator('#summaryTypes').textContent()).includes('Supporting'));
     assert((await page.locator('#summaryTypes').textContent()).includes('Testing'));
     assert(!(await page.locator('#summaryTypes').textContent()).includes('Sub-task'));
@@ -72,6 +94,7 @@ const { server } = require('./serve.cjs');
     assert.equal(await page.locator('#plannerOverlay').evaluate(x => x.inert), false);
     await page.locator('#summaryProject').selectOption('INTRACOM01');
     assert.equal(await page.locator('#summaryTotal').textContent(), '1h'); assert((await page.locator('#summaryGoalText').textContent()).includes('40h / 40h'));
+    assert.equal(await page.locator('#summaryProjects .summary-chart-row > small').textContent(), '100% tổng giờ');
     await page.locator('#summaryProject').selectOption('');
     fieldDenied = true;
     await page.locator('#summaryRefreshBtn').click(); await page.waitForFunction(() => state.summary.loaded && !state.summary.loading);

@@ -1,5 +1,10 @@
 # Quick Jira Log — Roadmap
 
+## V1.13.2 — Tỷ trọng dự án: đã xây dựng
+
+- Nhãn dưới thanh dự án thể hiện % tổng giờ, thanh có độ dài tương ứng tỷ trọng; giữ tổng giờ bên phải.
+- Phạm vi bản vá giao diện thống kê. Chưa triển khai xuất báo cáo V1.14.0.
+
 ## V1.13.1 — Sửa Sub-task Type: đã xây dựng
 
 - Đọc custom field riêng thay vì Issue Type, cộng giờ theo giá trị Jira đang chọn.

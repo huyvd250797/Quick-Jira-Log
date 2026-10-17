@@ -1,3 +1,10 @@
+# V1.13.2 — Tỷ trọng tổng giờ theo dự án (2026-10-17)
+
+- Thay nhãn thời lượng dưới thanh dự án bằng phần trăm tổng giờ của kỳ/bộ lọc hiện tại.
+- Giữ tổng thời lượng bên phải; thanh regular/OT/unknown cùng dùng mẫu số tổng giờ để phản ánh đúng tỷ trọng.
+- Hiển thị tối đa hai chữ số thập phân; cập nhật PWA và nhãn phiên bản.
+- Kiểm thử ví dụ 31h30/40h = 78,75%, 8h30/40h = 21,25%, trường hợp một dự án 100%, responsive và light/dark.
+
 # V1.13.1 — Đúng custom field Sub-task Type (2026-10-17)
 
 - Sửa nguyên nhân gộp mọi giờ thành “Sub-task”: dùng custom field Sub-task Type, không dùng Issue Type.

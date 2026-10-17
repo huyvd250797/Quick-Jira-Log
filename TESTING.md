@@ -1,4 +1,13 @@
-# Kiểm thử V1.13.1
+# Kiểm thử V1.13.2
+
+## Bản vá tỷ trọng dự án V1.13.2
+
+- `npm test`: PASS toàn bộ logic/API, gồm Sub-task Type native custom field và Overtime.
+- `tests/browser/summary.cjs`: kiểm tra nhãn % tổng giờ và độ dài thanh dùng tổng giờ theo bộ lọc; tổng thời lượng bên phải còn đủ.
+- Ví dụ ảnh người dùng: 31h30 + 8h30 = 40h; nhãn 78,75% và 21,25%; chiều dài thanh tương ứng.
+- Fixture có regular và OT: 40h/42h → 95,24%, 2h/42h → 4,76%; lọc một dự án → 100%.
+- UI PASS ở 1440×1000, 1024×700, 390×844, 320×683, 844×390; light/dark; giữ drill-down, sửa/xóa, kỳ và bộ lọc.
+- Không thay đổi API ghi Jira; chưa kiểm tra trên Jira thật trong phiên này.
 
 ## Hồi quy bản vá Sub-task Type
 
@@ -60,7 +69,7 @@ Có thể dùng Chromium đã có qua `QJL_CHROMIUM_PATH=/absolute/path/to/chrom
 
 ## Đối chiếu sau deploy
 
-1. Badge/footer/PWA là V1.13.1; nút Kiểm tra được thay bằng Tổng hợp.
+1. Badge/footer/PWA là V1.13.2; nút Kiểm tra được thay bằng Tổng hợp.
 2. Chọn tuần có cả giờ thường và OT, so sánh tổng và phân bổ với Jira. Chọn tháng 31 ngày.
 3. Chọn nhiều task đều Type: Sub-task nhưng có Sub-task Type khác nhau như Testing, Supporting, Developing. Biểu đồ phải tách đúng các giá trị riêng và cộng thời lượng worklog trong kỳ, không gộp Sub-task/không đếm task.
 4. Bấm nhóm, mở worklog để sửa thời lượng/ngày hoặc OT, kiểm tra tổng được cập nhật. Kiểm tra xóa trên một worklog thử nghiệm được phép xóa.

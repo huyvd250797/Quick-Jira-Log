@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.13.1';
+const APP_VERSION = '1.13.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1347,8 +1347,9 @@ function renderSummary() {
   $('summaryGoalMeter').setAttribute('aria-valuenow', String(Math.floor(all.percent)));
   $('summaryGoalMeter').classList.toggle('is-complete', all.remaining === 0 && !all.unknown && !summary.partial);
   $('summaryGoalHint').textContent = `${all.unknown || summary.partial ? 'Tạm tính · ' : ''}${all.remaining ? `Còn ${fmt(all.remaining)} giờ thường để đủ mục tiêu kỳ.` : 'Đã đủ mục tiêu giờ thường.'} T2–T6, 8h/ngày; chưa trừ ngày lễ/nghỉ phép. OT không bù giờ thường.${summary.project ? ' Bộ lọc dự án không thay đổi mục tiêu cá nhân.' : ''}`;
-  const maxProject = data.projects[0]?.total || 1;
-  $('summaryProjects').innerHTML = data.projects.length ? data.projects.map((row, index) => `<button type="button" class="summary-chart-row${summary.detail?.kind === 'project' && summary.detail.id === row.id ? ' is-selected' : ''}" data-summary-project="${index}" aria-label="Xem worklog dự án ${escapeHtml(row.name)}, ${escapeHtml(fmt(row.total))}"><span class="summary-row-title"><strong>${escapeHtml(row.name)}</strong><b>${escapeHtml(fmt(row.total))} <span aria-hidden="true">›</span></b></span><span class="summary-stacked" aria-hidden="true"><i class="regular" style="width:${row.regular / maxProject * 100}%"></i><i class="ot" style="width:${row.overtime / maxProject * 100}%"></i><i class="unknown" style="width:${row.unknown / maxProject * 100}%"></i></span><small>${[row.regular ? `${fmt(row.regular)} thường` : '', row.overtime ? `${fmt(row.overtime)} OT` : '', row.unknown ? `${fmt(row.unknown)} chưa rõ` : ''].filter(Boolean).join(' · ')}</small></button>`).join('') : '<p class="summary-empty">Chưa có worklog trong kỳ này.</p>';
+  const projectDenominator = data.total || 1;
+  const projectPercent = seconds => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(seconds / projectDenominator * 100);
+  $('summaryProjects').innerHTML = data.projects.length ? data.projects.map((row, index) => `<button type="button" class="summary-chart-row${summary.detail?.kind === 'project' && summary.detail.id === row.id ? ' is-selected' : ''}" data-summary-project="${index}" aria-label="Xem worklog dự án ${escapeHtml(row.name)}, ${escapeHtml(fmt(row.total))}, ${projectPercent(row.total)}% tổng giờ"><span class="summary-row-title"><strong>${escapeHtml(row.name)}</strong><b>${escapeHtml(fmt(row.total))} <span aria-hidden="true">›</span></b></span><span class="summary-stacked" aria-hidden="true"><i class="regular" style="width:${row.regular / projectDenominator * 100}%"></i><i class="ot" style="width:${row.overtime / projectDenominator * 100}%"></i><i class="unknown" style="width:${row.unknown / projectDenominator * 100}%"></i></span><small>${projectPercent(row.total)}% tổng giờ</small></button>`).join('') : '<p class="summary-empty">Chưa có worklog trong kỳ này.</p>';
   $('summaryTypeNotice').textContent = summary.typeNotice || 'Theo trường Sub-task Type trên Jira · Cộng giờ worklog trong kỳ';
   $('summaryTypeNotice').classList.toggle('is-warning', !!summary.typeNotice);
   const colors = ['#8b7de0', '#42a694', '#d17ba1', '#6488be', '#bb8b62', '#7d96a4'];
