@@ -1,3 +1,14 @@
+# V1.13.0 — Tổng hợp giờ & Overtime (2026-10-17)
+
+- Thay giao diện Kiểm tra bằng Tổng hợp tuần/tháng, lọc dự án và ba KPI giờ.
+- Biểu đồ dự án phân tách regular/OT/unknown; phân bổ theo Issue Type thực tế của sub-task, nhóm theo ID.
+- Drill-down nhóm → worklog → editor/xóa hiện có; làm mới cache sau mutation và bảo vệ navigation race.
+- Overtime chưa xác nhận được giữ riêng; dashboard/lịch tuần không cộng OT vào mục tiêu giờ thường.
+- Đọc tiếp trang worklog/metadata khi Jira giảm page size; phát hiện trang lặp/thiếu và giới hạn discovery; phạm vi summary hỗ trợ trên 500 task với cảnh báo giới hạn.
+- Tổng hợp chính xác giây, khử trùng, lọc author/ngày Việt Nam; tải tháng theo nhiều khoảng nhỏ.
+- Responsive, light/dark, empty/loading/error/partial, native editor không autofocus input.
+- PWA cache và các nhãn phiên bản cập nhật V1.13.0. Giữ adapter native form/token V1.12.1.
+
 # V1.12.1 — Correct Native Edit Action & Token Bootstrap
 
 - Sửa lỗi GET action POST `.jspa` khi mở form: dùng native `!update.jspa` theo tài nguyên WorklogPRO.

@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.12.1</title>
+  <title>Quick Jira Log · V1.13.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -19,13 +19,14 @@
   <link rel="stylesheet" href="/motion.css" />
   <link rel="stylesheet" href="/calendar-colors.css" />
   <link rel="stylesheet" href="/mobile-refinements.css" />
+  <link rel="stylesheet" href="/summary.css" />
 </head>
 <body class="booting">
   <div id="bootSplash" class="boot-splash" role="status" aria-live="polite">
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.12.1</div>
+      <div class="boot-version">V1.13.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -34,15 +35,15 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.12.1</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.13.0</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
           <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8 8.7 8.7 0 1 0 20.2 15.2Z"/></svg>
           <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
         </button>
-        <button id="plannerBtn" class="header-tool-btn hidden" type="button" aria-label="Kiểm tra và lập kế hoạch" title="Kiểm tra & lập kế hoạch">
-          <span class="header-tool-icon">✓</span><span>Kiểm tra & lập kế hoạch</span>
+        <button id="plannerBtn" class="header-tool-btn hidden" type="button" aria-label="Tổng hợp giờ và Overtime" title="Tổng hợp giờ & Overtime">
+          <span class="header-tool-icon">▥</span><span>Tổng hợp</span>
         </button>
         <button id="historyBtn" class="header-tool-btn hidden" type="button" aria-label="Worklog đã log" title="Tìm và chỉnh sửa worklog đã log">
           <span class="header-tool-icon history">↺</span><span>Worklog đã log</span>
@@ -68,10 +69,10 @@
     </section>
 
     <section id="dashboardCard" class="dashboard hidden" aria-label="Tổng giờ đã log">
-      <div class="dashboard-heading"><div><h2>Tổng giờ worklog</h2><p id="dashboardRange">Hôm nay và tuần hiện tại · Giờ Việt Nam</p></div><button id="refreshDashboardBtn" class="icon-btn" type="button" aria-label="Cập nhật tổng giờ" title="Cập nhật tổng giờ">↻</button></div>
+      <div class="dashboard-heading"><div><h2>Tiến độ giờ thường</h2><p id="dashboardRange">Hôm nay và tuần hiện tại · Giờ Việt Nam</p></div><button id="refreshDashboardBtn" class="icon-btn" type="button" aria-label="Cập nhật tổng giờ" title="Cập nhật tổng giờ">↻</button></div>
       <div class="dashboard-cards">
-        <article class="hours-card"><span>Hôm nay</span><div><strong id="dashboardToday">—</strong><small id="dashboardTodayTarget">/ 8h</small></div><div class="hours-meter" aria-hidden="true"><span id="dashboardTodayBar"></span></div><p id="dashboardTodayRemaining">Đang tải worklog…</p></article>
-        <article class="hours-card"><span>Tuần này · T2–T6</span><div><strong id="dashboardWeek">—</strong><small>/ 40h</small></div><div class="hours-meter" aria-hidden="true"><span id="dashboardWeekBar"></span></div><p id="dashboardWeekRemaining">Đang tải worklog…</p><small id="dashboardWeekend"></small></article>
+        <article class="hours-card"><span>Giờ thường hôm nay</span><div><strong id="dashboardToday">—</strong><small id="dashboardTodayTarget">/ 8h</small></div><div class="hours-meter" aria-hidden="true"><span id="dashboardTodayBar"></span></div><p id="dashboardTodayRemaining">Đang tải worklog…</p></article>
+        <article class="hours-card"><span>Giờ thường tuần này · T2–T6</span><div><strong id="dashboardWeek">—</strong><small>/ 40h</small></div><div class="hours-meter" aria-hidden="true"><span id="dashboardWeekBar"></span></div><p id="dashboardWeekRemaining">Đang tải worklog…</p><small id="dashboardWeekend"></small></article>
       </div><p id="dashboardState" class="dashboard-state" role="status" aria-live="polite"></p>
     </section>
 
@@ -293,18 +294,35 @@
 
     <div id="plannerOverlay" class="settings-overlay tool-overlay hidden" aria-hidden="true">
       <div class="settings-backdrop" data-close-planner></div>
-      <section class="settings-sheet tool-sheet" role="dialog" aria-modal="true" aria-labelledby="plannerTitle">
-        <div class="settings-head">
-          <div><h2 id="plannerTitle">Kiểm tra & lập kế hoạch</h2><p>Xem thời gian đã logwork và khoảng giờ còn trống trong ngày.</p></div>
-          <button id="closePlannerBtn" class="icon-btn" type="button" aria-label="Đóng">×</button>
+      <section class="settings-sheet tool-sheet summary-sheet" role="dialog" aria-modal="true" aria-labelledby="plannerTitle">
+        <div class="settings-head summary-head">
+          <div><h2 id="plannerTitle">Tổng hợp giờ &amp; Overtime</h2><p>Giờ đã log · Theo dự án và Sub-task Type</p></div>
+          <div class="summary-head-actions"><button id="summaryRefreshBtn" class="icon-btn" type="button" aria-label="Tải lại tổng hợp" title="Tải lại">↻</button><button id="closePlannerBtn" class="icon-btn" type="button" aria-label="Đóng tổng hợp">×</button></div>
         </div>
-        <div class="tool-modal-body">
-          <div class="audit-fields">
-            <label>Ngày<input id="auditDate" type="date" /></label>
-            <label>KEY (không bắt buộc)<input id="auditKey" placeholder="HIUCR-123" autocapitalize="characters" /></label>
+        <div class="summary-toolbar">
+          <div class="summary-switch" role="group" aria-label="Kỳ thống kê"><button id="summaryWeekBtn" type="button" aria-pressed="true">Tuần</button><button id="summaryMonthBtn" type="button" aria-pressed="false">Tháng</button></div>
+          <div class="summary-date-nav"><button id="summaryPrevBtn" class="icon-btn" type="button" aria-label="Kỳ trước">‹</button><label class="summary-date-label">Chọn ngày trong kỳ<input id="summaryDate" type="date" /></label><button id="summaryNextBtn" class="icon-btn" type="button" aria-label="Kỳ sau">›</button></div>
+          <button id="summaryTodayBtn" class="soft-btn" type="button">Hiện tại</button>
+          <label class="summary-project-label">Dự án<select id="summaryProject"><option value="">Tất cả</option></select></label>
+        </div>
+        <div class="summary-body">
+          <p id="summaryRangeLabel" class="summary-range-label"></p>
+          <div id="summaryState" class="summary-state" role="status" aria-live="polite"></div>
+          <div id="summaryContent" class="hidden">
+            <div class="summary-kpis">
+              <article class="summary-kpi"><span>Giờ thường</span><strong id="summaryRegular">—</strong><small id="summaryRegularHint"></small></article>
+              <article class="summary-kpi is-overtime"><span>Overtime</span><strong id="summaryOvertime">—</strong><small>Đã xác nhận trên Jira</small></article>
+              <article class="summary-kpi"><span>Tổng giờ</span><strong id="summaryTotal">—</strong><small id="summaryTotalHint">Giờ thường + Overtime</small></article>
+            </div>
+            <div id="summaryUnknown" class="summary-notice hidden"></div>
+            <section class="summary-goal" aria-label="Mục tiêu giờ thường"><div><strong>Mục tiêu giờ thường · Tất cả dự án</strong><span id="summaryGoalText"></span></div><div id="summaryGoalMeter" class="summary-meter" role="progressbar" aria-label="Tiến độ giờ thường" aria-valuemin="0" aria-valuemax="100"><span id="summaryGoalBar"></span></div><p id="summaryGoalHint"></p></section>
+            <div class="summary-charts">
+              <section class="summary-chart"><div class="summary-chart-head"><h3>Phân bổ theo dự án</h3><span class="summary-legend"><i class="regular"></i>Thường <i class="ot"></i>OT <i class="unknown"></i>Chưa rõ</span></div><div id="summaryProjects"></div></section>
+              <section class="summary-chart"><div class="summary-chart-head"><h3>Phân bổ theo Sub-task Type</h3><small>Tổng giờ · Tỷ trọng</small></div><div id="summaryTypes"></div></section>
+            </div>
+            <div id="summaryDeficit" class="summary-deficit hidden"></div>
+            <section id="summaryDetail" class="summary-detail hidden" aria-labelledby="summaryDetailTitle"><div class="summary-chart-head"><h3 id="summaryDetailTitle"></h3><button id="summaryCloseDetailBtn" class="text-btn" type="button">Thu gọn</button></div><p id="summaryDetailMeta"></p><div id="summaryDetailList"></div></section>
           </div>
-          <button id="runAuditBtn" class="secondary tool-primary-action" type="button">KIỂM TRA & LẬP KẾ HOẠCH</button>
-          <div id="auditResult" class="audit-result hidden"></div>
         </div>
       </section>
     </div>
@@ -400,7 +418,7 @@
 
     <nav id="mobileTaskbar" class="mobile-taskbar hidden" aria-label="Công cụ Worklog">
       <button id="mobilePlannerBtn" class="mobile-taskbar-btn" type="button">
-        <span class="mobile-taskbar-icon">✓</span><span>Kiểm tra</span>
+        <span class="mobile-taskbar-icon">▥</span><span>Tổng hợp</span>
       </button>
       <button id="mobileHistoryBtn" class="mobile-taskbar-btn" type="button">
         <span class="mobile-taskbar-icon history">↺</span><span>Worklog đã log</span>
@@ -408,7 +426,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.12.1</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.13.0</footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -426,6 +444,7 @@
   <script src="/lib/bulk-allocation.js" defer></script>
   <script src="/lib/late-log-warning.js" defer></script>
   <script src="/lib/ui-tools.js" defer></script>
+  <script src="/lib/worklog-summary.js" defer></script>
   <script src="/lib/calendar-style.js" defer></script>
   <script src="/lib/remembered-login.js" defer></script>
   <script src="/app.js" defer></script>

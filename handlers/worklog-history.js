@@ -38,7 +38,8 @@ function dayDistance(a, b) {
 
 async function safeKeys(fn) {
   try {
-    return { ok: true, keys: await fn(), error: '' };
+    const keys = await fn();
+    return { ok: true, keys, truncated: !!keys.truncated, error: '' };
   } catch (error) {
     if (error?.status === 401) throw error;
     return { ok: false, keys: [], error: error?.message || String(error) };
@@ -53,6 +54,7 @@ module.exports = async function handler(req, res) {
   const date = String(req.query?.date || '').trim();
   const endDate = String(req.query?.endDate || date).trim();
   const isRange = endDate !== date;
+  const summaryScope = req.query?.scope === 'summary';
   const requestedKey = String(req.query?.key || '').trim().toUpperCase();
   const force = String(req.query?.force || '') === '1';
   if (!validDate(date) || !validDate(endDate) || endDate < date || dayDistance(date, endDate) > 30) {
@@ -65,7 +67,7 @@ module.exports = async function handler(req, res) {
   const perf = createPerf();
   try {
     const cacheKey = historyKey(session, date, requestedKey);
-    if (!force && !isRange) {
+    if (!force && !isRange && !summaryScope) {
       const cached = await perf.step('cacheRead', () => cacheGet(cacheKey));
       if (cached.hit) {
         const performance = perf.snapshot({ cacheHit: 1 });
@@ -91,12 +93,14 @@ module.exports = async function handler(req, res) {
 
       for (const key of authorDay.keys || []) keySet.add(key);
       for (const key of recentWorked.keys || []) keySet.add(key);
+      sourceDetails.discoveryTruncated = !!(authorDay.truncated || recentWorked.truncated);
       source = authorDay.ok ? 'author-day' : 'fallback-worklog-date';
       sourceDetails.authorDay = { ok: authorDay.ok, issues: authorDay.keys.length, error: authorDay.error || null };
       sourceDetails.recentWorked = { ok: recentWorked.ok, issues: recentWorked.keys.length, skipped: Boolean(recentWorked.skipped), error: recentWorked.error || null };
 
       if (!authorDay.ok) {
         const anyDay = await perf.step('fallbackIssueScan', () => safeKeys(() => searchIssuesWithWorklogDate(date, session, endDate)));
+        sourceDetails.discoveryTruncated ||= !!anyDay.truncated;
         for (const key of anyDay.keys || []) keySet.add(key);
         sourceDetails.anyDay = { ok: anyDay.ok, issues: anyDay.keys.length, error: anyDay.error || null };
       } else {
@@ -107,17 +111,18 @@ module.exports = async function handler(req, res) {
     if (!requestedKey && sourceDetails.authorDay?.ok === false && sourceDetails.anyDay?.ok === false) {
       throw new JiraError('Không thể tìm worklog trên Jira. Vui lòng tải lại hoặc tìm bằng KEY.', 502);
     }
-    const truncated = keySet.size > 500;
-    const keys = [...keySet].slice(0, 500);
+    const limit = summaryScope ? 2000 : 500;
+    const truncated = keySet.size > limit || !!sourceDetails.discoveryTruncated;
+    const keys = [...keySet].slice(0, limit);
     if (!keys.length) {
       const payload = { ok: true, date, endDate, items: [], skipped: [], truncated, issueCount: 0, source, sourceDetails };
-      if (!isRange) await cacheSet(cacheKey, payload, HISTORY_CACHE_MS);
+      if (!isRange && !summaryScope) await cacheSet(cacheKey, payload, HISTORY_CACHE_MS);
       const performance = perf.snapshot({ cacheHit: 0 });
       res.setHeader('Server-Timing', perf.serverTimingHeader({ cacheHit: 0 }));
       return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });
     }
 
-    const metadataPromise = perf.step('metadataBatch', () => getIssuesByKeys(keys, session))
+    const metadataPromise = perf.step('metadataBatch', () => getIssuesByKeys(keys, session, { extraFields: ['issuetype'] }))
       .then(issues => ({ ok: true, issues }))
       .catch(error => {
         return { ok: false, issues: [], error: error?.message || String(error), fatal: error?.status === 401 ? error : null };
@@ -138,7 +143,9 @@ module.exports = async function handler(req, res) {
     if (metadata.fatal) throw metadata.fatal;
     if (!metadata.ok) sourceDetails.metadataError = metadata.error;
     const issueMap = new Map((metadata.issues || []).map(issue => [String(issue?.key || '').toUpperCase(), issue]));
+    if (keys.some(key => !issueMap.has(key.toUpperCase()))) sourceDetails.metadataError ||= 'Một số task chưa có thông tin phân loại.';
     const items = [];
+    const seen = new Set();
 
     for (const result of worklogResults) {
       const issue = issueMap.get(String(result.key).toUpperCase());
@@ -146,6 +153,9 @@ module.exports = async function handler(req, res) {
         if (!authorMatches(worklog, me)) continue;
         const parsed = parseJiraStartedAtWorkTimezone(worklog.started);
         if (!parsed || parsed.date < date || parsed.date > endDate) continue;
+        const identity = `${result.key}|${worklog.id}`;
+        if (seen.has(identity)) continue;
+        seen.add(identity);
         const seconds = Number(worklog.timeSpentSeconds || 0);
         if (!Number.isFinite(seconds) || seconds <= 0) continue;
         const minutes = Math.ceil(seconds / 60);
@@ -157,6 +167,9 @@ module.exports = async function handler(req, res) {
           project: String(issue?.fields?.project?.key || result.key.split('-')[0] || ''),
           summary: String(issue?.fields?.summary || ''),
           status: String(issue?.fields?.status?.name || ''),
+          issueType: String(issue?.fields?.issuetype?.name || ''),
+          issueTypeId: String(issue?.fields?.issuetype?.id || ''),
+          isSubtask: typeof issue?.fields?.issuetype?.subtask === 'boolean' ? issue.fields.issuetype.subtask : null,
           date: parsed.date,
           start: minuteToHHMM(parsed.minute),
           end: minuteToHHMM(endMinute),
@@ -177,7 +190,7 @@ module.exports = async function handler(req, res) {
     items.sort((a, b) => b.date.localeCompare(a.date) || b.start.localeCompare(a.start) || a.key.localeCompare(b.key));
     const payload = { ok: true, date, endDate, items, skipped, truncated, issueCount: keys.length, source, sourceDetails };
     // Range results are client-cached only: existing per-day invalidation remains authoritative.
-    if (!isRange) await perf.step('cacheWrite', () => cacheSet(cacheKey, payload, HISTORY_CACHE_MS));
+    if (!isRange && !summaryScope) await perf.step('cacheWrite', () => cacheSet(cacheKey, payload, HISTORY_CACHE_MS));
     const performance = perf.snapshot({ cacheHit: 0 });
     res.setHeader('Server-Timing', perf.serverTimingHeader({ cacheHit: 0 }));
     return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });

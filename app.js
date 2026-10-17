@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.12.1';
+const APP_VERSION = '1.13.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -35,6 +35,7 @@ const state = {
   deferredInstallPrompt: null,
   quickHandled: false,
   bootFinished: false,
+  summary: { mode: 'week', date: '', project: '', items: [], loading: false, loaded: false, error: '', partial: false, seq: 0, detail: null, updated: '' },
   historyItems: [],
   historyLoading: false,
   historyView: 'calendar',
@@ -180,6 +181,11 @@ function confirmLogAction({ title, message, rows = [], confirmLabel = 'XÁC NH�
 }
 
 function invalidateHistoryCache() {
+  state.summary.seq += 1;
+  state.summary.items = [];
+  state.summary.loaded = false;
+  state.summary.loading = false;
+  if (state.user && !$('plannerOverlay').classList.contains('hidden')) queueMicrotask(() => { void loadSummary({ force: true }); });
   state.historyCache.clear();
   state.historyRevision += 1;
   state.historySeq += 1;
@@ -1243,14 +1249,158 @@ function closeSettings() {
 }
 
 function openPlanner() {
-  $('auditDate').value = $('date').value || $('bulkDate').value || todayLocal();
-  $('auditKey').value = $('key').value.trim().toUpperCase();
+  state.summary.date ||= vietnamToday();
+  $('summaryDate').value = state.summary.date;
   openOverlay('plannerOverlay', 'closePlannerBtn');
+  void loadSummary();
 }
 
 function closePlanner() {
   closeOverlay('plannerOverlay');
 }
+
+function summaryRange() {
+  const date = state.summary.date || vietnamToday();
+  return state.summary.mode === 'month' ? QuickJiraUi.monthRange(date) : QuickJiraUi.weekRange(date);
+}
+
+function summaryDuration(seconds) {
+  if (!seconds) return '0h';
+  const value = Math.max(0, Math.round(seconds));
+  return [Math.floor(value / 3600) ? `${Math.floor(value / 3600)}h` : '', Math.floor(value % 3600 / 60) ? `${Math.floor(value % 3600 / 60)}m` : '', value % 60 ? `${value % 60}s` : ''].filter(Boolean).join(' ');
+}
+
+function summaryDateLabel(date) { return date.split('-').reverse().join('/'); }
+
+async function loadSummary({ force = false } = {}) {
+  if (!state.user) return;
+  const summary = state.summary, sequence = ++summary.seq, user = state.user;
+  const range = summaryRange();
+  summary.loading = true; summary.loaded = false; summary.error = ''; summary.partial = false; summary.items = [];
+  renderSummary();
+  const parts = QuickJiraSummary.chunks(range), collected = [];
+  let cursor = 0, completed = 0;
+  try {
+    await Promise.all(Array.from({ length: Math.min(2, parts.length) }, async () => {
+      while (cursor < parts.length) {
+        if (sequence !== summary.seq || user !== state.user) return;
+        const part = parts[cursor++];
+        const data = await fetchHistoryRange(part, '', force, true);
+        if (sequence !== summary.seq || user !== state.user) return;
+        collected.push(...(data.items || []));
+        summary.partial ||= historyIsPartial(data);
+        completed += 1;
+        $('summaryState').textContent = `Đang tổng hợp từ Jira… ${Math.round(completed / parts.length * 100)}%`;
+      }
+    }));
+    if (sequence !== summary.seq || user !== state.user) return;
+    summary.items = QuickJiraSummary.uniqueItems(collected, range);
+    summary.loaded = true;
+    summary.updated = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' }).format(new Date());
+  } catch (error) {
+    if (sequence !== summary.seq || user !== state.user) return;
+    // Invalidate concurrent workers. No incomplete subset is shown as a complete result.
+    summary.seq += 1;
+    summary.error = error.message || 'Không tải được tổng hợp.';
+  } finally {
+    if (user === state.user && (sequence === summary.seq || summary.error)) {
+      summary.loading = false;
+      renderSummary();
+    }
+  }
+}
+
+function renderSummary() {
+  const summary = state.summary, range = summaryRange();
+  $('summaryDate').value = summary.date;
+  $('summaryWeekBtn').setAttribute('aria-pressed', String(summary.mode === 'week'));
+  $('summaryMonthBtn').setAttribute('aria-pressed', String(summary.mode === 'month'));
+  $('summaryRangeLabel').textContent = `${summary.mode === 'week' ? 'Tuần' : 'Tháng'} · ${summaryDateLabel(range.start)} – ${summaryDateLabel(range.end)} · Giờ Việt Nam`;
+  $('summaryRefreshBtn').disabled = summary.loading;
+  $('summaryProject').disabled = summary.loading || !summary.loaded;
+  $('summaryContent').classList.toggle('hidden', summary.loading || !summary.loaded || !!summary.error);
+  $('plannerOverlay').querySelector('.summary-body').setAttribute('aria-busy', String(summary.loading));
+  const status = $('summaryState');
+  status.classList.toggle('is-warning', !!summary.error || summary.partial);
+  if (summary.loading) { status.textContent = 'Đang tổng hợp từ Jira…'; return; }
+  if (summary.error) { status.textContent = `${summary.error} Bấm ↻ để thử lại.`; return; }
+  if (!summary.loaded) { status.textContent = ''; return; }
+  const all = QuickJiraSummary.aggregate(summary.items, range, '', vietnamToday());
+  if (summary.project && !all.availableProjects.includes(summary.project)) summary.project = '';
+  const data = QuickJiraSummary.aggregate(summary.items, range, summary.project, vietnamToday());
+  $('summaryProject').innerHTML = `<option value="">Tất cả</option>${all.availableProjects.map(project => `<option value="${escapeHtml(project)}">${escapeHtml(project)}</option>`).join('')}`;
+  $('summaryProject').value = summary.project;
+  status.textContent = summary.partial ? 'Dữ liệu chưa đầy đủ · Số liệu tạm tính. Bấm ↻ để tải lại.' : `Cập nhật ${summary.updated} · ${data.items.length} worklog${data.items.length ? ' · Bấm biểu đồ để xem chi tiết' : ' trong kỳ đã chọn'}`;
+  const fmt = summaryDuration;
+  const unclassified = data.unknown > 0;
+  $('summaryRegular').textContent = unclassified ? (data.regular ? `≥ ${fmt(data.regular)}` : '—') : fmt(data.regular);
+  $('summaryOvertime').textContent = unclassified ? (data.overtime ? `≥ ${fmt(data.overtime)}` : '—') : fmt(data.overtime);
+  $('summaryTotal').textContent = fmt(data.total);
+  $('summaryRegularHint').textContent = summary.project ? summary.project : 'Tất cả dự án';
+  $('summaryTotalHint').textContent = unclassified ? 'Gồm giờ chưa xác nhận OT' : 'Giờ thường + Overtime';
+  $('summaryUnknown').classList.toggle('hidden', !unclassified);
+  $('summaryUnknown').textContent = unclassified ? `${fmt(data.unknown)} chưa xác nhận được Overtime trên Jira. Giờ thường và OT mới tính phần đã xác nhận; tổng giờ vẫn bao gồm phần này.` : '';
+  $('summaryGoalText').textContent = `${fmt(all.credited)} / ${fmt(all.target)} · ${Math.floor(all.percent)}%`;
+  $('summaryGoalBar').style.width = `${all.percent}%`;
+  $('summaryGoalMeter').setAttribute('aria-valuenow', String(Math.floor(all.percent)));
+  $('summaryGoalMeter').classList.toggle('is-complete', all.remaining === 0 && !all.unknown && !summary.partial);
+  $('summaryGoalHint').textContent = `${all.unknown || summary.partial ? 'Tạm tính · ' : ''}${all.remaining ? `Còn ${fmt(all.remaining)} giờ thường để đủ mục tiêu kỳ.` : 'Đã đủ mục tiêu giờ thường.'} T2–T6, 8h/ngày; chưa trừ ngày lễ/nghỉ phép. OT không bù giờ thường.${summary.project ? ' Bộ lọc dự án không thay đổi mục tiêu cá nhân.' : ''}`;
+  const maxProject = data.projects[0]?.total || 1;
+  $('summaryProjects').innerHTML = data.projects.length ? data.projects.map((row, index) => `<button type="button" class="summary-chart-row${summary.detail?.kind === 'project' && summary.detail.id === row.id ? ' is-selected' : ''}" data-summary-project="${index}" aria-label="Xem worklog dự án ${escapeHtml(row.name)}, ${escapeHtml(fmt(row.total))}"><span class="summary-row-title"><strong>${escapeHtml(row.name)}</strong><b>${escapeHtml(fmt(row.total))} <span aria-hidden="true">›</span></b></span><span class="summary-stacked" aria-hidden="true"><i class="regular" style="width:${row.regular / maxProject * 100}%"></i><i class="ot" style="width:${row.overtime / maxProject * 100}%"></i><i class="unknown" style="width:${row.unknown / maxProject * 100}%"></i></span><small>${[row.regular ? `${fmt(row.regular)} thường` : '', row.overtime ? `${fmt(row.overtime)} OT` : '', row.unknown ? `${fmt(row.unknown)} chưa rõ` : ''].filter(Boolean).join(' · ')}</small></button>`).join('') : '<p class="summary-empty">Chưa có worklog trong kỳ này.</p>';
+  const colors = ['#8b7de0', '#42a694', '#d17ba1', '#6488be', '#bb8b62', '#7d96a4'];
+  $('summaryTypes').innerHTML = data.types.length ? data.types.map((row, index) => `<button type="button" class="summary-chart-row${summary.detail?.kind === 'type' && summary.detail.id === row.id ? ' is-selected' : ''}" data-summary-type="${index}" aria-label="Xem worklog loại ${escapeHtml(row.name)}, ${escapeHtml(fmt(row.total))}"><span class="summary-row-title"><strong>${escapeHtml(row.name)}</strong><b>${escapeHtml(fmt(row.total))} <span aria-hidden="true">›</span></b></span><span class="summary-type-track" aria-hidden="true"><i style="width:${data.total ? row.total / data.total * 100 : 0}%;background:${colors[index % colors.length]}"></i></span><small>${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(data.total ? row.total / data.total * 100 : 0)}% tổng giờ${row.id === 'other' ? ' · Issue không phải sub-task' : row.id === 'unknown' ? ' · Chưa đọc đủ Issue Type' : ''}</small></button>`).join('') : '<p class="summary-empty">Chưa có dữ liệu phân loại.</p>';
+  $('summaryProjects').querySelectorAll('[data-summary-project]').forEach(button => button.addEventListener('click', () => showSummaryDetail('project', data.projects[Number(button.dataset.summaryProject)])));
+  $('summaryTypes').querySelectorAll('[data-summary-type]').forEach(button => button.addEventListener('click', () => showSummaryDetail('type', data.types[Number(button.dataset.summaryType)])));
+  const deficit = all.deficits[0];
+  const showDeficit = !!deficit && !summary.partial && !all.unknown;
+  $('summaryDeficit').classList.toggle('hidden', !showDeficit);
+  $('summaryDeficit').innerHTML = showDeficit ? `<span><strong>${escapeHtml(summaryDateLabel(deficit.date))}</strong> chưa đủ ${escapeHtml(fmt(deficit.seconds))} giờ thường${all.deficits.length > 1 ? ` · ${all.deficits.length} ngày chưa đủ trong kỳ tính đến hôm nay` : ''}.</span><button type="button" class="soft-btn" id="summaryOpenCalendarBtn">Mở lịch</button>` : '';
+  $('summaryOpenCalendarBtn')?.addEventListener('click', () => {
+    openHistory();
+    $('historyDate').value = deficit.date;
+    void loadWorklogHistory({ quiet: true });
+  });
+  renderSummaryDetail(data);
+}
+
+function showSummaryDetail(kind, row) {
+  state.summary.detail = { kind, id: row.id, name: row.name };
+  renderSummary();
+  $('summaryDetail').scrollIntoView({ block: 'nearest', behavior: reduceMotionEnabled() ? 'instant' : 'smooth' });
+}
+
+function renderSummaryDetail(data) {
+  const detail = state.summary.detail;
+  const items = detail ? data.items.filter(item => detail.kind === 'project' ? (item.project || item.key.split('-')[0]) === detail.id : QuickJiraSummary.typeOf(item).id === detail.id).sort((a, b) => b.date.localeCompare(a.date) || b.start.localeCompare(a.start)) : [];
+  $('summaryDetail').classList.toggle('hidden', !detail);
+  if (!detail) return;
+  $('summaryDetailTitle').textContent = `${detail.kind === 'project' ? 'Dự án' : 'Sub-task Type'} · ${detail.name}`;
+  $('summaryDetailMeta').textContent = `${items.length} worklog · ${summaryDuration(items.reduce((sum, item) => sum + Number(item.timeSpentSeconds ?? item.minutes * 60), 0))}${state.summary.project ? ` · ${state.summary.project}` : ''}`;
+  $('summaryDetailList').innerHTML = items.length ? items.map((item, index) => `<button type="button" class="summary-worklog" data-summary-log="${index}"><span class="summary-log-date">${escapeHtml(summaryDateLabel(item.date))}<small>${escapeHtml(item.start)}–${escapeHtml(item.end)}</small></span><span class="summary-log-copy"><strong>${escapeHtml(item.key)}</strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="summary-log-hours"><strong>${escapeHtml(summaryDuration(Number(item.timeSpentSeconds ?? item.minutes * 60)))}</strong>${QuickJiraSummary.classification(item) === 'overtime' ? '<small class="summary-ot-badge">OT</small>' : QuickJiraSummary.classification(item) === 'unknown' ? '<small>Chưa rõ OT</small>' : ''}</span><span aria-hidden="true">›</span></button>`).join('') : '<p class="summary-empty">Không có worklog phù hợp bộ lọc.</p>';
+  $('summaryDetailList').querySelectorAll('[data-summary-log]').forEach(button => button.addEventListener('click', () => openCorrection(items[Number(button.dataset.summaryLog)])));
+}
+
+function changeSummaryPeriod(mode, delta) {
+  if (mode) state.summary.mode = mode;
+  if (delta !== undefined) state.summary.date = delta === 0 ? vietnamToday() : state.summary.mode === 'week' ? QuickJiraUi.shiftDate(state.summary.date, delta * 7) : QuickJiraUi.shiftMonth(state.summary.date, delta);
+  state.summary.detail = null;
+  void loadSummary();
+}
+
+$('summaryRefreshBtn').addEventListener('click', () => { void loadSummary({ force: true }); });
+$('summaryWeekBtn').addEventListener('click', () => changeSummaryPeriod('week'));
+$('summaryMonthBtn').addEventListener('click', () => changeSummaryPeriod('month'));
+$('summaryPrevBtn').addEventListener('click', () => changeSummaryPeriod(null, -1));
+$('summaryNextBtn').addEventListener('click', () => changeSummaryPeriod(null, 1));
+$('summaryTodayBtn').addEventListener('click', () => changeSummaryPeriod(null, 0));
+$('summaryDate').addEventListener('change', () => {
+  if (!QuickJiraUi.validDate($('summaryDate').value)) { $('summaryDate').value = state.summary.date; return; }
+  state.summary.date = $('summaryDate').value;
+  state.summary.detail = null;
+  void loadSummary();
+});
+$('summaryProject').addEventListener('change', () => { state.summary.project = $('summaryProject').value; state.summary.detail = null; renderSummary(); });
+$('summaryCloseDetailBtn').addEventListener('click', () => { state.summary.detail = null; renderSummary(); });
 
 function resetProjectPalette() {
   state.previousProjectPalette = { ...state.previousProjectPalette, ...state.projectPalette };
@@ -1391,13 +1541,13 @@ function vietnamToday() {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-async function fetchHistoryRange(range, key = '', force = false) {
+async function fetchHistoryRange(range, key = '', force = false, summaryScope = false) {
   const user = state.user;
   const revision = state.historyRevision;
-  const cacheKey = `${range.start}|${range.end}|${key}`;
+  const cacheKey = `${range.start}|${range.end}|${key}|${summaryScope ? 'summary' : 'history'}`;
   const cached = state.historyCache.get(cacheKey);
   if (!force && cached && Date.now() - cached.at < 20000) return cached.data;
-  const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(range.start)}${range.end !== range.start ? `&endDate=${encodeURIComponent(range.end)}` : ''}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? `&force=1&revision=${revision}` : ''}`, { method: 'GET', cache: 'no-store' });
+  const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(range.start)}${range.end !== range.start ? `&endDate=${encodeURIComponent(range.end)}` : ''}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? `&force=1&revision=${revision}` : ''}${summaryScope ? '&scope=summary' : ''}`, { method: 'GET', cache: 'no-store' });
   if (state.user === user && state.historyRevision === revision) state.historyCache.set(cacheKey, { at: Date.now(), data });
   return data;
 }
@@ -1487,14 +1637,14 @@ function renderWeeklyCalendar(date) {
   const items = state.historyItems.filter(item => days.includes(item.date) && Number(item.minutes) > 0);
   const summary = QuickJiraUi.workSummary(state.historyItems, date);
   const format = QuickJiraCalendar.displayDuration;
-  $('calendarWeekSummary').innerHTML = `<strong>${format(summary.weekly)} <small>/ 40h</small></strong><span>${state.historyNotice ? 'Tạm tính · dữ liệu chưa đầy đủ' : summary.weekRemaining ? `Còn ${format(summary.weekRemaining)}` : 'Đã đủ mục tiêu tuần'}${summary.weekend ? ` · T7/CN ${format(summary.weekend)}` : ''}</span>`;
+  $('calendarWeekSummary').innerHTML = `<strong>${format(summary.weekly)} <small>/ 40h</small></strong><span>${state.historyNotice ? 'Tạm tính · dữ liệu chưa đầy đủ' : summary.weekRemaining ? `Còn ${format(summary.weekRemaining)}` : 'Đã đủ giờ thường tuần'}${summary.weekend ? ` · T7/CN ${format(summary.weekend)}` : ''}</span>`;
   let from = 8 * 60, to = 18 * 60;
   for (const item of items) { from = Math.min(from, Math.floor(QuickJiraUi.minuteOfDay(item.start) / 60) * 60); to = Math.max(to, Math.min(1440, Math.ceil((QuickJiraUi.minuteOfDay(item.start) + Number(item.minutes)) / 60) * 60)); }
   const height = to - from; // CSS scale stretches in fullscreen; all events keep the same minute ratio.
   const timeText = minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
   const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:calc(${index * 60} * var(--week-minute-px, 1px))">${timeText(from + index * 60)}</span>`).join('');
   const headers = days.map((day, index) => {
-    const total = state.historyItems.filter(item => item.date === day).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+    const total = state.historyItems.filter(item => item.date === day && item.overtime !== true && item.overtimeKnown !== false).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
     return `<button type="button" class="week-day-heading${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}${index < 5 && total >= 480 ? ' is-complete' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
   }).join('');
   const columns = days.map(day => {
@@ -1986,10 +2136,11 @@ function syncCorrectionViewport() {
 function lockCorrectionBackground() {
   if (correctionBackground) return;
   const results = $('historyResults');
-  correctionBackground = { top: results.scrollTop, left: results.scrollLeft, inert: $('historyOverlay').inert };
+  correctionBackground = { top: results.scrollTop, left: results.scrollLeft, inert: $('historyOverlay').inert, summaryInert: $('plannerOverlay').inert };
   document.documentElement.classList.add('worklog-details-open');
   document.body.classList.add('worklog-details-open');
   $('historyOverlay').inert = true;
+  $('plannerOverlay').inert = true;
 }
 
 function unlockCorrectionBackground() {
@@ -1997,6 +2148,7 @@ function unlockCorrectionBackground() {
   const saved = correctionBackground;
   correctionBackground = null;
   $('historyOverlay').inert = saved.inert;
+  $('plannerOverlay').inert = saved.summaryInert;
   document.documentElement.classList.remove('worklog-details-open');
   document.body.classList.remove('worklog-details-open');
   $('historyResults').scrollTo(saved.left, saved.top);
@@ -2045,9 +2197,9 @@ function finishCorrectionClose(job) {
   correctionCloseJob = null;
   job.resolve();
   if (job.restoreFocus) requestAnimationFrame(() => {
-    if (dialog.open || $('historyOverlay').classList.contains('hidden') || $('historyOverlay').classList.contains('qjl-closing')) return;
+    if (dialog.open) return;
     const source = job.source;
-    const target = source?.isConnected && source.getClientRects().length ? source : $('closeHistoryBtn');
+    const target = source?.isConnected && source.getClientRects().length ? source : !$('plannerOverlay').classList.contains('hidden') ? $('closePlannerBtn') : $('closeHistoryBtn');
     target?.focus({ preventScroll: true });
   });
 }
@@ -2210,7 +2362,7 @@ async function saveCorrection() {
     invalidateDayAuditCache();
     void refreshDashboard({ force: true });
     await closeCorrection();
-    await loadWorklogHistory({ quiet: true, force: true });
+    if (!$('historyOverlay').classList.contains('hidden')) await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
     if (error.details?.resultUnknown) {
       invalidateHistoryCache();
@@ -2235,44 +2387,15 @@ async function deleteHistoryItem(item) {
     invalidateDayAuditCache();
     void refreshDashboard({ force: true });
     if ($('correctionWorklogId').value === item.id) await closeCorrection();
-    await loadWorklogHistory({ quiet: true, force: true });
+    if (!$('historyOverlay').classList.contains('hidden')) await loadWorklogHistory({ quiet: true, force: true });
   } catch (error) {
     showCorrectionFeedback(error.message);
   }
 }
 
 async function deleteCurrentCorrection() {
-  const item = state.historyItems.find(x => x.id === $('correctionWorklogId').value && x.key === $('correctionKey').value);
+  const item = [...state.historyItems, ...state.summary.items].find(x => x.id === $('correctionWorklogId').value && x.key === $('correctionKey').value);
   await deleteHistoryItem(item);
-}
-
-async function runDayAudit() {
-  const date = $('auditDate').value || todayLocal();
-  const key = $('auditKey').value.trim().toUpperCase();
-  const btn = $('runAuditBtn');
-  const out = $('auditResult');
-  btn.disabled = true;
-  btn.textContent = 'ĐANG QUÉT JIRA...';
-  out.classList.remove('hidden');
-  out.innerHTML = 'Đang quét worklog trong ngày từ nhiều nguồn Jira...';
-  try {
-    const data = await fetchDayAudit(date, key, { force: true });
-    const sourceBits = [];
-    if (data.sources?.authorDay?.ok) sourceBits.push(`JQL user: ${data.sources.authorDay.issues}`);
-    if (data.sources?.anyDay?.ok) sourceBits.push(`JQL ngày: ${data.sources.anyDay.issues}`);
-    if (data.sources?.recentIssues?.ok) sourceBits.push(`Recent: ${data.sources.recentIssues.issues}`);
-    if (data.sources?.worklogDelta?.supported) sourceBits.push(`Delta: ${data.sources.worklogDelta.worklogs}`);
-    out.innerHTML = `<div class="audit-summary"><strong>${escapeHtml(date)}</strong><span>Quét ${data.checkedIssues} issue · ${data.checkedWorklogs} worklog</span></div>
-      <div class="planner-kpis"><div><small>Đã logwork</small><strong>${minutesLabel(data.occupiedMinutes || 0)}</strong></div><div><small>Còn trống</small><strong>${minutesLabel(data.freeMinutes || 0)}</strong></div></div>
-      <div class="planner-group"><strong>Giờ đã log</strong>${data.occupied?.length ? data.occupied.map(s => `<div class="segment busy"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('') : '<div class="template-empty">Chưa thấy worklog của bạn trong ngày này.</div>'}</div>
-      <div class="planner-group"><strong>Giờ còn trống</strong>${data.available?.length ? data.available.map(s => `<div class="segment free"><span>${escapeHtml(s.start)} → ${escapeHtml(s.end)}</span><span>${minutesLabel(s.minutes)}</span></div>`).join('') : '<div class="template-empty">Không còn thời gian trống trong 2 khung giờ cho phép.</div>'}</div>
-      <div class="planner-source">Nguồn kiểm tra: ${escapeHtml(sourceBits.join(' · ') || 'Jira')}</div>`;
-  } catch (error) {
-    out.innerHTML = `<div class="error-text audit-error">${escapeHtml(error.message)}</div>`;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'KIỂM TRA & LẬP KẾ HOẠCH';
-  }
 }
 
 
@@ -2952,7 +3075,7 @@ $('installPwaBtn')?.addEventListener('click', installPwa);
     if (!event.target.closest('.settings-sheet')) event.preventDefault();
   }, { passive: false });
 });
-$('runAuditBtn').addEventListener('click', runDayAudit);
+
 $('refreshWorklogHistoryBtn').addEventListener('click', () => loadWorklogHistory({ force: true }));
 $('historyListViewBtn').addEventListener('click', () => setHistoryView('list'));
 $('historyCalendarViewBtn').addEventListener('click', () => setHistoryView('calendar'));

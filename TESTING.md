@@ -1,42 +1,56 @@
-# Kiểm tra V1.12.1
+# Kiểm thử V1.13.0
 
-## Phạm vi
+## Môi trường và kết quả
 
-Kiểm thử với Node.js 24 và Jira/WorklogPRO giả lập dựa trên request/response đã cung cấp. Không sử dụng tài khoản hoặc ghi dữ liệu Jira thật. Không khẳng định HTTP 403 đã hết trên deployment thực tế chỉ từ kiểm thử giả lập.
+- Node.js 24.19.0; Chromium headless, Playwright. Jira/WorklogPRO được giả lập qua API và form fixture; không dùng tài khoản/ghi dữ liệu Jira thật.
+- `npm test`: PASS toàn bộ logic/API, gồm bộ mới `tests/summary-tests.js` và hồi quy native form V1.12.1.
+- `npm run test:ui`: PASS toàn bộ bộ giao diện, gồm lịch, correction, duration, workflow, mobile calendar, fullscreen, motion/scroll lock, màu dự án, parity, input bounds, lưu đăng nhập, OT native, tạo OT và màn hình Tổng hợp.
+- Sau rà ảnh, sửa nền control light/dark, kích thước mũi tên select và line-height để không cắt chữ. Chạy lại `tests/browser/summary.cjs`: PASS.
+- Chưa xác minh trên Jira/Vercel thật hoặc Safari/iPhone vật lý.
 
-## Hồi quy riêng lỗi GET 403
+## Phạm vi kiểm thử mới
 
-- Mock từ chối `GET WPCreateWorklogOnIssueWithWorkLogAction.jspa` bằng 403 giống đường sai ở V1.12.0.
-- Yêu cầu đúng phải là GET issue page → GET !update với token vừa đọc → POST action lưu với token của form.
-- Kiểm tra giữ JSESSIONID, cookie routing/XSRF, header AJAX, Origin/Referer; POST không retry.
-- Các ca không có token, login wall HTTP 200, anonymous HTTP 403, XSRF GET bị chặn và redirect ra origin khác dừng trước write, không lộ token/cookie.
-- Regression integration sửa OT và tạo OT qua handler thật dùng đúng ba bước mới.
+### Logic và API
 
-## Kiểm thử tự động
+- Cộng giây của worklog trong kỳ; khử trùng; lọc author và ngày Việt Nam; không dùng tổng timespent của task.
+- Tách regular/OT/unknown theo checkbox đã xác nhận; marker mô tả không quyết định OT; giá trị chưa biết không biến thành false.
+- Phân bổ theo project và Issue Type ID của sub-task; task thường/thiếu metadata có nhóm riêng; tổng các nhóm bằng tổng giờ.
+- Bộ lọc dự án; mục tiêu kỳ cá nhân T2–T6; ngày tương lai không bị nhắc thiếu, cuối tuần và giờ thường dư không bù ngày khác.
+- Biên tuần/tháng/năm, tháng nhuận 29 ngày, chia khoảng không bỏ sót ngày.
+- Jira giảm page size từ 1000 xuống 1: vẫn đọc đủ worklog; metadata nhiều trang cũng được đọc tiếp.
+- Summary trên 500 task; giới hạn discovery được báo rõ; lỗi WorklogPRO 403 để trạng thái chưa xác nhận.
 
-Chạy `npm test` (không cần dependency runtime): scheduler/guard, đăng nhập/CAPTCHA, history, cache/idempotency, streaming progress, duration, calendar, chỉnh sửa và tạo OT.
+### Giao diện Tổng hợp
 
-- `correction-overtime-tests.js`: form POST + GET latest; bật/tắt OT, giữ thuộc tính khác và author, dọn marker cũ, đổi ngày/giờ/thời lượng/mô tả, ordinary edit không phụ thuộc plugin; fallback native sau core 403; người khác/overlap/nghỉ trưa bị chặn; field thiếu/trùng/sai kiểu/disabled; HTTP 200 không lưu, đọc lại 403 và mất phản hồi sau commit không báo thành công, không retry POST.
-- `creation-ot-tests.js`: đủ 8h thường vẫn tạo thêm 2h OT; nhiều dòng OT không trùng; batch trộn thường/OT; giờ xếp sớm nhất; cuối tuần; còn cap 8h thường; khung tối không đủ bị chặn trước ghi; request thành công lặp cùng ID không tạo trùng; lỗi OT hoàn tác worklog mới; không xóa worklog cũ; hoàn tác bị từ chối báo resultUnknown và ID còn lại.
-- `native-form-tests.js`: CSRF/cookie động, không gửi tới origin/action khác, đúng issue/worklog, đầy đủ trường, Unicode, giữ custom attribute/select, checkbox tắt phải bỏ field, format ngày giờ và không làm tròn worklog có giây lẻ.
+`tests/browser/summary.cjs` chạy ở 1440×1000, 1024×700, 390×844, 320×683, 844×390:
 
-`npm run test:ui` dùng Playwright/Chromium (cài công cụ kiểm thử riêng nếu cần: `npm install --no-save playwright`, `npx playwright install chromium`). Có thể đặt `QJL_CHROMIUM_PATH` để dùng Chromium đã cài. Bộ UI gồm PC/mobile, lịch tuần/fullscreen, sheet/animation/scroll lock, bounded picker, màu, lưu đăng nhập, sửa OT qua HTTP handler và native form fixture.
+- Hai theme; kiểm tra control nằm trong khung, không tràn ngang; KPI, project và Sub-task Type.
+- Drill-down theo loại → mở editor; focus nút đóng thay vì textbox; background inert khi editor mở.
+- Lưu chỉnh sửa rồi tổng được đọc lại; xóa rồi nhóm biến mất/tổng giảm; cache mất hiệu lực sau mutation.
+- Lọc dự án không đổi mục tiêu cá nhân; OT chưa biết, lỗi API, dữ liệu một phần và retry.
+- Chuyển tuần/tháng, đủ ngày 31, lùi tháng, chuyển kỳ nhanh không để phản hồi cũ ghi đè.
 
-## Kết quả trong phiên phát triển
+## Cách chạy
 
-- `npm test`: PASS, toàn bộ bộ kiểm thử API/logic và các ca native form mới.
-- V1.12.1 chạy lại các bộ UI liên quan: native-overtime.cjs và creation-overtime.cjs trên Chromium headless. Bộ UI giao diện tổng quát đã qua ở V1.12.0, không chạy lại toàn bộ cho bản vá adapter này.
-- `creation-overtime.cjs`: kiểm tra UI tạo OT khi ngày đủ 8h ở 315×683, 390×844, 844×390, 1440×900; payload đơn/Bulk giữ đúng OT và giờ xếp, input nằm trong khung.
-- Không bao gồm Jira thật, Vercel thật hoặc Safari/iPhone vật lý.
+```sh
+npm test
+```
 
-## Đối soát sau deploy
+Bộ UI cần công cụ phát triển Playwright/Chromium, không phải dependency deploy:
 
-1. Cập nhật app/PWA để đầu trang/footer là V1.12.1; đăng nhập lại nếu phiên Jira hết hạn.
-2. Worklog có sẵn: bật OT → lưu → mở trên Jira xác nhận Over Time?; tắt rồi xác nhận lại. Kiểm tra mô tả, giờ và thuộc tính khác giữ nguyên.
-3. Sửa đồng thời ngày/giờ/thời lượng/mô tả và OT; đối chiếu từng trường. Sửa thông tin thường khi giữ nguyên OT. Không sửa worklog của người khác.
-4. Ngày đủ 8h: log task mới 2h với Overtime; kiểm tra 17:30–19:30 nếu khoảng đó trống, tổng thực tế 10h; 8h thường vẫn không tăng.
-5. Bulk gồm nhiều dòng OT và batch trộn thường/OT ở ngày còn chỗ: kiểm tra các worklog không trùng và đúng checkbox.
-6. Thử lỗi/kỳ bị khóa bằng môi trường kiểm thử: không có thông báo thành công giả; nếu chưa xác nhận/hoàn tác chưa hết, tải lại Jira trước khi log lại.
-7. Trên iPhone thật: checkbox không bật bàn phím; chỉ bấm ô giờ mới mở picker; input không tràn, sheet kéo xuống đóng, fullscreen và orientation theo khả năng Safari/iOS.
+```sh
+npm install --no-save playwright
+npx playwright install chromium
+npm run test:ui
+```
 
-Luồng mở form dùng !update theo tài nguyên plugin chính thức; GET action lưu bị chặn đã có kiểm thử hồi quy. Khả năng lấy token/phiên trên Jira đang cài cần đối soát sau deploy. Token không được hard-code. Thay đổi phiên bản plugin có thể cần adapter mới.
+Có thể dùng Chromium đã có qua `QJL_CHROMIUM_PATH=/absolute/path/to/chromium`. Đặt `QJL_QA_OUTPUT=/absolute/path` nếu cần ảnh kiểm thử nội bộ. Source ZIP không chứa browser binary/node_modules hoặc dữ liệu tài khoản.
+
+## Đối chiếu sau deploy
+
+1. Badge/footer/PWA là V1.13.0; nút Kiểm tra được thay bằng Tổng hợp.
+2. Chọn tuần có cả giờ thường và OT, so sánh tổng và phân bổ với Jira. Chọn tháng 31 ngày.
+3. Kiểm tra tên loại: biểu đồ dùng Issue Type của sub-task. Nếu Jira chỉ có một Issue Type Sub-task thì chỉ có một nhóm; không tự tách từ mô tả.
+4. Bấm nhóm, mở worklog để sửa thời lượng/ngày hoặc OT, kiểm tra tổng được cập nhật. Kiểm tra xóa trên một worklog thử nghiệm được phép xóa.
+5. Với quyền/plugin thiếu, phải thấy tạm tính/chưa xác nhận, không được xuất hiện thành 0h OT đã xác nhận.
+6. Xác nhận các guard, log đơn/Bulk và checkbox Over Time? native vẫn hoạt động như V1.12.1.
