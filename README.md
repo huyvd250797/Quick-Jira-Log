@@ -1,8 +1,18 @@
-# Quick Jira Log V1.14.2 — Highlight vùng thả & Swap lịch
+# Quick Jira Log V1.14.3 — Animation swap theo đường cong
 
 Ứng dụng PWA dùng Jira/WorklogPRO hiện có. Source sẵn sàng push GitHub và deploy Vercel; không thêm database hoặc dependency runtime.
 
-## V1.14.2 — Highlight và đổi chỗ block
+## V1.14.3 — Hiệu ứng bay khi swap
+
+- Khi thả swap hợp lệ, **block bị thay thế bay từ ô cũ về ô mới** theo đường cong mềm, thay vì chuyển vuông góc hoặc nhảy tức thời.
+- Độ cong/điểm điều khiển thay đổi nhẹ mỗi lần; điểm xuất phát và điểm đến luôn là đúng vị trí lịch. Ưu tiên hướng có đủ khoảng trống để block không bay khỏi chiều ngang màn hình.
+- Thời lượng khoảng **480–660ms** theo quãng đường, chậm dần khi hạ xuống. Block được kéo có hiệu ứng đặt xuống ngắn để nhận biết hai lịch đã đổi chỗ.
+- Giữ màu dự án, màu Overtime và nhãn OT trong lúc bay. Không đổi thời lượng, dữ liệu hoặc API ghi Jira.
+- Dùng bản sao hiển thị và chuyển động transform trên lớp riêng; không chạy thay đổi layout lưới trong từng frame.
+- Kéo tiếp, mở xác nhận, đóng lịch, cuộn, đổi kích thước/fullscreen hoặc rời app sẽ dọn hiệu ứng ngay và hiện block đúng vị trí; tránh bóng clone hoặc block bị ẩn.
+- Thiết bị bật **Reduce Motion** bỏ hiệu ứng bay. Bản nháp và bước **Lưu lịch** vẫn hoạt động như cũ; animation không tự ghi Jira.
+
+## Highlight và đổi chỗ block (giữ từ V1.14.2)
 
 - Khi kéo block trên lịch tuần, **vùng đích được tô nền và viền** đúng thời điểm/thời lượng; có nhãn giờ bắt đầu/kết thúc. Vị trí không hợp lệ chuyển viền đỏ.
 - Kéo lên một worklog khác: app snap đến **giờ bắt đầu của block đó**, highlight cả hai vị trí kèm ký hiệu ⇄ và thông báo đổi chỗ.
@@ -52,7 +62,7 @@
 4. Nhập thời lượng/mô tả/Overtime nếu cần, lưu và xác nhận theo luồng logwork hiện có. Ví dụ 15:00 + 1h → **15:00–16:00**.
 5. Lưu đúng giờ đã chọn; không tự đổi sang giờ trống khác hoặc chia qua giờ nghỉ. App đọc lại Jira rồi quay về lịch.
 
-Không cần database, biến môi trường hoặc token mới. Giữ cấu hình Vercel hiện có, dùng nội dung thư mục **Quick-Jira-Log-V1.14.2** làm root repository và cập nhật PWA sau deploy.
+Không cần database, biến môi trường hoặc token mới. Giữ cấu hình Vercel hiện có, dùng nội dung thư mục **Quick-Jira-Log-V1.14.3** làm root repository và cập nhật PWA sau deploy.
 
 ## Bản vá V1.13.2
 
@@ -99,10 +109,10 @@ Tham khảo hợp đồng API: [Jira REST field](https://developer.atlassian.com
 
 ## Cập nhật từ V1.12.1
 
-1. Giải nén, dùng **nội dung bên trong thư mục `Quick-Jira-Log-V1.14.2`** làm root repository; không đẩy cả ZIP hoặc lồng thêm thư mục.
+1. Giải nén, dùng **nội dung bên trong thư mục `Quick-Jira-Log-V1.14.3`** làm root repository; không đẩy cả ZIP hoặc lồng thêm thư mục.
 2. Push GitHub rồi deploy project Vercel hiện có. Framework **Other**, không Build Command; Node.js **24.x**, giữ `vercel.json`.
 3. Giữ `APP_SESSION_SECRET` và các biến môi trường đang dùng. Không cần token hay dịch vụ mới. Chỉ cấu hình `JIRA_SUBTASK_TYPE_FIELD_ID` nếu tự nhận diện trường không xác định được đúng một kết quả.
-4. Sau deploy, chọn **Cập nhật** trong PWA hoặc tải lại trang để badge/footer hiện **V1.14.2**.
+4. Sau deploy, chọn **Cập nhật** trong PWA hoặc tải lại trang để badge/footer hiện **V1.14.3**.
 5. Mở **Tổng hợp**, đối chiếu một tuần và một tháng với Jira, sau đó thử sửa một worklog và xác nhận tổng được tải lại.
 
 ## Kiểm thử và giới hạn xác minh
@@ -140,7 +150,7 @@ Không còn GET vào action lưu; không tự gửi POST mở form, không lặp
 
 ### Cập nhật
 
-Giữ cấu hình Vercel và `APP_SESSION_SECRET` hiện có. Deploy source, cập nhật PWA/tải lại để đầu trang và footer hiện **V1.14.2**. Không cần database hay token Jira mới. Đăng nhập lại nếu phiên Jira đã hết hạn.
+Giữ cấu hình Vercel và `APP_SESSION_SECRET` hiện có. Deploy source, cập nhật PWA/tải lại để đầu trang và footer hiện **V1.14.3**. Không cần database hay token Jira mới. Đăng nhập lại nếu phiên Jira đã hết hạn.
 
 ### Cấu hình và giới hạn
 
@@ -197,9 +207,9 @@ Màu vàng chỉ phản ánh OT đã đọc được từ WorklogPRO. Không suy
 
 ## Triển khai nhanh
 
-Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.14.2`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
+Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.14.3`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
 
-App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp này không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.14.2**.
+App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp này không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.14.3**.
 
 Đã kiểm tra bằng dữ liệu Jira giả lập; **chưa đăng nhập/ghi giờ lên Jira thật và chưa kiểm tra trên iPhone Safari vật lý**. Xem `TESTING.md` để biết phạm vi, cách chạy và giới hạn.
 
@@ -287,7 +297,7 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.14.2` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.14.3` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.

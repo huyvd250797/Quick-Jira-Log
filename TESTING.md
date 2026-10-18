@@ -1,3 +1,13 @@
+# Kiểm thử V1.14.3 — Swap motion
+
+- `npm test`: PASS toàn bộ logic/API, gồm geometry motion mới; không thay backend.
+- `tests/browser/swap-motion.cjs`: PASS ở 1440×1100, 390×1000 và 320×900. Kiểm tra frame đầu/giữa/cuối, đường cong không thẳng đứng, điểm hạ khớp DOM thật trong sai số 2px.
+- Kiểm tra clone giữ màu OT và góc xoay nhãn OT gốc, đường bay khác nhau giữa các swap, hạ xong dọn layer và opacity; không có request ghi Jira khi chạy animation.
+- Kéo liên tiếp, Escape, resize, render lại, đóng lịch, dark theme/fullscreen và Reduce Motion: không để lại clone hoặc block ẩn.
+- Hồi quy: Calendar Swap PC/touch, Calendar Interactions, responsive layout và motion/scroll lock; ghi nhận kết quả chạy trong bản phát hành này.
+- Không chạy lại toàn bộ chuỗi `npm run test:ui` ở bản này: thay đổi chỉ phía hiển thị, đã chạy các bộ UI bị ảnh hưởng nêu trên. Bộ đầy đủ vẫn có trong source.
+- Node syntax checks PASS. Chưa đo FPS trên iPhone/Safari vật lý hoặc kiểm chứng Jira thật; chuyển động dùng Web Animations/transform trên clone để giảm công việc layout mỗi frame.
+
 # Kiểm thử V1.14.2 — Highlight & Swap
 
 ## Logic và API mới

@@ -1,5 +1,12 @@
 # Quick Jira Log — Roadmap
 
+## V1.14.3 — Animation swap: đã xây dựng
+
+- Block bị thay thế bay theo đường cong ngẫu nhiên nhẹ đến vị trí chính xác.
+- Giữ lưới, màu dự án/OT và luồng bản nháp/xác nhận.
+- Dọn hiệu ứng khi thao tác tiếp và hỗ trợ Reduce Motion.
+
+
 ## V1.14.2 — Highlight & Swap lịch: đã xây dựng
 
 - Tô vùng đích khi kéo, highlight cả hai vị trí khi đổi chỗ.

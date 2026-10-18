@@ -11,6 +11,69 @@ let calendarFocusSource = null;
 let calendarRenderedItems = [];
 let calendarCloseAfterSave = false;
 let calendarSaveControls = [];
+let calendarSwapMotion = null;
+
+function calendarBlockFor(item) {
+  const id=QuickJiraDrafts.key(item);
+  return [...$('weeklyCalendar').querySelectorAll('[data-week-event]')].find(el=>QuickJiraDrafts.key(calendarRenderedItems[Number(el.dataset.weekEvent)])===id);
+}
+function cancelCalendarSwapMotion() {
+  const job=calendarSwapMotion;if(!job)return;
+  calendarSwapMotion=null;clearTimeout(job.timer);
+  job.destination?.classList.remove('is-swap-landing');
+  job.animations.forEach(animation=>{try{animation.cancel();}catch{}});job.layer.remove();
+}
+function prepareCalendarSwapMotion(drop) {
+  cancelCalendarSwapMotion();
+  if(!drop.swap||reduceMotionEnabled()||typeof Element.prototype.animate!=='function')return null;
+  const partner=calendarBlockFor(drop.swap);
+  if(!partner)return null;
+  const from=partner.getBoundingClientRect();if(!from.width||!from.height)return null;
+  const clone=partner.cloneNode(true);
+  clone.removeAttribute('id');clone.removeAttribute('data-week-event');clone.removeAttribute('aria-label');clone.removeAttribute('title');
+  clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+  clone.classList.remove('is-drag-source','is-swap-landing');clone.classList.add('calendar-swap-flight');
+  clone.disabled=true;clone.tabIndex=-1;clone.setAttribute('aria-hidden','true');
+  // Freeze appearance before detaching from #historyOverlay: scoped project/OT
+  // colors, typography and ribbon rules must also apply on the flying clone.
+  const sources=[partner,...partner.querySelectorAll('*')],copies=[clone,...clone.querySelectorAll('*')];
+  const appearance=['font','color','backgroundColor','borderTopColor','borderRightColor','borderBottomColor','borderLeftColor','borderRadius','padding','gap','letterSpacing','lineHeight'];
+  sources.forEach((source,index)=>{
+    const computed=getComputedStyle(source),copy=copies[index];
+    appearance.forEach(property=>{copy.style[property]=computed[property];});
+    if(source.classList.contains('ot-ribbon'))for(const property of ['display','position','top','right','bottom','left','width','height','transform','transformOrigin','textAlign','zIndex'])copy.style[property]=computed[property];
+  });
+  return {item:drop.swap,from,clone,primary:drop.changes[0]};
+}
+function playCalendarSwapMotion(prepared) {
+  if(!prepared)return;
+  const destination=calendarBlockFor(prepared.item),primary=calendarBlockFor(prepared.primary);
+  if(!destination||reduceMotionEnabled())return;
+  const to=destination.getBoundingClientRect(),area=$('historyResults').getBoundingClientRect();
+  if(!to.width||!to.height||!area.width||!area.height)return;
+  const header=$('weeklyCalendar').querySelector('.week-grid-heading')?.getBoundingClientRect();
+  const top=Math.min(area.bottom,Math.max(area.top,header?.bottom||area.top));
+  const bounds={left:area.left,top,right:area.right,bottom:area.bottom};
+  const layer=document.createElement('div');layer.className='calendar-swap-layer';layer.setAttribute('aria-hidden','true');
+  layer.style.cssText=`left:${area.left}px;top:${top}px;width:${area.width}px;height:${Math.max(0,area.bottom-top)}px`;
+  const clone=prepared.clone;
+  Object.assign(clone.style,{left:`${prepared.from.left-area.left}px`,top:`${prepared.from.top-top}px`,width:`${prepared.from.width}px`,height:`${prepared.from.height}px`});
+  layer.append(clone);document.body.append(layer);
+  const job=calendarSwapMotion={layer,destination,animations:[],scrolls:[$('historyResults'),$('weeklyCalendar').querySelector('.weekly-scroll')].filter(Boolean).map(el=>({el,left:el.scrollLeft,top:el.scrollTop}))};
+  try {
+    const motion=QuickJiraSwapMotion.flight(prepared.from,to,bounds);
+    destination.classList.add('is-swap-landing');
+    job.animations.push(clone.animate(motion.frames,{duration:motion.duration,easing:'cubic-bezier(.22,.7,.18,1)',fill:'both'}));
+    if(primary)job.animations.push(primary.animate([{opacity:.55,transform:'scale(.98)'},{opacity:1,transform:'scale(1)'}],{duration:200,easing:'ease-out'}));
+    const finish=()=>{if(calendarSwapMotion===job)cancelCalendarSwapMotion();};
+    Promise.allSettled(job.animations.map(animation=>animation.finished)).then(finish);
+    job.timer=setTimeout(finish,motion.duration+160);
+  } catch {cancelCalendarSwapMotion();}
+}
+function cancelSwapOnScroll() {
+  if(calendarSwapMotion?.scrolls.some(({el,left,top})=>!el.isConnected||el.scrollLeft!==left||el.scrollTop!==top))cancelCalendarSwapMotion();
+}
+
 
 function calendarPreviewItems() { return QuickJiraDrafts.project(state.historyItems, state.calendarDrafts); }
 function calendarIsDraft(item) { return state.calendarDrafts.has(QuickJiraDrafts.key(item)); }
@@ -66,6 +129,7 @@ function stageCalendarMove(item,target,proposal=null) {
   if(drop.problem)return calendarFeedback(drop.problem,true);
   if(drop.changes.some(x=>state.calendarDrafts.get(QuickJiraDrafts.key(x))?.status==='unknown'))
     return calendarFeedback('Chưa rõ kết quả lần lưu trước. Bấm Lưu lịch để đối chiếu Jira trước khi kéo tiếp.',true);
+  const swapMotion=prepareCalendarSwapMotion(drop);
   // Commit both previews together; each draft retains its own original snapshot.
   for(const moved of drop.changes) {
     const id=QuickJiraDrafts.key(moved),previous=state.calendarDrafts.get(id);
@@ -74,6 +138,7 @@ function stageCalendarMove(item,target,proposal=null) {
     else state.calendarDrafts.set(id,{original,target:{date:moved.date,start:moved.start},status:previous?.status||'pending'});
   }
   renderCalendarDrafts();
+  playCalendarSwapMotion(swapMotion);
   calendarFeedback(`${drop.swap?'Đã đổi chỗ ở bản nháp · ':''}${calendarDraftMessage()||'Đã đưa lịch về vị trí gốc.'}`);
 }
 
@@ -200,7 +265,7 @@ function cancelCalendarGesture() {
   }
   document.body.classList.remove('calendar-dragging');
 }
-function resetCalendarInteraction() { cancelCalendarGesture(); setCalendarEditMode(false); }
+function resetCalendarInteraction() { cancelCalendarSwapMotion(); cancelCalendarGesture(); setCalendarEditMode(false); }
 function calendarBlockClick(event, item) {
   if (calendarEditMode || state.calendarMovePending || performance.now() < calendarIgnoreClickUntil) { event.preventDefault(); return; }
   if (calendarIsDraft(item)) { openCalendarSave(); return; }
@@ -349,6 +414,13 @@ function closeCalendarLog({ force = false } = {}) {
 
 function setupCalendarInteractions() {
   const grid = $('weeklyCalendar');
+  document.addEventListener('pointerdown',()=>{if(calendarSwapMotion){cancelCalendarSwapMotion();calendarIgnoreClickUntil=Math.max(calendarIgnoreClickUntil,performance.now()+220);}},true);
+  $('historyResults').addEventListener('scroll',cancelSwapOnScroll,{passive:true,capture:true});
+  window.addEventListener('resize',cancelCalendarSwapMotion);
+  window.visualViewport?.addEventListener('resize',cancelCalendarSwapMotion);
+  document.addEventListener('fullscreenchange',cancelCalendarSwapMotion);
+  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',cancelCalendarSwapMotion);
+  window.addEventListener('blur',cancelCalendarSwapMotion);
   grid.addEventListener('pointerdown', event => {
     const block = event.target.closest('[data-week-event]');
     if (!block || state.calendarMovePending || state.historyLoading || event.button > 0) return;
@@ -404,6 +476,7 @@ function setupCalendarInteractions() {
   document.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
     if ($('calendarSaveDialog').open) {event.preventDefault();event.stopImmediatePropagation();closeCalendarSave();return;}
+    if (calendarSwapMotion) {event.preventDefault();event.stopImmediatePropagation();cancelCalendarSwapMotion();return;}
     if (calendarGesture || calendarEditMode) { event.preventDefault(); event.stopImmediatePropagation(); resetCalendarInteraction(); }
     else if ($('calendarLogDialog').open && !state.confirmOpen && !$('logProgressDialog').open) { event.preventDefault(); event.stopImmediatePropagation(); closeCalendarLog(); }
   }, true);

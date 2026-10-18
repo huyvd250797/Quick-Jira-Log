@@ -116,3 +116,9 @@ body:has(#historyOverlay.is-calendar-fullscreen) .toast { z-index: 250; }
 .calendar-drop-highlight.is-invalid { border-color:#db5673; background:#db56732b; }
 .calendar-drop-highlight.is-invalid > span { background:#b93555; }
 #weeklyCalendar .week-grid-heading { z-index:10; }
+/* V1.14.3 — a composited clone follows a curved route; the grid never animates layout. */
+.calendar-swap-layer { position:fixed; z-index:2147482990; pointer-events:none; overflow:hidden; contain:strict; }
+.calendar-swap-layer *, .calendar-swap-layer .calendar-swap-flight { pointer-events:none!important; }
+.calendar-swap-layer .calendar-swap-flight { position:absolute; margin:0!important; min-height:0!important; max-height:none!important; animation:none!important; transition:none!important; transform-origin:center center; will-change:transform; opacity:1!important; box-shadow:0 8px 24px #0003; cursor:default; }
+.week-worklog-block.is-swap-landing { opacity:0!important; animation:none!important; }
+@media (prefers-reduced-motion:reduce) { .calendar-swap-layer { display:none; } }

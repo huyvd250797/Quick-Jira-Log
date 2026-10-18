@@ -1,3 +1,12 @@
+# V1.14.3 — Animation swap theo đường cong (2026-10-18)
+
+- Block bị thay thế bay về vị trí mới theo đường Bézier, thay đổi độ cong nhẹ mỗi lần; điểm đến giữ chính xác.
+- Chuyển động 480–660ms, transform/scale/rotate trên clone riêng, dừng êm; primary block có hiệu ứng đặt xuống 200ms.
+- Chụp màu/font/ribbon từ block gốc để giữ theme, màu dự án và Overtime khi bay.
+- Dọn animation/clone/opacity khi xong, thao tác tiếp, scroll/resize/fullscreen, close/Escape, blur và reduced motion.
+- Giữ highlight, bản nháp, lưu/xác nhận và API swap từ V1.14.2. Không thay backend hoặc thêm dependency.
+- Cập nhật version/PWA cache và bổ sung kiểm thử đường cong, tọa độ hạ, interruption và reduced motion.
+
 # V1.14.2 — Highlight vùng thả & Swap lịch (2026-10-18)
 
 - Highlight vùng giờ đích chính xác khi kéo, hai vị trí khi swap; trạng thái hợp lệ/cảnh báo đỏ và tooltip tránh che vùng thả.
