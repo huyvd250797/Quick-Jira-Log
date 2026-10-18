@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.15.1';
+const APP_VERSION = '1.15.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -3458,7 +3458,7 @@ $('dismissAppUpdateBtn')?.addEventListener('click', () => $('appUpdateBanner')?.
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      const registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
       if (registration.waiting) showAppUpdateBanner(registration);
       registration.addEventListener('updatefound', () => {
         const installing = registration.installing;

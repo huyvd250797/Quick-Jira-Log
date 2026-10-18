@@ -133,7 +133,7 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
    // Closing with a pending position requires a decision; discard closes safely.
    await stage('1','08:00');await page.locator('#closeHistoryBtn').click();await page.locator('#calendarDiscardBtn').click();await page.waitForTimeout(250);assert.equal(await page.locator('#historyOverlay').isVisible(),false);assert.equal(await draftCount(),0);
   }
-  assert.deepEqual(errors,[]);await context.close();console.log('V1.15.1 click-to-log, staged drag, explicit confirm/cancel/save/discard, refresh/fullscreen, mobile hold/exit, overlap, rejected save and unknown-result reconciliation passed',viewport);
+  assert.deepEqual(errors,[]);await context.close();console.log('V1.15.2 click-to-log, staged drag, explicit confirm/cancel/save/discard, refresh/fullscreen, mobile hold/exit, overlap, rejected save and unknown-result reconciliation passed',viewport);
  }
  await browser.close();await new Promise(r=>server.close(r));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});

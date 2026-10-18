@@ -1,0 +1,24 @@
+/* V1.15.2 — Approved clock / green success check identity. */
+html:has(#appIconDialog[open]), body:has(#appIconDialog[open]) { overflow: hidden; overscroll-behavior: none; }
+.app-footer .icon-help-link { display: inline-block; margin-left: 8px; padding: 4px; color: var(--muted); font: inherit; background: transparent; border: 0; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+#appIconDialog { box-sizing: border-box; width: min(460px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); margin: auto; padding: 24px; overflow: auto; overscroll-behavior: none; border: 1px solid var(--line); border-radius: 22px; background: var(--card, #fff); color: var(--text, #18263a); box-shadow: 0 24px 80px #0005; }
+html[data-theme="dark"] #appIconDialog { background: #0d1828; }
+#appIconDialog::backdrop { background: #040c18aa; backdrop-filter: blur(3px); }
+#appIconDialog header { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+#appIconDialog h2 { margin: 0; font-size: 19px; }
+#appIconDialog .icon-help-preview { display: flex; align-items: center; gap: 16px; margin: 20px 0; }
+#appIconDialog img { width: 80px; height: 80px; border-radius: 18px; flex: 0 0 auto; }
+#appIconDialog .icon-help-preview span { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); }
+#appIconDialog p, #appIconDialog li { font-size: 13px; line-height: 1.65; }
+#appIconDialog ol { padding-left: 22px; }
+#appIconDialog li { margin-bottom: 8px; }
+#appIconDialog .icon-help-note { color: var(--muted); }
+#appIconDialog .icon-help-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+#appIconDialog .icon-help-actions button { flex: 1 1 150px; }
+#appIconStatus { min-height: 20px; margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+#appIconDialog .icon-copy-fallback { box-sizing: border-box; width: 100%; min-width: 0; margin-top: 8px; }
+#appIconDialog[open] { animation: icon-help-in 180ms ease-out; }
+#appIconDialog.icon-help-closing { animation: icon-help-out 150ms ease-in both; pointer-events: none; }
+@keyframes icon-help-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes icon-help-out { to { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) { #appIconDialog[open], #appIconDialog.icon-help-closing { animation: none; } }

@@ -1,3 +1,9 @@
+## V1.15.2 — Clock & Green Check Identity: đã xây dựng
+
+- Logo đồng hồ + dấu check xanh đồng bộ PC/mobile/PWA; versioned icons, Apple aliases và cập nhật cache.
+- Hướng dẫn thêm icon mới khi iPhone vẫn giữ icon cũ; không thể ép iOS cập nhật icon native từ JavaScript.
+- Không bổ sung chức năng logwork hoặc thay đổi luồng hiện có trong bản này.
+
 # Quick Jira Log — Roadmap
 
 ## V1.15.1 — Calendar Bounds & Personnel Suggestions: đã xây dựng

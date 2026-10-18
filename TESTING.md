@@ -1,3 +1,12 @@
+# Kiểm thử V1.15.2 — Clock & Green Check Identity
+
+- `npm test`: PASS toàn bộ bộ logic/API hiện có, bao gồm WorklogPRO/OT, log đơn/Bulk, calendar edits/drafts/swap, user viewer và personnel suggestions.
+- `QJL_CHROMIUM_PATH=... npm run test:branding`: PASS UI 1440×1000, 390×844, 315×683, landscape 844×390; light/dark, ảnh decode đủ kích thước, dialog không tràn, autofocus nút đóng, copy link canonical không query/hash, clipboard-denied fallback, đóng nút/Escape và giữ localStorage.
+- Service worker thật trên localhost: từ worker/cache V1.15.1 giả lập → waiting V1.15.2 → nút Cập nhật → activation/reload, xóa cache shell cũ, giữ dữ liệu localStorage. Icon và branding helper fetch được offline sau upgrade. Đây là cập nhật web shell, không kiểm thử đổi icon native iOS.
+- `tests/browser/layout.cjs`: PASS 7 viewport (1920, 1440, 1024, 900, 844, 390, 315); toolbar/calendar/sticky/layout/loading/errors/partial giữ đúng.
+- PNG kiểm tra dimensions, nền opaque, đủ màu navy/trắng/cyan/green; legacy aliases bằng byte với phiên bản mới. Đối chiếu source handler/lib/calendar tương tác giữ nguyên; app.js chỉ đổi version và option cache khi đăng ký worker. ZIP CRC kiểm tra khi đóng gói.
+- Không có iPhone/Safari vật lý hoặc phiên Jira công ty. Không xác nhận icon đã cài trên iPhone tự cập nhật; nếu icon cũ còn, dùng hướng dẫn thêm mới và kiểm tra trước khi xóa bản cũ.
+
 # Kiểm thử V1.15.1 — Calendar Bounds & Personnel Suggestions
 
 - `npm test`: PASS toàn bộ logic/API cũ và mới. Bounds unit: 4 mép, góc chéo, negative Safari offsets, fractional values, không chặn delta trong vùng hợp lệ.

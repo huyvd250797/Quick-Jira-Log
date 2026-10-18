@@ -1,3 +1,11 @@
+# V1.15.2 — Clock & Green Check Identity
+
+- Thay toàn bộ logo/icon bằng đồng hồ + dấu check xanh lá đã chốt, SVG source và PNG sẵn dùng.
+- URL icon theo phiên bản; cập nhật cả URL cũ, root Apple aliases, manifest/shortcut, cache worker và Vercel headers.
+- Thêm hướng dẫn Icon ứng dụng với xem trước, sao chép link sạch và fallback khi clipboard không được phép; co vừa màn hình, hỗ trợ theme và giảm chuyển động.
+- Phân biệt rõ cập nhật web app với icon Home Screen do iOS quản lý. Không tự xóa dữ liệu hoặc hứa ép đổi icon đã cài.
+- Không đổi các handler/API/logic logwork cá nhân hay lịch người khác.
+
 # V1.15.1 — Calendar Bounds & Personnel Suggestions (2026-10-18)
 
 - Thay local overscroll/scroll chaining trong khung lịch bằng overscroll none; bổ sung touch/wheel edge guard và clamp negative offsets. Giữ native pan ở vùng hợp lệ, giữ drag/long-press auto-scroll.
