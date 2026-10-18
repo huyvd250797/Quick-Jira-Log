@@ -1,3 +1,27 @@
+# Kiểm thử V1.14.2 — Highlight & Swap
+
+## Logic và API mới
+
+- `npm test`: PASS toàn bộ logic/API, gồm calendar-drafts, calendar-edit và calendar-swap.
+- Drop planner: swap snap đến giờ bắt đầu block đích, hai thời lượng khác nhau, giữ chính xác giây; chặn block thứ ba, nhiều block cùng vùng thả và giờ nghỉ.
+- Server swap thật qua HTTP fixture: đổi khác issue/ngày, kiểm tra author/stale/window/final overlap, không ghi trước validation, không có trùng thời gian ngay cả ở bước trung gian.
+- API xác minh đủ vị trí cuối, giữ description/native OT/seconds; replay cùng mã hoặc trạng thái đã đúng không ghi lại.
+- Lỗi bước giữa: phục hồi gốc; mất response sau commit bước trung gian: GET xác định rồi phục hồi, không replay mù; lỗi phục hồi: RESULT_UNKNOWN và vị trí thật đọc được.
+- Không có khoảng trống trung gian trong ngày liên quan: từ chối trước ghi. Có kiểm thử vòng ba worklog và giữ giây lẻ.
+- Native WorklogPRO fallback (core 403): cả ba bước swap qua native form, giữ OT và thuộc tính tùy chỉnh, duration 3661 giây.
+- API mới chỉ nhận POST đã đăng nhập, same-origin, request ID hợp lệ và 2–12 ID duy nhất. Không tạo/xóa worklog.
+
+## Giao diện
+
+- `npm run test:ui`: PASS toàn bộ UI regression và Calendar Swap mới.
+
+- `calendar-swap.cjs`: highlight một vùng trống / hai vùng swap, màu lỗi khi block thứ ba cản; Escape dọn vùng highlight và không mở form nhầm.
+- Touch thực qua CDP ở 390×1000, 320×900, ngang 844×440 fullscreen; PC 1440×1100. Có cuộn trong khi giữ/kéo trên màn hình ngang.
+- Kéo chưa gọi API; xác nhận mới gửi batch swap, hủy giữ bản nháp, thành công toast/icon ẩn; lỗi server giữ hai draft.
+- Rà ảnh nội bộ: viền/nhãn giờ nằm đúng lưới, tooltip tránh vùng đích và không tràn viewport.
+- Hồi quy luồng tạo từ khoảng trống, kéo bình thường, lưu tạm/xác nhận, sửa/xóa, native OT, Bulk, thống kê, fullscreen, palette và remembered login.
+- Jira/WorklogPRO giả lập; chưa đăng nhập Jira thật hoặc kiểm tra iPhone/Safari vật lý. Phục hồi nhóm là best effort, không phải transaction Jira; function bị ngắt cứng có thể để lại vị trí trung gian cần kiểm tra.
+
 # Kiểm thử V1.14.1
 
 ## V1.14.1 — Lưu tạm và xác nhận lưu lịch

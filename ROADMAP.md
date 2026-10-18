@@ -1,5 +1,12 @@
 # Quick Jira Log — Roadmap
 
+## V1.14.2 — Highlight & Swap lịch: đã xây dựng
+
+- Tô vùng đích khi kéo, highlight cả hai vị trí khi đổi chỗ.
+- Swap ở bản nháp; giữ xác nhận lưu và cập nhật Jira thật.
+- Bảo vệ thời lượng, OT, trùng block thứ ba; lưu chu kỳ qua khoảng trống trung gian và xác minh/phục hồi.
+
+
 ## V1.14.1 — Xác nhận lưu lịch: đã xây dựng
 
 - Kéo thả lưu tạm; icon lưu chỉ hiện khi có thay đổi.

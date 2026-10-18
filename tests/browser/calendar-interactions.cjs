@@ -90,7 +90,8 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
   assert.equal(patches.length,1);assert.equal(logs.find(x=>x.id==='1').start,'08:00');assert.equal(logs.find(x=>x.id==='1').end,'09:00');assert.equal(logs.find(x=>x.id==='1').description,'Giữ nguyên mô tả');assert.equal(await page.locator('#calendarSaveBtn').isVisible(),false);assert((await page.locator('#toast').textContent()).includes('Lưu lịch thành công'));
   // Returning a preview to its original position removes the draft without a write.
   await drag(600);assert.equal(await draftCount(),1);await drag(480);assert.equal(await draftCount(),0);assert.equal(patches.length,1);assert.equal(await page.locator('#calendarSaveBtn').isVisible(),false);
-  const before=patches.length;await drag(540);await page.waitForTimeout(150);assert.equal(patches.length,before);assert.equal(await draftCount(),0);assert((await page.locator('#calendarInteractionState').textContent()).includes('đã có worklog'));
+  const before=patches.length;await drag(540);await page.waitForTimeout(150);assert.equal(patches.length,before);assert.equal(await draftCount(),2);assert((await page.locator('#calendarInteractionState').textContent()).includes('đổi chỗ'));
+  await page.locator('#calendarSaveBtn').click();await page.locator('#calendarDiscardBtn').click();await page.waitForFunction(()=>!state.historyLoading);
   if(mobile){const blank=await point(660);await page.mouse.click(blank.x,blank.y);}
   rejectMove=true;await drag(810);assert.equal(patches.length,before);await confirmSave();
   assert.equal(patches.length,before+1);assert.equal(logs.find(x=>x.id==='1').start,'08:00');assert.equal(await draftCount(),1);assert((await page.locator('#calendarSaveError').textContent()).includes('không cho phép'));assert.equal(await page.locator('#calendarSaveBtn').isVisible(),true);
@@ -132,7 +133,7 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
    // Closing with a pending position requires a decision; discard closes safely.
    await stage('1','08:00');await page.locator('#closeHistoryBtn').click();await page.locator('#calendarDiscardBtn').click();await page.waitForTimeout(250);assert.equal(await page.locator('#historyOverlay').isVisible(),false);assert.equal(await draftCount(),0);
   }
-  assert.deepEqual(errors,[]);await context.close();console.log('V1.14.1 click-to-log, staged drag, explicit confirm/cancel/save/discard, refresh/fullscreen, mobile hold/exit, overlap, rejected save and unknown-result reconciliation passed',viewport);
+  assert.deepEqual(errors,[]);await context.close();console.log('V1.14.2 click-to-log, staged drag, explicit confirm/cancel/save/discard, refresh/fullscreen, mobile hold/exit, overlap, rejected save and unknown-result reconciliation passed',viewport);
  }
  await browser.close();await new Promise(r=>server.close(r));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});

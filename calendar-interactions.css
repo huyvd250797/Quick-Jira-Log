@@ -108,3 +108,11 @@ body:has(#historyOverlay.is-calendar-fullscreen) .toast { z-index: 250; }
   #calendarSaveDialog footer > div button { flex:1; white-space:nowrap; }
   #calendarSaveDialog #calendarDiscardBtn { order:1; padding:6px 10px; }
 }
+/* V1.14.2 — highlights remain attached to the minute grid during scroll/fullscreen. */
+#weeklyCalendar { position:relative; }
+.calendar-drop-highlight { position:absolute; z-index:8; box-sizing:border-box; pointer-events:none; border:2px solid var(--primary); border-radius:9px; background:color-mix(in srgb,var(--primary) 20%,transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary) 30%,transparent); }
+.calendar-drop-highlight > span { position:absolute; left:4px; right:4px; top:3px; padding:2px 4px; border-radius:5px; width:max-content; max-width:calc(100% - 8px); background:var(--primary); color:#fff; font-size:11px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.calendar-drop-highlight.is-swap { border-style:dashed; background:color-mix(in srgb,var(--primary) 27%,transparent); }
+.calendar-drop-highlight.is-invalid { border-color:#db5673; background:#db56732b; }
+.calendar-drop-highlight.is-invalid > span { background:#b93555; }
+#weeklyCalendar .week-grid-heading { z-index:10; }

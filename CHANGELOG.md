@@ -1,3 +1,12 @@
+# V1.14.2 — Highlight vùng thả & Swap lịch (2026-10-18)
+
+- Highlight vùng giờ đích chính xác khi kéo, hai vị trí khi swap; trạng thái hợp lệ/cảnh báo đỏ và tooltip tránh che vùng thả.
+- Thả vào một block khác để đổi ngày/giờ bắt đầu của hai block ở bản nháp. Giữ duration riêng, comment và native OT; chặn trùng với block thứ ba/giờ nghỉ.
+- Giữ icon lưu/xác nhận/toast V1.14.1. Swap ngược tự bỏ bản nháp; Escape/pointer cancel xóa highlight và chặn click thừa.
+- API calendar-moves cho chu kỳ đổi chỗ: dữ liệu mới/tác giả/guard trước ghi; tự tìm ô trung gian trong ngày liên quan, cùng adapter sửa và readback; không tạo/xóa log.
+- Phục hồi có kiểm tra khi bước giữa lỗi, giữ kết quả chưa rõ khi không xác nhận được, idempotency và đọc trạng thái cuối chống lặp.
+- Cập nhật cache/PWA V1.14.2; thêm kiểm thử swap logic/API/PC/mobile, native WorklogPRO fallback và giữ chính xác giây.
+
 # V1.14.1 — Kéo thả lưu tạm & xác nhận lưu lịch (2026-10-18)
 
 - Thả block chỉ tạo bản nháp, hiển thị viền/dấu chấm; không PATCH Jira trước xác nhận.
