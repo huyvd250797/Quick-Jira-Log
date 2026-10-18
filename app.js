@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.14.3';
+const APP_VERSION = '1.14.4';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1889,6 +1889,7 @@ function renderCalendarAgenda(date) {
 
 function renderWorklogHistory() {
   cancelCalendarSwapMotion();
+  if(!calendarKeepHoverOnRender)cancelCalendarHoverMotion();
   const wrap = $('worklogHistoryList');
   const stateEl = $('worklogHistoryState');
   if (!wrap || !stateEl) return;

@@ -1,3 +1,13 @@
+# Kiểm thử V1.14.4 — Live Swap Preview
+
+- `npm test`: PASS toàn bộ logic/API hiện có; backend không đổi.
+- `tests/browser/live-swap-preview.cjs`: PASS PC 1440×1100 và touch CDP 390×1000, 320×900. Kiểm tra B bay khi đang giữ, giữ logical hit region, đảo chiều liên tiếp từ frame hiện tại (sai số dưới 4px), B quay về/C bay đi đồng thời, thả ô trống chỉ draft A.
+- Thả giữa flight tiếp nhận frame hiện tại, không replay từ ô B; chỉ lúc thả mới có hai draft và icon lưu. Bấm icon vẫn cần xác nhận; không có request ghi Jira trong hover/return/cancel.
+- Escape/touchCancel, render lại, resize, fullscreen và Reduce Motion: PASS; không để lại clone hay block ẩn. Nhãn giờ clone theo ô preview; màu OT được giữ.
+- Hồi quy PASS: `calendar-swap.cjs` (PC, mobile 390/320, ngang 844×440), `swap-motion.cjs`, `calendar-interactions.cjs`, `layout.cjs`, `motion-lock.cjs`. Swap server/403/rollback/unknown-result dùng fixtures như trước.
+- Node syntax, version và ZIP CRC kiểm tra khi đóng gói. Không chạy lại toàn bộ chuỗi `npm run test:ui`; đã chạy các bộ UI liên quan nêu trên.
+- Chưa kiểm chứng Jira thật, iPhone/Safari vật lý hoặc đo FPS trên thiết bị. Chuyển động dùng WAAPI/transform, không render lại lưới trong từng frame kéo.
+
 # Kiểm thử V1.14.3 — Swap motion
 
 - `npm test`: PASS toàn bộ logic/API, gồm geometry motion mới; không thay backend.

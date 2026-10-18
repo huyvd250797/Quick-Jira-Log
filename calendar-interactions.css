@@ -121,4 +121,4 @@ body:has(#historyOverlay.is-calendar-fullscreen) .toast { z-index: 250; }
 .calendar-swap-layer *, .calendar-swap-layer .calendar-swap-flight { pointer-events:none!important; }
 .calendar-swap-layer .calendar-swap-flight { position:absolute; margin:0!important; min-height:0!important; max-height:none!important; animation:none!important; transition:none!important; transform-origin:center center; will-change:transform; opacity:1!important; box-shadow:0 8px 24px #0003; cursor:default; }
 .week-worklog-block.is-swap-landing { opacity:0!important; animation:none!important; }
-@media (prefers-reduced-motion:reduce) { .calendar-swap-layer { display:none; } }
+@media (prefers-reduced-motion:reduce) { .calendar-swap-layer:not(.is-hover-preview) { display:none; } }

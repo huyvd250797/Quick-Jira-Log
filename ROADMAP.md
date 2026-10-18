@@ -1,5 +1,10 @@
 # Quick Jira Log — Roadmap
 
+## V1.14.4 — Live Swap Preview: đã xây dựng
+
+- Bay khi hover, bay về khi rời; đảo hướng từ frame hiện tại, hỗ trợ B→C liên tục.
+- Chỉ thả tay mới chốt draft, xác nhận Lưu lịch mới cập nhật Jira.
+
 ## V1.14.3 — Animation swap: đã xây dựng
 
 - Block bị thay thế bay theo đường cong ngẫu nhiên nhẹ đến vị trí chính xác.

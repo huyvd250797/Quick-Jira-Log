@@ -1,3 +1,12 @@
+# V1.14.4 — Live Swap Preview (2026-10-18)
+
+- Block bị thay thế bay ngay khi hover hợp lệ, giữ tại ô gốc của block đang kéo; rời hover thì bay ngược về ô ban đầu.
+- Nhiều partner được quản lý độc lập: B quay về và C bay đi đồng thời; đổi hướng giữa chừng bắt đầu từ frame hiện tại.
+- Giữ logical slots ổn định để hit test không dao động; không mutate draft/history hay gọi API lúc hover.
+- Thả tay tiếp nhận hiệu ứng hiện tại sau render, chỉ chốt bản nháp của vị trí thả; không replay từ ô cũ. Nhãn giờ clone theo preview.
+- Cleanup khi cancel/render/navigation/resize/scroll; Reduce Motion preview tức thời. Không đổi backend hoặc dependency runtime.
+- Nâng version PWA/cache/UI lên 1.14.4. Thêm browser regression live-swap-preview cho PC và touch.
+
 # V1.14.3 — Animation swap theo đường cong (2026-10-18)
 
 - Block bị thay thế bay về vị trí mới theo đường Bézier, thay đổi độ cong nhẹ mỗi lần; điểm đến giữ chính xác.

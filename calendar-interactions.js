@@ -12,6 +12,9 @@ let calendarRenderedItems = [];
 let calendarCloseAfterSave = false;
 let calendarSaveControls = [];
 let calendarSwapMotion = null;
+// Hover is visual only. Logical slots stay in place for stable hit testing.
+const calendarHoverMotions = new Map();
+let calendarKeepHoverOnRender = false;
 
 function calendarBlockFor(item) {
   const id=QuickJiraDrafts.key(item);
@@ -23,12 +26,7 @@ function cancelCalendarSwapMotion() {
   job.destination?.classList.remove('is-swap-landing');
   job.animations.forEach(animation=>{try{animation.cancel();}catch{}});job.layer.remove();
 }
-function prepareCalendarSwapMotion(drop) {
-  cancelCalendarSwapMotion();
-  if(!drop.swap||reduceMotionEnabled()||typeof Element.prototype.animate!=='function')return null;
-  const partner=calendarBlockFor(drop.swap);
-  if(!partner)return null;
-  const from=partner.getBoundingClientRect();if(!from.width||!from.height)return null;
+function cloneCalendarSwapBlock(partner) {
   const clone=partner.cloneNode(true);
   clone.removeAttribute('id');clone.removeAttribute('data-week-event');clone.removeAttribute('aria-label');clone.removeAttribute('title');
   clone.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
@@ -43,7 +41,15 @@ function prepareCalendarSwapMotion(drop) {
     appearance.forEach(property=>{copy.style[property]=computed[property];});
     if(source.classList.contains('ot-ribbon'))for(const property of ['display','position','top','right','bottom','left','width','height','transform','transformOrigin','textAlign','zIndex'])copy.style[property]=computed[property];
   });
-  return {item:drop.swap,from,clone,primary:drop.changes[0]};
+  return clone;
+}
+function prepareCalendarSwapMotion(drop) {
+  cancelCalendarSwapMotion();
+  if(!drop.swap||reduceMotionEnabled()||typeof Element.prototype.animate!=='function')return null;
+  const partner=calendarBlockFor(drop.swap);
+  if(!partner)return null;
+  const from=partner.getBoundingClientRect();if(!from.width||!from.height)return null;
+  return {item:drop.swap,from,clone:cloneCalendarSwapBlock(partner),primary:drop.changes[0]};
 }
 function playCalendarSwapMotion(prepared) {
   if(!prepared)return;
@@ -72,8 +78,96 @@ function playCalendarSwapMotion(prepared) {
 }
 function cancelSwapOnScroll() {
   if(calendarSwapMotion?.scrolls.some(({el,left,top})=>!el.isConnected||el.scrollLeft!==left||el.scrollTop!==top))cancelCalendarSwapMotion();
+  if(!calendarGesture?.dragging&&[...calendarHoverMotions.values()].some(job=>job.scrolls.some(({el,left,top})=>!el.isConnected||el.scrollLeft!==left||el.scrollTop!==top)))cancelCalendarHoverMotion();
 }
 
+function calendarMotionScrolls() {
+  return [$('historyResults'),$('weeklyCalendar').querySelector('.weekly-scroll')].filter(Boolean).map(el=>({el,left:el.scrollLeft,top:el.scrollTop}));
+}
+function removeCalendarHoverJob(job) {
+  if(calendarHoverMotions.get(job.id)!==job)return;
+  calendarHoverMotions.delete(job.id);clearTimeout(job.timer);
+  job.node?.classList.remove('is-swap-landing');
+  job.animation?.cancel();job.layer.remove();
+}
+function cancelCalendarHoverMotion() {
+  for(const job of [...calendarHoverMotions.values()])removeCalendarHoverJob(job);
+}
+function calendarHoverSlot(item,node) {
+  const oldColumn=node?.closest('.week-day-column'),column=$('weeklyCalendar').querySelector(`[data-calendar-date="${item.date}"]`);
+  if(!column||!oldColumn)return null;
+  const old=oldColumn.getBoundingClientRect(),rect=node.getBoundingClientRect(),target=column.getBoundingClientRect();
+  const scale=target.height/Number(column.parentElement.dataset.minuteRange);
+  return {left:target.left+(rect.left-old.left)*target.width/old.width,top:target.top+(QuickJiraDrafts.minute(item.start)-Number(column.dataset.fromMinute))*scale,width:rect.width*target.width/old.width,height:QuickJiraDrafts.seconds(item)/60*scale};
+}
+function createCalendarHoverJob(item) {
+  const node=calendarBlockFor(item);if(!node)return null;
+  const clone=cloneCalendarSwapBlock(node);
+  // Invisible original remains hit-testable at its logical slot; a clone never
+  // steals the pointer or changes which partner the planner sees underneath.
+  node.classList.add('is-swap-landing');
+  const from=node.getBoundingClientRect(),area=$('historyResults').getBoundingClientRect();
+  const header=$('weeklyCalendar').querySelector('.week-grid-heading')?.getBoundingClientRect();
+  const top=Math.min(area.bottom,Math.max(area.top,header?.bottom||area.top));
+  const bounds={left:area.left,top,right:area.right,bottom:area.bottom};
+  const layer=document.createElement('div');layer.className='calendar-swap-layer is-hover-preview';layer.setAttribute('aria-hidden','true');
+  Object.assign(layer.style,{left:`${area.left}px`,top:`${top}px`,width:`${area.width}px`,height:`${Math.max(0,area.bottom-top)}px`});
+  Object.assign(clone.style,{left:`${from.left-area.left}px`,top:`${from.top-top}px`,width:`${from.width}px`,height:`${from.height}px`,transform:'none'});
+  layer.append(clone);document.body.append(layer);
+  const job={id:QuickJiraDrafts.key(item),item,node,clone,layer,bounds,goal:null,mode:null,scrolls:calendarMotionScrolls()};
+  calendarHoverMotions.set(job.id,job);return job;
+}
+function retargetCalendarHoverJob(job,to,mode) {
+  if(!to||!to.width||!to.height){removeCalendarHoverJob(job);return;}
+  if(job.mode===mode&&job.goal&&['left','top','width','height'].every(k=>Math.abs(to[k]-job.goal[k])<.75))return;
+  // Capture the currently displayed frame BEFORE canceling. A quick B→C→B
+  // reversal starts here, never from either stale endpoint.
+  const from=job.clone.getBoundingClientRect(),layer=job.layer.getBoundingClientRect();
+  job.sequence=(job.sequence||0)+1;const sequence=job.sequence;
+  clearTimeout(job.timer);job.animation?.cancel();job.animation=null;
+  job.mode=mode;job.goal={left:to.left,top:to.top,width:to.width,height:to.height};
+  Object.assign(job.clone.style,{left:`${from.left-layer.left}px`,top:`${from.top-layer.top}px`,width:`${from.width}px`,height:`${from.height}px`,transform:'none'});
+  const finish=()=>{
+    if(calendarHoverMotions.get(job.id)!==job||sequence!==job.sequence)return;
+    if(mode!=='away')removeCalendarHoverJob(job);
+  };
+  if(reduceMotionEnabled()||typeof job.clone.animate!=='function') {
+    Object.assign(job.clone.style,{left:`${to.left-layer.left}px`,top:`${to.top-layer.top}px`,width:`${to.width}px`,height:`${to.height}px`});finish();return;
+  }
+  try {
+    const motion=QuickJiraSwapMotion.flight(from,to,job.bounds);
+    job.animation=job.clone.animate(motion.frames,{duration:motion.duration,easing:'cubic-bezier(.22,.7,.18,1)',fill:'both'});
+    job.animation.finished.then(finish,()=>{});
+    job.timer=setTimeout(finish,motion.duration+180);
+  } catch {removeCalendarHoverJob(job);}
+}
+function updateCalendarHoverPreview(g,proposal) {
+  const partner=!proposal.problem&&proposal.swap,id=partner?QuickJiraDrafts.key(partner):null;
+  for(const job of [...calendarHoverMotions.values()])if(job.id!==id){labelCalendarHoverJob(job,job.item);retargetCalendarHoverJob(job,calendarHoverSlot(job.item,job.node),'return');}
+  if(!partner)return;
+  const job=calendarHoverMotions.get(id)||createCalendarHoverJob(partner);
+  if(job){labelCalendarHoverJob(job,proposal.changes[1]);retargetCalendarHoverJob(job,calendarHoverSlot(proposal.changes[1],job.node),'away');}
+}
+function labelCalendarHoverJob(job,item) {
+  const label=[...job.clone.children].find(el=>el.tagName==='SPAN'&&!el.classList.contains('ot-ribbon'));
+  const text=`${item.start}–${item.end} · ${formatHistoryTimeSpent(QuickJiraDrafts.seconds(item)/60)}`;
+  if(label&&label.textContent!==text)label.textContent=text;
+}
+function returnCalendarHoverPreview() {
+  for(const job of [...calendarHoverMotions.values()]){labelCalendarHoverJob(job,job.item);retargetCalendarHoverJob(job,calendarHoverSlot(job.item,job.node),'return');}
+}
+function finishCalendarHoverDrop() {
+  // The synchronous render replaced logical nodes. Adopt the new destinations
+  // while retaining every clone's current frame (including returning partners).
+  for(const job of [...calendarHoverMotions.values()]) {
+    job.node?.classList.remove('is-swap-landing');
+    job.node=calendarBlockFor(job.item);
+    if(!job.node){removeCalendarHoverJob(job);continue;}
+    job.node.classList.add('is-swap-landing');job.scrolls=calendarMotionScrolls();
+    labelCalendarHoverJob(job,calendarRenderedItems.find(item=>QuickJiraDrafts.key(item)===job.id)||job.item);
+    retargetCalendarHoverJob(job,job.node.getBoundingClientRect(),'commit');
+  }
+}
 
 function calendarPreviewItems() { return QuickJiraDrafts.project(state.historyItems, state.calendarDrafts); }
 function calendarIsDraft(item) { return state.calendarDrafts.has(QuickJiraDrafts.key(item)); }
@@ -123,13 +217,15 @@ function closeCalendarSave() {
   $('calendarSaveDialog').close(); calendarCloseAfterSave=false;
   $('calendarSaveBtn').focus({preventScroll:true});
 }
-function stageCalendarMove(item,target,proposal=null) {
+function stageCalendarMove(item,target,proposal=null,livePreview=false) {
   if (state.calendarMovePending) return;
   const drop=proposal||QuickJiraDrafts.drop(item,target,calendarPreviewItems());
   if(drop.problem)return calendarFeedback(drop.problem,true);
-  if(drop.changes.some(x=>state.calendarDrafts.get(QuickJiraDrafts.key(x))?.status==='unknown'))
+  if(drop.changes.some(x=>state.calendarDrafts.get(QuickJiraDrafts.key(x))?.status==='unknown')) {
+    if(livePreview)returnCalendarHoverPreview();
     return calendarFeedback('Chưa rõ kết quả lần lưu trước. Bấm Lưu lịch để đối chiếu Jira trước khi kéo tiếp.',true);
-  const swapMotion=prepareCalendarSwapMotion(drop);
+  }
+  const swapMotion=livePreview?null:prepareCalendarSwapMotion(drop);
   // Commit both previews together; each draft retains its own original snapshot.
   for(const moved of drop.changes) {
     const id=QuickJiraDrafts.key(moved),previous=state.calendarDrafts.get(id);
@@ -137,7 +233,9 @@ function stageCalendarMove(item,target,proposal=null) {
     if(original.date===moved.date&&original.start===moved.start)state.calendarDrafts.delete(id);
     else state.calendarDrafts.set(id,{original,target:{date:moved.date,start:moved.start},status:previous?.status||'pending'});
   }
-  renderCalendarDrafts();
+  calendarKeepHoverOnRender=livePreview;
+  try {renderCalendarDrafts();} finally {calendarKeepHoverOnRender=false;}
+  if(livePreview)finishCalendarHoverDrop();
   playCalendarSwapMotion(swapMotion);
   calendarFeedback(`${drop.swap?'Đã đổi chỗ ở bản nháp · ':''}${calendarDraftMessage()||'Đã đưa lịch về vị trí gốc.'}`);
 }
@@ -251,7 +349,7 @@ function setCalendarEditMode(enabled) {
   $('weeklyCalendar').classList.toggle('is-calendar-editing', enabled);
   if (!state.calendarMovePending) calendarFeedback(enabled ? 'Đang chỉnh sửa · Kéo để lưu tạm, chạm ngoài để kết thúc.' : calendarDraftMessage());
 }
-function cancelCalendarGesture() {
+function cancelCalendarGesture({returnHover=true}={}) {
   const gesture = calendarGesture;
   calendarGesture = null;
   cancelAnimationFrame(calendarDragFrame);
@@ -264,8 +362,9 @@ function cancelCalendarGesture() {
     try { gesture.block?.releasePointerCapture(gesture.id); } catch {}
   }
   document.body.classList.remove('calendar-dragging');
+  if(returnHover)returnCalendarHoverPreview();
 }
-function resetCalendarInteraction() { cancelCalendarSwapMotion(); cancelCalendarGesture(); setCalendarEditMode(false); }
+function resetCalendarInteraction() { cancelCalendarSwapMotion(); cancelCalendarGesture({returnHover:false}); cancelCalendarHoverMotion(); setCalendarEditMode(false); }
 function calendarBlockClick(event, item) {
   if (calendarEditMode || state.calendarMovePending || performance.now() < calendarIgnoreClickUntil) { event.preventDefault(); return; }
   if (calendarIsDraft(item)) { openCalendarSave(); return; }
@@ -314,6 +413,7 @@ function updateCalendarDrag() {
   g.target = calendarPointTarget(g.x, g.y, g.grabMinutes);
   const proposal=g.proposal=calendarDropProposal(g.item,g.target,g.x,g.y),problem=proposal.problem;
   highlightCalendarDrop(g,proposal);
+  updateCalendarHoverPreview(g,proposal);
   const moved=proposal.changes?.[0];
   const end=moved?.end||'';
   g.ghost.style.left = `${Math.max(4, Math.min(innerWidth - g.ghost.offsetWidth - 4, g.x - g.grabX))}px`;
@@ -414,13 +514,14 @@ function closeCalendarLog({ force = false } = {}) {
 
 function setupCalendarInteractions() {
   const grid = $('weeklyCalendar');
-  document.addEventListener('pointerdown',()=>{if(calendarSwapMotion){cancelCalendarSwapMotion();calendarIgnoreClickUntil=Math.max(calendarIgnoreClickUntil,performance.now()+220);}},true);
+  document.addEventListener('pointerdown',()=>{if(calendarSwapMotion||(!calendarGesture&&calendarHoverMotions.size)){cancelCalendarSwapMotion();cancelCalendarHoverMotion();calendarIgnoreClickUntil=Math.max(calendarIgnoreClickUntil,performance.now()+220);}},true);
   $('historyResults').addEventListener('scroll',cancelSwapOnScroll,{passive:true,capture:true});
-  window.addEventListener('resize',cancelCalendarSwapMotion);
-  window.visualViewport?.addEventListener('resize',cancelCalendarSwapMotion);
-  document.addEventListener('fullscreenchange',cancelCalendarSwapMotion);
-  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',cancelCalendarSwapMotion);
-  window.addEventListener('blur',cancelCalendarSwapMotion);
+  const clearMotion=()=>{cancelCalendarSwapMotion();cancelCalendarHoverMotion();};
+  window.addEventListener('resize',clearMotion);
+  window.visualViewport?.addEventListener('resize',clearMotion);
+  document.addEventListener('fullscreenchange',clearMotion);
+  window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',clearMotion);
+  window.addEventListener('blur',clearMotion);
   grid.addEventListener('pointerdown', event => {
     const block = event.target.closest('[data-week-event]');
     if (!block || state.calendarMovePending || state.historyLoading || event.button > 0) return;
@@ -453,9 +554,10 @@ function setupCalendarInteractions() {
     if (!g || g.id !== event.pointerId) return;
     if (g.dragging) {
       const target=calendarPointTarget(event.clientX,event.clientY,g.grabMinutes),proposal=calendarDropProposal(g.item,target,event.clientX,event.clientY),problem=proposal.problem;
+      updateCalendarHoverPreview(g,proposal);
       calendarIgnoreClickUntil = performance.now() + 600;
-      cancelCalendarGesture();
-      if (problem) calendarFeedback(problem, true); else stageCalendarMove(g.item,target,proposal);
+      cancelCalendarGesture({returnHover:!!problem});
+      if (problem) calendarFeedback(problem, true); else stageCalendarMove(g.item,target,proposal,true);
       event.preventDefault();
     } else { if (g.mobile && g.ready) calendarIgnoreClickUntil = performance.now() + 500; cancelCalendarGesture(); }
   });
@@ -476,8 +578,8 @@ function setupCalendarInteractions() {
   document.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
     if ($('calendarSaveDialog').open) {event.preventDefault();event.stopImmediatePropagation();closeCalendarSave();return;}
-    if (calendarSwapMotion) {event.preventDefault();event.stopImmediatePropagation();cancelCalendarSwapMotion();return;}
-    if (calendarGesture || calendarEditMode) { event.preventDefault(); event.stopImmediatePropagation(); resetCalendarInteraction(); }
+    if (calendarGesture || calendarEditMode) { event.preventDefault(); event.stopImmediatePropagation(); cancelCalendarGesture();setCalendarEditMode(false);return; }
+    if (calendarSwapMotion||calendarHoverMotions.size) {event.preventDefault();event.stopImmediatePropagation();clearMotion();return;}
     else if ($('calendarLogDialog').open && !state.confirmOpen && !$('logProgressDialog').open) { event.preventDefault(); event.stopImmediatePropagation(); closeCalendarLog(); }
   }, true);
   $('calendarSaveBtn').addEventListener('click', () => openCalendarSave());
