@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.15.0 – Personal Logwork and Read-only Fullscreen User Calendars.",
+  "description": "Quick Jira Log V1.15.1 – Bounded Calendars and Automatic Personnel Suggestions.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

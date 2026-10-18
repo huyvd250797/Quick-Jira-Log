@@ -1,6 +1,7 @@
 'use strict';
 // Selected identity is read-only; state.user and logwork inputs remain personal.
 let calendarViewedUser=null,calendarViewerRevision=0,calendarUserSearchSeq=0,calendarUserSearchTimer=0;
+let calendarUserComposing=false;
 const calendarViewerCache=new Map();
 const calendarReadOnly=()=>!!calendarViewedUser;
 const calendarUserStorageKey=()=>`qjl:calendar-recent:v1:${encodeURIComponent(String(state.user?.username||'').toLowerCase())}`;
@@ -26,6 +27,7 @@ function syncCalendarViewer() {
 }
 function closeCalendarUserPicker() {
   ++calendarUserSearchSeq;clearTimeout(calendarUserSearchTimer);
+  calendarUserComposing=false;$('calendarUserSearch').setAttribute('aria-expanded','false');$('calendarUserResults').setAttribute('aria-busy','false');
   if($('calendarUserDialog').open)$('calendarUserDialog').close();
 }
 function resetCalendarViewer({reload=false}={}) {
@@ -43,22 +45,46 @@ function calendarUserRow(user) {
 function renderRecentCalendarUsers() {
   const list=recentCalendarUsers();$('calendarUserRecent').replaceChildren(...list.map(calendarUserRow));$('calendarUserRecentSection').classList.toggle('hidden',!list.length);
 }
+function syncCalendarSearchSections(query) {
+  $('calendarUserMeBtn').classList.toggle('hidden',!!query);
+  $('calendarUserRecentSection').classList.toggle('hidden',!!query||!recentCalendarUsers().length);
+}
+function syncCalendarUserViewport() {
+  const dialog=$('calendarUserDialog');if(!dialog.open)return;
+  const viewport=window.visualViewport,height=viewport?.height||innerHeight,offset=viewport?.offsetTop||0;
+  dialog.style.maxHeight=`${Math.max(120,height-24)}px`;
+  dialog.style.top=`${offset+Math.max(12,(height-dialog.getBoundingClientRect().height)/2)}px`;
+}
 function openCalendarUserPicker() {
   if(!state.calendarFullscreen||state.historyView!=='calendar'||state.calendarMovePending)return;
   if(state.calendarDrafts.size){openCalendarSave();showToast('Lưu hoặc bỏ bản nháp trước khi xem lịch người khác.');return;}
   resetCalendarInteraction();closeCalendarUserPicker();$('calendarUserSearch').value='';$('calendarUserResults').replaceChildren();
-  $('calendarUserSearchState').textContent='Nhập tên hoặc username để tìm trên Jira.';renderRecentCalendarUsers();$('calendarUserDialog').showModal();$('calendarUserCloseBtn').focus({preventScroll:true});
+  $('calendarUserSearchState').textContent='Nhập tên hoặc username để tìm trên Jira.';renderRecentCalendarUsers();syncCalendarSearchSections('');$('calendarUserDialog').showModal();syncCalendarUserViewport();$('calendarUserCloseBtn').focus({preventScroll:true});
 }
 async function searchCalendarUserPicker() {
   const query=$('calendarUserSearch').value.trim(),sequence=++calendarUserSearchSeq,user=state.user;$('calendarUserResults').replaceChildren();
+  syncCalendarSearchSections(query);
+  $('calendarUserSearch').setAttribute('aria-expanded','false');
   if(query.length<2){$('calendarUserSearchState').textContent='Nhập ít nhất 2 ký tự để tìm người dùng.';return;}
   $('calendarUserSearchState').textContent='Đang tìm người dùng trên Jira…';
+  $('calendarUserResults').setAttribute('aria-busy','true');
   try {
     const data=await api(`/api?action=calendar-users&query=${encodeURIComponent(query)}`,{method:'GET',cache:'no-store'});
     if(sequence!==calendarUserSearchSeq||state.user!==user||!$('calendarUserDialog').open)return;
-    const users=(Array.isArray(data.users)?data.users:[]).map(cleanCalendarUser).filter(Boolean);$('calendarUserResults').replaceChildren(...users.map(calendarUserRow));
+    const users=(Array.isArray(data.users)?data.users:[]).map(cleanCalendarUser).filter(Boolean);
+    $('calendarUserResults').replaceChildren(...users.map(user=>{const row=calendarUserRow(user);row.setAttribute('role','option');row.setAttribute('aria-selected','false');return row;}));
+    $('calendarUserSearch').setAttribute('aria-expanded',String(users.length>0));
     $('calendarUserSearchState').textContent=users.length?`${users.length} người dùng · Chọn để xem lịch`:'Không tìm thấy người dùng phù hợp.';
   }catch(error){if(sequence===calendarUserSearchSeq&&state.user===user)$('calendarUserSearchState').textContent=error.message||'Chưa tìm được người dùng. Hãy thử lại.';}
+  finally{if(sequence===calendarUserSearchSeq)$('calendarUserResults').setAttribute('aria-busy','false');}
+}
+function queueCalendarUserSearch() {
+  ++calendarUserSearchSeq;clearTimeout(calendarUserSearchTimer);$('calendarUserResults').replaceChildren();
+  $('calendarUserSearch').setAttribute('aria-expanded','false');$('calendarUserResults').setAttribute('aria-busy','false');
+  const query=$('calendarUserSearch').value.trim();
+  syncCalendarSearchSections(query);
+  $('calendarUserSearchState').textContent=query.length<2?'Nhập ít nhất 2 ký tự để tìm người dùng.':calendarUserComposing?'Đang nhập tên nhân sự…':'Đang tìm người dùng trên Jira…';
+  if(query.length>=2&&!calendarUserComposing)calendarUserSearchTimer=setTimeout(()=>{void searchCalendarUserPicker();},250);
 }
 function selectCalendarUser(user) {
   if(!state.calendarFullscreen||state.historyView!=='calendar'||state.calendarMovePending)return;
@@ -91,9 +117,24 @@ document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&($('calendarUserDialog').open||$('calendarReadDialog').open)){event.preventDefault();event.stopImmediatePropagation();closeCalendarUserPicker();$('calendarReadDialog').close();}
 },true);
 document.addEventListener('DOMContentLoaded',()=>{
+  let viewportFrame=0;
+  const scheduleViewport=()=>{cancelAnimationFrame(viewportFrame);viewportFrame=requestAnimationFrame(syncCalendarUserViewport);};
+  window.visualViewport?.addEventListener('resize',scheduleViewport);window.visualViewport?.addEventListener('scroll',scheduleViewport);window.addEventListener('resize',scheduleViewport);
+  if(window.ResizeObserver)new ResizeObserver(scheduleViewport).observe($('calendarUserDialog'));
   $('calendarViewerBtn').addEventListener('click',openCalendarUserPicker);$('calendarUserCloseBtn').addEventListener('click',closeCalendarUserPicker);$('calendarUserMeBtn').addEventListener('click',()=>selectCalendarUser(null));
-  $('calendarUserSearch').addEventListener('input',()=>{++calendarUserSearchSeq;clearTimeout(calendarUserSearchTimer);calendarUserSearchTimer=setTimeout(searchCalendarUserPicker,280);});
-  $('calendarUserSearch').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(calendarUserSearchTimer);void searchCalendarUserPicker();}});
+  $('calendarUserSearch').addEventListener('compositionstart',()=>{calendarUserComposing=true;queueCalendarUserSearch();});
+  $('calendarUserSearch').addEventListener('compositionend',()=>{calendarUserComposing=false;queueCalendarUserSearch();});
+  $('calendarUserSearch').addEventListener('input',event=>{if(event.isComposing)calendarUserComposing=true;queueCalendarUserSearch();});
+  $('calendarUserSearch').addEventListener('keydown',event=>{
+    if(event.isComposing||calendarUserComposing)return;
+    if(event.key==='Enter'){event.preventDefault();clearTimeout(calendarUserSearchTimer);void searchCalendarUserPicker();}
+    if(event.key==='ArrowDown'&&$('calendarUserResults').firstElementChild){event.preventDefault();$('calendarUserResults').firstElementChild.focus();}
+  });
+  $('calendarUserResults').addEventListener('keydown',event=>{
+    const row=event.target.closest('.calendar-user-row');if(!row)return;
+    const next=event.key==='ArrowDown'?row.nextElementSibling:event.key==='ArrowUp'?row.previousElementSibling:null;
+    if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();(next||$('calendarUserSearch')).focus();}
+  });
   $('calendarReadCloseBtn').addEventListener('click',()=>$('calendarReadDialog').close());
   for(const id of ['calendarUserDialog','calendarReadDialog']) {
     $(id).addEventListener('cancel',event=>{event.preventDefault();if(id==='calendarUserDialog')closeCalendarUserPicker();else $(id).close();});

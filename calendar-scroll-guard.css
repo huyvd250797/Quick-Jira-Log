@@ -1,0 +1,10 @@
+/* contain prevents chaining but still allows Safari's local elastic bounce.
+   none keeps the grid origin inside its viewport in both axes. */
+#historyOverlay.is-calendar-view,
+#historyOverlay.is-calendar-view .history-tool-sheet,
+#historyOverlay.is-calendar-view .tool-modal-body,
+#historyOverlay.is-calendar-view #historyResults,
+#historyOverlay.is-calendar-view .weekly-scroll { overscroll-behavior:none; }
+#historyOverlay.is-calendar-view #historyResults { overflow-anchor:none; }
+#historyOverlay.is-calendar-view .history-tool-sheet,
+#historyOverlay.is-calendar-view .tool-modal-body { overflow:hidden; }

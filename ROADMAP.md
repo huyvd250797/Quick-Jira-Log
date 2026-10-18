@@ -1,5 +1,10 @@
 # Quick Jira Log — Roadmap
 
+## V1.15.1 — Calendar Bounds & Personnel Suggestions: đã xây dựng
+
+- Chặn lịch kéo quá biên, giữ cuộn và drag hợp lệ.
+- Tự gợi ý nhân sự khi gõ; sửa key/alias và fallback API, hỗ trợ bàn phím mobile.
+
 ## V1.15.0 — Xem lịch người khác: đã xây dựng
 
 - Chọn user chỉ trong fullscreen; reset về Tôi khi mở lại/thoát fullscreen.

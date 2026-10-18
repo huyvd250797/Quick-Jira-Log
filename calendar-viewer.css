@@ -10,6 +10,7 @@
 .calendar-viewer-dialog::backdrop { background:#04101db3; backdrop-filter:blur(3px); }
 body:has(#calendarUserDialog[open],#calendarReadDialog[open]) #historyResults { overflow:hidden!important; touch-action:none; overscroll-behavior:none; }
 .calendar-viewer-dialog { touch-action:pan-y; -webkit-overflow-scrolling:touch; }
+#calendarUserDialog { position:fixed; inset:0 0 auto; margin:0 auto; }
 .calendar-viewer-dialog header { position:sticky; top:0; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 16px; background:var(--card); border-bottom:1px solid var(--line); }
 .calendar-viewer-dialog h2 { margin:0; font-size:17px; }
 .calendar-viewer-dialog header p { margin:4px 0 0; color:var(--muted); font-size:12px; }

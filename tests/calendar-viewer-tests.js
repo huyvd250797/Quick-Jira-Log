@@ -26,7 +26,7 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
   if(u.pathname.endsWith('/user')){
    if(mode==='resolve-denied')return Response.json({}, {status:403});
    if(mode==='expired')return Response.json({}, {status:401});
-   const target=u.searchParams.get('key')==='THIRD'?third:other;return Response.json(mode==='wrong-user'?third:target);
+   const target=u.searchParams.get('key')==='THIRD'||u.searchParams.get('username')==='third'?third:other;return Response.json(mode==='wrong-user'?third:target);
   }
   if(u.pathname.endsWith('/search')){
    if(mode==='post-denied'&&method==='POST'&&jql.startsWith('worklogAuthor'))return Response.json({}, {status:403});

@@ -1,3 +1,13 @@
+# Kiểm thử V1.15.1 — Calendar Bounds & Personnel Suggestions
+
+- `npm test`: PASS toàn bộ logic/API cũ và mới. Bounds unit: 4 mép, góc chéo, negative Safari offsets, fractional values, không chặn delta trong vùng hợp lệ.
+- API suggestions fixture: picker thiếu key, key alias bằng username, trường username, nested users, fallback từ picker 404/empty/malformed sang user/search, canonical lookup, trùng user, inactive, 401/403/unresolved. Mọi request vẫn dùng caller auth và chỉ GET.
+- `tests/browser/calendar-refinements.cjs`: PASS 1440×1000, touch CDP 390×844, 320×683, ngang 844×390. Edge/diagonal/toolbar touch và wheel bị chặn đúng; native touch pan ngang vẫn hoạt động, không có khoảng trống ở gốc lưới; chạy thường/fullscreen/lịch người khác.
+- Tự gợi ý bằng typing không Enter; composition tiếng Việt; stale response, lỗi quyền, ArrowDown/Enter, ẩn recent khi nhập và visual viewport giảm khi bàn phím mở: PASS.
+- Hồi quy: calendar-viewer (MRU/read-only/reset), live-swap-preview, calendar-interactions và layout. Ghi nhận PASS các bộ liên quan; không chạy toàn bộ chuỗi test:ui.
+- Source handler ghi Jira/Bulk/correction/day-audit/history và calendar-interactions giữ nguyên so với ZIP V1.15.0. Node syntax/version/cache và ZIP CRC được kiểm tra khi đóng gói.
+- Chromium không mô phỏng đầy đủ rubber-band native của Safari. Đã kiểm tra CSS overscroll none, edge guards, unit negative offsets và touch thực qua CDP; chưa kiểm chứng iPhone/Safari vật lý hoặc Jira công ty. Không khẳng định quyền Browse Users của tài khoản thực tế.
+
 # Kiểm thử V1.15.0 — Fullscreen User Calendars
 
 - `npm test`: PASS toàn bộ logic/API cũ và API calendar viewer mới.

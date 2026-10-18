@@ -1,3 +1,11 @@
+# V1.15.1 — Calendar Bounds & Personnel Suggestions (2026-10-18)
+
+- Thay local overscroll/scroll chaining trong khung lịch bằng overscroll none; bổ sung touch/wheel edge guard và clamp negative offsets. Giữ native pan ở vùng hợp lệ, giữ drag/long-press auto-scroll.
+- Gợi ý nhân sự tự chạy khi gõ (2 ký tự, debounce 250ms), có IME composition và stale-response guards, keyboard selection.
+- Bổ sung canonical lookup cho picker thiếu key/key là username, hỗ trợ dạng mảng/nested và fallback user/search. Chỉ trả định danh/tên cần thiết, không HTML/email hoặc thông tin đăng nhập.
+- Ưu tiên kết quả gợi ý khi nhập và popup theo visual viewport, giữ 3 recent theo tài khoản.
+- Nâng version/cache lên 1.15.1; không đổi handler ghi Jira hay luồng logwork cá nhân.
+
 # V1.15.0 — Fullscreen User Calendars (2026-10-18)
 
 - Chỉ fullscreen của Lịch có bộ chọn user. Mở lại lịch hoặc thoát fullscreen reset về tài khoản đăng nhập.
