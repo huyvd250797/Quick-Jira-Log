@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.14.5';
+const APP_VERSION = '1.15.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -764,6 +764,7 @@ function setLoggedIn(user) {
 }
 
 function setLoggedOut() {
+  resetCalendarViewer();
   clearCalendarDrafts();
   closeCalendarLog({ force: true });
   resetCalendarInteraction();
@@ -1428,6 +1429,7 @@ function resetProjectPalette() {
 }
 
 function openHistory() {
+  resetCalendarViewer();
   resetProjectPalette();
   closeCorrection({ immediate: true });
   state.historyView = 'calendar';
@@ -1894,7 +1896,7 @@ function renderWorklogHistory() {
   const stateEl = $('worklogHistoryState');
   if (!wrap || !stateEl) return;
   const calendar = state.historyView === 'calendar';
-  $('calendarGestureHint').classList.toggle('hidden', !calendar || state.calendarMode !== 'week');
+  syncCalendarViewer();
   $('historyTitle').nextElementSibling.textContent = calendar && state.calendarMode === 'week' ? 'Kéo để lưu tạm · Bấm icon lưu để cập nhật Jira; mobile nhấn giữ.' : 'Chọn ngày để xem worklog · Bấm worklog để xem, sửa hoặc xóa.';
   $('historyListFilters').classList.toggle('hidden', calendar);
   $('refreshWorklogHistoryBtn').classList.toggle('hidden', calendar);
@@ -1972,7 +1974,7 @@ async function loadWorklogHistory({ quiet = false, force = false, preserveCorrec
   if (!QuickJiraUi.validDate(selectedDate)) return showToast('Vui lòng chọn ngày hợp lệ.');
   const range = state.historyView === 'calendar' ? (state.calendarMode === 'week' ? QuickJiraUi.weekRange(selectedDate) : QuickJiraUi.monthRange(selectedDate)) : { start: selectedDate, end: selectedDate };
   const key = state.historyView === 'calendar' ? '' : $('historyKey').value.trim().toUpperCase();
-  const scope = `${state.historyView}|${state.calendarMode}|${range.start}|${range.end}|${key}`;
+  const scope = `${state.historyView}|${state.calendarMode}|${range.start}|${range.end}|${key}|${calendarViewedUser?.key||'self'}`;
   const results = $('historyResults');
   const weeklyScroll = $('weeklyCalendar').querySelector('.weekly-scroll');
   const sameScope = scope === state.historyScrollScope;
@@ -1990,7 +1992,7 @@ async function loadWorklogHistory({ quiet = false, force = false, preserveCorrec
   searchBtn.textContent = 'ĐANG TẢI...';
   renderWorklogHistory();
   try {
-    const data = await fetchHistoryRange(range, key, force);
+    const data = state.historyView === 'calendar' && calendarReadOnly() ? await fetchCalendarViewerHistory(range,force) : await fetchHistoryRange(range, key, force);
     if (sequence !== state.historySeq || !state.user) return;
     state.historyItems = Array.isArray(data.items) ? data.items.filter(item => Number(item.minutes) > 0) : [];
     state.historyLoaded = true;
@@ -2058,6 +2060,7 @@ function syncCalendarFullscreenButton() {
   button.setAttribute('aria-label', state.calendarFullscreen ? 'Thoát lịch toàn màn hình' : 'Xem lịch toàn màn hình');
   button.title = button.getAttribute('aria-label');
   $('historyOverlay').classList.toggle('is-calendar-fullscreen', state.calendarFullscreen);
+  syncCalendarViewer();
   syncCalendarViewport();
   scheduleWeekFit();
 }
@@ -2099,6 +2102,7 @@ async function exitCalendarFullscreen({ nativeEnded = false } = {}) {
   if (!state.calendarFullscreen) return;
   ++state.calendarFullscreenSeq;
   state.calendarFullscreen = false;
+  resetCalendarViewer({reload:true});
   const owned = state.calendarNativeFullscreen;
   state.calendarNativeFullscreen = false;
   syncCalendarFullscreenButton();
@@ -2111,6 +2115,7 @@ async function exitCalendarFullscreen({ nativeEnded = false } = {}) {
 }
 
 function openCorrection(item) {
+  if(item?.calendarReadOnly)return openCalendarReadDetails(item);
   if (!item || state.calendarMovePending) return;
   if (calendarIsDraft(item)) { openCalendarSave(); return; }
   closeCorrection({ immediate: true, restoreFocus: false });

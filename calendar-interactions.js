@@ -218,6 +218,7 @@ function closeCalendarSave() {
   $('calendarSaveBtn').focus({preventScroll:true});
 }
 function stageCalendarMove(item,target,proposal=null,livePreview=false) {
+  if(calendarReadOnly()||item?.calendarReadOnly)return;
   if (state.calendarMovePending) return;
   const drop=proposal||QuickJiraDrafts.drop(item,target,calendarPreviewItems());
   if(drop.problem)return calendarFeedback(drop.problem,true);
@@ -272,6 +273,7 @@ async function checkCalendarDrafts() {
   return QuickJiraDrafts.plan(state.calendarDrafts,fresh);
 }
 async function saveCalendarDrafts() {
+  if(calendarReadOnly())return;
   if (state.calendarMovePending || !state.calendarDrafts.size) return;
   const user=state.user,total=state.calendarDrafts.size,closeAfter=calendarCloseAfterSave;
   let active=null,verified=0,error=null;
@@ -441,6 +443,7 @@ function startCalendarDrag(g) {
 }
 
 async function openCalendarLog(date, start) {
+  if(calendarReadOnly())return;
   if (!state.user || state.calendarMovePending || state.historyLoading || state.submitInFlight) return;
   if (!QuickJiraUi.validDate(date)) return;
   if (state.calendarDrafts.size) { openCalendarSave(); return; }
@@ -524,7 +527,7 @@ function setupCalendarInteractions() {
   window.addEventListener('blur',clearMotion);
   grid.addEventListener('pointerdown', event => {
     const block = event.target.closest('[data-week-event]');
-    if (!block || state.calendarMovePending || state.historyLoading || event.button > 0) return;
+    if (!block || calendarReadOnly() || state.calendarMovePending || state.historyLoading || event.button > 0) return;
     const item = calendarRenderedItems[Number(block.dataset.weekEvent)];
     if (!item) return;
     cancelCalendarGesture();

@@ -10,6 +10,8 @@ const handlers = Object.freeze({
   'bulk-worklog': require('../handlers/bulk-worklog'),
   'day-audit': require('../handlers/day-audit'),
   'worklog-history': require('../handlers/worklog-history'),
+  'calendar-users': require('../handlers/calendar-users'),
+  'calendar-history': require('../handlers/calendar-history'),
   'calendar-moves': require('../handlers/calendar-moves'),
   'worklog-correction': require('../handlers/worklog-correction')
 });

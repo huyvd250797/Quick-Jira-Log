@@ -1,5 +1,10 @@
 # Quick Jira Log — Roadmap
 
+## V1.15.0 — Xem lịch người khác: đã xây dựng
+
+- Chọn user chỉ trong fullscreen; reset về Tôi khi mở lại/thoát fullscreen.
+- Lịch chỉ xem, 3 user gần đây, giữ quyền Jira và luồng logwork cá nhân.
+
 ## V1.14.5 — Icon điều hướng & chú thích lịch: đã xây dựng
 
 - SVG thống kê/lịch đồng bộ PC và mobile; chú thích nhấn giữ kéo thả trong lịch tuần.

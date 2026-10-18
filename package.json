@@ -1,12 +1,12 @@
 {
   "name": "quick-jira-log",
-  "version": "1.14.5",
+  "version": "1.15.0",
   "private": true,
   "engines": {
     "node": "24.x"
   },
   "scripts": {
-    "test": "node tests/run-tests.js && node tests/auth-tests.js && node tests/history-tests.js && node tests/hardening-tests.js && node tests/ui-tools-tests.js && node tests/week-progress-tests.js && node tests/calendar-style-tests.js && node tests/correction-overtime-tests.js && node tests/creation-ot-tests.js && node tests/native-form-tests.js && node tests/summary-tests.js && node tests/subtask-type-tests.js && node tests/calendar-edit-tests.js && node tests/calendar-drafts-tests.js && node tests/calendar-swap-tests.js && node tests/swap-motion-tests.js",
-    "test:ui": "node tests/browser/layout.cjs && node tests/browser/correction.cjs && node tests/browser/duration.cjs && node tests/browser/workflow.cjs && node tests/browser/mobile-calendar.cjs && node tests/browser/native-fullscreen.cjs && node tests/browser/motion-lock.cjs && node tests/browser/calendar-colors.cjs && node tests/browser/correction-parity.cjs && node tests/browser/mobile-refinements.cjs && node tests/browser/random-palette.cjs && node tests/browser/remember-login.cjs && node tests/browser/native-overtime.cjs && node tests/browser/creation-overtime.cjs && node tests/browser/summary.cjs && node tests/browser/calendar-interactions.cjs && node tests/browser/calendar-swap.cjs && node tests/browser/swap-motion.cjs && node tests/browser/live-swap-preview.cjs"
+    "test": "node tests/run-tests.js && node tests/auth-tests.js && node tests/history-tests.js && node tests/hardening-tests.js && node tests/ui-tools-tests.js && node tests/week-progress-tests.js && node tests/calendar-style-tests.js && node tests/correction-overtime-tests.js && node tests/creation-ot-tests.js && node tests/native-form-tests.js && node tests/summary-tests.js && node tests/subtask-type-tests.js && node tests/calendar-edit-tests.js && node tests/calendar-drafts-tests.js && node tests/calendar-swap-tests.js && node tests/swap-motion-tests.js && node tests/calendar-viewer-tests.js",
+    "test:ui": "node tests/browser/layout.cjs && node tests/browser/correction.cjs && node tests/browser/duration.cjs && node tests/browser/workflow.cjs && node tests/browser/mobile-calendar.cjs && node tests/browser/native-fullscreen.cjs && node tests/browser/motion-lock.cjs && node tests/browser/calendar-colors.cjs && node tests/browser/correction-parity.cjs && node tests/browser/mobile-refinements.cjs && node tests/browser/random-palette.cjs && node tests/browser/remember-login.cjs && node tests/browser/native-overtime.cjs && node tests/browser/creation-overtime.cjs && node tests/browser/summary.cjs && node tests/browser/calendar-interactions.cjs && node tests/browser/calendar-swap.cjs && node tests/browser/swap-motion.cjs && node tests/browser/live-swap-preview.cjs && node tests/browser/calendar-viewer.cjs"
   }
 }

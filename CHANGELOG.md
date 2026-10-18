@@ -1,3 +1,13 @@
+# V1.15.0 — Fullscreen User Calendars (2026-10-18)
+
+- Chỉ fullscreen của Lịch có bộ chọn user. Mở lại lịch hoặc thoát fullscreen reset về tài khoản đăng nhập.
+- Tìm user trên Jira và lưu tối đa 3 người đã xem gần đây, tách theo tài khoản trên thiết bị.
+- API đọc riêng cho lịch người khác, giữ nguyên caller auth, nhận diện tác giả bằng stable key/name và lọc đúng ngày, đọc đủ trang.
+- Lịch người khác chỉ xem, có chi tiết riêng; chặn kéo thả, sửa/xóa và log từ ô trống. API ghi hiện có vẫn kiểm tra tác giả.
+- Cache và phản hồi bất đồng bộ được tách theo user/kỳ; không hiển thị phản hồi cũ sau khi đổi user/đóng fullscreen.
+- Giữ bản nháp cá nhân khi mở bộ chọn, yêu cầu giải quyết bản nháp trước khi đổi người.
+- Không đổi các handler logwork/Bulk/correction/day audit hoặc lịch sử cá nhân; không thêm cấu hình/database/dependency.
+
 # V1.14.5 — Navigation Icons & Calendar Hint (2026-10-18)
 
 - Dùng SVG biểu đồ thống kê cho Tổng hợp và SVG lịch cho Worklog đã log ở PC/mobile.

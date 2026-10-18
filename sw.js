@@ -1,5 +1,5 @@
-const CACHE = 'quick-jira-log-v1.14.5-shell';
-const APP_SHELL = ['/', '/index.html', '/styles.css', '/ui.css', '/mobile-calendar.css', '/motion.css', '/calendar-colors.css', '/mobile-refinements.css', '/lib/calendar-style.js', '/lib/remembered-login.js', '/app.js', '/summary.css', '/calendar-interactions.css', '/calendar-interactions.js', '/lib/calendar-drafts.js', '/lib/swap-motion.js', '/lib/worklog-summary.js', '/lib/ui-tools.js', '/lib/bulk-allocation.js', '/lib/late-log-warning.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png', '/icons/favicon-64.png'];
+const CACHE = 'quick-jira-log-v1.15.0-shell';
+const APP_SHELL = ['/', '/index.html', '/styles.css', '/ui.css', '/mobile-calendar.css', '/motion.css', '/calendar-colors.css', '/mobile-refinements.css', '/lib/calendar-style.js', '/lib/remembered-login.js', '/app.js', '/summary.css', '/calendar-interactions.css', '/calendar-interactions.js', '/calendar-viewer.js', '/calendar-viewer.css', '/lib/calendar-drafts.js', '/lib/swap-motion.js', '/lib/worklog-summary.js', '/lib/ui-tools.js', '/lib/bulk-allocation.js', '/lib/late-log-warning.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png', '/icons/favicon-64.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(APP_SHELL)));

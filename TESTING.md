@@ -1,3 +1,15 @@
+# Kiểm thử V1.15.0 — Fullscreen User Calendars
+
+- `npm test`: PASS toàn bộ logic/API cũ và API calendar viewer mới.
+- API mới: caller auth giữ nguyên, user picker không nhận HTML/email, lọc stable author (kể cả trùng displayName/đổi username), timestamp Việt Nam, phân trang, OT/unknown, GET fallback khi POST search bị chặn, 401/403/405, từ chối sửa/xóa worklog người khác.
+- `tests/browser/calendar-viewer.cjs`: PC 1440×1100; touch CDP 390×1000, 320×900, ngang 844×440. Chọn user chỉ ở fullscreen, không autofocus input khi mở, chi tiết chỉ đọc tuần/tháng, không drag/long-press/new-log của người khác, không API ghi.
+- Kiểm tra MRU tối đa 3, đưa người chọn lại lên đầu, còn sau reload, tách theo tài khoản; dữ liệu đến chậm không đè user mới. Người bị từ chối không vào MRU; không hiện lịch cũ sau lỗi quyền.
+- Kiểm tra bản nháp cá nhân không tự mất khi mở bộ chọn; thoát fullscreen/mở lại lịch reset về Tôi; giá trị form logwork cá nhân giữ nguyên.
+- Hồi quy PASS: calendar-interactions (log từ lịch, lưu nháp/xác nhận/rollback), live-swap-preview, workflow (logwork/sửa/xóa/progress), summary và responsive layout.
+- Chỉ thay các điểm tích hợp đọc lịch và guard tương tác. Source các handler ghi Jira/Bulk/correction/history/day-audit và thư viện cũ được so byte với ZIP đầu vào khi đóng gói.
+- Chưa có phiên Jira/WorklogPRO công ty hoặc iPhone/Safari vật lý. Dữ liệu phụ thuộc quyền caller/API plugin và giới hạn tìm kiếm của Jira. Không khẳng định đọc được toàn bộ worklog bị ẩn trên Jira.
+- Không chạy lại toàn bộ `npm run test:ui`; bộ đầy đủ vẫn có trong source. Các bộ ảnh hưởng trực tiếp nêu trên đã chạy.
+
 # Kiểm thử V1.14.5 — Navigation Icons & Calendar Hint
 
 - `npm test`: PASS toàn bộ logic/API hiện có.
