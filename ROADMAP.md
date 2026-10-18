@@ -1,5 +1,9 @@
 # Quick Jira Log — Roadmap
 
+## V1.14.5 — Icon điều hướng & chú thích lịch: đã xây dựng
+
+- SVG thống kê/lịch đồng bộ PC và mobile; chú thích nhấn giữ kéo thả trong lịch tuần.
+
 ## V1.14.4 — Live Swap Preview: đã xây dựng
 
 - Bay khi hover, bay về khi rời; đảo hướng từ frame hiện tại, hỗ trợ B→C liên tục.

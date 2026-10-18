@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.14.4</title>
+  <title>Quick Jira Log · V1.14.5</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -27,7 +27,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.14.4</div>
+      <div class="boot-version">V1.14.5</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -36,7 +36,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.14.4</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.14.5</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -44,10 +44,10 @@
           <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
         </button>
         <button id="plannerBtn" class="header-tool-btn hidden" type="button" aria-label="Tổng hợp giờ và Overtime" title="Tổng hợp giờ & Overtime">
-          <span class="header-tool-icon">▥</span><span>Tổng hợp</span>
+          <span class="header-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 3v17h17M8 16v-5M13 16V7M18 16v-8"/></svg></span><span>Tổng hợp</span>
         </button>
         <button id="historyBtn" class="header-tool-btn hidden" type="button" aria-label="Worklog đã log" title="Tìm và chỉnh sửa worklog đã log">
-          <span class="header-tool-icon history">↺</span><span>Worklog đã log</span>
+          <span class="header-tool-icon history" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M8 15h2M14 15h2M8 18h2"/></svg></span><span>Worklog đã log</span>
         </button>
         <button id="settingsBtn" class="header-icon-btn hidden" type="button" aria-label="Cài đặt" title="Cài đặt">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.42 1.42-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V20h-2v-.48A1.7 1.7 0 0 0 12.38 18a1.7 1.7 0 0 0-1.88.34l-.06.06-1.42-1.42.06-.06A1.7 1.7 0 0 0 9.42 15a1.7 1.7 0 0 0-1.56-1.03H7.4v-2h.46A1.7 1.7 0 0 0 9.42 11a1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.42-1.42.06.06A1.7 1.7 0 0 0 12.38 8a1.7 1.7 0 0 0 1.03-1.56V6h2v.44A1.7 1.7 0 0 0 16.44 8a1.7 1.7 0 0 0 1.88-.34l.06-.06 1.42 1.42-.06.06A1.7 1.7 0 0 0 19.4 11a1.7 1.7 0 0 0 1.56 1.03h.44v2h-.44A1.7 1.7 0 0 0 19.4 15Z"/></svg>
@@ -369,13 +369,14 @@
             </div>
             <div class="calendar-mode-toolbar"><div class="calendar-mode-switch" role="group" aria-label="Khoảng lịch"><button id="calendarWeekBtn" type="button" class="is-active" aria-pressed="true">Tuần</button><button id="calendarMonthBtn" type="button" aria-pressed="false">Tháng</button></div><button id="calendarProjectColorsBtn" class="calendar-icon-btn" type="button" aria-label="Bật màu theo dự án" title="Bật màu theo dự án" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.3a2.2 2.2 0 0 0 1.6-3.8c-.7-.8-.2-2.2.9-2.2H18a3 3 0 0 0 3-3 9 9 0 0 0-9-9Z"/><circle cx="7.5" cy="11" r=".7"/><circle cx="10" cy="7" r=".7"/><circle cx="15" cy="7.5" r=".7"/></svg></button><button id="calendarWeekendBtn" class="text-btn" type="button" aria-label="Hiện thứ 7 và chủ nhật" aria-pressed="false">T7/CN</button><div id="calendarWeekSummary" class="calendar-week-summary"></div></div>
           </div>
+          <p id="calendarGestureHint" class="calendar-gesture-hint hidden"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M3 12h18M8 7l4-4 4 4M8 17l4 4 4-4M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg><span>Nhấn giữ block để kéo thả lịch.</span></p>
           <div id="calendarInteractionState" class="calendar-interaction-state hidden" role="status" aria-live="polite"></div>
           <div id="historyResults" class="history-results">
           <div id="worklogHistoryState" class="history-state" role="status" aria-live="polite">Chọn ngày hoặc nhập KEY, sau đó bấm “Tìm worklog đã log”.</div>
           <div id="worklogHistoryList" class="worklog-history-list"></div>
           <div id="worklogCalendar" class="worklog-calendar hidden">
             <p id="calendarHelp" class="calendar-help">Bấm block worklog để xem, sửa hoặc xóa.</p>
-            <div id="weeklyCalendar" class="weekly-calendar hidden"></div>
+            <div id="weeklyCalendar" class="weekly-calendar hidden" aria-describedby="calendarGestureHint"></div>
             <div id="monthlyCalendar">
             <div class="calendar-weekdays" aria-hidden="true"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
             <div id="calendarGrid" class="calendar-grid" role="group" aria-label="Chọn ngày xem worklog"></div>
@@ -430,15 +431,15 @@
 
     <nav id="mobileTaskbar" class="mobile-taskbar hidden" aria-label="Công cụ Worklog">
       <button id="mobilePlannerBtn" class="mobile-taskbar-btn" type="button">
-        <span class="mobile-taskbar-icon">▥</span><span>Tổng hợp</span>
+        <span class="mobile-taskbar-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 3v17h17M8 16v-5M13 16V7M18 16v-8"/></svg></span><span>Tổng hợp</span>
       </button>
       <button id="mobileHistoryBtn" class="mobile-taskbar-btn" type="button">
-        <span class="mobile-taskbar-icon history">↺</span><span>Worklog đã log</span>
+        <span class="mobile-taskbar-icon history" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18M8 15h2M14 15h2M8 18h2"/></svg></span><span>Worklog đã log</span>
       </button>
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.14.4</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.14.5</footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>

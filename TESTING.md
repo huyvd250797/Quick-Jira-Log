@@ -1,3 +1,12 @@
+# Kiểm thử V1.14.5 — Navigation Icons & Calendar Hint
+
+- `npm test`: PASS toàn bộ logic/API hiện có.
+- `tests/browser/layout.cjs`: PASS các màn hình PC/mobile hiện có.
+- Rà giao diện bằng Chromium ở 1440×1000, 390×844, 315×683, ngang 844×390: 4 icon PC/mobile đều dùng SVG; chú thích ngắn, không tràn và nằm ngay trên lịch ở chế độ thường/fullscreen.
+- Kiểm tra tuần → tháng → tuần → danh sách: chú thích chỉ hiện ở tuần. Dark mode/fullscreen không che chú thích.
+- Không thay backend, lưu Jira hay logic kéo thả. Node syntax app.js và ZIP CRC/version được kiểm tra khi đóng gói.
+- Chưa kiểm chứng trên iPhone/Safari vật lý. Các kiểm tra UI bản trước vẫn có trong source; không chạy lại toàn bộ test:ui cho thay đổi icon/chú thích này.
+
 # Kiểm thử V1.14.4 — Live Swap Preview
 
 - `npm test`: PASS toàn bộ logic/API hiện có; backend không đổi.

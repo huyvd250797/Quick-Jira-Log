@@ -1,4 +1,8 @@
 /* V1.14.0 — Create and move real Jira worklogs from the weekly calendar. */
+.calendar-gesture-hint { display:flex; align-items:center; gap:5px; flex:0 0 auto; min-width:0; margin:0; color:var(--muted); font-size:11px; line-height:1.4; }
+.calendar-gesture-hint svg { flex:0 0 12px; width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+#historyOverlay.is-calendar-fullscreen .calendar-gesture-hint { order:2; }
+@media (min-width:900px) { #historyOverlay.is-calendar-view .calendar-gesture-hint { order:2; } }
 .week-day-column { cursor: crosshair; }
 .week-worklog-block { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 @media (pointer: fine) { .week-worklog-block { cursor: grab; } }

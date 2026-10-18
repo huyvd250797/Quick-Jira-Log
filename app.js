@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.14.4';
+const APP_VERSION = '1.14.5';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1894,6 +1894,7 @@ function renderWorklogHistory() {
   const stateEl = $('worklogHistoryState');
   if (!wrap || !stateEl) return;
   const calendar = state.historyView === 'calendar';
+  $('calendarGestureHint').classList.toggle('hidden', !calendar || state.calendarMode !== 'week');
   $('historyTitle').nextElementSibling.textContent = calendar && state.calendarMode === 'week' ? 'Kéo để lưu tạm · Bấm icon lưu để cập nhật Jira; mobile nhấn giữ.' : 'Chọn ngày để xem worklog · Bấm worklog để xem, sửa hoặc xóa.';
   $('historyListFilters').classList.toggle('hidden', calendar);
   $('refreshWorklogHistoryBtn').classList.toggle('hidden', calendar);

@@ -644,6 +644,7 @@ html[data-theme="dark"] .tool-group-icon.history { background: #172c49; color: #
 .header-tool-btn:active { transform: scale(.97); }
 .header-tool-icon { width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; background: #eaf8f1; color: var(--ok); font-size: 12px; font-weight: 950; }
 .header-tool-icon.history { background: #eaf2ff; color: var(--primary); }
+.header-tool-icon svg, .mobile-taskbar-icon svg { width: 18px; height: 18px; display: block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .bulk-title-meta { display: flex; align-items: flex-end; flex-direction: column; gap: 6px; }
 .bulk-selection-count { padding: 4px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary); font-size: 9px; font-weight: 900; white-space: nowrap; }
 .bulk-item-head { display: flex; align-items: flex-start; gap: 10px; }

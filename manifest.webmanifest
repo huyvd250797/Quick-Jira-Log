@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.14.4 – Calendar Logwork and Live Hover Swap Preview.",
+  "description": "Quick Jira Log V1.14.5 – Calendar Logwork, Clear Navigation Icons and Live Swap Preview.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

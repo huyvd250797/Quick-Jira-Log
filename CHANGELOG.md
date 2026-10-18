@@ -1,3 +1,9 @@
+# V1.14.5 — Navigation Icons & Calendar Hint (2026-10-18)
+
+- Dùng SVG biểu đồ thống kê cho Tổng hợp và SVG lịch cho Worklog đã log ở PC/mobile.
+- Thêm chú thích nhỏ, luôn thấy trên lịch tuần và fullscreen: “Nhấn giữ block để kéo thả lịch.”
+- Giữ nguyên nghiệp vụ và live swap preview. Nâng version UI/PWA cache lên 1.14.5.
+
 # V1.14.4 — Live Swap Preview (2026-10-18)
 
 - Block bị thay thế bay ngay khi hover hợp lệ, giữ tại ô gốc của block đang kéo; rời hover thì bay ngược về ô ban đầu.
