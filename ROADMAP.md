@@ -1,5 +1,12 @@
 # Quick Jira Log — Roadmap
 
+## V1.14.1 — Xác nhận lưu lịch: đã xây dựng
+
+- Kéo thả lưu tạm; icon lưu chỉ hiện khi có thay đổi.
+- Xem lại giờ cũ/mới trước khi xác nhận; toast và ẩn nút sau lưu thành công.
+- Giữ bản nháp khi lỗi, đối chiếu Jira trước khi gửi lại; bảo vệ thoát khi chưa lưu.
+
+
 ## V1.14.0 — Logwork trực tiếp trên lịch: đã xây dựng
 
 - Bấm giờ trống → Sub-task → form logwork hiện có → lưu đúng giờ chọn.

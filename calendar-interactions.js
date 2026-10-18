@@ -1,5 +1,5 @@
 'use strict';
-// Shared weekly-calendar gestures. No optimistic write: Jira read-back is required.
+// Weekly-calendar gestures stage local drafts; only explicit confirmation writes Jira.
 const calendarLogHome = document.getElementById('worklogCard').parentElement;
 const calendarConfirmHome = document.getElementById('logConfirmOverlay').parentElement;
 let calendarEditMode = false;
@@ -8,6 +8,149 @@ let calendarIgnoreClickUntil = 0;
 let calendarDragFrame = 0;
 let calendarPickerSeq = 0;
 let calendarFocusSource = null;
+let calendarRenderedItems = [];
+let calendarCloseAfterSave = false;
+let calendarSaveControls = [];
+
+function calendarPreviewItems() { return QuickJiraDrafts.project(state.historyItems, state.calendarDrafts); }
+function calendarIsDraft(item) { return state.calendarDrafts.has(QuickJiraDrafts.key(item)); }
+function syncCalendarSaveButton() {
+  const count = state.calendarDrafts.size, button = $('calendarSaveBtn');
+  button.classList.toggle('hidden', !count);
+  button.disabled = state.calendarMovePending;
+  button.title = button.getAttribute('aria-label') || 'Lưu lịch';
+  button.setAttribute('aria-label', `Lưu lịch (${count} thay đổi chưa lưu)`);
+  button.title = button.getAttribute('aria-label');
+  $('historyOverlay').classList.toggle('has-calendar-drafts', count > 0);
+}
+function renderCalendarDrafts() {
+  const results=$('historyResults'), scroll={left:results.scrollLeft,top:results.scrollTop};
+  const weekly=$('weeklyCalendar').querySelector('.weekly-scroll'), weekScroll={left:weekly?.scrollLeft||0,top:weekly?.scrollTop||0};
+  renderWorklogHistory(); syncCalendarSaveButton();
+  results.scrollTo(scroll.left,scroll.top);
+  $('weeklyCalendar').querySelector('.weekly-scroll')?.scrollTo(weekScroll.left,weekScroll.top);
+}
+function calendarDraftMessage() {
+  return state.calendarDrafts.size ? `${state.calendarDrafts.size} lịch chưa lưu · Bấm icon lưu phía trên để xác nhận.` : '';
+}
+function clearCalendarDrafts() {
+  state.calendarDrafts.clear();
+  $('calendarSaveDialog').close();
+  calendarCloseAfterSave=false;
+  syncCalendarSaveButton();
+}
+function openCalendarSave({ closeAfter = false } = {}) {
+  if (!state.calendarDrafts.size || state.calendarMovePending) return;
+  resetCalendarInteraction();
+  calendarCloseAfterSave = closeAfter;
+  $('calendarSaveTitle').textContent = closeAfter ? 'Lịch có thay đổi chưa lưu' : 'Xác nhận lưu lịch';
+  const date = value => value.split('-').reverse().join('/');
+  $('calendarSaveList').innerHTML = [...state.calendarDrafts.values()].map(d => {
+    const target=QuickJiraDrafts.preview(d.original,d.target);
+    return `<li><strong>${escapeHtml(d.original.key)}</strong><span>${date(d.original.date)} · ${d.original.start}–${d.original.end}</span><b aria-hidden="true">↓</b><span>${date(target.date)} · ${target.start}–${target.end}</span></li>`;
+  }).join('');
+  $('calendarSaveError').textContent=''; $('calendarSaveError').classList.add('hidden');
+  $('calendarSaveHint').textContent=`${state.calendarDrafts.size} worklog sẽ được cập nhật trên Jira. Giữ nguyên thời lượng, mô tả và Overtime.`;
+  $('calendarConfirmSaveBtn').textContent='Lưu lịch';
+  if (!$('calendarSaveDialog').open) $('calendarSaveDialog').showModal();
+  $('calendarCancelSaveBtn').focus({preventScroll:true});
+}
+function closeCalendarSave() {
+  if (state.calendarMovePending) return;
+  $('calendarSaveDialog').close(); calendarCloseAfterSave=false;
+  $('calendarSaveBtn').focus({preventScroll:true});
+}
+function stageCalendarMove(item,target) {
+  if (state.calendarMovePending) return;
+  const id=QuickJiraDrafts.key(item), previous=state.calendarDrafts.get(id);
+  const original=previous?.original || {...item};
+  if (previous?.status === 'unknown') return calendarFeedback('Chưa rõ kết quả lần lưu trước. Bấm Lưu lịch để đối chiếu Jira trước khi kéo tiếp.',true);
+  if (original.date === target.date && original.start === target.start) state.calendarDrafts.delete(id);
+  else state.calendarDrafts.set(id,{original,target:{date:target.date,start:target.start},status:previous?.status||'pending'});
+  renderCalendarDrafts();
+  calendarFeedback(calendarDraftMessage() || 'Đã đưa lịch về vị trí gốc.');
+}
+function calendarSaveLock(locked) {
+  $('historyOverlay').classList.toggle('is-calendar-saving',locked);
+  $('calendarSaveDialog').setAttribute('aria-busy',String(locked));
+  if (locked) {
+    calendarSaveControls=[...$('historyOverlay').querySelectorAll('button,input')].map(el=>[el,el.disabled]);
+    calendarSaveControls.forEach(([el])=>{el.disabled=true;});
+  } else { calendarSaveControls.forEach(([el,disabled])=>{if(el.isConnected)el.disabled=disabled;}); calendarSaveControls=[]; }
+  ['calendarConfirmSaveBtn','calendarCancelSaveBtn','calendarDiscardBtn'].forEach(id=>{$(id).disabled=locked;});
+  syncCalendarSaveButton();
+}
+async function checkCalendarDrafts() {
+  const drafts=[...state.calendarDrafts.values()],dates=[...new Set(drafts.flatMap(d=>[d.original.date,d.target.date]))],items=[];
+  for (const date of dates) {
+    const data=await fetchHistoryRange({start:date,end:date},'',true);
+    if (data.skipped?.length || data.truncated || !Array.isArray(data.items)) throw new Error('Chưa đọc đủ lịch trên Jira. Chưa gửi thay đổi; vui lòng thử lại.');
+    items.push(...data.items);
+  }
+  const fresh=[...new Map(items.map(item=>[QuickJiraDrafts.key(item),item])).values()];
+  for (const draft of drafts) {
+    const id=QuickJiraDrafts.key(draft.original),current=fresh.find(item=>QuickJiraDrafts.key(item)===id);
+    if (draft.status==='unknown' && current && QuickJiraDrafts.same(current,QuickJiraDrafts.preview(draft.original,draft.target))) {
+      state.calendarDrafts.delete(id); continue;
+    }
+    if (!current || !QuickJiraDrafts.same(current,draft.original)) {
+      draft.status='conflict';
+      throw new Error(`${draft.original.key} đã thay đổi hoặc không đọc được trên Jira. Bỏ thay đổi và tải lại lịch trước khi sửa tiếp.`);
+    }
+    draft.status='pending';
+  }
+  return QuickJiraDrafts.plan(state.calendarDrafts,fresh);
+}
+async function saveCalendarDrafts() {
+  if (state.calendarMovePending || !state.calendarDrafts.size) return;
+  const user=state.user,total=state.calendarDrafts.size,closeAfter=calendarCloseAfterSave;
+  let active=null,verified=0,error=null;
+  state.calendarMovePending=true; calendarSaveLock(true);
+  $('calendarSaveError').classList.add('hidden');
+  $('calendarSaveHint').textContent='Đang kiểm tra dữ liệu mới nhất trên Jira…';
+  try {
+    const ordered=await checkCalendarDrafts();
+    if (state.user!==user) return;
+    verified=total-state.calendarDrafts.size;
+    for (const draft of ordered) {
+      if (state.user!==user) return;
+      active=draft;
+      $('calendarSaveHint').textContent=`Đang lưu ${verified+1}/${total} · ${draft.original.key}…`;
+      const data=await api('/api?action=worklog-correction',{method:'PATCH',body:JSON.stringify({
+        key:draft.original.key,worklogId:draft.original.id,date:draft.target.date,start:draft.target.start,moveOnly:true,
+        expectedStarted:QuickJiraDrafts.started(draft.original),expectedSeconds:QuickJiraDrafts.seconds(draft.original)
+      })});
+      if (data.worklogVerified!==true || data.moved!==true) {const e=new Error('Jira chưa xác nhận vị trí mới. Bấm Lưu lịch để đối chiếu trước khi thử lại.');e.code='RESULT_UNKNOWN';throw e;}
+      const id=QuickJiraDrafts.key(draft.original);
+      state.historyItems=state.historyItems.map(item=>QuickJiraDrafts.key(item)===id?QuickJiraDrafts.preview(item,draft.target):item);
+      state.calendarDrafts.delete(id); verified++; active=null;
+      syncCalendarSaveButton();
+    }
+  } catch (e) {
+    error=e;
+    if (active && (e.details?.resultUnknown || /UNKNOWN/.test(e.code||'') || !e.status || e.status>=500)) active.status='unknown';
+    $('calendarSaveError').textContent=`${verified ? `Đã xác nhận ${verified}/${total} lịch. ` : ''}${e.message || 'Chưa lưu được lịch.'} Các thay đổi chưa xác nhận vẫn được giữ tạm.`;
+    $('calendarSaveError').classList.remove('hidden');
+  } finally {
+    if (state.user===user) {
+      invalidateHistoryCache(); invalidateDayAuditCache();
+      if (!$('historyOverlay').classList.contains('hidden')) await loadWorklogHistory({quiet:true,force:true,calendarSaveReload:true});
+      state.calendarMovePending=false; calendarSaveLock(false);
+      void refreshDashboard({force:true});
+      syncCalendarSaveButton();
+      if (!error && !state.calendarDrafts.size) {
+        $('calendarSaveDialog').close(); calendarCloseAfterSave=false;
+        calendarFeedback(''); showToast(`Lưu lịch thành công · ${total} worklog.`);
+        if (closeAfter) closeHistory();
+      } else {
+        calendarFeedback(calendarDraftMessage(),!!error);
+        $('calendarSaveHint').textContent=`Còn ${state.calendarDrafts.size} lịch chưa lưu. Kiểm tra lỗi rồi xác nhận lại hoặc bỏ thay đổi.`;
+        $('calendarConfirmSaveBtn').textContent='Kiểm tra và lưu lại';
+      }
+    } else { state.calendarMovePending=false; calendarSaveLock(false); }
+  }
+}
+
 
 function calendarFeedback(message, error = false) {
   const box = $('calendarInteractionState');
@@ -18,7 +161,7 @@ function calendarFeedback(message, error = false) {
 function setCalendarEditMode(enabled) {
   calendarEditMode = enabled;
   $('weeklyCalendar').classList.toggle('is-calendar-editing', enabled);
-  if (!state.calendarMovePending) calendarFeedback(enabled ? 'Đang chỉnh sửa · Kéo block để đổi giờ. Chạm ngoài block để kết thúc.' : '');
+  if (!state.calendarMovePending) calendarFeedback(enabled ? 'Đang chỉnh sửa · Kéo để lưu tạm, chạm ngoài để kết thúc.' : calendarDraftMessage());
 }
 function cancelCalendarGesture() {
   const gesture = calendarGesture;
@@ -35,6 +178,7 @@ function cancelCalendarGesture() {
 function resetCalendarInteraction() { cancelCalendarGesture(); setCalendarEditMode(false); }
 function calendarBlockClick(event, item) {
   if (calendarEditMode || state.calendarMovePending || performance.now() < calendarIgnoreClickUntil) { event.preventDefault(); return; }
+  if (calendarIsDraft(item)) { openCalendarSave(); return; }
   openCorrection(item);
 }
 function calendarMinuteLabel(value) { return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(Math.round(value % 60)).padStart(2, '0')}`; }
@@ -52,7 +196,7 @@ function calendarDropProblem(item, target) {
   const duration = Number(item.timeSpentSeconds ?? item.minutes * 60) / 60, end = target.minute + duration;
   const windows = isWeekendDateClient(target.date) ? [[480, 720], [810, 1050]] : [[480, 720], [810, 1050], [1050, 1439]];
   if (!windows.some(([a,b]) => target.minute >= a && end <= b)) return 'Khoảng giờ này nằm ngoài khung cho phép hoặc đi qua giờ nghỉ.';
-  if (state.historyItems.some(other => !(other.id === item.id && other.key === item.key) && other.date === target.date && target.minute < QuickJiraUi.minuteOfDay(other.start) + Number(other.timeSpentSeconds ?? other.minutes * 60) / 60 && end > QuickJiraUi.minuteOfDay(other.start))) return 'Khoảng giờ này đã có worklog. Chọn vị trí trống khác.';
+  if (calendarPreviewItems().some(other => !(other.id === item.id && other.key === item.key) && other.date === target.date && target.minute < QuickJiraUi.minuteOfDay(other.start) + Number(other.timeSpentSeconds ?? other.minutes * 60) / 60 && end > QuickJiraUi.minuteOfDay(other.start))) return 'Khoảng giờ này đã có worklog. Chọn vị trí trống khác.';
   return '';
 }
 function updateCalendarDrag() {
@@ -69,7 +213,7 @@ function updateCalendarDrag() {
   g.ghost.style.top = `${g.y - 20}px`;
   g.ghost.classList.toggle('is-invalid', !!problem);
   g.ghost.querySelector('span').textContent = g.target ? `${g.target.date.split('-').reverse().join('/')} · ${g.target.start}–${end}` : 'Chọn vị trí trong lịch';
-  g.ghost.querySelector('small').textContent = problem || 'Thả để lưu trên Jira';
+  g.ghost.querySelector('small').textContent = problem || 'Thả để lưu tạm · Chưa cập nhật Jira';
   calendarDragFrame = requestAnimationFrame(updateCalendarDrag);
 }
 function startCalendarDrag(g) {
@@ -85,37 +229,11 @@ function startCalendarDrag(g) {
   try { g.block.setPointerCapture(g.id); } catch {}
   updateCalendarDrag();
 }
-async function moveCalendarWorklog(item, target) {
-  if (state.calendarMovePending || (item.date === target.date && item.start === target.start)) return;
-  state.calendarMovePending = true;
-  calendarFeedback(`Đang lưu ${item.key} → ${target.start} trên Jira…`);
-  $('weeklyCalendar').setAttribute('aria-busy', 'true');
-  try {
-    const data = await api('/api?action=worklog-correction', { method: 'PATCH', body: JSON.stringify({
-      key: item.key, worklogId: item.id, date: target.date, start: target.start, moveOnly: true,
-      expectedStarted: item.started || `${item.date}T${item.start}:00.000+0700`,
-      expectedSeconds: Number(item.timeSpentSeconds ?? item.minutes * 60)
-    }) });
-    if (data.worklogVerified !== true || data.moved !== true) throw new Error('Jira chưa xác nhận vị trí mới. Hãy tải lại lịch trước khi kéo tiếp.');
-    invalidateHistoryCache(); invalidateDayAuditCache();
-    void refreshDashboard({ force: true });
-    if (!$('historyOverlay').classList.contains('hidden')) await loadWorklogHistory({ quiet: true, force: true });
-    calendarFeedback(`Đã chuyển ${item.key} sang ${target.start}${calendarEditMode ? ' · Chạm ngoài block để kết thúc chỉnh sửa.' : ''}`);
-  } catch (error) {
-    if (error.details?.resultUnknown || ['WORKLOG_STALE','RESULT_UNKNOWN'].includes(error.code) || !error.status || error.status >= 500) {
-      invalidateHistoryCache(); invalidateDayAuditCache();
-      if (!$('historyOverlay').classList.contains('hidden')) await loadWorklogHistory({ quiet: true, force: true });
-    }
-    calendarFeedback(error.message || 'Chưa chuyển được worklog. Hãy tải lại lịch.', true);
-  } finally {
-    state.calendarMovePending = false;
-    $('weeklyCalendar').setAttribute('aria-busy', 'false');
-  }
-}
 
 async function openCalendarLog(date, start) {
   if (!state.user || state.calendarMovePending || state.historyLoading || state.submitInFlight) return;
   if (!QuickJiraUi.validDate(date)) return;
+  if (state.calendarDrafts.size) { openCalendarSave(); return; }
   resetCalendarInteraction();
   calendarFocusSource = document.activeElement;
   state.calendarLogContext = { date, start };
@@ -189,7 +307,7 @@ function setupCalendarInteractions() {
   grid.addEventListener('pointerdown', event => {
     const block = event.target.closest('[data-week-event]');
     if (!block || state.calendarMovePending || state.historyLoading || event.button > 0) return;
-    const item = state.historyItems[Number(block.dataset.weekEvent)];
+    const item = calendarRenderedItems[Number(block.dataset.weekEvent)];
     if (!item) return;
     cancelCalendarGesture();
     const rect = block.getBoundingClientRect(), column = block.closest('.week-day-column');
@@ -220,7 +338,7 @@ function setupCalendarInteractions() {
       const target = calendarPointTarget(event.clientX, event.clientY, g.grabMinutes), problem = calendarDropProblem(g.item, target);
       calendarIgnoreClickUntil = performance.now() + 600;
       cancelCalendarGesture();
-      if (problem) calendarFeedback(problem, true); else void moveCalendarWorklog(g.item, target);
+      if (problem) calendarFeedback(problem, true); else stageCalendarMove(g.item, target);
       event.preventDefault();
     } else { if (g.mobile && g.ready) calendarIgnoreClickUntil = performance.now() + 500; cancelCalendarGesture(); }
   });
@@ -240,9 +358,25 @@ function setupCalendarInteractions() {
   });
   document.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
+    if ($('calendarSaveDialog').open) {event.preventDefault();event.stopImmediatePropagation();closeCalendarSave();return;}
     if (calendarGesture || calendarEditMode) { event.preventDefault(); event.stopImmediatePropagation(); resetCalendarInteraction(); }
     else if ($('calendarLogDialog').open && !state.confirmOpen && !$('logProgressDialog').open) { event.preventDefault(); event.stopImmediatePropagation(); closeCalendarLog(); }
   }, true);
+  $('calendarSaveBtn').addEventListener('click', () => openCalendarSave());
+  $('calendarConfirmSaveBtn').addEventListener('click', () => {void saveCalendarDrafts();});
+  $('calendarCancelSaveBtn').addEventListener('click', closeCalendarSave);
+  $('calendarSaveDialog').addEventListener('cancel',event=>{event.preventDefault();closeCalendarSave();});
+  $('calendarSaveDialog').addEventListener('click',event=>{if(event.target===$('calendarSaveDialog'))closeCalendarSave();});
+  $('calendarDiscardBtn').addEventListener('click',()=>{
+    if(state.calendarMovePending)return;
+    const closeAfter=calendarCloseAfterSave;
+    clearCalendarDrafts();renderCalendarDrafts();calendarFeedback('');
+    // Read back the server positions, including any earlier partially saved item.
+    void loadWorklogHistory({quiet:true,force:true});
+    showToast('Đã bỏ các thay đổi chưa lưu.');
+    if(closeAfter)closeHistory();
+  });
+  window.addEventListener('beforeunload',event=>{if(state.calendarDrafts.size||state.calendarMovePending){event.preventDefault();event.returnValue='';}});
   $('closeCalendarLogBtn').addEventListener('click', () => closeCalendarLog());
   $('calendarLogDialog').addEventListener('cancel', event => { event.preventDefault(); closeCalendarLog(); });
   $('calendarLogDialog').addEventListener('click', event => { if (event.target === $('calendarLogDialog')) closeCalendarLog(); });

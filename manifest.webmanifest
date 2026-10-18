@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.14.0 – Calendar Logwork, Desktop Drag and Mobile Hold-to-Edit.",
+  "description": "Quick Jira Log V1.14.1 – Calendar Logwork, Desktop Drag and Mobile Hold-to-Edit.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

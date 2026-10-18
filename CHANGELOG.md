@@ -1,3 +1,14 @@
+# V1.14.1 — Kéo thả lưu tạm & xác nhận lưu lịch (2026-10-18)
+
+- Thả block chỉ tạo bản nháp, hiển thị viền/dấu chấm; không PATCH Jira trước xác nhận.
+- Icon lưu mặc định ẩn, hiện khi có ít nhất một thay đổi; đặt trong thanh trên cùng, hỗ trợ fullscreen và mobile hẹp.
+- Dialog xem giờ cũ/mới, lưu/quay lại/bỏ thay đổi; toast thành công và ẩn icon khi không còn bản nháp.
+- Đưa block về vị trí gốc tự bỏ bản nháp; mobile chạm ngoài chỉ thoát chế độ rung.
+- Đọc lịch mới trước ghi, kiểm tra stale/trùng, sắp thứ tự giải phóng ô; giữ nguyên duration/comment/OT. Chặn hoán đổi vòng cần vị trí trung gian.
+- Lỗi một phần giữ bản nháp còn lại, không gửi lại các lịch đã xác nhận; mất phản hồi đọc lại Jira trước lần ghi tiếp theo.
+- Bảo vệ đóng lịch/reload/đăng xuất, giữ bản nháp khi tải lại lịch hoặc chuyển kỳ; bản nháp chỉ trong phiên hiện tại.
+- PWA assets và version V1.14.1; thêm calendar-drafts helper, kiểm thử logic và UI.
+
 # V1.14.0 — Logwork trực tiếp trên lịch (2026-10-18)
 
 - Bấm khoảng trống lịch tuần, chọn Sub-task và dùng lại form logwork với ngày/giờ bắt đầu được điền sẵn.

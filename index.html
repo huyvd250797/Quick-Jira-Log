@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.14.0</title>
+  <title>Quick Jira Log · V1.14.1</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/favicon-64.png" />
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
@@ -27,7 +27,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.14.0</div>
+      <div class="boot-version">V1.14.1</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -36,7 +36,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.14.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.14.1</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -336,6 +336,7 @@
         <div class="settings-head">
           <div><h2 id="historyTitle">Worklog đã log</h2><p>Bấm chỗ trống để log · Kéo block để đổi giờ; mobile nhấn giữ.</p></div>
           <div class="history-header-actions">
+            <button id="calendarSaveBtn" class="calendar-icon-btn calendar-save-btn hidden" type="button" aria-label="Lưu lịch" title="Lưu lịch"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l4 4v14H3V3h2ZM7 3v6h10V3M7 21v-8h10v8"/></svg></button>
             <button id="calendarOptionsBtn" class="calendar-icon-btn" type="button" aria-label="Tùy chọn cách xem" aria-controls="historyControls" aria-expanded="false" title="Tùy chọn cách xem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg></button>
             <button id="calendarRefreshBtn" class="calendar-refresh-btn" type="button" aria-label="Tải lại lịch" title="Tải lại lịch">↻</button>
             <button id="calendarFullscreenBtn" class="calendar-icon-btn" type="button" aria-label="Xem lịch toàn màn hình" aria-pressed="false" title="Xem lịch toàn màn hình"><svg class="fullscreen-enter" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg><svg class="fullscreen-exit" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h5V3M21 8h-5V3M8 21v-5H3M16 21v-5h5"/></svg></button>
@@ -437,7 +438,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.14.0</footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.14.1</footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -458,6 +459,13 @@
   <script src="/lib/worklog-summary.js" defer></script>
   <script src="/lib/calendar-style.js" defer></script>
   <script src="/lib/remembered-login.js" defer></script>
+  <dialog id="calendarSaveDialog" aria-labelledby="calendarSaveTitle" aria-describedby="calendarSaveHint">
+    <header><h2 id="calendarSaveTitle">Xác nhận lưu lịch</h2><p id="calendarSaveHint"></p></header>
+    <ul id="calendarSaveList"></ul>
+    <p id="calendarSaveError" class="hidden" role="alert"></p>
+    <footer><button id="calendarDiscardBtn" type="button" class="text-btn">Bỏ thay đổi</button><div><button id="calendarCancelSaveBtn" type="button" class="secondary">Quay lại</button><button id="calendarConfirmSaveBtn" type="button" class="primary">Lưu lịch</button></div></footer>
+  </dialog>
+  <script src="/lib/calendar-drafts.js" defer></script>
   <script src="/calendar-interactions.js" defer></script>
   <script src="/app.js" defer></script>
 </body>

@@ -1,3 +1,17 @@
+# Kiểm thử V1.14.1
+
+## V1.14.1 — Lưu tạm và xác nhận lưu lịch
+
+- `npm test`: PASS toàn bộ logic/API; thêm `calendar-drafts-tests.js` kiểm tra projection không sửa bản gốc, giữ giây/OT/mô tả, thứ tự giải phóng ô, trùng và vòng hoán đổi.
+- `npm run test:ui`: PASS toàn bộ UI regression hiện có và Calendar Interactions. Giữ log đơn/Bulk, native OT, sửa/xóa, fullscreen, Tổng hợp, remembered login.
+- Luồng mới: icon lưu mặc định ẩn; kéo chỉ đổi preview, không PATCH; bấm icon và Quay lại không ghi; xác nhận mới PATCH. Đưa về gốc tự bỏ draft, lưu xong toast/icon ẩn.
+- Mobile CDP touch thực: hold/rung/drag; chạm ngoài thoát edit nhưng giữ draft; short tap và scroll trước hold hoạt động như cũ.
+- Refresh/fullscreen giữ preview; icon nằm gọn trên PC 1440×1100 và touch mobile 390×1000, 320×900. Dialog review dùng native top layer; nút ở mobile hẹp không tràn/chéo.
+- Server 403 giữ draft; đóng lịch có lựa chọn; bỏ thay đổi trả về dữ liệu thật. Mất phản hồi sau commit được GET đối chiếu trước retry, không PATCH lặp khi vị trí đã đúng.
+- Nhiều block: giải phóng ô gốc trước khi đưa block khác vào, lỗi thứ hai giữ chỉ draft còn lại; retry không ghi lại lịch thành công. Remote timestamp thay đổi được bắt trước PATCH.
+- Build không cần thiết với app HTML/Node hiện tại; Node syntax checks PASS. Không đổi cấu hình hoặc dependency runtime.
+- Jira/WorklogPRO giả lập; chưa xác minh tài khoản Jira thật hoặc iPhone/Safari vật lý. Bản nháp chỉ trong phiên, không bảo đảm tồn tại qua kill/reload/đăng xuất.
+
 # Kiểm thử V1.14.0
 
 ## V1.14.0 — Luồng tạo và kéo thả từ lịch

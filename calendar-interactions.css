@@ -56,3 +56,55 @@ html[data-theme="dark"] .calendar-interaction-state.is-error { color: #ff9aae; b
 #calendarLogDialog .worklog-title > div { flex: 1; min-width: 0; }
 #calendarLogDialog .worklog-title .compact-close { flex: 0 0 38px; }
 #calendarLogDialog .log-submit-actions { grid-template-columns: 1fr; }
+/* V1.14.1 — staged positions, explicit save and a compact review dialog. */
+#historyOverlay .calendar-save-btn { color: var(--primary); background: var(--primary-soft); border-color: var(--primary); }
+.week-worklog-block.is-calendar-draft { outline: 2px dashed var(--primary); outline-offset: -3px; }
+.week-worklog-block.is-calendar-draft::after { content: ''; position: absolute; right: 7px; bottom: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 2px var(--card); }
+#historyOverlay.is-calendar-saving #weeklyCalendar { pointer-events: none; }
+#calendarSaveDialog { color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 0; margin: auto; width: min(540px, calc(100vw - 28px)); max-width: calc(100vw - 28px); max-height: calc(100dvh - 28px); overflow: auto; overscroll-behavior: contain; box-shadow: 0 24px 90px #0005; }
+#calendarSaveDialog::backdrop { background: #030b17b8; backdrop-filter: blur(3px); }
+#calendarSaveDialog[open] { animation: qjl-calendar-open .18s ease-out; }
+#calendarSaveDialog header { padding: 20px 20px 14px; border-bottom: 1px solid var(--line); }
+#calendarSaveDialog h2 { margin: 0; font-size: 19px; }
+#calendarSaveDialog p { margin: 8px 0 0; line-height: 1.5; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+#calendarSaveList { list-style: none; padding: 0; margin: 0; max-height: 45dvh; overflow: auto; }
+#calendarSaveList li { padding: 14px 20px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 4px 7px; font-size: 13px; }
+#calendarSaveList strong { grid-column: 1 / -1; color: var(--primary); margin-bottom: 4px; overflow-wrap: anywhere; }
+#calendarSaveList span { grid-column: 2; overflow-wrap: anywhere; }
+#calendarSaveList b { grid-row: 2 / span 3; align-self: center; color: var(--muted); }
+#calendarSaveDialog #calendarSaveError { margin: 12px 20px; padding: 10px; border: 1px solid #db5673; border-radius: 10px; color: #c33254; }
+html[data-theme="dark"] #calendarSaveDialog #calendarSaveError { color: #ff9aae; }
+#calendarSaveDialog footer { padding: 16px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+#calendarSaveDialog footer > div { display: flex; flex: 1; justify-content: flex-end; gap: 8px; }
+#calendarSaveDialog footer button { width: auto; min-width: 0; font-size: 13px; padding: 10px 12px; }
+#calendarSaveDialog #calendarConfirmSaveBtn { background: var(--primary); color: #fff; border: 1px solid var(--primary); }
+#calendarSaveDialog #calendarDiscardBtn { color: var(--muted); }
+#historyOverlay.has-calendar-drafts.is-calendar-view .settings-head { padding-right: 350px; }
+@media (max-width:899px) {
+  #historyOverlay.has-calendar-drafts.is-calendar-view:not(.is-calendar-fullscreen) .settings-head { padding-right: 12px; flex-wrap: wrap; gap: 8px; }
+  #historyOverlay.has-calendar-drafts:not(.is-calendar-fullscreen) .history-header-actions { margin-left: auto; }
+  #calendarSaveDialog header, #calendarSaveList li { padding-left: 16px; padding-right: 16px; }
+  #calendarSaveDialog footer { padding: 12px 16px; }
+}
+@media (prefers-reduced-motion: reduce) { #calendarSaveDialog[open] { animation: none; } }
+#historyOverlay.has-calendar-drafts.is-calendar-fullscreen #calendarSaveBtn { position: absolute; right: calc(max(6px, env(safe-area-inset-right)) + 84px); top: max(6px, env(safe-area-inset-top)); z-index: 12; width: 36px; height: 36px; }
+#historyOverlay.has-calendar-drafts.is-calendar-fullscreen .calendar-navigation { padding-right: 126px; }
+@media (min-width:900px) {
+  #historyOverlay.has-calendar-drafts.is-calendar-view:not(.is-calendar-fullscreen) .settings-head { padding-right: 440px; }
+  #historyOverlay.has-calendar-drafts.is-calendar-view:not(.is-calendar-fullscreen) .history-controls { right: 196px; }
+}
+@media (orientation:landscape) and (max-width:1199px) {
+  #historyOverlay.has-calendar-drafts.is-calendar-fullscreen #calendarControls { padding-right: 126px; }
+  #historyOverlay.has-calendar-drafts.is-calendar-fullscreen .calendar-navigation { padding-right: 0; }
+}
+@media (orientation:portrait) and (max-width:599px) {
+  #historyOverlay.has-calendar-drafts.is-calendar-fullscreen .calendar-date-field { flex: 1 1 80px; min-width: 80px; max-width: 145px; }
+  #historyOverlay.has-calendar-drafts.is-calendar-fullscreen .calendar-date-field input { padding: 5px 2px; font-size: 12px; }
+}
+body:has(#historyOverlay.is-calendar-fullscreen) .toast { z-index: 250; }
+@media (max-width:399px) {
+  #calendarSaveDialog footer { flex-direction:column; align-items:stretch; }
+  #calendarSaveDialog footer > div { order:0; width:100%; }
+  #calendarSaveDialog footer > div button { flex:1; white-space:nowrap; }
+  #calendarSaveDialog #calendarDiscardBtn { order:1; padding:6px 10px; }
+}

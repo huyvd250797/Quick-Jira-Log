@@ -8,7 +8,7 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
   const mobile=viewport.width<900,context=await browser.newContext({viewport,hasTouch:mobile,isMobile:mobile,serviceWorkers:'block',timezoneId:'Asia/Ho_Chi_Minh'}),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{const D=Date;window.Date=class extends D{constructor(...args){super(...args.length?args:['2026-10-16T13:00:00Z']);}static now(){return D.parse('2026-10-16T13:00:00Z');}};});
-  let logs=[],posts=[],patches=[],rejectMove=false;
+  let logs=[],posts=[],patches=[],rejectMove=false,unknownMove=false,rejectId='';
   const make=(id,start,minutes)=>({id:String(id),key:'CAL-1',project:'CAL',summary:'Hỗ trợ vận hành hệ thống',description:'Giữ nguyên mô tả',date:'2026-10-16',start,end:`${String(Math.floor((parseInt(start)*60+Number(start.slice(3))+minutes)/60)).padStart(2,'0')}:${String((Number(start.slice(3))+minutes)%60).padStart(2,'0')}`,minutes,timeSpentSeconds:minutes*60,started:`2026-10-16T${start}:00.000+0700`,overtimeKnown:true,overtime:false});
   logs.push(make('2','09:00',60));
   await page.route('**/api?*',async route=>{
@@ -24,10 +24,13 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
    }
    if(action==='worklog-correction'){
     const body=route.request().postDataJSON();patches.push(body);
-    if(rejectMove){status=403;data={ok:false,error:'Jira không cho phép sửa worklog này.'};}
-    else{const log=logs.find(x=>x.id===body.worklogId);assert.equal(body.moveOnly,true);assert.equal(body.expectedSeconds,log.timeSpentSeconds);assert.equal(body.expectedStarted,log.started);
+    if(rejectMove||body.worklogId===rejectId){status=403;data={ok:false,error:'Jira không cho phép sửa worklog này.'};}
+    else{const log=logs.find(x=>x.id===body.worklogId);const n=t=>Number(t.slice(0,2))*60+Number(t.slice(3));
+     assert(!logs.some(x=>x.id!==body.worklogId&&x.date===body.date&&n(body.start)<n(x.start)+x.minutes&&n(body.start)+log.minutes>n(x.start)),'Save order must free occupied originals before moving into them');
+     assert.equal(body.moveOnly,true);assert.equal(body.expectedSeconds,log.timeSpentSeconds);assert.equal(body.expectedStarted,log.started);
      log.date=body.date;log.start=body.start;log.end=`${String(parseInt(body.start)+1).padStart(2,'0')}:${body.start.slice(3)}`;log.started=`${body.date}T${body.start}:00.000+0700`;
-     data={ok:true,moved:true,worklogVerified:true,date:body.date,start:body.start,timeSpentSeconds:log.timeSpentSeconds};}
+     data={ok:true,moved:true,worklogVerified:true,date:body.date,start:body.start,timeSpentSeconds:log.timeSpentSeconds};
+     if(unknownMove){unknownMove=false;await route.abort('failed');return;}}
    }
    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
   });
@@ -39,6 +42,7 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
    const r=col.getBoundingClientRect(),scale=r.height/Number(col.parentElement.dataset.minuteRange),from=Number(col.dataset.fromMinute);
    return{x:Math.min(innerWidth-20,r.left+40),y:r.top+(minute-from)*scale+2};
   },{minute:time,date});
+  assert.equal(await page.locator('#calendarSaveBtn').isVisible(),false);
   const slot=await point(900);await page.mouse.click(slot.x,slot.y);
   await page.waitForFunction(()=>document.getElementById('calendarLogDialog').open);
   assert.equal(await page.evaluate(()=>['INPUT','TEXTAREA'].includes(document.activeElement.tagName)),false);
@@ -64,17 +68,39 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
     await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await session.detach();
    }else{await page.mouse.move(geometry.x,geometry.y);await page.mouse.down();await page.mouse.move(target.x,target.y,{steps:12});await page.mouse.up();}
   };
-  await drag(480);await page.waitForFunction(()=>!state.calendarMovePending&&state.historyLoaded&&state.historyItems.some(x=>x.id==='1'&&x.start==='08:00'));
-  assert.equal(patches.length,1);assert.equal(logs.find(x=>x.id==='1').end,'09:00');assert.equal(logs.find(x=>x.id==='1').description,'Giữ nguyên mô tả');
-  if(mobile){assert.equal(await page.evaluate(()=>calendarEditMode),true);const blank=await point(660);await page.mouse.click(blank.x,blank.y);assert.equal(await page.evaluate(()=>calendarEditMode),false);assert.equal(await page.locator('#calendarLogDialog').evaluate(x=>x.open),false);}
-  // Overlap is rejected before any API mutation.
-  const before=patches.length;await drag(540);await page.waitForTimeout(150);assert.equal(patches.length,before);assert.equal(logs.find(x=>x.id==='1').start,'08:00');assert((await page.locator('#calendarInteractionState').textContent()).includes('đã có worklog'));
+  const confirmSave=async()=>{await page.locator('#calendarSaveBtn').click();await page.waitForFunction(()=>document.getElementById('calendarSaveDialog').open);await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!state.historyLoading);};
+  const draftCount=()=>page.evaluate(()=>state.calendarDrafts.size);
+  await drag(480);assert.equal(await draftCount(),1);assert.equal(patches.length,0);assert.equal(logs.find(x=>x.id==='1').start,'15:00');
+  assert.equal(await page.locator('#calendarSaveBtn').isVisible(),true);assert.equal(await page.locator('.is-calendar-draft').count(),1);
+  const headerFit=await page.locator('.history-header-actions').evaluate(e=>[...e.querySelectorAll('button')].filter(x=>x.getClientRects().length).every(x=>{const r=x.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;}));assert(headerFit);
+  // Leaving mobile edit mode preserves the pending move without opening a log form.
+  if(mobile){assert.equal(await page.evaluate(()=>calendarEditMode),true);const blank=await point(660);await page.mouse.click(blank.x,blank.y);assert.equal(await page.evaluate(()=>calendarEditMode),false);assert.equal(await page.locator('#calendarLogDialog').evaluate(x=>x.open),false);assert.equal(await draftCount(),1);}
+  await page.locator('#calendarSaveBtn').click();assert.equal(patches.length,0);assert((await page.locator('#calendarSaveList').textContent()).includes('08:00'));
+  await page.locator('#calendarCancelSaveBtn').click();assert.equal(await draftCount(),1);assert.equal(patches.length,0);
+  // Refresh and fullscreen must retain drafts and expose a usable save icon.
+  await page.locator('#calendarRefreshBtn').click();await page.waitForFunction(()=>!state.historyLoading);assert.equal(await page.locator('.is-calendar-draft').count(),1);
+  await page.locator('#calendarFullscreenBtn').click();await page.waitForFunction(()=>state.calendarFullscreen);await page.waitForTimeout(200);
+  const fullscreenFit=await page.locator('#calendarSaveBtn').evaluate(e=>{const r=e.getBoundingClientRect();return r.width>20&&r.left>=0&&r.right<=innerWidth;});assert(fullscreenFit);
+  await page.locator('#calendarSaveBtn').click();assert(await page.locator('#calendarSaveDialog').evaluate(e=>e.open));await page.waitForTimeout(220);
+  if(process.env.QJL_QA_OUTPUT)await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`calendar-review-fullscreen-${viewport.width}.png`)});
+  await page.locator('#calendarCancelSaveBtn').click();
+  await page.locator('#calendarFullscreenBtn').click();await page.waitForFunction(()=>!state.calendarFullscreen);await page.waitForTimeout(200);
+  if(process.env.QJL_QA_OUTPUT){fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`calendar-draft-${viewport.width}.png`)});}
+  await confirmSave();await page.waitForFunction(()=>!document.getElementById('calendarSaveDialog').open);
+  assert.equal(patches.length,1);assert.equal(logs.find(x=>x.id==='1').start,'08:00');assert.equal(logs.find(x=>x.id==='1').end,'09:00');assert.equal(logs.find(x=>x.id==='1').description,'Giữ nguyên mô tả');assert.equal(await page.locator('#calendarSaveBtn').isVisible(),false);assert((await page.locator('#toast').textContent()).includes('Lưu lịch thành công'));
+  // Returning a preview to its original position removes the draft without a write.
+  await drag(600);assert.equal(await draftCount(),1);await drag(480);assert.equal(await draftCount(),0);assert.equal(patches.length,1);assert.equal(await page.locator('#calendarSaveBtn').isVisible(),false);
+  const before=patches.length;await drag(540);await page.waitForTimeout(150);assert.equal(patches.length,before);assert.equal(await draftCount(),0);assert((await page.locator('#calendarInteractionState').textContent()).includes('đã có worklog'));
   if(mobile){const blank=await point(660);await page.mouse.click(blank.x,blank.y);}
-  rejectMove=true;await drag(810);await page.waitForFunction(()=>!state.calendarMovePending);await page.waitForTimeout(100);
-  assert.equal(patches.length,before+1);assert.equal(logs.find(x=>x.id==='1').start,'08:00');assert((await page.locator('#calendarInteractionState').textContent()).includes('không cho phép'));
-  if(process.env.QJL_QA_OUTPUT){fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`calendar-drag-${viewport.width}.png`)});}
-  rejectMove=false;
-  if(!mobile){await drag(810,{targetDate:'2026-10-12'});await page.waitForFunction(()=>!state.calendarMovePending&&state.historyItems.some(x=>x.id==='1'&&x.date==='2026-10-12'));assert.equal(logs.find(x=>x.id==='1').start,'13:30');}
+  rejectMove=true;await drag(810);assert.equal(patches.length,before);await confirmSave();
+  assert.equal(patches.length,before+1);assert.equal(logs.find(x=>x.id==='1').start,'08:00');assert.equal(await draftCount(),1);assert((await page.locator('#calendarSaveError').textContent()).includes('không cho phép'));assert.equal(await page.locator('#calendarSaveBtn').isVisible(),true);
+  await page.locator('#calendarCancelSaveBtn').click();assert.equal(await draftCount(),1);
+  await page.locator('#closeHistoryBtn').click();assert(await page.locator('#calendarSaveDialog').evaluate(e=>e.open));assert.equal(await page.locator('#historyOverlay').isVisible(),true);
+  await page.locator('#calendarCancelSaveBtn').click();await page.locator('#calendarSaveBtn').click();await page.locator('#calendarDiscardBtn').click();await page.waitForFunction(()=>!state.historyLoading);assert.equal(await draftCount(),0);assert.equal(logs.find(x=>x.id==='1').start,'08:00');rejectMove=false;
+  // A lost response after commit is reconciled using GET before another PATCH.
+  await drag(600);unknownMove=true;await confirmSave();assert.equal(await draftCount(),1);assert.equal(logs.find(x=>x.id==='1').start,'10:00');const afterUnknown=patches.length;
+  await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!document.getElementById('calendarSaveDialog').open);assert.equal(patches.length,afterUnknown);assert.equal(await draftCount(),0);
+  if(!mobile){await drag(810,{targetDate:'2026-10-12'});assert.equal(logs.find(x=>x.id==='1').date,'2026-10-16');await confirmSave();assert.equal(logs.find(x=>x.id==='1').date,'2026-10-12');assert.equal(logs.find(x=>x.id==='1').start,'13:30');}
   else{
    const blank=await point(660);await page.touchscreen.tap(blank.x,blank.y);await page.waitForTimeout(650);
    await point(480);
@@ -86,7 +112,27 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
    await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:source.x,y:source.y+45}]});await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(650);await session.detach();
    assert.equal(await page.evaluate(()=>calendarEditMode),false);assert.equal(await page.locator('#calendarLogDialog').evaluate(e=>e.open),false);
   }
-  assert.deepEqual(errors,[]);await context.close();console.log('V1.14.0 calendar click → original form → exact time, drag PC/touch hold jiggle/drop/exit, overlap, server rejection and no optimistic move passed',viewport);
+  if(!mobile){
+   logs=[make('1','15:00',60),make('2','08:00',60)];
+   await page.evaluate(async()=>{document.getElementById('historyDate').value='2026-10-16';await loadWorklogHistory({quiet:true,force:true});});
+   const stage=async(id,start)=>page.evaluate(({id,start})=>stageCalendarMove(state.historyItems.find(x=>x.id===id),{date:'2026-10-16',start}),{id,start});
+   // First A targets B's old slot, then B vacates it: the save must order B first.
+   await stage('2','10:00');await stage('1','08:00');
+   const orderBefore=patches.length;await confirmSave();assert.deepEqual(patches.slice(orderBefore).map(x=>x.worklogId),['2','1']);
+   assert.equal(await draftCount(),0);assert.equal(logs.find(x=>x.id==='1').start,'08:00');
+   // A confirmed success is removed; only the rejected second item remains/retries.
+   await stage('1','13:30');await stage('2','15:00');rejectId='2';const partialBefore=patches.length;await confirmSave();
+   assert.equal(await draftCount(),1);assert.equal(logs.find(x=>x.id==='1').start,'13:30');assert.equal(logs.find(x=>x.id==='2').start,'10:00');assert((await page.locator('#calendarSaveError').textContent()).includes('1/2'));
+   rejectId='';await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!document.getElementById('calendarSaveDialog').open);
+   assert.deepEqual(patches.slice(partialBefore).map(x=>x.worklogId),['1','2','2']);assert.equal(await draftCount(),0);
+   // A fresh remote change is detected before any PATCH, keeping the pending move.
+   await stage('1','08:00');const staleBefore=patches.length;logs.find(x=>x.id==='1').started='2026-10-16T14:30:00.000+0700';logs.find(x=>x.id==='1').start='14:30';
+   await confirmSave();assert.equal(patches.length,staleBefore);assert.equal(await draftCount(),1);assert((await page.locator('#calendarSaveError').textContent()).includes('đã thay đổi'));
+   await page.locator('#calendarDiscardBtn').click();await page.waitForFunction(()=>!state.historyLoading);
+   // Closing with a pending position requires a decision; discard closes safely.
+   await stage('1','08:00');await page.locator('#closeHistoryBtn').click();await page.locator('#calendarDiscardBtn').click();await page.waitForTimeout(250);assert.equal(await page.locator('#historyOverlay').isVisible(),false);assert.equal(await draftCount(),0);
+  }
+  assert.deepEqual(errors,[]);await context.close();console.log('V1.14.1 click-to-log, staged drag, explicit confirm/cancel/save/discard, refresh/fullscreen, mobile hold/exit, overlap, rejected save and unknown-result reconciliation passed',viewport);
  }
  await browser.close();await new Promise(r=>server.close(r));
 })().catch(e=>{console.error(e);server.close();process.exit(1)});
