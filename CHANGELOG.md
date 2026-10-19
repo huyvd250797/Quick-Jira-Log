@@ -1,3 +1,10 @@
+# V1.15.3 — Subtle Calendar Hours
+
+- Tô xám nhẹ nền lịch ngoài hai ca 08:00–12:00 và 13:30–17:30, có màu phù hợp light/dark.
+- Tọa độ màu đồng bộ độ giãn fullscreen và thời điểm bắt đầu lịch khi có worklog sớm/muộn.
+- Giữ lưới 30 phút, màu block dự án/OT và toàn bộ tương tác/luồng logwork hiện có; không bổ sung ràng buộc mới.
+- Cache PWA và nhãn phiên bản tăng lên V1.15.3, precache stylesheet mới.
+
 # V1.15.2 — Clock & Green Check Identity
 
 - Thay toàn bộ logo/icon bằng đồng hồ + dấu check xanh lá đã chốt, SVG source và PNG sẵn dùng.

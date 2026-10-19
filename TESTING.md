@@ -1,3 +1,11 @@
+# Kiểm thử V1.15.3 — Subtle Calendar Hours
+
+- `npm test`: PASS toàn bộ bộ logic/API hiện có (bao gồm OT, calendar drafts/swap và user viewer).
+- Visual QA Chromium: PASS 24 tổ hợp PC 1440×1100, mobile 390×844, landscape 844×390 × light/dark × thường/fullscreen × lịch 08:00–18:00/lịch mở rộng 07:00–19:00. Lấy mẫu màu thực để đối chiếu hai ca không tô, nghỉ trưa tô đủ đến 13:30, vùng sau 17:30 và trước 08:00 cùng sắc xám; chênh nền tối đa 20/255 mỗi kênh để tránh tương phản quá đậm. Đã xem ảnh và kiểm tra lớp nền không che hit target cột lịch.
+- `tests/browser/calendar-interactions.cjs`: PC PASS toàn bộ create/drag/draft/confirm/save/discard. Mobile chạy tới phần short-tap mở chi tiết sau nhiều thao tác thì timeout; không ghi nhận PASS toàn bộ mobile interaction suite. Không thay source tương tác/handler trong bản này.
+- Byte comparison khi đóng gói: handler/API/lib, calendar-interactions và calendar-viewer giữ nguyên; app.js chỉ đổi version và khai báo mốc phút cho CSS. Cache/CSS/reference/version/syntax và ZIP CRC được kiểm tra.
+- Không kiểm chứng iPhone/Safari vật lý hoặc Jira công ty; ảnh và pixel samples là Chromium giả lập. Không đổi quy tắc OT hoặc chặn thêm khung giờ.
+
 # Kiểm thử V1.15.2 — Clock & Green Check Identity
 
 - `npm test`: PASS toàn bộ bộ logic/API hiện có, bao gồm WorklogPRO/OT, log đơn/Bulk, calendar edits/drafts/swap, user viewer và personnel suggestions.

@@ -1,3 +1,8 @@
+## V1.15.3 — Subtle Calendar Hours: đã xây dựng
+
+- Nền xám nhẹ cho khoảng nghỉ trưa và ngoài giờ thường trên lịch tuần; đồng bộ PC/mobile/fullscreen/light/dark.
+- Không thay đổi luồng logwork, OT hoặc quyền xem/sửa lịch.
+
 ## V1.15.2 — Clock & Green Check Identity: đã xây dựng
 
 - Logo đồng hồ + dấu check xanh đồng bộ PC/mobile/PWA; versioned icons, Apple aliases và cập nhật cache.
