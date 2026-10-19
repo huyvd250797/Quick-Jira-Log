@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.15.4';
+const APP_VERSION = '1.15.5';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -81,6 +81,7 @@ const state = {
   historyCache: new Map(),
   historyRevision: 0,
   dayAuditCache: new Map(),
+  dayAuditRevision: 0,
   apiInflight: new Map(),
   swUpdateRegistration: null,
   swReloading: false,
@@ -200,6 +201,7 @@ function invalidateHistoryCache() {
 }
 
 function invalidateDayAuditCache(date = '') {
+  state.dayAuditRevision += 1;
   if (!date) {
     state.dayAuditCache.clear();
     return;
@@ -210,12 +212,13 @@ function invalidateDayAuditCache(date = '') {
 }
 
 async function fetchDayAudit(date, key = '', { force = false } = {}) {
+  const user = state.user, revision = state.dayAuditRevision;
   const cacheKey = `${date}|${String(key || '').toUpperCase()}`;
   const cached = state.dayAuditCache.get(cacheKey);
   if (!force && cached && Date.now() - Number(cached.at || 0) < 15000) return cached.data;
-  const path = `/api?action=day-audit&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? '&force=1' : ''}`;
+  const path = `/api?action=day-audit&date=${encodeURIComponent(date)}${key ? `&key=${encodeURIComponent(key)}` : ''}&revision=${revision}${force ? '&force=1' : ''}`;
   const data = await api(path, { method: 'GET', cache: 'no-store' });
-  state.dayAuditCache.set(cacheKey, { at: Date.now(), data });
+  if (state.user === user && state.dayAuditRevision === revision) state.dayAuditCache.set(cacheKey, { at: Date.now(), data });
   return data;
 }
 
@@ -1572,7 +1575,7 @@ async function fetchHistoryRange(range, key = '', force = false, summaryScope = 
   const cacheKey = `${range.start}|${range.end}|${key}|${summaryScope ? 'summary' : 'history'}`;
   const cached = state.historyCache.get(cacheKey);
   if (!force && cached && Date.now() - cached.at < 20000) return cached.data;
-  const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(range.start)}${range.end !== range.start ? `&endDate=${encodeURIComponent(range.end)}` : ''}${key ? `&key=${encodeURIComponent(key)}` : ''}${force ? `&force=1&revision=${revision}` : ''}${summaryScope ? '&scope=summary' : ''}`, { method: 'GET', cache: 'no-store' });
+  const data = await api(`/api?action=worklog-history&date=${encodeURIComponent(range.start)}${range.end !== range.start ? `&endDate=${encodeURIComponent(range.end)}` : ''}${key ? `&key=${encodeURIComponent(key)}` : ''}&revision=${revision}${force ? '&force=1' : ''}${summaryScope ? '&scope=summary' : ''}`, { method: 'GET', cache: 'no-store' });
   if (state.user === user && state.historyRevision === revision) state.historyCache.set(cacheKey, { at: Date.now(), data });
   return data;
 }

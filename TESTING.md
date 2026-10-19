@@ -1,3 +1,15 @@
+# Kiểm thử V1.15.5 — Dimmed Loading & Fresh Jira Reads
+
+- `npm test`: PASS toàn bộ logic/API hiện có và `tests/read-scope-tests.js`. Giữ kiểm tra log đơn/Bulk, OT native form/readback, chống trùng, calendar save/swap/rollback và quyền lịch người khác.
+- Read scope: 8 lượt GET đồng thời chỉ gọi Jira một lần, dữ liệu consumer độc lập; đọc kế tiếp gọi mới. Tách API request/auth/headers/timeout, lỗi không giữ lại, hai ghi giống nhau vẫn là hai ghi, readback tách lượt đọc đang chờ trước ghi.
+- Handler API thật với Jira fixture: 500 task/5 trang, POST search bị từ chối, GET được phép: 1 POST + 5 GET thay vì 5 POST + 5 GET. API request kế tiếp tự xác định lại và nhận dữ liệu mới. Kiểm tra GET ưu tiên lỗi thì fallback POST, 401 không fallback.
+- `tests/browser/read-freshness.cjs`: PASS phản hồi lịch cũ về sau phản hồi mới không ghi đè cache; day audit tương tự; phản hồi của tài khoản trước không lấp cache tài khoản mới. Revision tạo request riêng sau invalidate, không tăng TTL.
+- `tests/browser/loading-feedback.cjs`: PASS 1440×1000, 390×844, 844×390; light/dark, nền phủ alpha 0.3–0.55 trong khi card/foreground opacity 1, ở giữa viewport, spinner/cỡ chữ, đóng/mở/error/retry/fullscreen/native picker/focus/reduced motion và một tiến trình log. Đã xem ảnh PC dark/mobile light.
+- `tests/browser/workflow.cjs`: PASS desktop và iPhone giả lập: dashboard, tuần/tháng, block, sửa/xóa, streaming progress và interrupted response.
+- `tests/browser/branding.cjs`: PASS 4 viewport và service worker upgrade thật trên localhost; nhận cache V1.15.5, giữ localStorage, icon offline. Logo V1.15.2 giữ nguyên.
+- So source đầu vào: không đổi các handler nghiệp vụ; chỉ thêm API read scope, Jira read wrapper/search-method hint, native-form read barrier, frontend revision và backdrop/version/docs/tests. Node syntax, precache assets, version và ZIP CRC kiểm tra khi đóng gói.
+- Không chạy toàn bộ chuỗi `test:ui`; các bộ ảnh hưởng trực tiếp nêu trên đã chạy. Dữ liệu giả lập không thay cho kiểm chứng Jira công ty hoặc iPhone/Safari vật lý. Không cam kết phần trăm giảm thời gian logwork thực tế; quyền, tải Jira/WorklogPRO và đường truyền vẫn ảnh hưởng.
+
 # Kiểm thử V1.15.4 — Centered Loading & Faster Jira Reads
 
 - `npm test`: PASS bộ logic/API trước đó. `tests/performance-tests.js`: PASS pool guard tối đa 12 không kẹt task chậm; 24 issue đọc đủ; metadata tối đa 3 batch, đủ 350 key/phân trang 20 item dù yêu cầu 100, đúng thứ tự/dedup/401; handler log đơn và Bulk discovery chồng thời gian metadata, không đọc worklog hoặc ghi trước validation, project sai không ghi.

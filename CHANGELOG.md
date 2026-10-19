@@ -1,3 +1,12 @@
+# V1.15.5 — Dimmed Loading & Fresh Jira Reads
+
+- Nền tối dưới thẻ loading, phù hợp light/dark; foreground giữ sáng, không blur hay thêm thanh tiến trình.
+- Gộp chỉ các read in-flight giống nhau trong một API request; tách auth/options, clone dữ liệu cho consumer, không cache kết quả hoàn tất.
+- Mọi ghi REST và form WorklogPRO native là ranh giới đọc mới. Không gộp hoặc tự retry ghi; readback không dùng lượt đọc trước ghi.
+- Nhớ GET search thành công trong một lần xử lý khi POST bị từ chối; phân trang vẫn đầy đủ, lựa chọn reset ở request mới.
+- Revision lịch/day audit ngăn phản hồi trước cập nhật hoặc trước đổi tài khoản ghi đè cache mới. Không tăng TTL cache.
+- Nâng UI/PWA lên V1.15.5, thêm regression API scope/fresh reads và browser race cases.
+
 # V1.15.4 — Centered Loading & Faster Jira Reads
 
 - Thẻ loading trung tâm với spinner và chữ dễ đọc, theo busy state của màn hình, không chặn thao tác/focus; dữ liệu cache trả nhanh không nháy thẻ.

@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.15.4 – Centered Loading & Faster Jira Reads.",
+  "description": "Quick Jira Log V1.15.5 – Dimmed Loading & Fresh Jira Reads.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

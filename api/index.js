@@ -1,4 +1,5 @@
 'use strict';
+const { withJiraReadScope } = require('../lib/jira-read-scope');
 
 const handlers = Object.freeze({
   'login': require('../handlers/login'),
@@ -29,5 +30,5 @@ module.exports = async function handler(req, res) {
     return res.end(JSON.stringify({ ok: false, error: 'API_NOT_FOUND' }));
   }
 
-  return target(req, res);
+  return withJiraReadScope(() => target(req, res));
 };

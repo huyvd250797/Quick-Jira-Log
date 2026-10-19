@@ -1,5 +1,6 @@
-/* V1.15.4 — One readable, centered indeterminate data-loading status. */
-#dataLoadingFeedback { position: fixed; inset: 0; z-index: 180; display: grid; place-items: center; padding: 20px; box-sizing: border-box; pointer-events: none; }
+/* V1.15.5 — One readable, centered indeterminate data-loading status. */
+#dataLoadingFeedback { position: fixed; inset: 0; z-index: 180; display: grid; place-items: center; padding: 20px; box-sizing: border-box; pointer-events: none; background: rgba(6, 15, 29, .36); }
+html[data-theme="dark"] #dataLoadingFeedback { background: rgba(0, 5, 14, .48); }
 #dataLoadingFeedback[hidden] { display: none; }
 #historyResults[aria-busy="true"] #worklogHistoryState,
 #plannerOverlay .summary-body[aria-busy="true"] #summaryState,
