@@ -1,6 +1,22 @@
-# Quick Jira Log V1.15.5 — Dimmed Loading & Fresh Jira Reads
+# Quick Jira Log V1.15.6 — Adaptive Calendar Fullscreen
 
 Ứng dụng PWA dùng Jira/WorklogPRO hiện có. Source sẵn sàng push GitHub và deploy Vercel; không thêm database hoặc dependency runtime.
+
+## V1.15.6 — Fullscreen theo hướng cầm máy
+
+- Bật fullscreen **giữ hướng màn hình hiện tại**, không gọi khóa ngang hoặc mở khóa hướng màn hình. Người dùng chủ động xoay máy; lịch tự bố trí lại theo kích thước viewport. Manifest tiếp tục cho phép mọi hướng (`any`).
+- Màn hình dọc: hai hàng gọn cho điều hướng ngày và chế độ xem. Chọn người dùng của mình hiển thị bằng icon, tên đầy đủ có trong tooltip/nhãn truy cập; lịch người khác vẫn hiện tên rút gọn và nhãn **Chỉ xem**.
+- Màn hình ngang đủ rộng: một hàng cho ngày, tuần/tháng, màu dự án, T7/CN, chọn người dùng và các icon tùy chọn/fullscreen/lưu nháp. Cửa sổ ngang hẹp ẩn tổng giờ tóm tắt để giữ chỗ cho thao tác; khi xem người khác ở màn hình hẹp có thể dùng hai hàng để giữ tên và trạng thái chỉ xem.
+- Giảm lề, khoảng cách và chiều cao header ngày. Thanh progress theo ngày vẫn giữ, cột giờ gọn hơn. Khung lịch dùng toàn bộ phần còn lại của viewport, chừa safe area cho tai thỏ và thanh Home. Không thu nhỏ tỷ lệ phút xuống dưới mức cũ để nhồi chữ; các ngày/giờ vượt khung vẫn cuộn trong lịch.
+- Hướng dẫn nhấn giữ vẫn hiện khi xem bình thường; trong fullscreen chuyển vào **Tùy chọn cách xem** để giải phóng diện tích. Chọn ngày hiện tại vẫn thực hiện được qua ô ngày; tiêu đề màn hình và dòng tổng kết phụ không chiếm thêm hàng.
+- Bản nháp kéo thả và ngày đang xem được giữ khi xoay máy. Icon **Lưu lịch** xuất hiện đúng khi có thay đổi, nằm cạnh icon tùy chọn và thoát fullscreen. Chế độ chọn user chỉ có ở fullscreen như trước; thoát fullscreen trở về lịch cá nhân.
+- Không đổi API Jira/WorklogPRO, giờ log, OT, lưu nháp/xác nhận, swap hoặc luồng log đơn/Bulk. Giữ nền loading tối và các tối ưu đọc dữ liệu V1.15.5.
+
+### Triển khai V1.15.6
+
+Deploy nội dung thư mục `Quick-Jira-Log-V1.15.6` lên project Vercel đang dùng, giữ biến môi trường hiện có. Mở PWA, chấp nhận **Cập nhật** nếu được hỏi và kiểm tra nhãn **V1.15.6**. Stylesheet fullscreen mới đã được precache.
+
+Chạy `npm test`, `npm run test:fullscreen`; các bộ UI liên quan có trong `TESTING.md`. Kiểm thử Chromium desktop/touch không thay thế kiểm chứng Safari/iPhone vật lý. Khả năng ẩn thanh trình duyệt phụ thuộc trình duyệt; fullscreen trong trang vẫn tận dụng visual viewport khi native fullscreen không có hoặc bị từ chối.
 
 ## V1.15.5 — Loading rõ hơn, giảm truy vấn lặp
 
@@ -12,7 +28,7 @@
 
 Trong fixture 500 task/5 trang, Jira từ chối POST search: số lần gọi giảm **10 → 6** (1 POST bị từ chối + 5 GET), đọc đủ và thấy dữ liệu thay đổi ở lần gọi sau. Đây là giảm số request trong tình huống cụ thể, không phải cam kết phần trăm tăng tốc tổng logwork trên Jira công ty.
 
-Deploy nội dung thư mục `Quick-Jira-Log-V1.15.5` lên project Vercel hiện tại, giữ cấu hình/biến môi trường. Chấp nhận **Cập nhật** trong PWA nếu được hỏi và kiểm tra nhãn **V1.15.5**. Không cần database hay dependency runtime mới.
+Deploy nội dung thư mục `Quick-Jira-Log-V1.15.6` lên project Vercel hiện tại, giữ cấu hình/biến môi trường. Chấp nhận **Cập nhật** trong PWA nếu được hỏi và kiểm tra nhãn **V1.15.5**. Không cần database hay dependency runtime mới.
 
 Kiểm thử: `npm test`, `npm run test:loading`, `npm run test:reads`. Dùng `QJL_CHROMIUM_PATH` nếu Chromium nằm ngoài đường dẫn mặc định. Chi tiết trong `TESTING.md`; chưa đối chiếu Jira công ty hay iPhone/Safari vật lý.
 
@@ -32,7 +48,7 @@ Benchmark so với V1.15.3, chạy 3 lần với cùng fixture và độ trễ m
 
 ### Cập nhật
 
-Deploy nội dung thư mục `Quick-Jira-Log-V1.15.5` lên cùng project Vercel, giữ nguyên biến môi trường hiện có; không cần database hoặc dịch vụ mới. Mở PWA, chọn **Cập nhật** nếu có thông báo, kiểm tra nhãn **V1.15.4**. Hai file loading mới đã được precache.
+Deploy nội dung thư mục `Quick-Jira-Log-V1.15.6` lên cùng project Vercel, giữ nguyên biến môi trường hiện có; không cần database hoặc dịch vụ mới. Mở PWA, chọn **Cập nhật** nếu có thông báo, kiểm tra nhãn **V1.15.4**. Hai file loading mới đã được precache.
 
 Chạy `npm test`, `npm run test:performance`; khi có Playwright/Chromium, chạy `npm run test:loading`. Có thể dùng `QJL_CHROMIUM_PATH` trỏ tới Chromium cài sẵn. Chưa kiểm chứng Jira/WorklogPRO công ty hoặc iPhone vật lý.
 
@@ -42,7 +58,7 @@ Chạy `npm test`, `npm run test:performance`; khi có Playwright/Chromium, ch�
 - Light mode dùng xám nhạt; dark mode dùng xám sáng với độ phủ thấp để phân biệt mà không chói. Lưới 30 phút vẫn rõ và block worklog giữ nguyên màu dự án/Overtime.
 - Vùng màu gắn theo tọa độ phút của lịch: đúng khi fullscreen kéo giãn, xem PC/mobile, T7/CN hoặc lịch mở rộng vì worklog có giờ sớm/muộn. Cột giờ và header ngày giữ nguyên.
 - Chỉ thay giao diện nền: không tạo lớp chặn thao tác; không thay luật logwork, Overtime, kéo thả/swap hoặc quyền chỉ xem lịch người khác. Màu xám chỉ phân biệt **ngoài giờ thường**, không thể hiện rằng worklog Overtime đã tồn tại là không hợp lệ.
-- Deploy như trước, dùng thư mục `Quick-Jira-Log-V1.15.5` làm root; chấp nhận Cập nhật PWA/tải lại sau deploy để nhận CSS mới. Không cần database, cấu hình Jira hoặc biến môi trường mới.
+- Deploy như trước, dùng thư mục `Quick-Jira-Log-V1.15.6` làm root; chấp nhận Cập nhật PWA/tải lại sau deploy để nhận CSS mới. Không cần database, cấu hình Jira hoặc biến môi trường mới.
 
 ## V1.15.2 — Logo đồng hồ & dấu check xanh
 
@@ -57,7 +73,7 @@ Chạy `npm test`, `npm run test:performance`; khi có Playwright/Chromium, ch�
 
 ### Triển khai và kiểm tra icon
 
-Push nội dung thư mục `Quick-Jira-Log-V1.15.5` lên repo và deploy Vercel với cấu hình/biến môi trường hiện có. Dùng cùng domain đang cài PWA; mở app, chấp nhận cập nhật nếu được hỏi, kiểm tra badge/footer V1.15.4. Thêm mới trên Safari sẽ dùng `/icons/apple-touch-icon-v1152.png` (180×180). Trình duyệt khác tự quyết định lịch cập nhật icon đã cài.
+Push nội dung thư mục `Quick-Jira-Log-V1.15.6` lên repo và deploy Vercel với cấu hình/biến môi trường hiện có. Dùng cùng domain đang cài PWA; mở app, chấp nhận cập nhật nếu được hỏi, kiểm tra badge/footer V1.15.4. Thêm mới trên Safari sẽ dùng `/icons/apple-touch-icon-v1152.png` (180×180). Trình duyệt khác tự quyết định lịch cập nhật icon đã cài.
 
 Nguồn tham khảo: [WebKit — icon trong manifest và apple-touch-icon](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/), [Apple — Thêm web app vào màn hình chính](https://support.apple.com/en-vn/guide/iphone/iphea86e5236/ios), [W3C — vòng đời manifest](https://www.w3.org/TR/appmanifest/#updating-the-manifest). Chưa xác minh trên iPhone thật; kiểm thử Chromium không chứng minh iOS đổi icon native.
 
@@ -213,7 +229,7 @@ Tham khảo hợp đồng API: [Jira REST field](https://developer.atlassian.com
 
 ## Cập nhật từ V1.12.1
 
-1. Giải nén, dùng **nội dung bên trong thư mục `Quick-Jira-Log-V1.15.5`** làm root repository; không đẩy cả ZIP hoặc lồng thêm thư mục.
+1. Giải nén, dùng **nội dung bên trong thư mục `Quick-Jira-Log-V1.15.6`** làm root repository; không đẩy cả ZIP hoặc lồng thêm thư mục.
 2. Push GitHub rồi deploy project Vercel hiện có. Framework **Other**, không Build Command; Node.js **24.x**, giữ `vercel.json`.
 3. Giữ `APP_SESSION_SECRET` và các biến môi trường đang dùng. Không cần token hay dịch vụ mới. Chỉ cấu hình `JIRA_SUBTASK_TYPE_FIELD_ID` nếu tự nhận diện trường không xác định được đúng một kết quả.
 4. Sau deploy, chọn **Cập nhật** trong PWA hoặc tải lại trang để badge/footer hiện **V1.15.4**.
@@ -311,7 +327,7 @@ Màu vàng chỉ phản ánh OT đã đọc được từ WorklogPRO. Không suy
 
 ## Triển khai nhanh
 
-Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.15.5`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
+Giải nén ZIP, dùng **nội dung bên trong `Quick-Jira-Log-V1.15.6`** làm root repository. Push GitHub rồi import repository vào Vercel. Chọn Framework **Other**, không cần Build Command, giữ root và output mặc định. Thiết lập biến môi trường theo `.env.example` và phần hướng dẫn bên dưới; không commit `.env` hoặc mật khẩu.
 
 App dùng Node.js 24.x và API Vercel hiện có. Bản nâng cấp này không cần đổi database hoặc thêm dịch vụ. Nếu đang dùng bản cũ, sau deploy hãy chọn **Cập nhật** trong PWA hoặc tải lại trang. Phiên bản trên đầu trang và footer phải là **V1.15.4**.
 
@@ -401,7 +417,7 @@ Cách hoạt động:
 
 ## 6. Triển khai Vercel
 
-1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.15.5` (thư mục này chứa package.json, index.html và vercel.json).
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log-V1.15.6` (thư mục này chứa package.json, index.html và vercel.json).
 2. Đưa source trong thư mục đó lên repository GitHub của app.
 3. Trong Vercel, import repository hoặc cập nhật project đang liên kết repository.
 4. Nếu repository chứa thêm thư mục cha, đặt **Root Directory** trỏ tới thư mục chứa package.json của app.

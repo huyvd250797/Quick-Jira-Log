@@ -1,0 +1,133 @@
+/* V1.15.6 — Follow device orientation; reserve the viewport for the calendar. */
+.calendar-fullscreen-help { display: none; }
+#historyOverlay.is-calendar-fullscreen {
+  --calendar-safe-top: max(3px, env(safe-area-inset-top));
+  --calendar-safe-right: max(3px, env(safe-area-inset-right));
+  --calendar-safe-bottom: max(2px, env(safe-area-inset-bottom));
+  --calendar-safe-left: max(3px, env(safe-area-inset-left));
+  --calendar-actions-width: 78px;
+}
+#historyOverlay.is-calendar-fullscreen.has-calendar-drafts { --calendar-actions-width: 117px; }
+#historyOverlay.is-calendar-fullscreen .history-tool-sheet { min-width: 0; min-height: 0; }
+#historyOverlay.is-calendar-fullscreen .tool-modal-body {
+  padding: var(--calendar-safe-top) var(--calendar-safe-right) var(--calendar-safe-bottom) var(--calendar-safe-left);
+  gap: 3px;
+}
+#historyOverlay.is-calendar-fullscreen #calendarControls {
+  flex: 0 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 0;
+}
+#historyOverlay.is-calendar-fullscreen .calendar-navigation {
+  display: flex; flex: 0 0 auto; justify-content: flex-start; align-items: center; gap: 4px;
+  min-width: 0; padding: 0 var(--calendar-actions-width) 0 0;
+}
+#historyOverlay.is-calendar-fullscreen .calendar-date-field {
+  flex: 0 1 148px; width: 148px; min-width: 90px; max-width: 148px; margin: 0;
+}
+#historyOverlay.is-calendar-fullscreen .calendar-date-field input {
+  box-sizing: border-box; min-width: 0; width: 100%; max-width: 100%; height: 36px; min-height: 36px;
+  padding: 4px 5px; font-size: 14px;
+}
+#historyOverlay.is-calendar-fullscreen .calendar-nav-btn {
+  flex: 0 0 32px; width: 32px; min-width: 32px; height: 36px; padding: 0 4px;
+}
+#historyOverlay.is-calendar-fullscreen .calendar-today-btn { display: none; }
+#historyOverlay.is-calendar-fullscreen #calendarFullscreenBtn,
+#historyOverlay.is-calendar-fullscreen #calendarOptionsBtn,
+#historyOverlay.is-calendar-fullscreen.has-calendar-drafts #calendarSaveBtn {
+  position: absolute; z-index: 12; top: var(--calendar-safe-top); width: 36px; min-width: 36px; height: 36px; padding: 7px;
+}
+#historyOverlay.is-calendar-fullscreen #calendarFullscreenBtn { right: var(--calendar-safe-right); }
+#historyOverlay.is-calendar-fullscreen #calendarOptionsBtn { right: calc(var(--calendar-safe-right) + 39px); }
+#historyOverlay.is-calendar-fullscreen.has-calendar-drafts #calendarSaveBtn { right: calc(var(--calendar-safe-right) + 78px); }
+#historyOverlay.is-calendar-fullscreen #historyControls {
+  top: calc(var(--calendar-safe-top) + 39px); right: var(--calendar-safe-right);
+  width: min(280px, calc(100% - var(--calendar-safe-left) - var(--calendar-safe-right)));
+  max-height: calc(100% - var(--calendar-safe-top) - var(--calendar-safe-bottom) - 44px);
+  overflow: auto; overscroll-behavior: none;
+}
+#historyOverlay.is-calendar-fullscreen .calendar-mode-toolbar {
+  display: flex; flex: 1 1 auto; grid-column: auto; flex-wrap: nowrap; min-width: 0;
+  align-items: center; gap: 4px; padding: 0;
+}
+#historyOverlay.is-calendar-fullscreen .calendar-mode-switch { flex: 0 0 auto; padding: 2px; gap: 1px; }
+#historyOverlay.is-calendar-fullscreen .calendar-mode-switch button { min-height: 32px; padding: 5px 9px; font-size: 12px; }
+#historyOverlay.is-calendar-fullscreen #calendarWeekendBtn { flex: 0 0 auto; min-height: 36px; padding: 4px; font-size: 12px; }
+#historyOverlay.is-calendar-fullscreen #calendarProjectColorsBtn { flex: 0 0 34px; width: 34px; min-width: 34px; height: 36px; padding: 7px; }
+#historyOverlay.is-calendar-fullscreen #calendarViewerControls { flex: 0 0 auto; min-width: 0; gap: 3px; }
+#historyOverlay.is-calendar-fullscreen #calendarViewerBtn {
+  flex: 0 1 auto; gap: 3px; min-height: 36px; height: 36px; max-width: 150px; padding: 5px 6px;
+}
+#historyOverlay.is-calendar-fullscreen .calendar-week-summary {
+  display: grid; flex: 1 1 auto; min-width: 0; min-height: 0; margin-left: auto; gap: 0; padding: 0; justify-content: end;
+}
+#historyOverlay.is-calendar-fullscreen .calendar-week-summary > strong { font-size: 14px; white-space: nowrap; }
+#historyOverlay.is-calendar-fullscreen .calendar-week-summary > span { display: none; }
+#historyOverlay.is-calendar-fullscreen #calendarGestureHint {
+  /* Keep its accessible description; the visible help lives in view options. */
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%);
+}
+#historyOverlay.is-calendar-fullscreen .calendar-fullscreen-help { display: block; margin: 0; font-size: 11px; line-height: 1.5; color: var(--muted); }
+#historyOverlay.is-calendar-fullscreen.is-calendar-readonly .calendar-fullscreen-help { display: none; }
+#historyOverlay.is-calendar-fullscreen #historyResults { flex: 1 1 0; min-height: 0; width: 100%; border-radius: 3px; scrollbar-gutter: auto; }
+#historyOverlay.is-calendar-fullscreen .week-day-heading { min-height: 44px; padding: 3px 5px; gap: 2px; }
+#historyOverlay.is-calendar-fullscreen .week-day-heading > span { font-size: 11px; }
+#historyOverlay.is-calendar-fullscreen .week-day-heading > strong { font-size: 12px; }
+#historyOverlay.is-calendar-fullscreen .week-day-heading i { margin: 1px 5px 0; }
+#historyOverlay.is-calendar-fullscreen .weekly-inner { min-width: calc(44px + var(--week-days) * 136px); }
+#historyOverlay.is-calendar-fullscreen .week-grid-heading,
+#historyOverlay.is-calendar-fullscreen .week-grid-body { grid-template-columns: 44px repeat(var(--week-days), minmax(0, 1fr)); }
+
+/* One toolbar row on wide screens, two rows on narrow ones. No forced rotation. */
+@media (min-width: 720px), (orientation: landscape) and (min-width: 560px) {
+  #historyOverlay.is-calendar-fullscreen #calendarControls {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; padding: 0 var(--calendar-actions-width) 0 0;
+  }
+  #historyOverlay.is-calendar-fullscreen .calendar-navigation { padding: 0; }
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-toolbar { flex: 1 0 max-content; }
+  #historyOverlay.is-calendar-fullscreen .calendar-date-field { flex: 0 1 128px; width: 128px; min-width: 116px; }
+}
+@media (orientation: landscape) {
+  #historyOverlay.is-calendar-fullscreen .weekly-inner { min-width: calc(44px + var(--week-days) * 110px); }
+  #historyOverlay.is-calendar-fullscreen .week-day-heading {
+    grid-template-columns: minmax(0, 1fr) auto; align-items: center; min-height: 36px; padding: 4px 5px; gap: 3px;
+  }
+  #historyOverlay.is-calendar-fullscreen .week-day-heading > span { font-size: 10px; white-space: nowrap; }
+  #historyOverlay.is-calendar-fullscreen .week-day-heading > strong { font-size: 11px; }
+  #historyOverlay.is-calendar-fullscreen .week-day-heading i { grid-column: 1 / -1; margin: 0 4px; }
+}
+@media (max-width: 1099px) {
+  #historyOverlay.is-calendar-fullscreen #calendarViewerBtn { width: 36px; min-width: 36px; justify-content: center; }
+  #historyOverlay.is-calendar-fullscreen #calendarViewerLabel,
+  #historyOverlay.is-calendar-fullscreen #calendarViewerBtn > span:last-child { display: none; }
+  #historyOverlay.is-calendar-fullscreen.is-calendar-readonly #calendarViewerBtn { width: auto; max-width: 112px; }
+  #historyOverlay.is-calendar-fullscreen.is-calendar-readonly #calendarViewerLabel { display: block; max-width: 78px; }
+  #historyOverlay.is-calendar-fullscreen #calendarViewerMode { font-size: 10px; }
+}
+@media (max-width: 719px) {
+  #historyOverlay.is-calendar-fullscreen.is-calendar-readonly .calendar-week-summary { display: none; }
+  #historyOverlay.is-calendar-fullscreen.is-calendar-readonly #calendarViewerBtn { max-width: 90px; }
+  #historyOverlay.is-calendar-fullscreen .calendar-week-summary small { font-size: 10px; }
+}
+@media (orientation: landscape) and (max-width: 719px) {
+  #historyOverlay.is-calendar-fullscreen.is-calendar-readonly #calendarControls { display: grid; padding: 0; }
+  #historyOverlay.is-calendar-fullscreen.is-calendar-readonly .calendar-navigation { padding-right: var(--calendar-actions-width); }
+  #historyOverlay.is-calendar-fullscreen .calendar-week-summary { display: none; }
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-toolbar { justify-content: flex-end; }
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-switch button { padding: 5px 7px; }
+  #historyOverlay.is-calendar-fullscreen.is-calendar-readonly #calendarViewerBtn { max-width: 84px; }
+}
+@media (max-width: 359px) {
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-toolbar { gap: 3px; }
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-switch button { padding: 5px 7px; }
+  #historyOverlay.is-calendar-fullscreen .calendar-week-summary > strong { font-size: 12px; }
+}
+/* Short landscape windows benefit even before fullscreen is selected. */
+@media (orientation: landscape) and (max-height: 500px) and (max-width: 1199px) {
+  #historyOverlay.is-calendar-view:not(.is-calendar-fullscreen) .settings-head { min-height: 40px; padding-top: 3px; padding-bottom: 3px; }
+  #historyOverlay.is-calendar-view:not(.is-calendar-fullscreen) .settings-head h2 { font-size: 14px; }
+  #historyOverlay.is-calendar-view:not(.is-calendar-fullscreen) .tool-modal-body { padding: 3px 5px max(2px, env(safe-area-inset-bottom)); gap: 3px; }
+  #historyOverlay.is-calendar-view:not(.is-calendar-fullscreen) #calendarControls { gap: 5px; padding: 0; }
+  #historyOverlay.is-calendar-view:not(.is-calendar-fullscreen) .calendar-today-btn,
+  #historyOverlay.is-calendar-view:not(.is-calendar-fullscreen) .calendar-week-summary > span { display: none; }
+  #historyOverlay.is-calendar-view:not(.is-calendar-fullscreen) .calendar-gesture-hint { font-size: 10px; }
+}

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.15.5';
+const APP_VERSION = '1.15.6';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -2078,7 +2078,6 @@ async function enterCalendarFullscreen() {
   document.activeElement?.blur?.();
   syncCalendarFullscreenButton();
   $('calendarFullscreenBtn').focus({ preventScroll: true });
-  let orientationLocked = false;
   try {
     // Fullscreen the document so native worklog dialogs stay in the same top layer.
     if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
@@ -2090,15 +2089,10 @@ async function enterCalendarFullscreen() {
       }
       state.calendarNativeFullscreen = true;
     }
-    if (sequence === state.calendarFullscreenSeq && state.calendarFullscreen && screen.orientation?.lock) {
-      try { await screen.orientation.lock('landscape'); orientationLocked = true; } catch { /* CSS immersive mode remains usable. */ }
-    }
   } catch { /* iPhone and restricted contexts still get an edge-to-edge calendar. */ }
-  if (sequence !== state.calendarFullscreenSeq || !state.calendarFullscreen) {
-    if (!state.calendarFullscreen && orientationLocked) { try { screen.orientation?.unlock?.(); } catch {} }
-    return;
-  }
-  if (!orientationLocked && window.innerHeight > window.innerWidth) showToast('Đã mở lịch toàn màn hình. Xoay máy ngang để xem rộng hơn; tắt khóa xoay nếu cần.');
+  if (sequence !== state.calendarFullscreenSeq || !state.calendarFullscreen) return;
+  // Keep the device's current orientation. Resize adapts the layout if the user rotates.
+  syncCalendarViewport();
 }
 
 async function exitCalendarFullscreen({ nativeEnded = false } = {}) {
@@ -2109,7 +2103,6 @@ async function exitCalendarFullscreen({ nativeEnded = false } = {}) {
   const owned = state.calendarNativeFullscreen;
   state.calendarNativeFullscreen = false;
   syncCalendarFullscreenButton();
-  try { screen.orientation?.unlock?.(); } catch { /* Not supported on every browser. */ }
   if (owned && !nativeEnded && document.fullscreenElement) {
     try { await document.exitFullscreen(); } catch { /* Local immersive mode already closed. */ }
   }

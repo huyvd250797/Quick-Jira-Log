@@ -21,6 +21,9 @@ function syncCalendarViewer() {
   $('calendarViewerControls').classList.toggle('hidden',!visible);
   $('calendarViewerLabel').textContent=other?calendarViewedUser.displayName:`${state.user?.displayName||state.user?.username||'Tôi'} (Tôi)`;
   $('calendarViewerBtn').disabled=state.calendarMovePending;
+  const viewerName=other?calendarViewedUser.displayName:`${state.user?.displayName||state.user?.username||'Tôi'} (Tôi)`;
+  $('calendarViewerBtn').title=`Lịch ${viewerName}${other?' · Chỉ xem':''} · Chọn người dùng`;
+  $('calendarViewerBtn').setAttribute('aria-label',$('calendarViewerBtn').title);
   $('calendarViewerMode').classList.toggle('hidden',!other);
   $('historyOverlay').classList.toggle('is-calendar-readonly',other);
   $('calendarGestureHint').classList.toggle('hidden',other||state.historyView!=='calendar'||state.calendarMode!=='week');

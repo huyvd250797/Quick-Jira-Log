@@ -1,3 +1,11 @@
+# V1.15.6 — Adaptive Calendar Fullscreen
+
+- Bỏ Screen Orientation lock/unlock và toast yêu cầu xoay ngang khi bật fullscreen. Resize tiếp tục đồng bộ visual viewport và tỷ lệ phút.
+- Gom chọn user vào thanh công cụ lịch; bố cục một hàng khi rộng, hai hàng khi hẹp, giữ tên/trạng thái chỉ xem cho lịch người khác.
+- Fullscreen giảm lề, header ngày, khoảng trống và dòng phụ; tôn trọng safe area. Hướng dẫn kéo thả chuyển vào tùy chọn khi fullscreen.
+- Giữ nút lưu nháp trong hàng icon, điều chỉnh chỗ dành cho nút theo trạng thái. Bố cục ngang thấp khi chưa fullscreen cũng gọn hơn.
+- Không đổi backend hoặc thư viện nghiệp vụ; không ghi Jira khi xoay/đổi fullscreen. Nâng UI/service-worker lên V1.15.6 và precache calendar-fullscreen.css.
+
 # V1.15.5 — Dimmed Loading & Fresh Jira Reads
 
 - Nền tối dưới thẻ loading, phù hợp light/dark; foreground giữ sáng, không blur hay thêm thanh tiến trình.

@@ -1,3 +1,18 @@
+# Kiểm thử V1.15.6 — Adaptive Calendar Fullscreen
+
+- `npm test`: PASS toàn bộ logic/API hiện có. Backend (`api/`, `handlers/`, `lib/`) giữ nguyên byte so với ZIP V1.15.5 đầu vào; không đổi logwork/OT/guard/rollback/idempotency hoặc tối ưu đọc dữ liệu.
+- `tests/browser/fullscreen-layout.cjs`: 8 viewport 315×683, 390×844, 430×932, 568×320, 667×375, 844×390, 1024×768, 1440×1000; light/dark. Kiểm tra vùng lịch dọc >= chiều cao viewport - 90px, ngang >= viewport - 52px ở lịch cá nhân không nháp; fullscreen tăng diện tích so với cùng cửa sổ thường.
+- Mọi input/nút hiện trong toolbar nằm trong viewport và phía trên lịch, không chồng nhau, nhận được pointer ở tâm. Kiểm tra cả nút lưu khi có nháp, mở/hủy xác nhận lưu; popup tùy chọn không vượt mép.
+- Spy Screen Orientation: fullscreen vào/ra không gọi lock hoặc unlock; native request thành công/từ chối vẫn hoạt động. Xoay dọc/ngang giữ ngày, giờ nháp, số nháp và không gửi request ghi Jira.
+- Mô phỏng safe area trái/phải 47px và bottom 21px trên 844×390; kiểm tra lịch cá nhân và lịch người khác. Thanh công cụ tự xuống hàng khi chỗ còn lại không đủ. Đây là kiểm tra CSS gutter giả lập, không phải phép đo iPhone vật lý.
+- `tests/browser/mobile-calendar.cjs`: PASS 315, 390, 430, 667, 844, 1440px; popup/sửa, không autofocus input, xoay khi đang sửa không mất nội dung, native fullscreen/fallback/denial, thoát hệ thống và chuyển danh sách.
+- `tests/browser/native-fullscreen.cjs`: PASS Chromium native fullscreen thật và sự kiện fullscreenchange khi thoát.
+- `tests/browser/calendar-viewer.cjs`: PASS PC/mobile/landscape: fullscreen-only picker, tên/Chỉ xem, read-only mouse/touch/month/details, MRU 3, phản hồi cũ/lỗi quyền, bảo vệ nháp, reset tài khoản và form logwork cá nhân không đổi.
+- `tests/browser/calendar-interactions.cjs`: PASS PC 1440×1100, touch 390×1000 và 320×900: tạo từ ô trống, kéo nháp, xác nhận/hủy/lưu/bỏ, nút lưu fullscreen, mobile nhấn giữ, overlap, từ chối lưu, response mất và đối chiếu trạng thái.
+- `tests/browser/calendar-refinements.cjs`, `tests/browser/calendar-colors.cjs`: PASS bounds/gợi ý nhân sự và các trạng thái màu/OT/progress/scale ở các viewport hiện có.
+- `tests/browser/branding.cjs`: PASS 4 viewport và cập nhật service worker thật trên localhost tới cache V1.15.6, giữ localStorage, icon offline. CSS fullscreen mới nằm trong precache.
+- Đã xem ảnh PC/mobile dọc/ngang. Node syntax, version, asset references, backend byte comparison và ZIP CRC kiểm tra khi đóng gói. Không chạy toàn bộ chuỗi `test:ui`; các bộ liên quan nêu trên đã chạy. Chưa kiểm chứng Safari/iPhone vật lý hoặc Jira công ty; native fullscreen/ẩn thanh trình duyệt phụ thuộc trình duyệt.
+
 # Kiểm thử V1.15.5 — Dimmed Loading & Fresh Jira Reads
 
 - `npm test`: PASS toàn bộ logic/API hiện có và `tests/read-scope-tests.js`. Giữ kiểm tra log đơn/Bulk, OT native form/readback, chống trùng, calendar save/swap/rollback và quyền lịch người khác.
