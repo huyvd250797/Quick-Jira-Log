@@ -1,3 +1,12 @@
+# V1.16.0 — Resize Worklogs on Calendar
+
+- Tay nắm cạnh dưới cho lịch tuần: PC kéo trực tiếp, mobile hiện khi nhấn giữ vào chế độ chỉnh sửa. End-time snap 30 phút, min 30 phút, highlight/tooltip thời lượng, không swap khi resize.
+- Bản nháp chứa thời lượng đích; so sánh trước/sau gồm thời lượng. Giữ resize khi tiếp tục di chuyển/swap và chỉ ghi sau xác nhận.
+- API correction thêm calendarEdit/targetSeconds có xác thực expected snapshot, giữ comment/OT, fresh conflict guard, readback và native fallback. Hợp đồng moveOnly cũ giữ nguyên.
+- Calendar-moves hỗ trợ duration-aware cycles/replay và phục hồi cả thời lượng/vị trí. Planner phát hiện phụ thuộc giữa thu ngắn/mở rộng và các block đang di chuyển.
+- Mở rộng lưới tạm cho resize buổi tối; giữ scale trong gesture, cleanup khi hủy/repaint/resize. Toast trạng thái không chặn tay nắm sát đáy. Lịch người khác không có tay nắm.
+- Nâng version/cache V1.16.0; precache calendar-resize.css, bổ sung API/planner và browser gesture regressions.
+
 # V1.15.6 — Adaptive Calendar Fullscreen
 
 - Bỏ Screen Orientation lock/unlock và toast yêu cầu xoay ngang khi bật fullscreen. Resize tiếp tục đồng bộ visual viewport và tỷ lệ phút.

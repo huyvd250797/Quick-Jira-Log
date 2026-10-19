@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.15.6';
+const APP_VERSION = '1.16.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1647,7 +1647,7 @@ let weekFitFrame = 0;
 function fitWeekToViewport() {
   const inner = $('weeklyCalendar').querySelector('.weekly-inner');
   const body = inner?.querySelector('.week-grid-body');
-  if (!inner || !body) return;
+  if (!inner || !body || body.dataset.calendarResizing==='true') return;
   const minutes = Number(body.dataset.minuteRange) || 600;
   const header = inner.querySelector('.week-grid-heading');
   const space = $('historyResults').clientHeight - (header?.offsetHeight || 0) - 2;
@@ -1682,7 +1682,7 @@ function renderWeeklyCalendar(date) {
       const globalIndex = displayed.indexOf(event.item);
       const appearance = calendarAppearance(event.item);
       const label = `${calendarIsDraft(event.item) ? 'Chưa lưu · ' : ''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
-      return `<button type="button" class="week-worklog-block${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small></button>`;
+      return `<button type="button" class="week-worklog-block${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
     }).join('')}</div>`;
   }).join('');
   $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length};--week-minute-px:1px;--week-morning-start:${480 - from};--week-morning-end:${720 - from};--week-afternoon-start:${810 - from};--week-afternoon-end:${1050 - from}"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" data-minute-range="${height}" style="height:calc(${height} * var(--week-minute-px, 1px))"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
@@ -1843,7 +1843,7 @@ function syncCalendarControls() {
   $('calendarWeekendBtn').setAttribute('aria-pressed', String(state.calendarWeekends));
   $('calendarWeekendBtn').textContent = 'T7/CN';
   $('calendarWeekendBtn').setAttribute('aria-label', state.calendarWeekends ? 'Ẩn thứ 7 và chủ nhật' : 'Hiện thứ 7 và chủ nhật');
-  $('calendarHelp').textContent = weekly ? 'Bấm chỗ trống để log đúng giờ · Kéo block để đổi giờ; mobile nhấn giữ để chỉnh sửa · Chạm block để xem chi tiết.' : 'Số giờ trong ô là tổng worklog đã ghi. Chọn ngày để xem chi tiết.';
+  $('calendarHelp').textContent = weekly ? 'Bấm chỗ trống để log đúng giờ · Kéo block đổi giờ, kéo cạnh dưới đổi thời lượng; mobile nhấn giữ để chỉnh sửa · Chạm block để xem chi tiết.' : 'Số giờ trong ô là tổng worklog đã ghi. Chọn ngày để xem chi tiết.';
   return { date, weekly };
 }
 
@@ -1893,6 +1893,7 @@ function renderCalendarAgenda(date) {
 }
 
 function renderWorklogHistory() {
+  if(calendarGesture)cancelCalendarGesture({returnHover:false});
   cancelCalendarSwapMotion();
   if(!calendarKeepHoverOnRender)cancelCalendarHoverMotion();
   const wrap = $('worklogHistoryList');

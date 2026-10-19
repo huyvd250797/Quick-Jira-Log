@@ -17,7 +17,8 @@ function snapshot(raw,key) {
 }
 async function invokeMove(req,from,to) {
  // Reuse the authorized correction endpoint's full guard/native OT fallback/readback.
- const body={key:from.key,worklogId:from.id,moveOnly:true,date:to.date,start:to.start,expectedStarted:from.started,expectedSeconds:D.seconds(from)};
+ const resized=D.seconds(from)!==D.seconds(to);
+ const body={key:from.key,worklogId:from.id,...(resized?{calendarEdit:true,targetSeconds:D.seconds(to)}:{moveOnly:true}),date:to.date,start:to.start,expectedStarted:from.started,expectedSeconds:D.seconds(from)};
  const child=Readable.from([Buffer.from(JSON.stringify(body))]);child.method='PATCH';child.headers={...req.headers};
  let response;
  const res={statusCode:200,setHeader(){},end(raw){response={status:this.statusCode,data:JSON.parse(raw)};}};
@@ -36,7 +37,7 @@ module.exports=async function handler(req,res) {
   if(!requestId||!Array.isArray(moves)||moves.length<2||moves.length>12) return sendJson(res,400,{ok:false,error:'Yêu cầu đổi chỗ cần 2–12 worklog và mã yêu cầu hợp lệ.'});
   const ids=new Set();
   for(const move of moves) {
-   if(!/^[A-Z][A-Z0-9_]*-\d+$/.test(move?.key||'')||!/^\d+$/.test(move?.worklogId||'')||ids.has(String(move.worklogId))||!validDate(move.date)||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(move.start||'')||!Number.isSafeInteger(move.expectedSeconds)||move.expectedSeconds<=0||!Number.isFinite(Date.parse(move.expectedStarted)))
+   if(!/^[A-Z][A-Z0-9_]*-\d+$/.test(move?.key||'')||!/^\d+$/.test(move?.worklogId||'')||ids.has(String(move.worklogId))||!validDate(move.date)||!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(move.start||'')||!Number.isSafeInteger(move.expectedSeconds)||move.expectedSeconds<=0||!Number.isFinite(Date.parse(move.expectedStarted))||(move.targetSeconds!==undefined&&(!Number.isSafeInteger(move.targetSeconds)||move.targetSeconds<=0||move.targetSeconds>57600)))
     return sendJson(res,400,{ok:false,error:'Dữ liệu đổi lịch không hợp lệ hoặc trùng worklog.'});
    ids.add(String(move.worklogId));
   }
@@ -49,7 +50,7 @@ module.exports=async function handler(req,res) {
    for(const move of moves) {
     const raw=rawByKey.get(move.key).find(x=>String(x.id)===String(move.worklogId));
     if(!raw||!authorMatches(raw,me))return {status:403,data:{ok:false,error:'Không tìm thấy hoặc không có quyền sửa một worklog trong nhóm đổi chỗ.'}};
-    const current=snapshot(raw,move.key),expected={...current,started:move.expectedStarted,timeSpentSeconds:move.expectedSeconds};
+    const current=snapshot(raw,move.key),expected=snapshot({...raw,started:move.expectedStarted,timeSpentSeconds:move.expectedSeconds},move.key);
     const target=D.preview(expected,move);
     originals.push(current);targets.push(target);
    }

@@ -1,3 +1,17 @@
+## V1.16.0 — Resize Worklogs on Calendar: đã xây dựng
+
+- Kéo cạnh dưới để chỉnh thời lượng, highlight/tooltip, mobile nhấn giữ rồi dùng tay nắm.
+- Lưu nháp và xác nhận chung với các thay đổi di chuyển/swap; kiểm tra dữ liệu mới trước ghi và đọc lại sau lưu.
+- Giữ comment/OT, lịch người khác chỉ xem, fullscreen, quyền và luồng logwork hiện có.
+
+## V1.15.6 — Adaptive Calendar Fullscreen: đã xây dựng
+
+- Fullscreen giữ hướng cầm máy, gom toolbar dọc/ngang để tăng không gian lịch.
+
+## V1.15.5 — Dimmed Loading & Fresh Jira Reads: đã xây dựng
+
+- Loading nền tối, gộp truy vấn đọc đang chạy trong cùng API request, chặn phản hồi cũ ghi đè cache sau sửa.
+
 ## V1.15.4 — Centered Loading & Faster Jira Reads: đã xây dựng
 
 - Loading trung tâm, spinner, cỡ chữ rõ và đúng màn hình; logwork tiếp tục dùng một popup tiến trình.

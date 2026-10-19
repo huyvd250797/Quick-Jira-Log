@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.15.6 – Adaptive Calendar Fullscreen.",
+  "description": "Quick Jira Log V1.16.0 – Resize Worklogs on Calendar.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

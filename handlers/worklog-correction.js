@@ -52,34 +52,43 @@ module.exports = async function handler(req, res) {
     }
 
     const moveOnly = body.moveOnly === true;
+    const calendarEdit = body.calendarEdit === true;
+    if ((body.calendarEdit !== undefined && typeof body.calendarEdit !== 'boolean') || (calendarEdit && moveOnly) ||
+        (calendarEdit && (!Number.isSafeInteger(body.targetSeconds) || body.targetSeconds <= 0 || body.targetSeconds > 57600))) {
+      return sendJson(res, 400, { ok: false, error: 'Thời lượng chỉnh trên lịch không hợp lệ.' });
+    }
+    const preserveFields = moveOnly || calendarEdit;
     if (body.moveOnly !== undefined && typeof body.moveOnly !== 'boolean') return sendJson(res, 400, { ok: false, error: 'Thao tác di chuyển không hợp lệ.' });
-    if (moveOnly && (!Number.isFinite(Date.parse(body.expectedStarted)) || !Number.isSafeInteger(body.expectedSeconds) || body.expectedSeconds <= 0)) {
+    if (preserveFields && (!Number.isFinite(Date.parse(body.expectedStarted)) || !Number.isSafeInteger(body.expectedSeconds) || body.expectedSeconds <= 0)) {
       return sendJson(res, 400, { ok: false, error: 'Thiếu thông tin worklog gốc. Hãy tải lại lịch.' });
     }
-    if (moveOnly && (Date.parse(body.expectedStarted) !== Date.parse(current.started) || body.expectedSeconds !== Number(current.timeSpentSeconds))) {
+    if (preserveFields && (Date.parse(body.expectedStarted) !== Date.parse(current.started) || body.expectedSeconds !== Number(current.timeSpentSeconds))) {
       return sendJson(res, 409, { ok: false, error: 'Worklog đã thay đổi trên Jira. Hãy tải lại lịch trước khi kéo thả.', code: 'WORKLOG_STALE' });
     }
     const date = String(body.date || '').trim();
     const start = String(body.start || '').trim();
     const timeSpent = String(body.timeSpent || '').trim();
-    const description = moveOnly ? textOf(current.comment) : readLabel(String(body.description || '')).description.trim();
+    const description = preserveFields ? textOf(current.comment) : readLabel(String(body.description || '')).description.trim();
     if ((body.overtime !== undefined && typeof body.overtime !== 'boolean') ||
         (body.updateOvertime !== undefined && typeof body.updateOvertime !== 'boolean') ||
         (body.updateOvertime === true && typeof body.overtime !== 'boolean')) {
       return sendJson(res, 400, { ok: false, error: 'Trạng thái Overtime không hợp lệ.' });
     }
-    if (!validDate(date) || !validTime(start) || (!moveOnly && (!timeSpent || !description))) {
+    if (!validDate(date) || !validTime(start) || (!preserveFields && (!timeSpent || !description))) {
       return sendJson(res, 400, { ok: false, error: 'Vui lòng nhập đúng Date, Start, TimeSpent và Description.' });
     }
 
     let minutes;
-    try { minutes = moveOnly ? Number(current.timeSpentSeconds) / 60 : parseTimeSpent(timeSpent); }
+    try { minutes = calendarEdit ? body.targetSeconds / 60 : moveOnly ? Number(current.timeSpentSeconds) / 60 : parseTimeSpent(timeSpent); }
     catch { return sendJson(res, 400, { ok: false, error: 'TimeSpent không hợp lệ.' }); }
 
-    const seconds = moveOnly ? Number(current.timeSpentSeconds) : minutes * 60;
+    const seconds = calendarEdit ? body.targetSeconds : moveOnly ? Number(current.timeSpentSeconds) : minutes * 60;
     const startMinute = hhmmToMinute(start);
     const segment = { start: startMinute, end: startMinute + minutes, minutes };
     const oldParsed = parseJiraStartedAtWorkTimezone(current?.started || '');
+    if (calendarEdit && oldParsed?.date === date && oldParsed?.minute === startMinute && Date.parse(current.started) % 60000 !== 0) {
+      return sendJson(res, 409, { ok: false, code: 'WORKLOG_START_PRECISION', error: 'Giờ bắt đầu có giây lẻ. Mở chi tiết worklog để chỉnh thời lượng chính xác.' });
+    }
     const scheduleChanged = oldParsed?.date !== date || oldParsed?.minute !== startMinute || Number(current.timeSpentSeconds) !== seconds;
     if (scheduleChanged) {
       const guard = await loadOccupiedRanges(date, [key], me, session, { excludeWorklogIds: [worklogId] });
@@ -99,7 +108,7 @@ module.exports = async function handler(req, res) {
       oldParsed?.date ? invalidateWorklogCaches(session, oldParsed.date, [key]) : Promise.resolve(),
       date !== oldParsed?.date ? invalidateWorklogCaches(session, date, [key]) : Promise.resolve()
     ]);
-    const overtimeChangeRequested = !moveOnly && typeof body.overtime === 'boolean' && body.updateOvertime !== false;
+    const overtimeChangeRequested = !preserveFields && typeof body.overtime === 'boolean' && body.updateOvertime !== false;
     if (overtimeChangeRequested) {
       // Resolve the worklog BOOL field from WorklogPRO, not Jira /field or editmeta.
       const attribute = await perf.step('worklogproAttribute', () => worklogpro.getOvertimeAttribute(session));
@@ -141,7 +150,7 @@ module.exports = async function handler(req, res) {
         written = true;
         updated = await perf.step('verifyWorklog', () => getWorklog(key, worklogId, session));
         if (String(updated?.id) !== worklogId || Date.parse(updated.started) !== Date.parse(started) ||
-            Number(updated.timeSpentSeconds) !== seconds || (moveOnly ? textOf(updated.comment) : readLabel(updated.comment).description) !== description || !authorMatches(updated, me)) {
+            Number(updated.timeSpentSeconds) !== seconds || (preserveFields ? textOf(updated.comment) : readLabel(updated.comment).description) !== description || !authorMatches(updated, me)) {
           throw new JiraError('Dữ liệu đọc lại từ Jira chưa khớp yêu cầu.', 502, { provider: 'jira', stage: 'verifyWorklog' }, 'JIRA_WORKLOG_VERIFY_FAILED');
         }
       } catch (error) {
@@ -170,7 +179,7 @@ module.exports = async function handler(req, res) {
       minutes,
       description,
       worklogVerified: true,
-      ...(moveOnly ? { moved: true, timeSpentSeconds: seconds } : {}),
+      ...(preserveFields ? { moved: true, timeSpentSeconds: seconds, ...(calendarEdit ? { resized: true } : {}) } : {}),
       editProvider,
       overtimeChangeRequested,
       ...(overtimeVerified ? { overtime, overtimeKnown: true, overtimeVerified: true, overtimeSource: 'worklogpro' } : { overtimeKnown: false }),

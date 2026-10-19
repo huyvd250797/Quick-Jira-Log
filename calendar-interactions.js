@@ -204,10 +204,10 @@ function openCalendarSave({ closeAfter = false } = {}) {
   const date = value => value.split('-').reverse().join('/');
   $('calendarSaveList').innerHTML = [...state.calendarDrafts.values()].map(d => {
     const target=QuickJiraDrafts.preview(d.original,d.target);
-    return `<li><strong>${escapeHtml(d.original.key)}</strong><span>${date(d.original.date)} · ${d.original.start}–${d.original.end}</span><b aria-hidden="true">↓</b><span>${date(target.date)} · ${target.start}–${target.end}</span></li>`;
+    return `<li><strong>${escapeHtml(d.original.key)}</strong><span>${date(d.original.date)} · ${d.original.start}–${d.original.end} · ${formatHistoryTimeSpent(QuickJiraDrafts.seconds(d.original)/60)}</span><b aria-hidden="true">↓</b><span>${date(target.date)} · ${target.start}–${target.end} · ${formatHistoryTimeSpent(QuickJiraDrafts.seconds(target)/60)}</span></li>`;
   }).join('');
   $('calendarSaveError').textContent=''; $('calendarSaveError').classList.add('hidden');
-  $('calendarSaveHint').textContent=`${state.calendarDrafts.size} worklog sẽ được cập nhật trên Jira. Giữ nguyên thời lượng, mô tả và Overtime.`;
+  $('calendarSaveHint').textContent=`${state.calendarDrafts.size} worklog sẽ được cập nhật trên Jira. Giữ nguyên mô tả và Overtime. Kiểm tra ngày, giờ và thời lượng trước khi lưu.`;
   $('calendarConfirmSaveBtn').textContent='Lưu lịch';
   if (!$('calendarSaveDialog').open) $('calendarSaveDialog').showModal();
   $('calendarCancelSaveBtn').focus({preventScroll:true});
@@ -231,8 +231,8 @@ function stageCalendarMove(item,target,proposal=null,livePreview=false) {
   for(const moved of drop.changes) {
     const id=QuickJiraDrafts.key(moved),previous=state.calendarDrafts.get(id);
     const original=previous?.original||{...(calendarPreviewItems().find(x=>QuickJiraDrafts.key(x)===id)||moved)};
-    if(original.date===moved.date&&original.start===moved.start)state.calendarDrafts.delete(id);
-    else state.calendarDrafts.set(id,{original,target:{date:moved.date,start:moved.start},status:previous?.status||'pending'});
+    if(QuickJiraDrafts.same(original,moved))state.calendarDrafts.delete(id);
+    else state.calendarDrafts.set(id,{original,target:{date:moved.date,start:moved.start,targetSeconds:QuickJiraDrafts.seconds(moved)},status:previous?.status||'pending'});
   }
   calendarKeepHoverOnRender=livePreview;
   try {renderCalendarDrafts();} finally {calendarKeepHoverOnRender=false;}
@@ -290,7 +290,7 @@ async function saveCalendarDrafts() {
         const group=draft.cycle;active=group;
         $('calendarSaveHint').textContent=`Đang đổi chỗ ${group.length} worklog trên Jira…`;
         const requestId=createRequestId('calendar-swap');
-        const data=await api('/api?action=calendar-moves',{method:'POST',requestId,body:JSON.stringify({requestId,moves:group.map(d=>({key:d.original.key,worklogId:d.original.id,date:d.target.date,start:d.target.start,expectedStarted:QuickJiraDrafts.started(d.original),expectedSeconds:QuickJiraDrafts.seconds(d.original)}))})});
+        const data=await api('/api?action=calendar-moves',{method:'POST',requestId,body:JSON.stringify({requestId,moves:group.map(d=>({key:d.original.key,worklogId:d.original.id,date:d.target.date,start:d.target.start,expectedStarted:QuickJiraDrafts.started(d.original),expectedSeconds:QuickJiraDrafts.seconds(d.original),...(d.target.targetSeconds!==undefined?{targetSeconds:d.target.targetSeconds}:{})}))})});
         if(data.worklogVerified!==true||data.moved!==true||!Array.isArray(data.items)||group.some(d=>!data.items.some(x=>QuickJiraDrafts.key(x)===QuickJiraDrafts.key(d.original)&&QuickJiraDrafts.same(x,QuickJiraDrafts.preview(d.original,d.target))))) {
           const e=new Error('Chưa xác nhận đủ kết quả đổi chỗ. Bấm Lưu lịch để đối chiếu Jira.');e.code='RESULT_UNKNOWN';throw e;
         }
@@ -303,11 +303,14 @@ async function saveCalendarDrafts() {
       }
       active=draft;
       $('calendarSaveHint').textContent=`Đang lưu ${verified+1}/${total} · ${draft.original.key}…`;
+      const target=QuickJiraDrafts.preview(draft.original,draft.target);
+      const resized=QuickJiraDrafts.seconds(target)!==QuickJiraDrafts.seconds(draft.original);
       const data=await api('/api?action=worklog-correction',{method:'PATCH',body:JSON.stringify({
-        key:draft.original.key,worklogId:draft.original.id,date:draft.target.date,start:draft.target.start,moveOnly:true,
+        key:draft.original.key,worklogId:draft.original.id,date:draft.target.date,start:draft.target.start,
+        ...(resized?{calendarEdit:true,targetSeconds:QuickJiraDrafts.seconds(target)}:{moveOnly:true}),
         expectedStarted:QuickJiraDrafts.started(draft.original),expectedSeconds:QuickJiraDrafts.seconds(draft.original)
       })});
-      if (data.worklogVerified!==true || data.moved!==true) {const e=new Error('Jira chưa xác nhận vị trí mới. Bấm Lưu lịch để đối chiếu trước khi thử lại.');e.code='RESULT_UNKNOWN';throw e;}
+      if (data.worklogVerified!==true || data.moved!==true || (resized && (data.resized!==true || data.timeSpentSeconds!==QuickJiraDrafts.seconds(target))) || (data.timeSpentSeconds!==undefined && data.timeSpentSeconds!==QuickJiraDrafts.seconds(target))) {const e=new Error('Jira chưa xác nhận vị trí mới. Bấm Lưu lịch để đối chiếu trước khi thử lại.');e.code='RESULT_UNKNOWN';throw e;}
       const id=QuickJiraDrafts.key(draft.original);
       state.historyItems=state.historyItems.map(item=>QuickJiraDrafts.key(item)===id?QuickJiraDrafts.preview(item,draft.target):item);
       state.calendarDrafts.delete(id); verified++; active=null;
@@ -349,7 +352,7 @@ function calendarFeedback(message, error = false) {
 function setCalendarEditMode(enabled) {
   calendarEditMode = enabled;
   $('weeklyCalendar').classList.toggle('is-calendar-editing', enabled);
-  if (!state.calendarMovePending) calendarFeedback(enabled ? 'Đang chỉnh sửa · Kéo để lưu tạm, chạm ngoài để kết thúc.' : calendarDraftMessage());
+  if (!state.calendarMovePending) calendarFeedback(enabled ? 'Đang chỉnh sửa · Kéo block để đổi giờ, kéo cạnh dưới để đổi thời lượng.' : calendarDraftMessage());
 }
 function cancelCalendarGesture({returnHover=true}={}) {
   const gesture = calendarGesture;
@@ -359,16 +362,22 @@ function cancelCalendarGesture({returnHover=true}={}) {
     if(gesture.dragging)calendarIgnoreClickUntil=performance.now()+600;
     clearTimeout(gesture.timer);
     gesture.ghost?.remove();
+    if(gesture.resize && gesture.column?.isConnected) {delete gesture.column.parentElement.dataset.calendarResizing;scheduleWeekFit();}
+    if(gesture.gridBefore && gesture.column?.isConnected) {
+      const body=gesture.column.parentElement;
+      body.dataset.minuteRange=gesture.gridBefore.range;body.style.height=gesture.gridBefore.height;
+      body.querySelectorAll('.calendar-resize-extra-tick').forEach(el=>el.remove());
+    }
     gesture.highlights?.forEach(el=>el.remove());
     gesture.block?.classList.remove('is-drag-source');
     try { gesture.block?.releasePointerCapture(gesture.id); } catch {}
   }
-  document.body.classList.remove('calendar-dragging');
+  document.body.classList.remove('calendar-dragging','calendar-resizing');
   if(returnHover)returnCalendarHoverPreview();
 }
 function resetCalendarInteraction() { cancelCalendarSwapMotion(); cancelCalendarGesture({returnHover:false}); cancelCalendarHoverMotion(); setCalendarEditMode(false); }
 function calendarBlockClick(event, item) {
-  if (calendarEditMode || state.calendarMovePending || performance.now() < calendarIgnoreClickUntil) { event.preventDefault(); return; }
+  if (event.target.closest('[data-calendar-resize]') || calendarEditMode || state.calendarMovePending || performance.now() < calendarIgnoreClickUntil) { event.preventDefault(); return; }
   if (calendarIsDraft(item)) { openCalendarSave(); return; }
   openCorrection(item);
 }
@@ -401,21 +410,33 @@ function highlightCalendarDrop(g,proposal) {
     const scale=rect.height/range,top=(QuickJiraDrafts.minute(item.start)-Number(column.dataset.fromMinute))*scale;
     highlight.style.cssText=`display:block;left:${rect.left-grid.left+2}px;top:${rect.top-grid.top+top}px;width:${rect.width-4}px;height:${QuickJiraDrafts.seconds(item)/60*scale}px`;
     highlight.classList.toggle('is-invalid',!!proposal.problem);highlight.classList.toggle('is-swap',!!proposal.swap);
-    highlight.querySelector('span').textContent=`${proposal.swap?'⇄ ':''}${item.start}–${item.end}`;
+    highlight.querySelector('span').textContent=`${proposal.swap?'⇄ ':''}${item.start}–${item.end}${g.resize?' · '+formatHistoryTimeSpent(QuickJiraDrafts.seconds(item)/60):''}`;
   });
 }
 
+function calendarResizeProposal(g,x,y) {
+  const area=$('historyResults').getBoundingClientRect();
+  if(!g.column?.isConnected || x<area.left || x>area.right || y<area.top || y>area.bottom)
+    return {problem:'Giữ tay nắm trong khung lịch để chỉnh thời lượng.',changes:[]};
+  const rect=g.column.getBoundingClientRect(),scale=rect.height/Number(g.column.parentElement.dataset.minuteRange);
+  const end=Math.round((Number(g.column.dataset.fromMinute)+(y-rect.top)/scale-g.endGrabMinutes)/30)*30;
+  return QuickJiraDrafts.resize(g.item,end,calendarPreviewItems());
+}
+function stageCalendarResize(item,proposal) {
+  if(proposal.problem)return calendarFeedback(proposal.problem,true);
+  stageCalendarMove(item,null,proposal);
+}
 function updateCalendarDrag() {
   const g = calendarGesture;
   if (!g?.dragging) return;
   const bounds = $('historyResults').getBoundingClientRect();
-  const dx = g.x < bounds.left + 28 ? -10 : g.x > bounds.right - 28 ? 10 : 0;
+  const dx = g.resize ? 0 : g.x < bounds.left + 28 ? -10 : g.x > bounds.right - 28 ? 10 : 0;
   const dy = g.y < bounds.top + 42 ? -10 : g.y > bounds.bottom - 28 ? 10 : 0;
   if (g.x >= bounds.left && g.x <= bounds.right && g.y >= bounds.top && g.y <= bounds.bottom) $('historyResults').scrollBy(dx, dy);
   g.target = calendarPointTarget(g.x, g.y, g.grabMinutes);
-  const proposal=g.proposal=calendarDropProposal(g.item,g.target,g.x,g.y),problem=proposal.problem;
+  const proposal=g.proposal=g.resize?calendarResizeProposal(g,g.x,g.y):calendarDropProposal(g.item,g.target,g.x,g.y),problem=proposal.problem;
   highlightCalendarDrop(g,proposal);
-  updateCalendarHoverPreview(g,proposal);
+  if(!g.resize)updateCalendarHoverPreview(g,proposal);
   const moved=proposal.changes?.[0];
   const end=moved?.end||'';
   g.ghost.style.left = `${Math.max(4, Math.min(innerWidth - g.ghost.offsetWidth - 4, g.x - g.grabX))}px`;
@@ -424,7 +445,7 @@ function updateCalendarDrag() {
   if(ghostTop+ghostHeight>innerHeight-12)ghostTop=(area?.top||g.y)-ghostHeight-12;
   g.ghost.style.top=`${Math.max(8,Math.min(innerHeight-ghostHeight-8,ghostTop))}px`;
   g.ghost.classList.toggle('is-invalid', !!problem);
-  g.ghost.querySelector('span').textContent = moved ? `${moved.date.split('-').reverse().join('/')} · ${moved.start}–${end}` : 'Chọn vị trí trong lịch';
+  g.ghost.querySelector('span').textContent = moved ? `${moved.date.split('-').reverse().join('/')} · ${moved.start}–${end}${g.resize?' · '+formatHistoryTimeSpent(QuickJiraDrafts.seconds(moved)/60):''}` : 'Chọn vị trí trong lịch';
   g.ghost.querySelector('small').textContent = problem || (proposal.swap?`Thả để đổi chỗ với ${proposal.swap.key} · Lưu tạm`:'Thả để lưu tạm · Chưa cập nhật Jira');
   calendarDragFrame = requestAnimationFrame(updateCalendarDrag);
 }
@@ -433,6 +454,21 @@ function startCalendarDrag(g) {
   g.dragging = true;
   clearTimeout(g.timer);
   g.block.classList.add('is-drag-source');
+  if(g.resize) {
+    document.body.classList.add('calendar-resizing');
+    g.column.parentElement.dataset.calendarResizing='true';
+    // Extend late-day space only while resizing; cancellation restores the grid.
+    const from=Number(g.column.dataset.fromMinute),body=g.column.parentElement,range=Number(body.dataset.minuteRange);
+    if(QuickJiraDrafts.minute(g.item.start)>=1050 && from+range<1440) {
+      g.gridBefore={range:body.dataset.minuteRange,height:body.style.height};
+      const scale=g.column.getBoundingClientRect().height/range;
+      body.dataset.minuteRange=String(1440-from);body.style.height=`${(1440-from)*scale}px`;
+      const ruler=body.querySelector('.week-time-ruler');
+      for(let minute=from+range+60;minute<=1440;minute+=60) {
+        const tick=document.createElement('span');tick.className='calendar-resize-extra-tick';tick.style.top=`${(minute-from)*scale}px`;tick.textContent=calendarMinuteLabel(minute);ruler.append(tick);
+      }
+    }
+  }
   const ghost = document.createElement('div'); ghost.className = 'calendar-drag-ghost';
   ghost.innerHTML = `<strong>${escapeHtml(g.item.key)}</strong><span></span><small></small>`;
   ghost.style.width = `${Math.max(170, Math.min(280, g.rect.width))}px`;
@@ -519,7 +555,7 @@ function setupCalendarInteractions() {
   const grid = $('weeklyCalendar');
   document.addEventListener('pointerdown',()=>{if(calendarSwapMotion||(!calendarGesture&&calendarHoverMotions.size)){cancelCalendarSwapMotion();cancelCalendarHoverMotion();calendarIgnoreClickUntil=Math.max(calendarIgnoreClickUntil,performance.now()+220);}},true);
   $('historyResults').addEventListener('scroll',cancelSwapOnScroll,{passive:true,capture:true});
-  const clearMotion=()=>{cancelCalendarSwapMotion();cancelCalendarHoverMotion();};
+  const clearMotion=()=>{cancelCalendarSwapMotion();cancelCalendarHoverMotion();if(calendarGesture?.resize)cancelCalendarGesture();};
   window.addEventListener('resize',clearMotion);
   window.visualViewport?.addEventListener('resize',clearMotion);
   document.addEventListener('fullscreenchange',clearMotion);
@@ -534,7 +570,7 @@ function setupCalendarInteractions() {
     const rect = block.getBoundingClientRect(), column = block.closest('.week-day-column');
     const scale = column.getBoundingClientRect().height / Number(column.parentElement.dataset.minuteRange);
     const mobile = event.pointerType === 'touch';
-    const g = calendarGesture = { id: event.pointerId, mobile, block, item, rect, initialX: event.clientX, initialY: event.clientY, x: event.clientX, y: event.clientY, grabX: event.clientX - rect.left, grabMinutes: (event.clientY - rect.top) / scale, ready: !mobile || calendarEditMode };
+    const g = calendarGesture = { id: event.pointerId, mobile, block, item, rect, initialX: event.clientX, initialY: event.clientY, x: event.clientX, y: event.clientY, grabX: event.clientX - rect.left, grabMinutes: (event.clientY - rect.top) / scale, ready: !mobile || calendarEditMode, column, resize: !!event.target.closest('[data-calendar-resize]') && (!mobile || calendarEditMode), endGrabMinutes: (event.clientY-rect.bottom)/scale };
     if (mobile && !calendarEditMode) g.timer = setTimeout(() => {
       if (calendarGesture !== g) return;
       setCalendarEditMode(true); g.ready = true;
@@ -549,18 +585,18 @@ function setupCalendarInteractions() {
     g.x = event.clientX; g.y = event.clientY;
     const distance = Math.hypot(g.x - g.initialX, g.y - g.initialY);
     if (!g.ready && distance > 10) { cancelCalendarGesture(); return; }
-    if (g.ready && distance > 6 && !g.dragging) startCalendarDrag(g);
+    if (g.ready && distance > (g.resize?4:6) && !g.dragging) startCalendarDrag(g);
     if (g.dragging) event.preventDefault();
   }, { passive: false });
   document.addEventListener('pointerup', event => {
     const g = calendarGesture;
     if (!g || g.id !== event.pointerId) return;
     if (g.dragging) {
-      const target=calendarPointTarget(event.clientX,event.clientY,g.grabMinutes),proposal=calendarDropProposal(g.item,target,event.clientX,event.clientY),problem=proposal.problem;
-      updateCalendarHoverPreview(g,proposal);
+      const target=calendarPointTarget(event.clientX,event.clientY,g.grabMinutes),proposal=g.resize?calendarResizeProposal(g,event.clientX,event.clientY):calendarDropProposal(g.item,target,event.clientX,event.clientY),problem=proposal.problem;
+      if(!g.resize)updateCalendarHoverPreview(g,proposal);
       calendarIgnoreClickUntil = performance.now() + 600;
       cancelCalendarGesture({returnHover:!!problem});
-      if (problem) calendarFeedback(problem, true); else stageCalendarMove(g.item,target,proposal,true);
+      if (problem) calendarFeedback(problem, true); else if(g.resize)stageCalendarResize(g.item,proposal); else stageCalendarMove(g.item,target,proposal,true);
       event.preventDefault();
     } else { if (g.mobile && g.ready) calendarIgnoreClickUntil = performance.now() + 500; cancelCalendarGesture(); }
   });

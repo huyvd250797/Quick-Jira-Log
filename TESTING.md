@@ -1,3 +1,18 @@
+# Kiểm thử V1.16.0 — Resize Worklogs on Calendar
+
+- `npm test`: PASS toàn bộ logic/API và bộ `tests/calendar-resize-tests.js`. Hồi quy log đơn/Bulk, native OT, form WorklogPRO, guard, history/summary, calendar edits/swaps và user viewer đều giữ trong script kiểm thử.
+- Resize planner: mở rộng/thu ngắn, min 30 phút, giờ nghỉ/cuối tuần/tối, xung đột không swap, preview bất biến, target duration khi tiếp tục move/swap, thứ tự giải phóng chỗ trước mở rộng và cycle parking.
+- API correction: kiểm tra auth/origin/tác giả, snapshot expectedStarted/expectedSeconds, số giây đích hợp lệ, trạng thái server thay đổi, trùng/lunch/weekend, preserve comment/OT, adjustEstimate=leave, native-form fallback chỉ sau core 403, readback mismatch và mất phản hồi không retry ghi.
+- Cycle API: nhóm vừa swap vừa đổi thời lượng, readback, replay ở request mới nhận đúng đích gồm thời lượng; lỗi bước cuối và mất phản hồi sau commit phục hồi cả thời lượng lẫn vị trí, không transient overlap trong fixture. Giờ bắt đầu có giây lẻ được từ chối resize thay vì làm tròn.
+- `tests/browser/calendar-resize.cjs`: PASS desktop 1440×1000, touch 390×844, 320×683 và landscape 844×390. Mouse/touch kéo thật, highlight/tooltip, giữ dữ liệu server trước xác nhận, về thời lượng gốc xóa nháp, overlap/min/lunch giữ nháp cũ, Escape/pointercancel/đổi viewport hủy gesture, review/hủy/lưu, 403/retry, mất response được đối chiếu không PATCH lặp, resize rồi move, fullscreen và read-only không có handle.
+- Bộ browser resize còn kiểm tra kéo dài OT 17:30 qua 18:00 tới 19:00 bằng auto-scroll, thu lại/xóa nháp, cleanup lưới tạm, giữ màu/cờ OT sau lưu; thay đổi Jira bên ngoài ngăn PATCH trước ghi. Có light/dark và reduced motion (320px). Đã xem ảnh PC và mobile preview.
+- `tests/browser/calendar-interactions.cjs`: PASS PC 1440×1100 và touch 390×1000, 320×900; tạo log, draft/confirm/cancel/save/discard, lỗi/unknown/reconciliation, nhấn giữ và cập nhật vị trí thật giữ nguyên.
+- `tests/browser/calendar-swap.cjs`: PASS PC, mobile 390/320 và landscape 844; highlight, swap, OT, batch save, xung đột và giữ nháp khi lỗi. `tests/browser/live-swap-preview.cjs`: PASS PC/mobile 390/320; bay ngay khi hover, đảo chiều liên tục, commit/cancel/reduced motion và cleanup. Khi render lại, active gesture được hủy để RAF không dựng lại clone trên DOM mới.
+- `tests/browser/fullscreen-layout.cjs`: PASS 8 viewport 315–1440px, giữ hướng, controls/options/save/readonly trong khung, safe area và bản nháp qua xoay màn hình. `tests/browser/calendar-viewer.cjs`: PASS 4 viewport, picker fullscreen-only, chỉ xem mouse/touch, MRU/reset/stale/auth và bảo vệ nháp/form cá nhân.
+- `tests/browser/branding.cjs`: PASS 4 viewport và worker upgrade/cache migration/localStorage/offline; CSS resize mới nằm trong precache V1.16.0.
+- Đối chiếu source: handler log đơn/Bulk, thư viện Jira/WorklogPRO/native-form/guard/scheduler và các tối ưu đọc dữ liệu giữ nguyên; mở rộng correction/calendar-moves và calendar-drafts để lưu duration. Không thêm dependency runtime. Kiểm tra Node syntax, asset references, version và ZIP CRC khi đóng gói.
+- Không chạy toàn bộ chuỗi `test:ui`; các bộ liên quan nêu trên đã chạy. Chưa có phiên Jira công ty hoặc iPhone/Safari vật lý; fixture/Chromium touch không chứng minh toàn bộ hành vi thiết bị thật.
+
 # Kiểm thử V1.15.6 — Adaptive Calendar Fullscreen
 
 - `npm test`: PASS toàn bộ logic/API hiện có. Backend (`api/`, `handlers/`, `lib/`) giữ nguyên byte so với ZIP V1.15.5 đầu vào; không đổi logwork/OT/guard/rollback/idempotency hoặc tối ưu đọc dữ liệu.
