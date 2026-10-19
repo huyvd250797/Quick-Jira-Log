@@ -123,13 +123,16 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, { ...payload, cache: { hit: false }, performance });
     }
 
-    const typeField = summaryScope ? await perf.step('subtaskTypeField', () => resolveSubtaskTypeField(session, { force })) : null;
-    if (typeField) sourceDetails.subtaskTypeField = typeField;
-    const metadataPromise = perf.step('metadataBatch', () => getIssuesByKeys(keys, session, { extraFields: ['issuetype', ...(typeField?.ok ? [typeField.id] : [])] }))
+    let typeField = null;
+    // Resolve classification and read metadata while independent worklog reads
+    // are running; retain exact pagination, author filters and OT verification.
+    const metadataPromise = (async () => {
+      typeField = summaryScope ? await perf.step('subtaskTypeField', () => resolveSubtaskTypeField(session, { force })) : null;
+      if (typeField) sourceDetails.subtaskTypeField = typeField;
+      return perf.step('metadataBatch', () => getIssuesByKeys(keys, session, { extraFields: ['issuetype', ...(typeField?.ok ? [typeField.id] : [])] }));
+    })()
       .then(issues => ({ ok: true, issues }))
-      .catch(error => {
-        return { ok: false, issues: [], error: error?.message || String(error), fatal: error?.status === 401 ? error : null };
-      });
+      .catch(error => ({ ok: false, issues: [], error: error?.message || String(error), fatal: error?.status === 401 ? error : null }));
 
     const skipped = [];
     const worklogResults = await perf.step('worklogs', () => mapWithConcurrency(keys, 12, async key => {

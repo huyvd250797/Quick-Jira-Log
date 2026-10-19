@@ -87,24 +87,28 @@ async function performBulk(body, session, perf) {
   perf.report?.(5, 'Đang đọc thông tin các task');
   const mePromise = session.me ? Promise.resolve(session.me) : perf.step('myself', () => getMyself(session));
   const issueDetailsPromise = perf.step('issueBatch', () => getIssuesByKeys(items.map(item => item.key), session));
-  const [me, issueDetails] = await Promise.all([mePromise, issueDetailsPromise]);
-  const issueMap = new Map((issueDetails || []).map(issue => [String(issue?.key || '').toUpperCase(), issue]));
+  const verifiedPromise = issueDetailsPromise.then(issueDetails => {
+    const issueMap = new Map((issueDetails || []).map(issue => [String(issue?.key || '').toUpperCase(), issue]));
 
-  const verified = items.map((item) => {
-    const issue = issueMap.get(item.key);
-    if (!issue) throw new JiraError(`Không tải được thông tin issue ${item.key} từ Jira.`, 404);
-    const actualProject = String(issue?.fields?.project?.key || '').toUpperCase();
-    if (actualProject !== item.project) {
-      throw new JiraError(`Issue ${item.key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${item.project}.`, 400);
-    }
-    const summary = String(issue?.fields?.summary || '');
-    return { ...item, summary, description: item.description || summary };
+    const verified = items.map((item) => {
+      const issue = issueMap.get(item.key);
+      if (!issue) throw new JiraError(`Không tải được thông tin issue ${item.key} từ Jira.`, 404);
+      const actualProject = String(issue?.fields?.project?.key || '').toUpperCase();
+      if (actualProject !== item.project) {
+        throw new JiraError(`Issue ${item.key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${item.project}.`, 400);
+      }
+      const summary = String(issue?.fields?.summary || '');
+      return { ...item, summary, description: item.description || summary };
+    });
+    if (verified.some(item => !item.description)) throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
+
+    return { issueMap, verified };
   });
-  if (verified.some(item => !item.description)) throw new JiraError('Có issue không có Description/Summary để logwork.', 400);
-
-  const targetKeys = verified.map(item => item.key);
-  perf.report?.(25, 'Đang kiểm tra giờ trống và phân lịch');
-  const initialGuard = await perf.step('guard', () => loadOccupiedRangesStable(date, targetKeys, me, session));
+  const targetKeys = items.map(item => item.key);
+  const guardPromise = mePromise.then(me => perf.step('guard', () =>
+    loadOccupiedRangesStable(date, targetKeys, me, session, { beforeRead: verifiedPromise })));
+  const [me, { issueMap, verified }, initialGuard] = await Promise.all([mePromise, verifiedPromise, guardPromise]);
+  perf.report?.(25, 'Đã kiểm tra giờ trống; đang phân lịch');
   const alreadyRegular = minutesInsideWindows(initialGuard.occupied, workWindowsFor(date, false));
   const requestedRegular = verified.filter(item => !item.overtime).reduce((sum, item) => sum + item.minutes, 0);
   if (alreadyRegular + requestedRegular > MAX_REGULAR_MINUTES) {

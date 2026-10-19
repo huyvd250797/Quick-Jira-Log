@@ -1,3 +1,12 @@
+# V1.15.4 — Centered Loading & Faster Jira Reads
+
+- Thẻ loading trung tâm với spinner và chữ dễ đọc, theo busy state của màn hình, không chặn thao tác/focus; dữ liệu cache trả nhanh không nháy thẻ.
+- Popup tiến trình logwork thêm vòng xoay/cỡ chữ, giữ một thanh tiến trình thật.
+- Guard worklog chuyển từ các batch chờ nhau sang worker pool liên tục (12); metadata batch song song tối đa 3.
+- Discovery log đơn/Bulk chạy sớm cùng metadata; barrier bảo đảm task hợp lệ trước khi đọc worklog thật và trước mọi ghi.
+- Tổng hợp đọc worklog đồng thời với tra Sub-task Type/metadata. Không thay dữ liệu/OT/guard/idempotency/readback/rollback.
+- Cache PWA/nội dung phiên bản V1.15.4; thêm kiểm thử performance và loading.
+
 # V1.15.3 — Subtle Calendar Hours
 
 - Tô xám nhẹ nền lịch ngoài hai ca 08:00–12:00 và 13:30–17:30, có màu phù hợp light/dark.

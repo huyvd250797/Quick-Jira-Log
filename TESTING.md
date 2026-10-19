@@ -1,3 +1,13 @@
+# Kiểm thử V1.15.4 — Centered Loading & Faster Jira Reads
+
+- `npm test`: PASS bộ logic/API trước đó. `tests/performance-tests.js`: PASS pool guard tối đa 12 không kẹt task chậm; 24 issue đọc đủ; metadata tối đa 3 batch, đủ 350 key/phân trang 20 item dù yêu cầu 100, đúng thứ tự/dedup/401; handler log đơn và Bulk discovery chồng thời gian metadata, không đọc worklog hoặc ghi trước validation, project sai không ghi.
+- Benchmark nội bộ so cùng source V1.15.3, 3 lần/fixture: guard 100ms → 56ms (24 issue/lần, tổng 72 reads cả trước/sau), metadata 84ms → 42ms (400 issue/lần, tổng 12 reads cả trước/sau). Đây là độ trễ mô phỏng của hai bước, không phải benchmark production hay end-to-end logwork.
+- `tests/browser/loading-feedback.cjs`: PASS 1440×1000, 390×844, landscape 844×390; light/dark, vị trí giữa viewport, font ≥18px, spinner, đóng/mở lại khi đang tải, error/retry, fullscreen host, picker dialog native, không focus input, tổng hợp, giảm chuyển động và chỉ một progress khi log. Đã xem ảnh QA.
+- `tests/browser/workflow.cjs`: PASS PC và iPhone giả lập: dashboard, tuần/tháng, block theo thời lượng, sửa/xóa và streaming/interrupted response.
+- `tests/browser/branding.cjs`: PASS 4 viewport và worker upgrade thật trên localhost, cache migration, giữ localStorage và fetch offline sau cập nhật.
+- Các bước trước ghi vẫn dùng worklog đọc thật; không bỏ chống trùng, auth, giới hạn giờ, OT readback, idempotency và rollback. Không thêm cache dữ liệu Jira mới hoặc thay quyền lịch người khác.
+- Chưa có phiên Jira công ty hay iPhone/Safari vật lý. Cải thiện thực phụ thuộc độ trễ và tải server Jira/WorklogPRO; không cam kết phần trăm tăng tốc ngoài fixture.
+
 # Kiểm thử V1.15.3 — Subtle Calendar Hours
 
 - `npm test`: PASS toàn bộ bộ logic/API hiện có (bao gồm OT, calendar drafts/swap và user viewer).

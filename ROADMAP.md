@@ -1,3 +1,9 @@
+## V1.15.4 — Centered Loading & Faster Jira Reads: đã xây dựng
+
+- Loading trung tâm, spinner, cỡ chữ rõ và đúng màn hình; logwork tiếp tục dùng một popup tiến trình.
+- Giảm chờ giữa các bước đọc Jira, pool worklog liên tục, batch metadata đồng thời và barrier kiểm tra trước ghi.
+- Benchmark giả lập tốt hơn; cần đo thời gian trên Jira thật để xác định mức cải thiện khi triển khai.
+
 ## V1.15.3 — Subtle Calendar Hours: đã xây dựng
 
 - Nền xám nhẹ cho khoảng nghỉ trưa và ngoài giờ thường trên lịch tuần; đồng bộ PC/mobile/fullscreen/light/dark.

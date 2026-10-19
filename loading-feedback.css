@@ -1,0 +1,20 @@
+/* V1.15.4 — One readable, centered indeterminate data-loading status. */
+#dataLoadingFeedback { position: fixed; inset: 0; z-index: 180; display: grid; place-items: center; padding: 20px; box-sizing: border-box; pointer-events: none; }
+#dataLoadingFeedback[hidden] { display: none; }
+#historyResults[aria-busy="true"] #worklogHistoryState,
+#plannerOverlay .summary-body[aria-busy="true"] #summaryState,
+#calendarLogDialog:has(#calendarTaskRefreshBtn:disabled) #calendarTaskState { visibility: hidden; }
+.data-loading-card { display: flex; flex-direction: column; align-items: center; gap: 16px; width: min(330px, calc(100vw - 72px)); box-sizing: border-box; padding: 28px 24px; border: 1px solid #dce5ef; border-radius: 22px; background: rgba(255,255,255,.98); color: #182b46; box-shadow: 0 18px 64px #05172c29; text-align: center; animation: qjl-loading-enter 160ms ease-out both; }
+.data-loading-card strong { font-size: clamp(18px, 2.2vw, 22px); font-weight: 700; line-height: 1.45; }
+.data-loading-card > span:last-child { color: #66778d; font-size: 13px; line-height: 1.5; }
+.data-loading-spinner { display: inline-block; width: 38px; height: 38px; flex: 0 0 auto; box-sizing: border-box; border: 3px solid #dce8f9; border-top-color: #377fe3; border-right-color: #377fe3; border-radius: 50%; animation: qjl-data-spin .85s linear infinite; }
+html[data-theme="dark"] .data-loading-card { background: rgba(19,33,52,.98); border-color: #314158; color: #e0e9f6; box-shadow: 0 18px 64px #0007; }
+html[data-theme="dark"] .data-loading-card > span:last-child { color: #a8b8cc; }
+html[data-theme="dark"] .data-loading-spinner { border-color: #293e59; border-top-color: #8abaff; border-right-color: #8abaff; }
+.boot-message { font-size: 17px; line-height: 1.5; }
+#logProgressTitle { display: flex; align-items: center; gap: 12px; font-size: clamp(18px, 2.2vw, 22px); line-height: 1.4; }
+#logProgressPhase { font-size: 16px; line-height: 1.55; }
+#logProgressPanel:not(.is-complete):not(.is-error) #logProgressTitle::before { content: ''; width: 25px; height: 25px; flex: 0 0 25px; box-sizing: border-box; border: 3px solid #a8bad355; border-top-color: var(--primary, #377fe3); border-radius: 50%; animation: qjl-data-spin .85s linear infinite; }
+@keyframes qjl-data-spin { to { transform: rotate(360deg); } }
+@keyframes qjl-loading-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .data-loading-spinner, .data-loading-card, #logProgressTitle::before { animation: none !important; } }

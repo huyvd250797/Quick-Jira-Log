@@ -88,16 +88,19 @@ async function performWorklog(body, session, perf) {
 
   perf.report?.(5, 'Đang đọc thông tin task');
   const mePromise = session.me ? Promise.resolve(session.me) : perf.step('myself', () => getMyself(session));
-  const issuePromise = perf.step('issue', () => getIssue(key, session));
-  const [me, issue] = await Promise.all([mePromise, issuePromise]);
-
-  const actualProject = String(issue?.fields?.project?.key || '').toUpperCase();
-  if (actualProject !== project) {
-    throw new JiraError(`Issue ${key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${project}.`, 400);
-  }
-
-  perf.report?.(20, 'Đang kiểm tra giờ trống');
-  const guard = await perf.step('guard', () => loadOccupiedRangesStable(date, [key], me, session));
+  const issuePromise = perf.step('issue', () => getIssue(key, session)).then(issue => {
+    const actualProject = String(issue?.fields?.project?.key || '').toUpperCase();
+    if (actualProject !== project) {
+      throw new JiraError(`Issue ${key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${project}.`, 400);
+    }
+    return issue;
+  });
+  // Only read-only discovery overlaps metadata. The guard's worklog reads still
+  // wait for validated task metadata, before any Jira write can begin.
+  const guardPromise = mePromise.then(me => perf.step('guard', () =>
+    loadOccupiedRangesStable(date, [key], me, session, { beforeRead: issuePromise })));
+  const [me, issue, guard] = await Promise.all([mePromise, issuePromise, guardPromise]);
+  perf.report?.(20, 'Đã kiểm tra giờ trống');
   const windows = workWindowsFor(date, overtime);
   if (!overtime) {
     const alreadyRegular = minutesInsideWindows(guard.occupied, workWindowsFor(date, false));

@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.15.3 – Subtle Non-working Hours in Weekly Calendar.",
+  "description": "Quick Jira Log V1.15.4 – Centered Loading & Faster Jira Reads.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
