@@ -1,3 +1,17 @@
+# Kiểm thử V1.19.2 — Draft Split Regroup
+
+- `npm test`: PASS toàn bộ logic/API kế thừa và `tests/calendar-regroup-tests.js`.
+- `calendar-regroup-tests.js`: kéo từ phần đầu/cuối, tổng giây/mô tả/OT giữ nguyên, phân biệt nhóm với worklog cùng issue, đích trống/không đủ chỗ, tách lại/4 phần/đồng ý >2; đối tác xếp vào đúng các khoảng nguồn, không tự chia đối tác; về gốc và stale/unknown/conflict guard; preview không đổi map nháp.
+- `tests/browser/calendar-regroup.cjs`: PASS Chromium PC 1440×1100, touch 390×1000, 320×900 reduced motion, ngang 844×390, zoom thời gian 150%. Mouse/CDP touch thật, nhấn giữ; kéo phần 2/1/4, một ghost tổng 2h30, các phần nguồn ẩn/mờ và highlight đúng; Escape/touchcancel/thả không đủ chỗ giữ nguyên nháp. Swap hai đối tác bay vào đúng hai khoảng nguồn thực và staging 3 dòng, chưa gửi API ghi.
+- Bộ trên kiểm tra merge → lưu chỉ PATCH ID gốc với tổng giờ; kéo về vị trí Jira thật xóa nháp không ghi; re-split sang ngày khác 4 phần → hủy giữ nguyên/đồng ý tạo nháp mới; gom lại lần nữa vẫn giữ snapshot gốc; lưu split giữ đủ tổng giây và phần đã lưu không còn group metadata. Worklog khác cùng issue giữ nguyên.
+- Mobile group blocks khai báo touch ownership từ trước touchstart; drag không bị browser hủy khi kéo chéo/ngang. Test tạo chuyển động đầu trước khi cuộn khung để đến vùng đích, tránh mô phỏng nhảy cuộn trong khi browser chưa nhận drag.
+- Hồi quy `calendar-fit.cjs`: PASS 4 viewport; multi-swap, split, popup >2 và lost-response verify-only không tạo trùng. Fixture chờ cả busy chung sau save trước khi thay dữ liệu mock/tạo thao tác kế tiếp.
+- Hồi quy `live-swap-preview.cjs`: PASS PC/390/320; bay cong, reverse, giữ/release/cancel/reduced motion. `calendar-resize.cjs`: PASS 4 viewport. `calendar-experience.cjs`: PASS 4 viewport giữ vị trí/partial save/unknown/rollback.
+- `loading-lock.cjs`: PASS PC/touch/ngang, concurrent request, native modal/fullscreen, HTTP/mạng/JSON lỗi, NDJSON tới final và cleanup.
+- `calendar-performance.cjs`: PASS 400 worklog, idle grid vẫn 0 blocking listener, 0 dimension read cho 60 scroll event, 1 apply/1 storage write cho burst 100 zoom input.
+- `branding.cjs`: kiểm tra cache/SW upgrade V1.19.2, icon offline và giữ storage.
+- Đã kiểm tra syntax, asset references, handler/API giữ nguyên byte và ZIP CRC; ảnh QA không đóng vào source ZIP. Chưa kết nối Jira công ty hoặc kiểm chứng iPhone/Safari vật lý; không chạy toàn bộ chuỗi UI không liên quan.
+
 # Kiểm thử V1.19.1 — Loading Interaction Lock
 
 - `npm test`: PASS toàn bộ logic/API kế thừa; backend không thay đổi.

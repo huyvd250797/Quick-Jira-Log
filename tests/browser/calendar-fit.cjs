@@ -44,7 +44,7 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
   await move(await point(810));await page.waitForTimeout(40);assert(await page.evaluate(()=>[...calendarHoverMotions.values()].every(j=>j.mode==='return')));
   await move(await point(480));await page.waitForTimeout(60);await end();assert.equal(await page.evaluate(()=>state.calendarDrafts.size),3);assert.equal(mutations.length,0);
   assert.deepEqual(await page.evaluate(()=>calendarPreviewItems().map(x=>[x.id,x.start])),[['1','08:00'],['2','15:00'],['3','16:30']]);
-  await page.locator('#calendarSaveBtn').click();assert.equal(await page.locator('#calendarSaveList li').count(),3);await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!state.historyLoading);assert.equal(mutations.length,1);assert.equal(await page.evaluate(()=>state.calendarDrafts.size),0);
+  await page.locator('#calendarSaveBtn').click();assert.equal(await page.locator('#calendarSaveList li').count(),3);await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!state.historyLoading&&!QuickJiraBusy.active);assert.equal(mutations.length,1);assert.equal(await page.evaluate(()=>state.calendarDrafts.size),0);
   logs=[make(1,'13:30',150),make(2,'14:00',30),make(3,'15:00',30)];
   await page.evaluate(async()=>{await loadWorklogHistory({quiet:true,force:true});});await page.waitForTimeout(200);
   await begin();await move(await point(660));await page.waitForTimeout(80);assert.equal(await page.locator('.calendar-drop-highlight').count(),4);await end();
@@ -53,12 +53,12 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
   await page.locator('#calendarSaveBtn').click();const review=await page.locator('#calendarSaveList').textContent();assert(review.includes('4 phần'));assert(review.includes('11:00–12:00'));assert(review.includes('15:30–16:00'));
   await page.waitForTimeout(240);const fit=await page.locator('#calendarSaveDialog').evaluate(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight+1;});assert(fit);
   if(process.env.QJL_QA_OUTPUT){fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`smart-split-${viewport.width}.png`)});}
-  await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!state.historyLoading);assert.equal(mutations.length,2);assert.equal(await page.evaluate(()=>state.calendarDrafts.size),0);assert.equal(logs.filter(x=>x.key==='CAL-1').reduce((n,x)=>n+x.timeSpentSeconds,0),9000);assert.deepEqual(errors,[]);
+  await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!state.historyLoading&&!QuickJiraBusy.active);assert.equal(mutations.length,2);assert.equal(await page.evaluate(()=>state.calendarDrafts.size),0);assert.equal(logs.filter(x=>x.key==='CAL-1').reduce((n,x)=>n+x.timeSpentSeconds,0),9000);assert.deepEqual(errors,[]);
   // A lost split response must show actual server records without duplicate ghosts,
   // then confirm through the read-only branch, never create the tails again.
   logs=[make(1,'13:30',150),make(2,'14:00',30),make(3,'15:00',30)];
   await page.evaluate(async()=>{await loadWorklogHistory({quiet:true,force:true});const item=calendarPreviewItems().find(x=>x.id==='1'),target={date:item.date,start:'11:00'},p=QuickJiraDrafts.drop(item,target,calendarPreviewItems());stageCalendarMove(item,target,{...p,confirmed:true});});
-  loseSplit=true;await page.locator('#calendarSaveBtn').click();await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!state.historyLoading);
+  loseSplit=true;await page.locator('#calendarSaveBtn').click();await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!state.historyLoading&&!QuickJiraBusy.active);
   assert.equal(await page.evaluate(()=>[...state.calendarDrafts.values()][0].status),'unknown');assert.equal(await page.evaluate(()=>calendarPreviewItems().length),6);assert.equal(mutations.length,3);
   await page.locator('#calendarConfirmSaveBtn').click();await page.waitForFunction(()=>!state.calendarMovePending&&!state.historyLoading&&!state.calendarDrafts.size);assert.equal(verifyReads,1);assert.equal(mutations.length,3);assert.deepEqual(errors,[]);
   await ctx.close();console.log('Multi-swap held/reverse/highlights and split confirm/cancel/review/explicit save passed',viewport);

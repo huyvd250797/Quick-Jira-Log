@@ -120,3 +120,17 @@ body:has(#historyOverlay.is-calendar-fullscreen) .toast { z-index: 250; }
 #calendarSplitList { padding: 4px 32px 4px 44px; line-height: 1.9; overflow-wrap: anywhere; }
 
 #calendarSaveList .calendar-save-target { white-space: pre-line; line-height: 1.65; }
+
+/* V1.19.2: only the members of the dragged unsaved group fold into one ghost. */
+.week-worklog-block { transition: opacity 140ms ease-out; }
+.week-worklog-block.is-regroup-source { opacity: 0 !important; animation: none !important; }
+.calendar-drag-ghost.is-regroup-ghost { animation: qjl-regroup-appear 140ms ease-out both; }
+@keyframes qjl-regroup-appear { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .week-worklog-block { transition: none; }
+  .calendar-drag-ghost.is-regroup-ghost { animation: none; }
+}
+
+/* An unsaved split is an editing group. Declare touch ownership before the
+   hold, since browsers cannot change an active pointer's touch-action later. */
+.week-worklog-block.is-split-group { touch-action: none; }

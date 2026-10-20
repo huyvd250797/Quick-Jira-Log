@@ -272,6 +272,9 @@ function stageCalendarMove(item,target,proposal=null,livePreview=false) {
   if(calendarReadOnly()||item?.calendarReadOnly)return;
   if (state.calendarMovePending) return;
   if([...state.calendarDrafts.values()].some(d=>d.target.segments&&d.status==='unknown'))return calendarFeedback('Cần đối chiếu kết quả tách trước khi chỉnh tiếp. Bấm Lưu lịch để kiểm tra Jira.',true);
+  const context=QuickJiraDrafts.regroup(item,state.calendarDrafts);
+  if(context.problem){if(livePreview)returnCalendarHoverPreview();return calendarFeedback(context.problem,true);}
+  item=context.item;
   const drop=proposal||QuickJiraDrafts.drop(item,target,calendarPreviewItems());
   if(drop.problem)return calendarFeedback(drop.problem,true);
   if(drop.requiresConfirmation&&!drop.confirmed){
@@ -482,6 +485,7 @@ function cancelCalendarGesture({returnHover=true}={}) {
     }
     gesture.highlights?.forEach(el=>el.remove());
     gesture.block?.classList.remove('is-drag-source');
+    gesture.groupNodes?.forEach(node=>node.classList.remove('is-regroup-source'));
     try { gesture.block?.releasePointerCapture(gesture.id); } catch {}
   }
   document.body.classList.remove('calendar-dragging','calendar-resizing');
@@ -489,7 +493,6 @@ function cancelCalendarGesture({returnHover=true}={}) {
 }
 function resetCalendarInteraction() { cancelCalendarSwapMotion(); cancelCalendarGesture({returnHover:false}); cancelCalendarHoverMotion(); setCalendarEditMode(false); }
 function calendarBlockClick(event, item) {
-  if(item?.calendarSplitRoot){event.preventDefault();openCalendarSave();return;}
   if (event.target.closest('[data-calendar-resize]') || calendarEditMode || state.calendarMovePending || state.historyLoading || performance.now() < calendarIgnoreClickUntil) { event.preventDefault(); return; }
   if (calendarIsDraft(item)) { openCalendarSave(); return; }
   openCorrection(item);
@@ -567,9 +570,10 @@ function updateCalendarDrag(now=performance.now()) {
   const moved=proposal.changes?.[0],problem=proposal.problem;
   const label=moved?`${moved.date.split('-').reverse().join('/')} · ${moved.start}–${moved.end}${g.resize?' · '+formatHistoryTimeSpent(QuickJiraDrafts.seconds(moved)/60):''}`:'Chọn vị trí trong lịch';
   const detail=problem||(proposal.swap?`Thả để đổi chỗ với ${(proposal.swaps||[proposal.swap]).length} block · Lưu tạm`:proposal.segments?`Thả để tách ${proposal.segments.length} phần${proposal.requiresConfirmation?' · Cần xác nhận':''} · Lưu tạm`:'Thả để lưu tạm · Chưa cập nhật Jira');
-  const content=label+'|'+detail;
+  const groupLabel=g.item.calendarDragParts?`Gom ${g.item.calendarDragParts.length} phần · ${formatHistoryTimeSpent(QuickJiraDrafts.seconds(g.item)/60)} · `:'';
+  const content=label+'|'+groupLabel+detail;
   if(g.ghostContent!==content){
-    g.ghostContent=content;g.ghost.querySelector('span').textContent=label;g.ghost.querySelector('small').textContent=detail;
+    g.ghostContent=content;g.ghost.querySelector('span').textContent=label;g.ghost.querySelector('small').textContent=groupLabel+detail;
     g.ghost.classList.toggle('is-invalid',!!problem);g.ghostHeight=g.ghost.offsetHeight;
   }
   const area=g.highlights?.[0]?.getBoundingClientRect(),ghostHeight=g.ghostHeight||0;
@@ -587,6 +591,7 @@ function startCalendarDrag(g) {
   g.dragging = true;g.items=calendarPreviewItems();
   clearTimeout(g.timer);
   g.block.classList.add('is-drag-source');
+  if(g.item.calendarDragParts){g.groupNodes=g.item.calendarDragParts.map(calendarBlockFor).filter(Boolean);g.groupNodes.forEach(node=>node.classList.add('is-regroup-source'));}
   if(g.resize) {
     document.body.classList.add('calendar-resizing');
     g.column.parentElement.dataset.calendarResizing='true';
@@ -603,7 +608,8 @@ function startCalendarDrag(g) {
     }
   }
   const ghost = document.createElement('div'); ghost.className = 'calendar-drag-ghost';
-  ghost.innerHTML = `<strong>${escapeHtml(g.item.key)}</strong><span></span><small></small>`;
+  ghost.innerHTML = `<strong>${escapeHtml(g.item.key)}${g.item.calendarDragParts?' · '+escapeHtml(formatHistoryTimeSpent(QuickJiraDrafts.seconds(g.item)/60)):''}</strong><span></span><small></small>`;
+  if(g.item.calendarDragParts)ghost.classList.add('is-regroup-ghost');
   g.ghostWidth=Math.max(170,Math.min(280,g.rect.width));
   ghost.style.width=`${g.ghostWidth}px`;
   document.body.append(ghost); g.ghost = ghost;
@@ -698,15 +704,17 @@ function setupCalendarInteractions() {
   grid.addEventListener('pointerdown', event => {
     const block = event.target.closest('[data-week-event]');
     if (!block || calendarReadOnly() || state.calendarMovePending || state.historyLoading || event.button > 0) return;
-    const item = calendarRenderedItems[Number(block.dataset.weekEvent)];
-    if (!item) return;
+    const displayed = calendarRenderedItems[Number(block.dataset.weekEvent)];
+    if (!displayed) return;
     if([...state.calendarDrafts.values()].some(d=>d.target.segments&&d.status==='unknown')){calendarFeedback('Cần đối chiếu kết quả tách trước khi chỉnh tiếp. Bấm Lưu lịch để kiểm tra Jira.',true);return;}
-    if(item.calendarSplitRoot){calendarFeedback('Các phần tách đang chờ lưu. Lưu hoặc bỏ bản nháp trước khi kéo tiếp.',true);return;}
+    const context=QuickJiraDrafts.regroup(displayed,state.calendarDrafts);
+    if(context.problem){calendarFeedback(context.problem,true);return;}
+    const item=context.item;
     cancelCalendarGesture();
     const rect = block.getBoundingClientRect(), column = block.closest('.week-day-column');
     const scale = column.getBoundingClientRect().height / Number(column.parentElement.dataset.minuteRange);
     const mobile = event.pointerType === 'touch';
-    const g = calendarGesture = { id: event.pointerId, mobile, block, item, rect, initialX: event.clientX, initialY: event.clientY, x: event.clientX, y: event.clientY, grabX: event.clientX - rect.left, grabMinutes: (event.clientY - rect.top) / scale, ready: !mobile || calendarEditMode, column, resize: !!event.target.closest('[data-calendar-resize]') && (!mobile || calendarEditMode), endGrabMinutes: (event.clientY-rect.bottom)/scale };
+    const g = calendarGesture = { id: event.pointerId, mobile, block, item, rect, initialX: event.clientX, initialY: event.clientY, x: event.clientX, y: event.clientY, grabX: event.clientX - rect.left, grabMinutes: (event.clientY - rect.top) / scale, ready: !mobile || calendarEditMode, column, resize: !item.calendarDragParts && !!event.target.closest('[data-calendar-resize]') && (!mobile || calendarEditMode), endGrabMinutes: (event.clientY-rect.bottom)/scale };
     if (mobile && !calendarEditMode) g.timer = setTimeout(() => {
       if (calendarGesture !== g) return;
       setCalendarEditMode(true); g.ready = true;
@@ -764,9 +772,12 @@ function setupCalendarInteractions() {
   $('calendarSplitConfirmBtn').addEventListener('click',()=>{
     const pending=calendarPendingSplit;closeCalendarSplitConfirm();
     if(!pending||pending.user!==state.user)return;
-    const current=calendarPreviewItems().find(x=>QuickJiraDrafts.key(x)===QuickJiraDrafts.key(pending.item));
-    if(!current||!QuickJiraDrafts.same(current,pending.item))return calendarFeedback('Bản nháp đã thay đổi. Kéo lại để tính vị trí mới.',true);
-    stageCalendarMove(current,pending.target,{...pending.proposal,confirmed:true});
+    const resolved=QuickJiraDrafts.regroup(pending.item,state.calendarDrafts);
+    const current=pending.item.calendarRegroupRoot?resolved.item:calendarPreviewItems().find(x=>QuickJiraDrafts.key(x)===QuickJiraDrafts.key(pending.item));
+    if(resolved.problem||!current||!QuickJiraDrafts.same(current,pending.item))return calendarFeedback('Bản nháp đã thay đổi. Kéo lại để tính vị trí mới.',true);
+    const fresh=QuickJiraDrafts.drop(current,pending.target,calendarPreviewItems());
+    if(fresh.problem||JSON.stringify(fresh.segments)!==JSON.stringify(pending.proposal.segments))return calendarFeedback('Chỗ trống đã thay đổi. Kéo lại để xem vị trí mới trước khi tách.',true);
+    stageCalendarMove(current,pending.target,{...fresh,confirmed:true});
   });
   $('calendarSaveBtn').addEventListener('click', () => openCalendarSave());
   $('calendarConfirmSaveBtn').addEventListener('click', () => {void saveCalendarDrafts();});

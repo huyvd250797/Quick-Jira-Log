@@ -1,3 +1,7 @@
+## V1.19.2 — Kéo gom nhóm tách trong bản nháp: đã xây dựng
+
+Kéo bất kỳ phần chưa lưu để gom tổng giờ, di chuyển, swap khi đáp ứng các khoảng nguồn hoặc tách lại ở đích; giữ nháp/xác nhận và phục hồi bố cục khi hủy. Chưa gom các worklog đã lưu riêng trên Jira.
+
 ## V1.19.1 — Khóa thao tác khi loading: đã sửa
 
 Khóa toàn bộ thao tác trong app từ lúc bắt đầu tải/xử lý tới khi hoàn tất; hỗ trợ request đồng thời, popup/fullscreen, tiến trình log đơn/hàng loạt và mở khóa khi lỗi. Giữ cơ chế kéo đổi nhiều block/tách qua giờ nghỉ của V1.19.0.

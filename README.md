@@ -1,6 +1,20 @@
-# Quick Jira Log V1.19.1 — Loading Interaction Lock
+# Quick Jira Log V1.19.2 — Draft Split Regroup
 
 Ứng dụng PWA dùng Jira/WorklogPRO hiện có. Source sẵn sàng push GitHub và deploy Vercel; không thêm database hoặc dependency runtime.
+
+## V1.19.2 — Kéo gom lại nhóm tách chưa lưu
+
+- PC kéo bất kỳ phần nào của nhóm tách; mobile nhấn giữ rồi kéo. App gom các phần thuộc **đúng nhóm nháp** thành một block kéo với tổng thời lượng. Không gom các worklog khác chỉ vì trùng mã subtask.
+- Ví dụ nhóm 11:00–12:00 (1h) + 13:30–15:00 (1h30): kéo tới 08:00 → lưu tạm thành 08:00–10:30. Kéo từ phần thứ hai hoặc phần thứ tư vẫn dùng tổng giờ của cả nhóm.
+- Các phần nguồn mờ đi trong lúc kéo, hiển thị một ghost tổng giờ và highlight bố cục đích. Khi hủy/Escape/touchcancel/thả không hợp lệ, các phần trở lại bố cục trước lần kéo; không thay bản nháp một phần.
+- Nếu đích đi qua giờ nghỉ, tự tính lại các phần theo chỗ trống cùng ngày. Hơn 2 phần vẫn hỏi xác nhận. Hủy popup giữ nguyên nhóm cũ; trước khi đồng ý kiểm tra lại nhóm và bố cục để tránh dùng proposal cũ.
+- Swap vẫn preview bay đi/quay về. Với nguồn là nhóm tách, từng đối tác phải đặt nguyên block vào một khoảng nguồn thực sự đủ chỗ. Có thể đổi thứ tự đối tác để xếp vừa các khoảng. Không giả định nguồn là một vùng liền mạch qua giờ nghỉ và không tự tách đối tác để ép swap.
+- Nhóm quá phức tạp hoặc không có phương án đặt từng đối tác sẽ bị từ chối trước lưu; giới hạn swap 12 worklog kế thừa. Không cắt ngắn/đổi tổng thời lượng để ép vừa.
+- Nhóm chưa lưu giữ snapshot Jira gốc xuyên suốt các lần kéo/gom/tách. Gom thành một block dùng luồng sửa worklog hiện có khi bấm icon Lưu và xác nhận, giữ ID gốc, mô tả và Overtime. Còn nhiều phần thì dùng luồng tách có xác nhận/đọc lại/khôi phục hiện có.
+- Kéo trở về đúng vị trí và thời lượng thật trên Jira sẽ bỏ nháp của worklog đó; các nháp khác vẫn giữ. Không có request ghi khi chỉ kéo, preview, hủy hoặc lưu tạm.
+- Các phần chưa lưu không có tay nắm resize riêng; gom về một block rồi chỉnh cạnh như thông thường. Mobile dành thao tác chạm trên các phần nhóm cho nhấn giữ/kéo; cuộn lịch từ vùng trống hoặc các vùng không thuộc nhóm. Khai báo touch-action trước khi chạm để tránh trình duyệt chiếm thao tác kéo ngang sang ngày khác.
+- Chưa hỗ trợ tự gom các phần **đã lưu thành các worklog riêng trên Jira**. Sau khi lưu/tải lại, chúng vẫn là từng worklog thật và không được tự liên kết theo issue key. Nhóm có trạng thái chưa rõ/xung đột phải đối chiếu trước khi kéo.
+- Giữ bản sửa khóa loading V1.19.1; không đổi endpoint/handler Jira, cấu hình hoặc dependency. Version UI/manifest/service worker: 1.19.2.
 
 ## V1.19.1 — Khóa tương tác khi đang tải/xử lý
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.19.1';
+const APP_VERSION = '1.19.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1670,7 +1670,7 @@ function renderWeeklyCalendar(date) {
   for (const item of items) { from = Math.min(from, Math.floor(QuickJiraUi.minuteOfDay(item.start) / 60) * 60); to = Math.max(to, Math.min(1440, Math.ceil((QuickJiraUi.minuteOfDay(item.start) + Number(item.minutes)) / 60) * 60)); }
   const height = to - from; // CSS scale stretches in fullscreen; all events keep the same minute ratio.
   const signature=()=>JSON.stringify([date,days,state.user?.username,calendarViewedUser?.key,calendarReadOnly(),state.projectColors,state.projectPalette,
-    displayed.map(item=>[item.key,item.id,item.project,item.date,item.start,item.end,item.minutes,item.timeSpentSeconds,item.summary,item.description,item.overtime,item.overtimeKnown,item.calendarReadOnly,calendarIsDraft(item)])]);
+    displayed.map(item=>[item.key,item.id,item.project,item.date,item.start,item.end,item.minutes,item.timeSpentSeconds,item.summary,item.description,item.overtime,item.overtimeKnown,item.calendarReadOnly,item.calendarSplitRoot,item.calendarSplitCount,calendarIsDraft(item)])]);
   const existing=$('weeklyCalendar').querySelector('.weekly-inner');
   if(existing?._calendarSignature===signature()){fitWeekToViewport();return;}
 
@@ -1685,8 +1685,8 @@ function renderWeeklyCalendar(date) {
     return `<div class="week-day-column" data-calendar-date="${day}" data-from-minute="${from}">${events.map(event => {
       const globalIndex = eventIndexes.get(event.item);
       const appearance = calendarAppearance(event.item);
-      const label = `${calendarIsDraft(event.item) ? 'Chưa lưu · ' : ''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
-      return `<button type="button" class="week-worklog-block${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
+      const label = `${calendarIsDraft(event.item) ? 'Chưa lưu · ' : ''}${event.item.calendarSplitRoot?(event.item.calendarSplitCount?'Nhóm '+event.item.calendarSplitCount+' phần · Kéo để gom lại · ':'Nhóm tách cần đối chiếu · '):''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
+      return `<button type="button" class="week-worklog-block${event.item.calendarSplitRoot&&!event.item.calendarSplitUncertain?' is-split-group':''}${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly||event.item.calendarSplitRoot?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
     }).join('')}</div>`;
   }).join('');
   $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length};--week-minute-px:1px;--week-morning-start:${480 - from};--week-morning-end:${720 - from};--week-afternoon-start:${810 - from};--week-afternoon-end:${1050 - from}"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" data-minute-range="${height}" style="height:calc(${height} * var(--week-minute-px, 1px))"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
