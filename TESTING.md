@@ -325,6 +325,13 @@ Có thể dùng Chromium đã có qua `QJL_CHROMIUM_PATH=/absolute/path/to/chrom
 4. Bấm nhóm, mở worklog để sửa thời lượng/ngày hoặc OT, kiểm tra tổng được cập nhật. Kiểm tra xóa trên một worklog thử nghiệm được phép xóa.
 5. Với quyền/plugin thiếu, phải thấy tạm tính/chưa xác nhận, không được xuất hiện thành 0h OT đã xác nhận.
 6. Xác nhận các guard, log đơn/Bulk và checkbox Over Time? native vẫn hoạt động như V1.12.1.
+# V1.19.4
+
+- Bố cục mới giới hạn ở `min-width:900px`, calendar view và chưa fullscreen. Kiểm tra PC 1920×1080, 1440×900, 1280×720, 1024×768 và 900×650: toolbar không đè nút; kiểm tra thêm khi hiện icon Lưu, xem tháng và bật T7/CN.
+- Kiểm tra chuyển qua danh sách/fullscreen rồi trở lại; ngày, chế độ và thao tác kéo/zoom giữ nguyên.
+- Kiểm tra light/dark và mobile 390px để đảm bảo bố cục cũ không bị ghi đè.
+- Kết quả phiên này: bộ test nền tảng `tests/run-tests.js`, logic thu phóng, đặt thẻ thông tin và cú pháp JavaScript đạt. Kiểm thử trình duyệt chưa chạy được do môi trường thiếu Chromium; các kích thước ở trên là checklist cần xác nhận trên trình duyệt thực tế.
+
 # V1.19.3
 
 - `node tests/calendar-info-tests.js`: hướng lên/xuống/giữa, nhiều highlight tách/swap, khung nhỏ và không còn chỗ. Mọi thẻ được hiển thị phải nằm trong khung và không giao vùng xem trước.

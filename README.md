@@ -628,6 +628,12 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Sau deploy, kiểm tra footer V1.12.1, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.
+# V1.19.4 — Không gian lịch PC gọn hơn
+
+Ở chế độ thường trên màn hình từ 900px, phần tiêu đề và toolbar gọn hơn, điều hướng nằm sát kỳ xem, thông tin và hướng dẫn cùng hàng. Tiêu đề ngày đặt tổng giờ cạnh ngày để lịch bắt đầu cao hơn. Màn hình 900–1199px tự chia toolbar thành hai hàng.
+
+Đóng gói sẵn cho Vercel; sử dụng cấu hình triển khai đang có. Stylesheet mới được lưu offline cùng phiên bản service worker 1.19.4.
+
 # V1.19.3 — Thẻ thông tin kéo lịch thông minh
 
 Thẻ thông tin né toàn bộ vùng xem trước, ưu tiên phía đối diện hướng kéo và không ra ngoài khung lịch. Nếu thiếu chỗ, thẻ thu gọn hoặc tạm ẩn; nhãn giờ tại điểm đến vẫn hiển thị. Không thay đổi luồng lưu Jira.

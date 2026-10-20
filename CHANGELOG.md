@@ -1,3 +1,11 @@
+## V1.19.4 — Tối ưu không gian lịch PC
+
+- Chế độ lịch thường trên PC dùng tiêu đề gọn, bỏ hướng dẫn lặp lại bên dưới tiêu đề. Giữ nút lưu nháp, chuyển lịch/danh sách, tải lại, fullscreen và đóng ở hàng trên.
+- Gom kỳ xem, điều hướng ngày và các tùy chọn vào toolbar gọn. Khoảng trống giữa kỳ xem và ô ngày được loại bỏ; màn hình laptop hẹp tự xuống hai hàng.
+- Số worklog và hướng dẫn thao tác chuột cùng một hàng. Thu gọn tiêu đề ngày bằng cách đặt ngày và tổng giờ cạnh nhau, progress phía dưới.
+- Tăng chiều rộng tối đa vùng lịch PC và giảm lề ngoài để dành thêm diện tích cho lịch. Lịch mobile, fullscreen và danh sách tiếp tục dùng bố cục hiện có.
+- Thêm stylesheet vào bộ nhớ offline; cập nhật phiên bản app/service worker 1.19.4.
+
 ## V1.19.3 — Thẻ kéo lịch tránh che vùng xem trước
 
 - Kéo xuống ưu tiên thẻ thông tin phía trên; kéo lên ưu tiên phía dưới. Ở giữa, chọn phía còn chỗ trong khung lịch.
