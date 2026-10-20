@@ -1,3 +1,15 @@
+## V1.19.1 — Khóa tương tác khi đang tải/xử lý
+
+- Sửa nguyên nhân loading cũ chỉ là lớp hiển thị `pointer-events: none`, nên nút và phím tắt phía sau vẫn hoạt động; đồng thời bổ sung các luồng trước đó chưa có loading chung.
+- Dùng một modal loading thực sự cho các API trong app: đăng nhập/đăng xuất, tải Sub-task, tổng giờ/dashboard, lịch cá nhân/người khác, tổng hợp, tra thông tin task/nhân sự, kiểm tra giờ trống, log đơn/hàng loạt, sửa/xóa, swap và tách lịch.
+- Khóa ngay khi bắt đầu chờ, gồm cả 140ms trước khi card loading xuất hiện. Chặn chuột, cảm ứng, bàn phím/phím tắt, gửi form, kéo thả và cuộn nền; không cho đóng hoặc chuyển chức năng trong lúc chờ.
+- Nhiều request đồng thời dùng bộ đếm; hoàn thành một request không mở khóa nếu vẫn còn request hoặc công đoạn UI đang xử lý. GET trùng request vẫn dùng cơ chế gộp hiện có.
+- Thu hồi khóa trong `finally` khi hoàn tất hoặc lỗi (HTTP/mạng/dữ liệu không hợp lệ). Các nút thử lại, đóng, nhập liệu và điều hướng hoạt động trở lại; không ghi đè trạng thái disabled/inert của màn hình gốc.
+- Native dialog/bottom sheet và fullscreen cũng được che bằng lớp khóa ở top layer. Hủy gesture/nhấn giữ đang dở khi bắt đầu request để không thả nhầm vào nền.
+- Khi logwork đang có popup tiến trình, dùng lớp chắn trong suốt để giữ đúng **một** tiến trình đang hiển thị; không thêm card/spinner thứ hai. Khóa giữ xuyên suốt khi đọc NDJSON tới kết quả cuối.
+- Giữ loading giữa màn hình, nền tối, light/dark và reduced motion. Khi rảnh, gỡ toàn bộ listener chặn thao tác; không thêm vòng RAF hoặc listener chặn cuộn thường trực cho lịch.
+- Giữ nguyên backend Jira, phân bổ giờ, Overtime, swap/tách và luồng xác nhận logwork. Không thêm dependency hoặc cấu hình môi trường. Service worker/UI/manifest được tăng lên 1.19.1.
+
 ## V1.19.0 — Multi-Swap & Smart Split
 
 ### Kéo đổi chỗ nhiều block

@@ -25,15 +25,16 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   await page.locator(mobile?'#mobileHistoryBtn':'#historyBtn').click();await page.waitForFunction(()=>state.historyLoaded&&!state.historyLoading);
   for(const theme of ['light','dark']){
    await page.evaluate(t=>{applyTheme(t);state.historyCache.clear();},theme);historyDelay=900;
-   await page.locator('#calendarNextBtn').click();await hud.waitFor({state:'visible'});await page.waitForTimeout(180);
+   await page.locator('#calendarNextBtn').click();await hud.waitFor({state:'visible'});await page.waitForFunction(()=>document.getElementById('dataLoadingFeedback').hasAttribute('data-visible'));await page.waitForTimeout(180);
    const geometry=await hud.locator('.data-loading-card').evaluate(el=>{const r=el.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,x:r.x+r.width/2,y:r.y+r.height/2,w:innerWidth,h:innerHeight,font:parseFloat(getComputedStyle(el.querySelector('strong')).fontSize),motion:getComputedStyle(el.querySelector('.data-loading-spinner')).animationName};});
    assert(Math.abs(geometry.x-geometry.w/2)<3&&Math.abs(geometry.y-geometry.h/2)<3,JSON.stringify(geometry));assert(geometry.left>=0&&geometry.right<=geometry.w&&geometry.top>=0&&geometry.bottom<=geometry.h);assert(geometry.font>=18);assert.equal(geometry.motion,'qjl-data-spin');
    await hud.locator('.data-loading-card').evaluate(el=>Promise.all(el.getAnimations().map(animation=>animation.finished.catch(()=>{}))));
    const contrast=await hud.evaluate(el=>({background:getComputedStyle(el).backgroundColor,opacity:getComputedStyle(el).opacity,cardOpacity:getComputedStyle(el.firstElementChild).opacity}));
    const alpha=Number(contrast.background.match(/rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/)?.[1]);assert(alpha>=.3&&alpha<=.55,JSON.stringify(contrast));assert.equal(contrast.opacity,'1');assert.equal(contrast.cardOpacity,'1');
    if(process.env.QJL_QA_OUTPUT){fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`loading-${viewport.width}-${theme}.png`)});}
-   // Closing a view during its request immediately removes its feedback.
-   await page.locator('#closeHistoryBtn').click();await hud.waitFor({state:'hidden'});
+   // Navigation is blocked while data is loading, then becomes available.
+   await page.evaluate(()=>document.getElementById('closeHistoryBtn').click());assert.equal(await page.locator('#historyOverlay').isVisible(),true);
+   await page.waitForFunction(()=>!state.historyLoading&&!QuickJiraBusy.active);await hud.waitFor({state:'hidden'});await page.locator('#closeHistoryBtn').click();
    await page.locator(mobile?'#mobileHistoryBtn':'#historyBtn').click();await page.waitForFunction(()=>state.historyLoaded&&!state.historyLoading);await hud.waitFor({state:'hidden'});
   }
   // Error states must replace loading, including the existing retry control.
@@ -48,13 +49,13 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   // Loading the native task picker does not focus any input or cover top-layer progress.
   await page.evaluate(()=>{void openCalendarLog('2026-10-16','15:00');});await page.locator('#calendarLogDialog').waitFor({state:'visible'});
   filterDelay=800;await page.locator('#calendarTaskRefreshBtn').click();await hud.waitFor({state:'visible'});
-  assert.equal(await hud.evaluate(el=>el.parentElement.id),'calendarLogDialog');
+  assert.equal(await hud.evaluate(el=>el.matches(':modal')),true);
   assert(!['INPUT','TEXTAREA'].includes(await page.evaluate(()=>document.activeElement.tagName)));
   await page.waitForFunction(()=>!state.filterLoading);await hud.waitFor({state:'hidden'});
   await page.locator('#closeCalendarLogBtn').click();await page.locator('#calendarFullscreenBtn').click();await page.waitForFunction(()=>!state.calendarFullscreen);await page.locator('#closeHistoryBtn').click();
   historyDelay=800;await page.locator(mobile?'#mobilePlannerBtn':'#plannerBtn').click();await hud.waitFor({state:'visible'});assert((await hud.textContent()).includes('tổng hợp'));
-  await page.locator('#closePlannerBtn').click();await hud.waitFor({state:'hidden'});
-  await page.evaluate(()=>startLogProgress('single'));assert.equal(await hud.isVisible(),false);
+  await page.evaluate(()=>document.getElementById('closePlannerBtn').click());assert.equal(await page.locator('#plannerOverlay').isVisible(),true);await page.waitForFunction(()=>!state.summary.loading&&!QuickJiraBusy.active);await hud.waitFor({state:'hidden'});await page.locator('#closePlannerBtn').click();
+  await page.evaluate(()=>startLogProgress('single'));await page.waitForFunction(()=>QuickJiraBusy.active);assert.equal(await hud.locator('.data-loading-card').isVisible(),false);
   assert.equal(await page.locator('#logProgressTitle').evaluate(el=>getComputedStyle(el,'::before').animationName),'qjl-data-spin');
   await page.evaluate(()=>finishLogProgress(true));assert.equal(await page.locator('#logProgressTitle').evaluate(el=>getComputedStyle(el,'::before').content),'none');
   await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>startLogProgress('single'));assert.equal(await page.locator('#logProgressTitle').evaluate(el=>getComputedStyle(el,'::before').animationName),'none');

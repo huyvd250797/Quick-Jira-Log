@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.19.0';
+const APP_VERSION = '1.19.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -876,6 +876,7 @@ async function api(path, options = {}) {
   const dedupeKey = method === 'GET' ? `${method}:${path}` : '';
   if (dedupeKey && state.apiInflight.has(dedupeKey)) return state.apiInflight.get(dedupeKey);
 
+  const releaseBusy = QuickJiraBusy.begin(QuickJiraBusy.titleFor(path,method));
   const run = (async () => {
     const startedAt = performance.now();
     const response = await fetch(path, {
@@ -905,7 +906,7 @@ async function api(path, options = {}) {
       setLoggedOut();
       // A streamed response has already sent its headers; clear the expired cookie separately.
       if (response.headers.get('content-type')?.includes('application/x-ndjson')) {
-        void fetch('/api?action=logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+        void QuickJiraBusy.run('Đang cập nhật phiên Jira…',()=>fetch('/api?action=logout', { method: 'POST', credentials: 'same-origin' })).catch(() => {});
       }
     }
     if (resultStatus >= 400 || !data?.ok) {
@@ -927,11 +928,12 @@ async function api(path, options = {}) {
 
   if (dedupeKey) state.apiInflight.set(dedupeKey, run);
   try { return await run; }
-  finally { if (dedupeKey && state.apiInflight.get(dedupeKey) === run) state.apiInflight.delete(dedupeKey); }
+  finally { if (dedupeKey && state.apiInflight.get(dedupeKey) === run) state.apiInflight.delete(dedupeKey); releaseBusy(); }
 }
 
 async function checkStatus() {
   setBootMessage('Đang kiểm tra phiên Jira...');
+  const releaseBusy=QuickJiraBusy.begin('Đang kiểm tra phiên Jira…');
   try {
     const response = await fetch('/api?action=status', { credentials: 'same-origin', cache: 'no-store' });
     const data = await response.json();
@@ -945,7 +947,7 @@ async function checkStatus() {
   } catch {
     setLoggedOut();
   } finally {
-    finishBoot();
+    finishBoot();releaseBusy();
   }
 }
 
@@ -1758,6 +1760,7 @@ function startLogProgress(mode, count = 1) {
   panel.tabIndex = -1;
   panel.focus({ preventScroll: true });
   showAnimated(panel);
+  QuickJiraBusy.sync();
   $('logProgressTitle').textContent = mode === 'bulk' ? `Đang log ${count} task` : 'Đang logwork';
   $('closeLogProgressBtn').classList.add('hidden');
   paintLogProgress();
@@ -1809,6 +1812,7 @@ function finishLogProgress(success, error) {
   $('logProgressPanel').classList.toggle('is-complete', success);
   $('closeLogProgressBtn').classList.remove('hidden');
   paintLogProgress();
+  QuickJiraBusy.sync();
   if (success) state.logProgressHideTimer = setTimeout(closeLogProgress, 4500);
 }
 

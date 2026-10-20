@@ -1,3 +1,16 @@
+# Kiểm thử V1.19.1 — Loading Interaction Lock
+
+- `npm test`: PASS toàn bộ logic/API kế thừa; backend không thay đổi.
+- `tests/browser/loading-lock.cjs`: PC 1440×1000, touch 390×844 và ngang 844×390. Giữ response bằng gate để kiểm tra khóa trước/trong khi loading; chuột/tap thật, click tổng hợp, Escape/Tab/Ctrl+K/Ctrl+Enter, wheel không tác động nền/không phát sinh request mới.
+- Bộ trên kiểm tra 2 request đồng thời, một request xong vẫn khóa; release gọi lặp không làm âm bộ đếm; native dialog mở khi busy vẫn nằm dưới blocker; fullscreen; summary hoàn tất mở khóa; HTTP 503/thử lại, JSON sai và mất mạng đều cleanup; dedup GET không nhân khóa; stream NDJSON thật giữ khóa tới final result; popup progress không có thêm card loading thứ hai.
+- `tests/browser/loading-feedback.cjs`: PASS 3 viewport trên, light/dark, card/spinner căn giữa, backdrop tối, native task picker, lỗi/thử lại, fullscreen, không autofocus input, reduced motion. Đã thay kỳ vọng cũ “đóng khi đang tải” bằng “khóa tới khi hoàn tất”. Chờ card xuất hiện và kết thúc animation trước đo vị trí.
+- `tests/browser/calendar-experience.cjs`: PASS 4 viewport PC/390/320/ngang; refresh/focal, partial-save, unknown/retry/rollback và report không bị hồi quy.
+- `tests/browser/calendar-fit.cjs`: PASS 4 viewport; giữ multi-swap, bay đi/quay về, tách >2 phần, hủy/xác nhận/lưu và đối chiếu sau mất phản hồi.
+- `tests/browser/calendar-performance.cjs`: PASS fixture 400 worklog; khi rảnh vẫn 0 blocking listener trên đường cuộn, 0 lần đọc kích thước cho 60 scroll event, 1 apply và 1 storage write cho burst 100 zoom input.
+- `tests/browser/workflow.cjs`: PASS desktop/iPhone giả lập, sửa/xóa, log đơn/hàng loạt với NDJSON streaming thật qua localhost và mất phản hồi. Click block 30 phút được đặt vào vùng nội dung, tránh tay nắm resize.
+- `tests/browser/branding.cjs`: kiểm tra upgrade service worker V1.19.1, cache/icon và giữ storage.
+- Syntax toàn bộ JS/CJS, asset references và ZIP CRC kiểm tra trước bàn giao. QA log/ảnh nằm ngoài ZIP. Chưa kiểm chứng Safari/iPhone vật lý hoặc Jira công ty; không chạy lại toàn bộ chuỗi UI không liên quan.
+
 # Kiểm thử V1.19.0 — Multi-Swap & Smart Split
 
 - `npm test`: PASS toàn bộ bộ logic/API kế thừa và các bộ mới bên dưới.
@@ -27,6 +40,7 @@
 - `tests/browser/fullscreen-layout.cjs`: PASS 8 viewport 315–1440px, safe area giả lập, icon/header bounds, drafts/readonly và không đổi orientation.
 - `tests/browser/loading-feedback.cjs`: PASS PC/mobile/landscape, light/dark, loading giữa màn hình/nền tối, close/reopen/error/fullscreen/native picker/focus, chỉ một tiến trình. Chờ animation kết thúc trước đo opacity để tránh lấy frame đang fade.
 - `tests/browser/calendar-viewer.cjs`: PASS 4 viewport, fullscreen-only personnel, readonly, MRU 3, stale/403/draft guard và form cá nhân không đổi. `tests/browser/read-freshness.cjs`: PASS revision/user isolation, phản hồi cũ không thay cache mới.
+- `tests/browser/workflow.cjs`: PASS desktop/iPhone giả lập, sửa/xóa, log đơn/hàng loạt với NDJSON streaming thật qua localhost và mất phản hồi. Click block 30 phút được đặt vào vùng nội dung, tránh tay nắm resize.
 - `tests/browser/branding.cjs`: PASS 4 viewport và SW upgrade thật trên localhost, cache V1.18.0, localStorage giữ nguyên, icon offline. CSS và thư viện experience có trong precache, không đổi logo.
 - So byte backend V1.17.0, syntax toàn bộ JS/CJS, version/asset references và ZIP CRC kiểm tra lúc đóng gói. Không chạy toàn bộ chuỗi `test:ui`; các bộ liên quan nêu trên đã chạy. Đã xem ảnh review PC/mobile light/dark; chưa kiểm chứng iPhone/Safari vật lý hoặc Jira công ty, không cam kết FPS/tăng tốc toàn hệ thống.
 
@@ -41,6 +55,7 @@
 - `tests/browser/calendar-resize.cjs`: PASS 1440×1000, 390×844, 320×683, 844×390; resize min/overlap/cancel, giữ draft, xác nhận, retry/lost response, move composition, fullscreen, OT kéo qua 18:00 tới 19:00, trả về gốc và readonly. Fixture chờ layout ổn định trước đo tay nắm và thả ngay sau mốc auto-scroll; tránh để các lượt xác nhận qua giao thức browser làm cuộn thêm trước khi thả.
 - `tests/browser/live-swap-preview.cjs`: PASS PC/touch 390/320, hover flight, stable hit test, reversal/B→C, draft sau thả, cancel/reduced/cleanup và không ghi Jira.
 - `tests/browser/calendar-viewer.cjs`: PASS PC/touch/landscape, fullscreen-only picker, readonly, MRU 3, stale/403, draft guard, reset và luồng form cá nhân.
+- `tests/browser/workflow.cjs`: PASS desktop/iPhone giả lập, sửa/xóa, log đơn/hàng loạt với NDJSON streaming thật qua localhost và mất phản hồi. Click block 30 phút được đặt vào vùng nội dung, tránh tay nắm resize.
 - `tests/browser/branding.cjs`: PASS 4 viewport, cập nhật service worker thật trên localhost tới V1.17.0, giữ localStorage và icon offline. Ba tài nguyên zoom mới có trong precache; giữ tên icon V1.15.2.
 - Đã xem ảnh PC/mobile light/dark. Backend từ ZIP V1.16.0 được so byte, không đổi handler/API/Jira adapter; chỉ thêm thư viện math UI. Kiểm tra syntax, asset references, version và ZIP CRC khi đóng gói.
 - Không chạy toàn bộ chuỗi `test:ui`; các bộ ảnh hưởng trực tiếp nêu trên đã chạy. Chưa kiểm chứng Safari/iPhone vật lý hoặc Jira công ty. Trình duyệt quyết định khả năng native fullscreen/ẩn thanh trình duyệt; local fullscreen vẫn hoạt động.
@@ -56,6 +71,7 @@
 - `tests/browser/calendar-interactions.cjs`: PASS PC 1440×1100 và touch 390×1000, 320×900; tạo log, draft/confirm/cancel/save/discard, lỗi/unknown/reconciliation, nhấn giữ và cập nhật vị trí thật giữ nguyên.
 - `tests/browser/calendar-swap.cjs`: PASS PC, mobile 390/320 và landscape 844; highlight, swap, OT, batch save, xung đột và giữ nháp khi lỗi. `tests/browser/live-swap-preview.cjs`: PASS PC/mobile 390/320; bay ngay khi hover, đảo chiều liên tục, commit/cancel/reduced motion và cleanup. Khi render lại, active gesture được hủy để RAF không dựng lại clone trên DOM mới.
 - `tests/browser/fullscreen-layout.cjs`: PASS 8 viewport 315–1440px, giữ hướng, controls/options/save/readonly trong khung, safe area và bản nháp qua xoay màn hình. `tests/browser/calendar-viewer.cjs`: PASS 4 viewport, picker fullscreen-only, chỉ xem mouse/touch, MRU/reset/stale/auth và bảo vệ nháp/form cá nhân.
+- `tests/browser/workflow.cjs`: PASS desktop/iPhone giả lập, sửa/xóa, log đơn/hàng loạt với NDJSON streaming thật qua localhost và mất phản hồi. Click block 30 phút được đặt vào vùng nội dung, tránh tay nắm resize.
 - `tests/browser/branding.cjs`: PASS 4 viewport và worker upgrade/cache migration/localStorage/offline; CSS resize mới nằm trong precache V1.16.0.
 - Đối chiếu source: handler log đơn/Bulk, thư viện Jira/WorklogPRO/native-form/guard/scheduler và các tối ưu đọc dữ liệu giữ nguyên; mở rộng correction/calendar-moves và calendar-drafts để lưu duration. Không thêm dependency runtime. Kiểm tra Node syntax, asset references, version và ZIP CRC khi đóng gói.
 - Không chạy toàn bộ chuỗi `test:ui`; các bộ liên quan nêu trên đã chạy. Chưa có phiên Jira công ty hoặc iPhone/Safari vật lý; fixture/Chromium touch không chứng minh toàn bộ hành vi thiết bị thật.
@@ -72,6 +88,7 @@
 - `tests/browser/calendar-viewer.cjs`: PASS PC/mobile/landscape: fullscreen-only picker, tên/Chỉ xem, read-only mouse/touch/month/details, MRU 3, phản hồi cũ/lỗi quyền, bảo vệ nháp, reset tài khoản và form logwork cá nhân không đổi.
 - `tests/browser/calendar-interactions.cjs`: PASS PC 1440×1100, touch 390×1000 và 320×900: tạo từ ô trống, kéo nháp, xác nhận/hủy/lưu/bỏ, nút lưu fullscreen, mobile nhấn giữ, overlap, từ chối lưu, response mất và đối chiếu trạng thái.
 - `tests/browser/calendar-refinements.cjs`, `tests/browser/calendar-colors.cjs`: PASS bounds/gợi ý nhân sự và các trạng thái màu/OT/progress/scale ở các viewport hiện có.
+- `tests/browser/workflow.cjs`: PASS desktop/iPhone giả lập, sửa/xóa, log đơn/hàng loạt với NDJSON streaming thật qua localhost và mất phản hồi. Click block 30 phút được đặt vào vùng nội dung, tránh tay nắm resize.
 - `tests/browser/branding.cjs`: PASS 4 viewport và cập nhật service worker thật trên localhost tới cache V1.15.6, giữ localStorage, icon offline. CSS fullscreen mới nằm trong precache.
 - Đã xem ảnh PC/mobile dọc/ngang. Node syntax, version, asset references, backend byte comparison và ZIP CRC kiểm tra khi đóng gói. Không chạy toàn bộ chuỗi `test:ui`; các bộ liên quan nêu trên đã chạy. Chưa kiểm chứng Safari/iPhone vật lý hoặc Jira công ty; native fullscreen/ẩn thanh trình duyệt phụ thuộc trình duyệt.
 
@@ -83,6 +100,7 @@
 - `tests/browser/read-freshness.cjs`: PASS phản hồi lịch cũ về sau phản hồi mới không ghi đè cache; day audit tương tự; phản hồi của tài khoản trước không lấp cache tài khoản mới. Revision tạo request riêng sau invalidate, không tăng TTL.
 - `tests/browser/loading-feedback.cjs`: PASS 1440×1000, 390×844, 844×390; light/dark, nền phủ alpha 0.3–0.55 trong khi card/foreground opacity 1, ở giữa viewport, spinner/cỡ chữ, đóng/mở/error/retry/fullscreen/native picker/focus/reduced motion và một tiến trình log. Đã xem ảnh PC dark/mobile light.
 - `tests/browser/workflow.cjs`: PASS desktop và iPhone giả lập: dashboard, tuần/tháng, block, sửa/xóa, streaming progress và interrupted response.
+- `tests/browser/workflow.cjs`: PASS desktop/iPhone giả lập, sửa/xóa, log đơn/hàng loạt với NDJSON streaming thật qua localhost và mất phản hồi. Click block 30 phút được đặt vào vùng nội dung, tránh tay nắm resize.
 - `tests/browser/branding.cjs`: PASS 4 viewport và service worker upgrade thật trên localhost; nhận cache V1.15.5, giữ localStorage, icon offline. Logo V1.15.2 giữ nguyên.
 - So source đầu vào: không đổi các handler nghiệp vụ; chỉ thêm API read scope, Jira read wrapper/search-method hint, native-form read barrier, frontend revision và backdrop/version/docs/tests. Node syntax, precache assets, version và ZIP CRC kiểm tra khi đóng gói.
 - Không chạy toàn bộ chuỗi `test:ui`; các bộ ảnh hưởng trực tiếp nêu trên đã chạy. Dữ liệu giả lập không thay cho kiểm chứng Jira công ty hoặc iPhone/Safari vật lý. Không cam kết phần trăm giảm thời gian logwork thực tế; quyền, tải Jira/WorklogPRO và đường truyền vẫn ảnh hưởng.
@@ -93,6 +111,7 @@
 - Benchmark nội bộ so cùng source V1.15.3, 3 lần/fixture: guard 100ms → 56ms (24 issue/lần, tổng 72 reads cả trước/sau), metadata 84ms → 42ms (400 issue/lần, tổng 12 reads cả trước/sau). Đây là độ trễ mô phỏng của hai bước, không phải benchmark production hay end-to-end logwork.
 - `tests/browser/loading-feedback.cjs`: PASS 1440×1000, 390×844, landscape 844×390; light/dark, vị trí giữa viewport, font ≥18px, spinner, đóng/mở lại khi đang tải, error/retry, fullscreen host, picker dialog native, không focus input, tổng hợp, giảm chuyển động và chỉ một progress khi log. Đã xem ảnh QA.
 - `tests/browser/workflow.cjs`: PASS PC và iPhone giả lập: dashboard, tuần/tháng, block theo thời lượng, sửa/xóa và streaming/interrupted response.
+- `tests/browser/workflow.cjs`: PASS desktop/iPhone giả lập, sửa/xóa, log đơn/hàng loạt với NDJSON streaming thật qua localhost và mất phản hồi. Click block 30 phút được đặt vào vùng nội dung, tránh tay nắm resize.
 - `tests/browser/branding.cjs`: PASS 4 viewport và worker upgrade thật trên localhost, cache migration, giữ localStorage và fetch offline sau cập nhật.
 - Các bước trước ghi vẫn dùng worklog đọc thật; không bỏ chống trùng, auth, giới hạn giờ, OT readback, idempotency và rollback. Không thêm cache dữ liệu Jira mới hoặc thay quyền lịch người khác.
 - Chưa có phiên Jira công ty hay iPhone/Safari vật lý. Cải thiện thực phụ thuộc độ trễ và tải server Jira/WorklogPRO; không cam kết phần trăm tăng tốc ngoài fixture.

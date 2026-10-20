@@ -61,7 +61,7 @@ const ui=require('../../lib/ui-tools');
   await capture(page,`${name}-v111-workflow-week-dark.png`);
   await page.evaluate(()=>applyTheme('light'));await page.waitForTimeout(200);
   await capture(page,`${name}-v111-workflow-week.png`);
-  await blocks.nth(2).click();await page.locator('#worklogCorrectionPanel').waitFor({state:'visible'});
+  await blocks.nth(2).click({position:{x:12,y:5}});await page.locator('#worklogCorrectionPanel').waitFor({state:'visible'});
   await page.locator('#worklogCorrectionPanel .duration-stepper button[data-step="1"]').click();
   await page.locator('#saveCorrectionBtn').click();await page.waitForFunction(()=>!state.historyLoading);await page.locator('#worklogCorrectionPanel').waitFor({state:'hidden'});
   assert.equal(corrected,1);

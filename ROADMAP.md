@@ -1,3 +1,7 @@
+## V1.19.1 — Khóa thao tác khi loading: đã sửa
+
+Khóa toàn bộ thao tác trong app từ lúc bắt đầu tải/xử lý tới khi hoàn tất; hỗ trợ request đồng thời, popup/fullscreen, tiến trình log đơn/hàng loạt và mở khóa khi lỗi. Giữ cơ chế kéo đổi nhiều block/tách qua giờ nghỉ của V1.19.0.
+
 ## V1.19.0 — Đổi chỗ nhiều block & tự ráp lịch qua giờ nghỉ: đã xây dựng
 
 - Đổi một block với nhiều block khi cả vùng đích và vùng nguồn đáp ứng; preview bay/hoàn về ngay khi đang kéo.
