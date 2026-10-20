@@ -1,6 +1,6 @@
 {
   "name": "quick-jira-log",
-  "version": "1.19.2",
+  "version": "1.19.3",
   "private": true,
   "engines": {
     "node": "24.x"
@@ -17,6 +17,7 @@
     "test:zoom": "node tests/calendar-zoom-tests.js && node tests/browser/calendar-zoom.cjs",
     "test:experience": "node tests/calendar-experience-tests.js && node tests/browser/calendar-experience.cjs && node tests/browser/calendar-performance.cjs",
     "test:fit": "node tests/calendar-fit-tests.js && node tests/calendar-split-tests.js && node tests/calendar-split-integration-tests.js && node tests/browser/calendar-fit.cjs",
-    "test:regroup": "node tests/calendar-regroup-tests.js && node tests/browser/calendar-regroup.cjs"
+    "test:regroup": "node tests/calendar-regroup-tests.js && node tests/browser/calendar-regroup.cjs",
+    "test:drag-info": "node tests/calendar-info-tests.js && node tests/browser/calendar-regroup.cjs"
   }
 }

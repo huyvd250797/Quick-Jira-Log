@@ -1,3 +1,10 @@
+## V1.19.3 — Thẻ kéo lịch tránh che vùng xem trước
+
+- Kéo xuống ưu tiên thẻ thông tin phía trên; kéo lên ưu tiên phía dưới. Ở giữa, chọn phía còn chỗ trong khung lịch.
+- Né toàn bộ highlight, bao gồm các phần tách và đối tác swap; không chỉ phần đầu tiên. Giới hạn trong vùng lịch nhìn thấy, bên dưới tiêu đề và bên trên thông báo đáy.
+- Nếu thiếu chỗ, thử vị trí bên cạnh hoặc thu gọn chiều cao. Khi không còn vùng trống tối thiểu, tạm ẩn thẻ thay vì che điểm đến; nhãn giờ trên highlight vẫn còn.
+- Không thay đổi dữ liệu, luồng lưu tạm/xác nhận hoặc API Jira. Giữ cơ chế gom nhóm V1.19.2.
+
 ## V1.19.2 — Kéo gom lại nhóm tách chưa lưu
 
 - PC kéo bất kỳ phần nào của nhóm tách; mobile nhấn giữ rồi kéo. App gom các phần thuộc **đúng nhóm nháp** thành một block kéo với tổng thời lượng. Không gom các worklog khác chỉ vì trùng mã subtask.

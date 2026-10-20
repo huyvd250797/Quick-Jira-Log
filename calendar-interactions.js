@@ -547,6 +547,48 @@ function stageCalendarResize(item,proposal) {
 function scheduleCalendarDrag(){
   if(!calendarDragFrame)calendarDragFrame=requestAnimationFrame(updateCalendarDrag);
 }
+// Find a free vertical band, including every split/swap preview. Never clamp a
+// card back on top of the destination when the preferred side has no room.
+function calendarInfoPlacement(bounds, obstacles, width, height, anchor, preferAbove) {
+  const gap=8, w=Math.min(width,Math.max(0,bounds.right-bounds.left));
+  const clamp=x=>Math.max(bounds.left,Math.min(bounds.right-w,x));
+  const xs=[clamp(anchor.x),bounds.left,bounds.right-w,...obstacles.flatMap(r=>[clamp(r.left-w-gap),clamp(r.right+gap)])];
+  const candidates=[];
+  for(const x of new Set(xs)) {
+    const blocks=obstacles.filter(r=>r.right+gap>x&&r.left-gap<x+w).sort((a,b)=>a.top-b.top);
+    let top=bounds.top;
+    const bands=[];
+    for(const r of blocks){if(r.top-gap>top)bands.push([top,Math.min(bounds.bottom,r.top-gap)]);top=Math.max(top,r.bottom+gap);}
+    if(top<bounds.bottom)bands.push([top,bounds.bottom]);
+    for(const [a,b] of bands){
+      const h=Math.min(height,b-a);if(h<32)continue;
+      const above=b<=anchor.top,below=a>=anchor.bottom;
+      const y=above?b-h:below?a:Math.max(a,Math.min(b-h,anchor.top-h-gap));
+      const preferred=preferAbove?above:below;
+      candidates.push({x,y,width:w,height:h,side:above?'above':below?'below':'side',score:(height-h)*10000+(preferred?0:2000)+Math.abs(x-anchor.x)+Math.min(Math.abs(y+h-anchor.top),Math.abs(y-anchor.bottom))});
+    }
+  }
+  return candidates.sort((a,b)=>a.score-b.score)[0]||null;
+}
+function positionCalendarDragInfo(g,bounds) {
+  const heading=$('weeklyCalendar').querySelector('.week-grid-heading')?.getBoundingClientRect();
+  const notice=$('calendarInteractionState');
+  const footer=notice&&!notice.classList.contains('hidden')?notice.getBoundingClientRect():null;
+  const viewport=window.visualViewport;
+  const frame={left:Math.max(bounds.left,viewport?.offsetLeft||0)+8,right:Math.min(bounds.right,(viewport?.offsetLeft||0)+(viewport?.width||innerWidth))-8,
+    top:Math.max(bounds.top,heading?.bottom||bounds.top,viewport?.offsetTop||0)+8,
+    bottom:Math.min(bounds.bottom,(viewport?.offsetTop||0)+(viewport?.height||innerHeight),footer&&footer.top>bounds.top&&footer.top<bounds.bottom?footer.top:bounds.bottom)-8};
+  const obstacles=(g.highlights||[]).filter(el=>el.style.display!=='none').map(el=>el.getBoundingClientRect()).filter(r=>r.bottom>frame.top&&r.top<frame.bottom&&r.right>frame.left&&r.left<frame.right);
+  const first=obstacles[0];
+  const delta=first?first.top-g.rect.top:g.y-g.initialY;
+  if(Math.abs(delta)>24)g.infoAbove=delta>0;
+  const width=Math.max(0,Math.min(g.ghostWidth,frame.right-frame.left));
+  if(g.infoWidth!==width){g.infoWidth=width;g.ghost.style.width=`${width}px`;g.ghostHeight=0;}
+  if(!g.ghostHeight){g.ghost.style.maxHeight='none';g.ghostHeight=g.ghost.offsetHeight;}
+  const placement=calendarInfoPlacement(frame,obstacles,width,g.ghostHeight,{x:g.x-g.grabX,top:first?.top??g.y,bottom:first?.bottom??g.y},!!g.infoAbove);
+  g.ghost.style.visibility=placement?'visible':'hidden';
+  if(placement){g.ghost.style.maxHeight=`${placement.height}px`;g.ghost.dataset.placement=placement.side;g.ghost.style.transform=`translate3d(${placement.x}px,${placement.y}px,0)`;}
+}
 function updateCalendarDrag(now=performance.now()) {
   calendarDragFrame=0;
   const g=calendarGesture;if(!g?.dragging)return;
@@ -574,14 +616,9 @@ function updateCalendarDrag(now=performance.now()) {
   const content=label+'|'+groupLabel+detail;
   if(g.ghostContent!==content){
     g.ghostContent=content;g.ghost.querySelector('span').textContent=label;g.ghost.querySelector('small').textContent=groupLabel+detail;
-    g.ghost.classList.toggle('is-invalid',!!problem);g.ghostHeight=g.ghost.offsetHeight;
+    g.ghost.classList.toggle('is-invalid',!!problem);g.ghostHeight=0;
   }
-  const area=g.highlights?.[0]?.getBoundingClientRect(),ghostHeight=g.ghostHeight||0;
-  let ghostTop=area?area.bottom+12:g.y+24;
-  if(ghostTop+ghostHeight>innerHeight-12)ghostTop=(area?.top||g.y)-ghostHeight-12;
-  const x=Math.max(4,Math.min(innerWidth-g.ghostWidth-4,g.x-g.grabX));
-  const y=Math.max(8,Math.min(innerHeight-ghostHeight-8,ghostTop));
-  g.ghost.style.transform=`translate3d(${x}px,${y}px,0)`;
+  positionCalendarDragInfo(g,bounds);
   // A stationary drag inside the grid has no JS animation loop. Native curved
   // swap animations continue independently; only edge auto-scroll needs frames.
   if(scrolling||waitingForEdge)scheduleCalendarDrag();

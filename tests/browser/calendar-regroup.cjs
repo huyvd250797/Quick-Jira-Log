@@ -49,6 +49,8 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
   await begin(1);await move(await point(480));await page.waitForTimeout(180);
   assert.equal(await page.locator('.is-regroup-source').count(),2);assert.equal(await page.locator('.calendar-drag-ghost').count(),1);assert((await page.locator('.calendar-drag-ghost strong').textContent()).includes('2h 30m'));assert.equal(await page.locator('.calendar-drop-highlight').count(),1);assert.equal(await snapshot(),originalDraft);assert.equal(writes.length,0);
   assert.equal(await page.evaluate(()=>document.getElementById('calendarSaveDialog').open),false);
+  const info=await page.evaluate(()=>{const ghost=document.querySelector('.calendar-drag-ghost'),r=ghost.getBoundingClientRect(),frame=document.getElementById('historyResults').getBoundingClientRect();return {visible:getComputedStyle(ghost).visibility!=='hidden',inside:r.left>=frame.left&&r.right<=frame.right&&r.top>=frame.top&&r.bottom<=frame.bottom,overlap:[...document.querySelectorAll('.calendar-drop-highlight')].some(el=>{const b=el.getBoundingClientRect();return r.left<b.right&&r.right>b.left&&r.top<b.bottom&&r.bottom>b.top;})};});
+  if(info.visible){assert(info.inside,'Drag info must stay inside calendar');assert(!info.overlap,'Drag info must not cover any preview');}
   if(process.env.QJL_QA_OUTPUT){fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`regroup-held-${viewport.width}.png`)});}
   await end(true);await page.waitForTimeout(160);assert.equal(await snapshot(),originalDraft);assert.equal(await page.locator('.is-regroup-source,.calendar-drag-ghost').count(),0);
   // Invalid release restores the two parts; it does not retain half a placement.

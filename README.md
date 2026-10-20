@@ -628,3 +628,7 @@ Các test dùng Jira giả lập, không ghi vào hệ thống Jira thật. Kế
 - Sau deploy, kiểm tra footer V1.12.1, cập nhật PWA, đối chiếu tổng hôm nay/tuần với Jira; thử tăng giờ, log đơn/Bulk, sửa/xóa từ block và theo dõi tiến trình trên mạng thực tế.
 
 Xem thêm CHANGELOG.md và ROADMAP.md.
+# V1.19.3 — Thẻ thông tin kéo lịch thông minh
+
+Thẻ thông tin né toàn bộ vùng xem trước, ưu tiên phía đối diện hướng kéo và không ra ngoài khung lịch. Nếu thiếu chỗ, thẻ thu gọn hoặc tạm ẩn; nhãn giờ tại điểm đến vẫn hiển thị. Không thay đổi luồng lưu Jira.
+

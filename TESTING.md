@@ -325,3 +325,9 @@ Có thể dùng Chromium đã có qua `QJL_CHROMIUM_PATH=/absolute/path/to/chrom
 4. Bấm nhóm, mở worklog để sửa thời lượng/ngày hoặc OT, kiểm tra tổng được cập nhật. Kiểm tra xóa trên một worklog thử nghiệm được phép xóa.
 5. Với quyền/plugin thiếu, phải thấy tạm tính/chưa xác nhận, không được xuất hiện thành 0h OT đã xác nhận.
 6. Xác nhận các guard, log đơn/Bulk và checkbox Over Time? native vẫn hoạt động như V1.12.1.
+# V1.19.3
+
+- `node tests/calendar-info-tests.js`: hướng lên/xuống/giữa, nhiều highlight tách/swap, khung nhỏ và không còn chỗ. Mọi thẻ được hiển thị phải nằm trong khung và không giao vùng xem trước.
+- `node tests/browser/calendar-regroup.cjs`: thao tác chuột/cảm ứng và kiểm tra thẻ thực tế không che preview hoặc tràn khung trên 4 kích thước.
+- Kết quả phiên này: `npm test`, test bố trí thẻ và kiểm tra cú pháp đạt. Chưa chạy lại test trình duyệt do môi trường chưa có Chromium; không khẳng định đã kiểm thử iPhone thật. Backend/handlers giữ nguyên byte so với V1.19.2.
+
