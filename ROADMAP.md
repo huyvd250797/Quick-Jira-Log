@@ -1,3 +1,10 @@
+## V1.18.0 — Củng cố trải nghiệm & tốc độ: đã xây dựng
+
+- Cuộn tự nhiên trong khung, zoom gộp theo frame, giảm observer/layout/loop và tái sử dụng lịch không đổi.
+- Giữ ngày/giờ đang nhìn khi tải lại lịch trong app; xử lý thay đổi dải giờ và lỗi/retry.
+- Kết quả lưu từng worklog, phân biệt thành công, lỗi, chưa gửi, chưa rõ và đã phục hồi; chỉ xác nhận/lưu lại phần còn lại.
+- Giữ phạm vi app logtime, backend và luồng xác nhận hiện có. Undo/Redo là đề xuất riêng, không nằm trong bản tối ưu này.
+
 ## V1.17.0 — Thu phóng lịch: đã xây dựng
 
 - Điều khiển riêng chiều cao khung giờ và độ rộng cột ngày bằng −/+, thanh kéo; 75–200%, mặc định 100%.

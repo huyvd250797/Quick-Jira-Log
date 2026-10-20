@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('node:assert/strict'),E=require('../lib/calendar-experience');
+assert.equal(E.failureState({status:403}),'failed');assert.equal(E.failureState({status:409}),'conflict');
+assert.equal(E.failureState({status:503}),'unknown');assert.equal(E.failureState({code:'RESULT_UNKNOWN'}),'unknown');
+assert.equal(E.failureState({status:422,details:{rolledBack:true}}),'rolledback');
+assert.equal(E.failureState({status:422,details:{resultUnknown:true}}),'unknown');
+assert.deepEqual(E.totals([{status:'saved'},{status:'unknown'},{status:'conflict'},{status:'rolledback'},{status:'waiting'}]),{total:5,saved:1,unknown:1,failed:2,waiting:1});
+const dates=['2026-10-19','2026-10-20','2026-10-21','2026-10-22','2026-10-23'];
+const snapshot=E.focalSnapshot({day:2.4,minute:210},480,dates);
+assert.equal(snapshot.date,dates[2]);assert.equal(snapshot.minute,690);
+const shifted=E.focalAnchor(snapshot,360,dates);assert(Math.abs(shifted.day-2.4)<1e-9);assert.equal(shifted.minute,330);
+assert.equal(E.focalAnchor(snapshot,360,dates.slice(0,2)),null,'never restore another week/day by index');
+assert.equal(E.focalAnchor({date:dates[0],minute:NaN},360,dates),null);
+console.log('Experience: exact daily/time focal snapshots after range changes; verified/failed/unknown/rolled-back/waiting classification and counts passed.');

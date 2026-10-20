@@ -1,3 +1,12 @@
+# V1.18.0 — Smooth Calendar & Save Results
+
+- Native contained scrolling; loại bỏ listener chặn không cần thiết trên đường cuộn bình thường, giữ fallback engine cũ và khóa nền modal.
+- Zoom gộp theo frame, debounce/flush tùy chọn; lookup/index block, delegated clicks, tái sử dụng grid không đổi, loading observer chỉ theo dõi owner trạng thái.
+- Drag đứng yên không chạy loop; ghost di chuyển bằng transform, auto-scroll theo thời gian và chờ ý định ở mép 110ms. Giữ swap/reversal, resize, snap và kiểm tra trước ghi.
+- Tải lại cùng kỳ giữ grid dưới loading và phục hồi tâm theo ngày/phút, kể cả dải giờ đổi, retry lỗi và responses cũ.
+- Kết quả lưu từng dòng: confirmed/failed/conflict/not sent/unknown/rolled back, tổng kết và retry chỉ phần chưa xác nhận; giữ unknown khi đọc đối chiếu lỗi, không ghi lặp.
+- Version/manifest/precache/docs/tests được cập nhật; backend Jira/WorklogPRO và logo giữ nguyên.
+
 # V1.17.0 — Calendar Zoom Controls
 
 - Hai trục thu phóng độc lập: Khung giờ/Cột ngày, nút −/+ 25%, thanh kéo 5%, phạm vi 75–200%, đặt lại từng trục/cả hai về 100%.

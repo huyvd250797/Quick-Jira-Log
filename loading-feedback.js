@@ -61,9 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 140);
   }
   function schedule() { if (!frame) frame = requestAnimationFrame(sync); }
-  new MutationObserver(records => {
-    if (records.some(r => r.target !== hud && !hud.contains(r.target))) schedule();
-  }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden', 'aria-busy', 'open', 'disabled'] });
+  // Observe busy-state owners only. Grid highlights, slider buttons and drag
+  // ghosts must not schedule a layout-reading HUD scan on every frame.
+  const observer=new MutationObserver(schedule);
+  const owners=new Set([document.body,...document.querySelectorAll('dialog'),
+    ...['historyOverlay','historyResults','plannerOverlay','settingsOverlay','worklogCard','bulkCard','singleCapacityCard','bulkCapacityCard','filterLoading','calendarTaskRefreshBtn'].map(byId),
+    byId('plannerOverlay')?.querySelector('.summary-body')]);
+  for(const owner of owners)if(owner)observer.observe(owner,{attributes:true,attributeFilter:['class','hidden','aria-busy','open','disabled']});
   document.addEventListener('fullscreenchange', schedule);
   schedule();
 });

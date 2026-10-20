@@ -6,7 +6,8 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
  const browser=await chromium.launch({...(process.env.QJL_CHROMIUM_PATH?{executablePath:process.env.QJL_CHROMIUM_PATH}:{}),headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
  for(const viewport of [{width:1440,height:1000},{width:390,height:844},{width:320,height:683},{width:844,height:390}]){
   const mobile=viewport.width<900,context=await browser.newContext({viewport,hasTouch:mobile,isMobile:mobile,serviceWorkers:'block',timezoneId:'Asia/Ho_Chi_Minh'}),page=await context.newPage(),errors=[],lookups=[],writes=[];
-  page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(()=>{const D=Date;window.Date=class extends D{constructor(...a){super(...a.length?a:['2026-10-16T13:00:00Z']);}static now(){return D.parse('2026-10-16T13:00:00Z');}};});
+  page.on('pageerror',e=>errors.push(e.message));if(process.env.QJL_LEGACY_SCROLL)await page.addInitScript(()=>{window.__legacyScroll=true;});await page.addInitScript(()=>{if(window.__legacyScroll){const original=CSS.supports.bind(CSS);CSS.supports=(...args)=>args[0]==='overscroll-behavior'?false:original(...args);}
+const D=Date;window.Date=class extends D{constructor(...a){super(...a.length?a:['2026-10-16T13:00:00Z']);}static now(){return D.parse('2026-10-16T13:00:00Z');}};});
   const person={key:'JIRAUSER123',username:'nguyen.an',displayName:'Nguyễn An'},slowPerson={key:'SLOW',username:'slow',displayName:'Old result'};
   const logs=[{id:'1',key:'CAL-1',date:'2026-10-16',start:'08:00',end:'09:00',minutes:60,timeSpentSeconds:3600,summary:'Hỗ trợ vận hành',description:'Giữ nguyên logwork',overtimeKnown:true,overtime:false},{id:'2',key:'CAL-2',date:'2026-10-16',start:'15:00',end:'16:00',minutes:60,timeSpentSeconds:3600,summary:'Review tài liệu',overtimeKnown:true,overtime:true}];
   await page.route('**/api?*',async route=>{const u=new URL(route.request().url()),a=u.searchParams.get('action');let data={ok:true},status=200;
@@ -34,11 +35,11 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
     touch('touchstart',target,150,250,true);const pinch=touch('touchmove',target,160,260,true);touch('touchend',target,160,260);
     r.scrollTo(0,0);const wheel=new WheelEvent('wheel',{bubbles:true,cancelable:true,deltaX:-100,deltaY:-100});target.dispatchEvent(wheel);
     const heading=document.querySelector('.week-grid-heading').getBoundingClientRect(),frame=r.getBoundingClientRect();
-    return{first,last,diagonal,interior,toolbar,pinch,wheel:wheel.defaultPrevented,maxX,maxY,overscroll:getComputedStyle(r).overscrollBehavior,gapX:heading.left-frame.left,gapY:heading.top-frame.top};
+    return{native:CSS.supports('overscroll-behavior','none'),first,last,diagonal,interior,toolbar,pinch,wheel:wheel.defaultPrevented,maxX,maxY,overscroll:getComputedStyle(r).overscrollBehavior,gapX:heading.left-frame.left,gapY:heading.top-frame.top};
    });
-   assert.equal(result.first.prevented,true);assert.equal(result.first.left,0);assert.equal(result.first.top,0);
-   assert.equal(result.last.prevented,true);assert(Math.abs(result.last.left-result.maxX)<1&&Math.abs(result.last.top-result.maxY)<1);
-   assert.equal(result.diagonal.left,0);assert.equal(result.interior,false);assert.equal(result.toolbar.prevented,true);assert.equal(result.pinch,false);assert.equal(result.wheel,true);assert.equal(result.overscroll,'none');assert(result.gapX<3&&result.gapY<3,'No empty strip at the grid origin');
+   assert.equal(result.first.prevented,!result.native);assert.equal(result.first.left,0);assert.equal(result.first.top,0);
+   assert.equal(result.last.prevented,!result.native);assert(Math.abs(result.last.left-result.maxX)<1&&Math.abs(result.last.top-result.maxY)<1);
+   assert.equal(result.diagonal.left,0);assert.equal(result.interior,false);assert.equal(result.toolbar.prevented,true);assert.equal(result.pinch,false);assert.equal(result.wheel,!result.native);assert.equal(result.overscroll,'none');assert(result.gapX<3&&result.gapY<3,'No empty strip at the grid origin');
   };
   await testEdges();
   // Genuine touch still pans inside a scrollable grid (not globally touch-locked).

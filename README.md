@@ -1,6 +1,48 @@
-# Quick Jira Log V1.17.0 — Calendar Zoom Controls
+# Quick Jira Log V1.18.0 — Smooth Calendar & Save Results
 
 Ứng dụng PWA dùng Jira/WorklogPRO hiện có. Source sẵn sàng push GitHub và deploy Vercel; không thêm database hoặc dependency runtime.
+
+## V1.18.0 — Củng cố trải nghiệm & tốc độ
+
+### Cuộn, zoom và thao tác lịch
+
+- Cuộn ngang/dọc bằng cơ chế cuộn tự nhiên của trình duyệt có hỗ trợ containment. Không chặn một lần kéo ngang chỉ vì ngón tay lệch nhẹ ra mép trên/dưới. Khung vẫn giới hạn nội dung trong lịch; toolbar và nền modal vẫn khóa đúng phạm vi.
+- Chỉ đăng ký bộ chặn touch cho chỉnh sửa khi đang chỉnh sửa; bộ chặn của bottom sheet chi tiết chỉ tồn tại lúc sheet mở. Giữ fallback JavaScript cho engine thiếu CSS containment. Không tự mô phỏng quán tính hoặc thay đổi tốc độ cuộn của thiết bị.
+- Zoom vẫn có −/+, hai thanh kéo, 75–200% và reset. Các input dồn trong một khung hình được gộp, tùy chọn lưu sau 150ms ngừng thay đổi và được ghi ngay khi đóng/ẩn trang nếu còn thay đổi. Không ghi localStorage lại khi không có thay đổi.
+- Lưới vẫn dùng kích thước thật để snap, highlight, swap và resize khớp dữ liệu. Giữ vùng nhìn khi zoom/xoay máy; không dùng transform phóng toàn bộ lịch để thay tọa độ phút.
+- Kéo đứng yên ở trong lịch không giữ vòng JavaScript chạy liên tục. Đường bay swap tiếp tục bằng animation hiện có. Auto-scroll theo thời gian thực, chỉ bắt đầu khi giữ sát mép khoảng 110ms để tránh giật khi tay nắm đi ngang qua mép; dừng ở giới hạn.
+- Thu hẹp các vùng mà loading observer theo dõi, tránh kiểm tra layout vì một highlight/ghost đổi mỗi frame. Giảm cập nhật DOM lặp, dùng lookup cho block và chỉ tạo layer cho các phần sticky; không tạo layer riêng cho mọi worklog.
+- Hiệu ứng mở/đóng bottom sheet và popup giữ fade/slide, reduced motion vẫn được tôn trọng; không thay đổi giá trị blur nền trong từng frame của popup chi tiết.
+
+### Tải lại giữ vùng xem
+
+- Bấm tải lại cùng kỳ: giữ lưới hiện tại phía sau loading nền tối, khóa thao tác trên dữ liệu đang tải, sau đó hiển thị dữ liệu mới. Nếu dữ liệu hiển thị không đổi, tái sử dụng lưới hiện có.
+- Vùng nhìn lưu theo **ngày và phút thực**, thay vì chỉ theo pixel. Nếu có thêm worklog OT lúc 06:00 khiến lịch bắt đầu sớm hơn, vùng đang xem vẫn giữ gần cùng ngày/giờ; giới hạn tại mép đầu/cuối nếu khung không đủ không gian.
+- Lỗi tải lại giữ snapshot vùng nhìn cuối để nút Thử lại phục hồi đúng vị trí sau khi đọc thành công. Không dùng phản hồi cũ thay dữ liệu của request/tài khoản mới.
+- Áp dụng khi tải lại lịch trong app và tải lại sau lưu cùng kỳ. Không thêm cơ chế tự mở lại modal hoặc khôi phục bản nháp khi reload toàn bộ trang trình duyệt.
+
+### Kết quả lưu theo từng worklog
+
+- Bảng xác nhận hiển thị trước/sau cùng trạng thái riêng: **Chưa lưu**, **Đang kiểm tra**, **Đang lưu**, **Đã xác nhận trên Jira**, **Chưa lưu được**, **Cần xử lý xung đột**, **Chưa thực hiện**, **Chưa rõ kết quả · Cần đối chiếu**, **Đã phục hồi · Chưa lưu**.
+- Khi một dòng lỗi, nhóm dừng như trước để giữ thứ tự/dependency. Các dòng đã xác nhận giữ trạng thái thành công; dòng chưa tới lượt được ghi rõ chưa gửi. Tổng kết cho biết đã xác nhận bao nhiêu, còn bao nhiêu cần xử lý/đối chiếu.
+- Đóng rồi mở lại bảng vẫn thấy các dòng đã xác nhận và phần còn lại trong phiên hiện tại. **Kiểm tra và lưu (n)** chỉ xử lý nháp còn lại; **Bỏ phần chưa lưu** không hoàn tác worklog đã lưu trên Jira.
+- Mất phản hồi ghi không được xem là thất bại chắc chắn. Nếu đọc đối chiếu tiếp tục lỗi, trạng thái vẫn là chưa rõ. Khi đọc lại thấy đúng đích, xác nhận đã lưu mà không gửi ghi lặp.
+- Swap lỗi có rollback đã được xác nhận hiển thị đã phục hồi, không gắn nhãn đã lưu. Lịch người khác vẫn chỉ xem. Report chỉ giữ trong bộ nhớ phiên, không lưu nội dung worklog vào storage mới.
+
+### Kiểm chứng và triển khai
+
+Fixture Chromium touch với **400 worklog**, so cùng source V1.17.0:
+
+| Chỉ số kiểm tra | V1.17.0 | V1.18.0 |
+| --- | ---: | ---: |
+| Listener touch/wheel có thể chặn trên đường cuộn khi xem lịch bình thường | 7 | 0 |
+| Lượt đọc kích thước khung do 60 sự kiện scroll | 240 | 0 |
+| Lượt áp dụng geometry trong một đợt 100 input zoom | 100 | 1 |
+| Lượt ghi tùy chọn trong cùng đợt input | 100 | 1 |
+
+Đây là phép đo số thao tác trong fixture, không phải cam kết FPS hoặc phần trăm tăng tốc trên iPhone/Jira thực tế. Không đổi API/backend, quy tắc logtime, native Overtime, xác nhận, chống trùng, rollback hoặc thứ tự ghi. Không thêm database/dependency runtime.
+
+Deploy nội dung `Quick-Jira-Log-V1.18.0` lên project Vercel hiện có, giữ biến môi trường. Trong PWA chấp nhận **Cập nhật** nếu được hỏi, kiểm tra nhãn **V1.18.0**. Chạy `npm test`, `npm run test:experience`; phần browser cần Playwright/Chromium và hỗ trợ `QJL_CHROMIUM_PATH`. Chi tiết trong `TESTING.md`.
 
 ## V1.17.0 — Thu phóng lịch
 

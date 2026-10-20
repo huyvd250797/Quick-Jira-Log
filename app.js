@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.17.0';
+const APP_VERSION = '1.18.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -768,6 +768,7 @@ function setLoggedIn(user) {
 
 function setLoggedOut() {
   resetCalendarViewer();
+  state.historyViewportSnapshot=null;
   clearCalendarDrafts();
   closeCalendarLog({ force: true });
   resetCalendarInteraction();
@@ -1651,13 +1652,14 @@ function fitWeekToViewport() {
 }
 function scheduleWeekFit() {
   cancelAnimationFrame(weekFitFrame);
-  weekFitFrame = requestAnimationFrame(fitWeekToViewport);
+  weekFitFrame = requestAnimationFrame(() => { weekFitFrame=0; fitWeekToViewport(); });
 }
 
 function renderWeeklyCalendar(date) {
   const week = QuickJiraUi.weekRange(date);
   const days = state.calendarWeekends ? week.days : week.days.slice(0, 5);
   const displayed = calendarRenderedItems = calendarPreviewItems();
+  const eventIndexes = new Map(displayed.map((item,index)=>[item,index]));
   const items = displayed.filter(item => days.includes(item.date) && Number(item.minutes) > 0);
   const summary = QuickJiraUi.workSummary(displayed, date);
   const format = QuickJiraCalendar.displayDuration;
@@ -1665,6 +1667,11 @@ function renderWeeklyCalendar(date) {
   let from = 8 * 60, to = 18 * 60;
   for (const item of items) { from = Math.min(from, Math.floor(QuickJiraUi.minuteOfDay(item.start) / 60) * 60); to = Math.max(to, Math.min(1440, Math.ceil((QuickJiraUi.minuteOfDay(item.start) + Number(item.minutes)) / 60) * 60)); }
   const height = to - from; // CSS scale stretches in fullscreen; all events keep the same minute ratio.
+  const signature=()=>JSON.stringify([date,days,state.user?.username,calendarViewedUser?.key,calendarReadOnly(),state.projectColors,state.projectPalette,
+    displayed.map(item=>[item.key,item.id,item.project,item.date,item.start,item.end,item.minutes,item.timeSpentSeconds,item.summary,item.description,item.overtime,item.overtimeKnown,item.calendarReadOnly,calendarIsDraft(item)])]);
+  const existing=$('weeklyCalendar').querySelector('.weekly-inner');
+  if(existing?._calendarSignature===signature()){fitWeekToViewport();return;}
+
   const timeText = minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
   const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:calc(${index * 60} * var(--week-minute-px, 1px))">${timeText(from + index * 60)}</span>`).join('');
   const headers = days.map((day, index) => {
@@ -1674,15 +1681,15 @@ function renderWeeklyCalendar(date) {
   const columns = days.map(day => {
     const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
     return `<div class="week-day-column" data-calendar-date="${day}" data-from-minute="${from}">${events.map(event => {
-      const globalIndex = displayed.indexOf(event.item);
+      const globalIndex = eventIndexes.get(event.item);
       const appearance = calendarAppearance(event.item);
       const label = `${calendarIsDraft(event.item) ? 'Chưa lưu · ' : ''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
       return `<button type="button" class="week-worklog-block${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
     }).join('')}</div>`;
   }).join('');
   $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length};--week-minute-px:1px;--week-morning-start:${480 - from};--week-morning-end:${720 - from};--week-afternoon-start:${810 - from};--week-afternoon-end:${1050 - from}"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" data-minute-range="${height}" style="height:calc(${height} * var(--week-minute-px, 1px))"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
+  $('weeklyCalendar').querySelector('.weekly-inner')._calendarSignature=signature();
   fitWeekToViewport();
-  $('weeklyCalendar').querySelectorAll('[data-week-event]').forEach(button => button.addEventListener('click', event => calendarBlockClick(event, calendarRenderedItems[Number(button.dataset.weekEvent)])));
   $('weeklyCalendar').querySelectorAll('[data-week-day]').forEach(button => button.addEventListener('click', () => {
     $('historyDate').value = button.dataset.weekDay;
     syncCalendarControls();
@@ -1896,6 +1903,7 @@ function renderWorklogHistory() {
   const stateEl = $('worklogHistoryState');
   if (!wrap || !stateEl) return;
   const calendar = state.historyView === 'calendar';
+  const retainGrid=calendar&&state.historyLoading&&state.historyLoaded&&!state.historyError;
   syncCalendarViewer();
   $('historyTitle').nextElementSibling.textContent = calendar && state.calendarMode === 'week' ? 'Kéo để lưu tạm · Bấm icon lưu để cập nhật Jira; mobile nhấn giữ.' : 'Chọn ngày để xem worklog · Bấm worklog để xem, sửa hoặc xóa.';
   $('historyListFilters').classList.toggle('hidden', calendar);
@@ -1910,13 +1918,13 @@ function renderWorklogHistory() {
   syncCalendarZoom();
   if (calendar) syncCalendarControls();
   wrap.classList.toggle('hidden', calendar);
-  $('worklogCalendar').classList.toggle('hidden', !calendar || state.historyLoading || !state.historyLoaded || !!state.historyError);
+  $('worklogCalendar').classList.toggle('hidden', !calendar || (state.historyLoading&&!retainGrid) || !state.historyLoaded || !!state.historyError);
   $('historyListViewBtn').classList.toggle('is-active', !calendar);
   $('historyCalendarViewBtn').classList.toggle('is-active', calendar);
   $('historyListViewBtn').setAttribute('aria-pressed', String(!calendar));
   $('historyCalendarViewBtn').setAttribute('aria-pressed', String(calendar));
   $('historySummary').classList.toggle('hidden', !calendar && (state.historyLoading || !state.historyLoaded || !!state.historyError));
-  if (calendar && (state.historyLoading || !state.historyLoaded || state.historyError)) $('historySummary').textContent = 'Worklog cá nhân · Giờ Việt Nam';
+  if (calendar && !retainGrid && (state.historyLoading || !state.historyLoaded || state.historyError)) $('historySummary').textContent = 'Worklog cá nhân · Giờ Việt Nam';
   let message = '';
   if (state.historyLoading) message = calendar ? `Đang tải worklog trong ${state.calendarMode === 'week' ? 'tuần' : 'tháng'} từ Jira...` : 'Đang tải worklog từ Jira...';
   else if (state.historyError) message = state.historyError;
@@ -1934,6 +1942,7 @@ function renderWorklogHistory() {
   stateEl.classList.toggle('is-warning', !!state.historyNotice && !state.historyError);
   stateEl.classList.toggle('is-error', !!state.historyError);
   $('historyResults').setAttribute('aria-busy', String(state.historyLoading));
+  if(retainGrid){stateEl.classList.add('hidden');return;}
   if (state.historyLoading || state.historyError || !state.historyLoaded) {
     wrap.innerHTML = '';
     return;
@@ -1979,13 +1988,16 @@ async function loadWorklogHistory({ quiet = false, force = false, preserveCorrec
   const results = $('historyResults');
   const weeklyScroll = $('weeklyCalendar').querySelector('.weekly-scroll');
   const sameScope = scope === state.historyScrollScope;
+  const retained=state.historyView==='calendar'&&sameScope&&state.historyLoaded&&!state.historyError;
+  let viewportSnapshot=sameScope?(captureCalendarViewport()||state.historyViewportSnapshot):null;
+  if(viewportSnapshot)state.historyViewportSnapshot=viewportSnapshot;
+  else if(!sameScope)state.historyViewportSnapshot=null;
   const scroll = sameScope ? { top: results.scrollTop, left: results.scrollLeft, weekTop: weeklyScroll?.scrollTop || 0, weekLeft: weeklyScroll?.scrollLeft || 0 } : { top: 0, left: 0, weekTop: 0, weekLeft: 0 };
   const sequence = ++state.historySeq;
   if (!preserveCorrection) closeCorrection({ immediate: true });
   state.historyError = '';
   state.historyNotice = '';
-  state.historyItems = [];
-  state.historyLoaded = false;
+  if(!retained){state.historyItems = [];state.historyLoaded = false;}
   state.historyLoading = true;
   const searchBtn = $('refreshWorklogHistoryBtn');
   searchBtn.disabled = true;
@@ -2010,6 +2022,7 @@ async function loadWorklogHistory({ quiet = false, force = false, preserveCorrec
     if (!quiet) showToast(state.historyError);
   } finally {
     if (sequence === state.historySeq) {
+      if(retained&&sameScope)viewportSnapshot=captureCalendarViewport()||viewportSnapshot;
       state.historyLoading = false;
       searchBtn.disabled = false;
       searchBtn.classList.remove('is-loading');
@@ -2020,6 +2033,7 @@ async function loadWorklogHistory({ quiet = false, force = false, preserveCorrec
       requestAnimationFrame(() => {
         if (sequence !== state.historySeq) return;
         results.scrollTo(scroll.left, scroll.top);
+        if(sameScope&&viewportSnapshot)restoreCalendarViewport(viewportSnapshot);
         $('weeklyCalendar').querySelector('.weekly-scroll')?.scrollTo(scroll.weekLeft, scroll.weekTop);
         if (!sameScope && state.historyView === 'calendar' && state.calendarMode === 'week' && window.innerWidth < 900) {
           const heading = $('weeklyCalendar').querySelector(`[data-week-day="${selectedDate}"]`);
@@ -2164,6 +2178,7 @@ function syncCorrectionViewport() {
 }
 
 function lockCorrectionBackground() {
+  listenCorrectionGestures(true);
   if (correctionBackground) return;
   const results = $('historyResults');
   correctionBackground = { top: results.scrollTop, left: results.scrollLeft, inert: $('historyOverlay').inert, summaryInert: $('plannerOverlay').inert };
@@ -2174,6 +2189,7 @@ function lockCorrectionBackground() {
 }
 
 function unlockCorrectionBackground() {
+  listenCorrectionGestures(false);
   if (!correctionBackground) return;
   const saved = correctionBackground;
   correctionBackground = null;
@@ -2269,12 +2285,12 @@ function correctionCanScroll(target, deltaY) {
   return false;
 }
 
-document.addEventListener('touchstart', event => {
+function correctionTouchStart(event){
   if (!$('worklogCorrectionDialog').open || event.touches.length !== 1) { correctionTouch = null; return; }
   const touch = event.touches[0], bounds = $('worklogCorrectionDialog').getBoundingClientRect();
   correctionTouch = { x: touch.clientX, y: touch.clientY, outside: touch.clientX < bounds.left || touch.clientX > bounds.right || touch.clientY < bounds.top || touch.clientY > bounds.bottom };
-}, { capture: true, passive: true });
-document.addEventListener('touchmove', event => {
+}
+function correctionTouchMove(event){
   const dialog = $('worklogCorrectionDialog');
   if (correctionSheetDrag) { event.preventDefault(); return; }
   if (!dialog.open || event.touches.length !== 1 || !correctionTouch) return;
@@ -2284,14 +2300,22 @@ document.addEventListener('touchmove', event => {
   if (outside || !dialog.contains(event.target) || dialog.dataset.motion === 'closing' || Math.abs(dx) > Math.abs(dy) || (Math.abs(dy) > 0 && !correctionCanScroll(event.target, dy))) {
     if (event.cancelable) event.preventDefault();
   }
-}, { capture: true, passive: false });
-document.addEventListener('wheel', event => {
+}
+function correctionWheel(event){
   const dialog = $('worklogCorrectionDialog');
   if (!dialog.open) return;
   const bounds = dialog.getBoundingClientRect();
   const outside = event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom;
   if (outside || !dialog.contains(event.target) || dialog.dataset.motion === 'closing' || Math.abs(event.deltaX) > Math.abs(event.deltaY) || !correctionCanScroll(event.target, -event.deltaY)) event.preventDefault();
-}, { capture: true, passive: false });
+}
+
+function listenCorrectionGestures(enabled){
+  const bindings=[['touchstart',correctionTouchStart,true],['touchmove',correctionTouchMove,false],['wheel',correctionWheel,false]];
+  for(const [type,handler,passive] of bindings){
+    if(enabled)document.addEventListener(type,handler,{capture:true,passive});
+    else document.removeEventListener(type,handler,true);
+  }
+}
 
 function setupCorrectionSheetDrag() {
   const header = $('worklogCorrectionPanel').querySelector('.correction-head'), dialog = $('worklogCorrectionDialog');
@@ -3103,9 +3127,7 @@ document.querySelectorAll('[data-close-planner]').forEach(el => el.addEventListe
 document.querySelectorAll('[data-close-history]').forEach(el => el.addEventListener('click', closeHistory));
 $('installPwaBtn')?.addEventListener('click', installPwa);
 ['settingsOverlay', 'plannerOverlay', 'historyOverlay'].forEach(id => {
-  $(id)?.addEventListener('touchmove', event => {
-    if (!event.target.closest('.settings-sheet')) event.preventDefault();
-  }, { passive: false });
+  $(id)?.querySelector('.settings-backdrop')?.addEventListener('touchmove',event=>{if(event.cancelable)event.preventDefault();},{passive:false});
 });
 
 $('refreshWorklogHistoryBtn').addEventListener('click', () => loadWorklogHistory({ force: true }));

@@ -1,0 +1,42 @@
+/* V1.18.0 — Keep pans native and isolate only the handful of sticky surfaces. */
+#historyOverlay.is-calendar-view #historyResults {
+  overscroll-behavior:none; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y;
+  isolation:isolate;
+}
+#historyOverlay .week-grid-heading, #historyOverlay .week-time-heading,
+#historyOverlay .week-time-ruler { will-change:transform; }
+#historyOverlay .week-grid-heading { box-shadow:none; }
+#historyOverlay .week-day-column { contain:paint; }
+#historyOverlay.is-calendar-view .settings-head { backdrop-filter:none; background:var(--card); }
+#historyOverlay #historyResults[aria-busy=true] { pointer-events:none; }
+.calendar-drag-ghost { left:0; top:0; will-change:transform; }
+#calendarSaveList li { position:relative; }
+.calendar-save-status { display:flex; align-items:center; gap:6px; padding-top:5px; font-size:12px; font-weight:650; color:var(--muted); }
+.calendar-save-status::before { content:'•'; font-size:16px; line-height:1; }
+.calendar-save-status[data-save-state=saved] { color:#18734b; }
+.calendar-save-status[data-save-state=saved]::before { content:'✓'; }
+.calendar-save-status[data-save-state=failed], .calendar-save-status[data-save-state=conflict] { color:#b63550; }
+.calendar-save-status[data-save-state=unknown], .calendar-save-status[data-save-state=rolledback] { color:#916106; }
+.calendar-save-status[data-save-state=saving], .calendar-save-status[data-save-state=checking] { color:var(--primary); }
+.calendar-save-status[data-save-state=saving]::before,
+.calendar-save-status[data-save-state=checking]::before { content:''; width:11px; height:11px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:qjl-spin .8s linear infinite; }
+.calendar-save-detail { color:var(--muted); font-size:11px; line-height:1.5; overflow-wrap:anywhere; }
+#calendarSaveResult { margin:0 0 10px; font-size:13px; font-weight:650; color:var(--text); }
+#calendarSaveList [data-save-state=saved] { opacity:1; }
+html[data-theme=dark] .calendar-save-status[data-save-state=saved] { color:#78d9ab; }
+html[data-theme=dark] .calendar-save-status[data-save-state=failed],
+html[data-theme=dark] .calendar-save-status[data-save-state=conflict] { color:#ff9bae; }
+html[data-theme=dark] .calendar-save-status[data-save-state=unknown],
+html[data-theme=dark] .calendar-save-status[data-save-state=rolledback] { color:#efc66e; }
+@media (prefers-reduced-motion:reduce) { .calendar-save-status::before { animation:none!important; } }
+
+#calendarSaveDialog #calendarSaveResult { padding:12px 20px 0; margin:0 0 10px; color:var(--text); }
+#calendarSaveList .calendar-save-status, #calendarSaveList .calendar-save-detail { grid-column:2; }
+#calendarSaveDialog footer button { white-space:normal; }
+
+/* Keep the backdrop blur constant while only the foreground slides/fades. */
+@keyframes qjl-modal-backdrop-in { from { background-color:rgba(4,12,24,0); } to { background-color:rgba(4,12,24,.65); } }
+@keyframes qjl-modal-backdrop-out { from { background-color:rgba(4,12,24,.65); } to { background-color:rgba(4,12,24,0); } }
+/* A retry label must wrap within narrow phone footers rather than widen the dialog. */
+#calendarSaveDialog footer > div { min-width:0; }
+#calendarSaveDialog footer > div button { min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }

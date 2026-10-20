@@ -2,7 +2,7 @@
 // These bindings are initialized before app.js. App globals are used only once
 // rendering begins or after DOMContentLoaded; zoom never fetches or writes Jira.
 const CALENDAR_ZOOM_KEY='quick-jira-log:calendar-zoom:v1';
-let calendarZoomProfile=null,calendarZoomPrefs=null,calendarZoomGrid=null,calendarZoomPositionFrame=0;
+let calendarZoomProfile=null,calendarZoomPrefs=null,calendarZoomGrid=null,calendarZoomPositionFrame=0,calendarZoomSaveTimer=0,calendarViewportRestoreFrame=0,calendarZoomDirty=false;
 
 function calendarZoomSettings(){
   if(!calendarZoomPrefs){
@@ -26,6 +26,7 @@ function applyCalendarZoomGeometry(){
     minDay:parseFloat(css.getPropertyValue('--week-base-day'))||170,
     fullscreen:state.calendarFullscreen,zoom:calendarZoomSettings()};
   let geometry=QuickJiraZoom.dimensions(args);
+  if(previous&&['dayWidth','minutePx','timeWidth','width','height','header'].every(key=>Math.abs(previous[key]-geometry[key])<.001)&&previous.viewWidth===args.width)return;
   inner.style.width=`${geometry.width}px`;
   inner.style.minWidth=`${geometry.width}px`;
   inner.style.setProperty('--week-day-width',`${geometry.dayWidth}px`);
@@ -71,15 +72,50 @@ function setCalendarZoom(axis,value){
   const prefs=calendarZoomSettings();
   if(axis==='both')calendarZoomPrefs={time:100,day:100};
   else calendarZoomPrefs={...prefs,[axis]:QuickJiraZoom.percent(value)};
+  if(prefs.time===calendarZoomPrefs.time&&prefs.day===calendarZoomPrefs.day)return;
+  calendarZoomDirty=true;
+  clearTimeout(calendarZoomSaveTimer);
+  calendarZoomSaveTimer=setTimeout(persistCalendarZoom,150);
+  scheduleWeekFit();
+  syncCalendarZoom();
+}
+
+function persistCalendarZoom(){
+  clearTimeout(calendarZoomSaveTimer);calendarZoomSaveTimer=0;
+  if(!calendarZoomPrefs||!calendarZoomDirty)return;
+  calendarZoomDirty=false;
   const stored=readStorage(CALENDAR_ZOOM_KEY,{});
   writeStorage(CALENDAR_ZOOM_KEY,{desktop:QuickJiraZoom.settings(stored?.desktop),mobile:QuickJiraZoom.settings(stored?.mobile),[calendarZoomProfile]:calendarZoomPrefs});
-  applyCalendarZoomGeometry();
-  syncCalendarZoom();
+}
+
+function captureCalendarViewport(){
+  const results=$('historyResults'),inner=$('weeklyCalendar').querySelector('.weekly-inner');
+  const geometry=calendarZoomGrid?.inner===inner?calendarZoomGrid.geometry:null;
+  if(!geometry||!inner?.getClientRects().length)return null;
+  const columns=[...inner.querySelectorAll('.week-day-column')];
+  const focal=QuickJiraZoom.anchor({left:results.scrollLeft,top:results.scrollTop},geometry);
+  return {focal:QuickJiraExperience.focalSnapshot(focal,Number(columns[0]?.dataset.fromMinute)||0,columns.map(c=>c.dataset.calendarDate)),left:results.scrollLeft,top:results.scrollTop};
+}
+function restoreCalendarViewport(snapshot,attempt=0){
+  if(!snapshot)return;
+  const inner=$('weeklyCalendar').querySelector('.weekly-inner'),results=$('historyResults');
+  if(!inner||calendarZoomGrid?.inner!==inner)return;
+  const columns=[...inner.querySelectorAll('.week-day-column')];
+  const body=inner.querySelector('.week-grid-body'),actual=columns[0]?.getBoundingClientRect(),geometry=calendarZoomGrid.geometry;
+  if(actual&&attempt<3&&(Math.abs(actual.height/Number(body.dataset.minuteRange)-geometry.minutePx)>.002||Math.abs(actual.width-geometry.dayWidth)>.05)){
+    cancelAnimationFrame(calendarViewportRestoreFrame);
+    calendarViewportRestoreFrame=requestAnimationFrame(()=>{calendarViewportRestoreFrame=0;if(inner===$('weeklyCalendar').querySelector('.weekly-inner'))restoreCalendarViewport(snapshot,attempt+1);});
+    return;
+  }
+  const anchor=QuickJiraExperience.focalAnchor(snapshot.focal,Number(columns[0]?.dataset.fromMinute)||0,columns.map(c=>c.dataset.calendarDate));
+  const next=anchor?QuickJiraZoom.scrollToAnchor(anchor,calendarZoomGrid.geometry,results.scrollWidth-results.clientWidth,results.scrollHeight-results.clientHeight):snapshot;
+  results.scrollTo({left:next.left,top:next.top,behavior:'instant'});
 }
 
 function closeCalendarZoom(restore=true){
   const dialog=$('calendarZoomDialog');
   if(!dialog?.open)return;
+  persistCalendarZoom();
   dialog.close();
   $('calendarZoomBtn').setAttribute('aria-expanded','false');
   if(restore&&$('calendarZoomBtn').getClientRects().length)$('calendarZoomBtn').focus({preventScroll:true});
@@ -135,6 +171,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   for(const source of [window,window.visualViewport].filter(Boolean))source.addEventListener('resize',scheduleCalendarZoomPosition,{passive:true});
   window.visualViewport?.addEventListener('scroll',scheduleCalendarZoomPosition,{passive:true});
   if(window.ResizeObserver)new ResizeObserver(scheduleCalendarZoomPosition).observe(dialog);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)closeCalendarZoom(false);});
+  window.addEventListener('pagehide',persistCalendarZoom);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){persistCalendarZoom();closeCalendarZoom(false);}});
   syncCalendarZoom();
 });
