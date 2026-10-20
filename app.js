@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.16.0';
+const APP_VERSION = '1.17.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1240,6 +1240,7 @@ function closeOverlay(id, { restore = true } = {}) {
 }
 
 function closeAllToolOverlays({ restore = true } = {}) {
+  closeCalendarZoom(false);
   closeCorrection({ restoreFocus: false, immediate: true });
   closeOverlay('plannerOverlay', { restore: false });
   closeOverlay('historyOverlay', { restore: false });
@@ -1445,6 +1446,7 @@ function openHistory() {
 }
 
 function closeHistory() {
+  closeCalendarZoom(false);
   if (state.calendarMovePending) return;
   if (state.calendarDrafts.size) { openCalendarSave({ closeAfter: true }); return; }
   resetCalendarInteraction();
@@ -1645,14 +1647,7 @@ function calendarAppearance(item) {
 
 let weekFitFrame = 0;
 function fitWeekToViewport() {
-  const inner = $('weeklyCalendar').querySelector('.weekly-inner');
-  const body = inner?.querySelector('.week-grid-body');
-  if (!inner || !body || body.dataset.calendarResizing==='true') return;
-  const minutes = Number(body.dataset.minuteRange) || 600;
-  const header = inner.querySelector('.week-grid-heading');
-  const space = $('historyResults').clientHeight - (header?.offsetHeight || 0) - 2;
-  const scale = state.calendarFullscreen ? Math.max(1, Math.floor(space / minutes * 10000) / 10000) : 1;
-  inner.style.setProperty('--week-minute-px', `${scale}px`);
+  applyCalendarZoomGeometry();
 }
 function scheduleWeekFit() {
   cancelAnimationFrame(weekFitFrame);
@@ -1815,6 +1810,7 @@ function historyDayLabel(date, monthOnly = false) {
 }
 
 function syncCalendarControls() {
+  syncCalendarZoom();
   const date = $('historyDate').value || todayLocal();
   if (!QuickJiraUi.validDate(date)) return;
   if ($('calendarDate').value !== date) $('calendarDate').value = date;
@@ -1911,6 +1907,7 @@ function renderWorklogHistory() {
   $('calendarRefreshBtn').disabled = state.historyLoading || state.calendarMovePending;
   syncCalendarSaveButton();
   $('calendarControls').classList.toggle('hidden', !calendar);
+  syncCalendarZoom();
   if (calendar) syncCalendarControls();
   wrap.classList.toggle('hidden', calendar);
   $('worklogCalendar').classList.toggle('hidden', !calendar || state.historyLoading || !state.historyLoaded || !!state.historyError);

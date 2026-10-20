@@ -1,0 +1,80 @@
+/* V1.17.0 — Real grid dimensions keep minute snapping, highlights and handles aligned. */
+#historyOverlay .weekly-inner { --week-base-time:60; --week-base-day:170; overflow-anchor:none; }
+@media (min-width:900px) { #historyOverlay .weekly-inner { --week-base-day:138; } }
+#historyOverlay.is-calendar-fullscreen .weekly-inner { --week-base-time:44; --week-base-day:136; }
+@media (orientation:landscape) { #historyOverlay.is-calendar-fullscreen .weekly-inner { --week-base-day:110; } }
+#historyOverlay .week-grid-heading, #historyOverlay .week-grid-body {
+  grid-template-columns:var(--week-time-width,60px) repeat(var(--week-days),var(--week-day-width,minmax(0,1fr)));
+}
+#historyOverlay #historyResults { overflow-anchor:none; scroll-behavior:auto; }
+#historyOverlay #calendarZoomBtn { flex:0 0 40px; width:40px; min-width:40px; padding:9px; }
+#calendarZoomBtn.has-zoom { color:var(--primary); box-shadow:inset 0 0 0 1px currentColor; }
+#historyOverlay.is-calendar-fullscreen #calendarZoomBtn { flex-basis:34px; width:34px; min-width:34px; height:36px; padding:7px; }
+/* The small sheet floats over the grid, leaving live changes visible behind it. */
+#calendarZoomDialog {
+  position:fixed; inset:auto; margin:0; box-sizing:border-box;
+  width:min(332px,calc(100vw - 16px)); max-width:calc(100vw - 16px);
+  max-height:calc(var(--zoom-vh,100dvh) - 16px); overflow:auto; overscroll-behavior:none;
+  color:var(--text); background:var(--card); border:1px solid var(--line); border-radius:16px;
+  padding:16px; box-shadow:0 12px 48px rgba(0,0,0,.28); font:inherit;
+}
+#calendarZoomDialog::backdrop { background:rgba(4,13,27,.12); }
+.calendar-zoom-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:4px; }
+.calendar-zoom-head h2 { margin:0; font-size:17px; }
+#calendarZoomCloseBtn { width:36px; height:36px; min-height:36px; padding:0; font-size:25px; }
+.calendar-zoom-help { margin:0 0 14px; color:var(--muted); font-size:12px; line-height:1.5; }
+.calendar-zoom-axis { padding:10px 0; border-top:1px solid var(--line); }
+.calendar-zoom-label { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.calendar-zoom-label label { font-size:14px; font-weight:650; }
+.calendar-zoom-value { background:var(--primary-soft); color:var(--primary); min-width:58px; min-height:32px; padding:4px 8px; font-size:13px; font-weight:700; font-variant-numeric:tabular-nums; }
+.calendar-zoom-track { display:flex; align-items:center; gap:10px; margin-top:6px; }
+.calendar-zoom-track button { flex:0 0 36px; width:36px; height:36px; min-height:36px; padding:0; font-size:22px; }
+#calendarZoomDialog input[type=range] {
+  appearance:none; -webkit-appearance:none; flex:1 1 0; min-width:0; width:100%; height:36px;
+  padding:0; border:0; border-radius:0; box-shadow:none; background:transparent; cursor:pointer; touch-action:pan-y; transition:none;
+}
+#calendarZoomDialog input[type=range]::-webkit-slider-runnable-track { height:5px; border-radius:5px; background:linear-gradient(to right,var(--primary) var(--zoom-fill),var(--line) var(--zoom-fill)); }
+#calendarZoomDialog input[type=range]::-webkit-slider-thumb { appearance:none; -webkit-appearance:none; margin-top:-7px; width:19px; height:19px; border-radius:50%; background:var(--primary); border:3px solid var(--card); box-shadow:0 0 0 1px var(--primary); }
+#calendarZoomDialog input[type=range]::-moz-range-track { height:5px; border-radius:5px; background:var(--line); }
+#calendarZoomDialog input[type=range]::-moz-range-progress { height:5px; border-radius:5px; background:var(--primary); }
+#calendarZoomDialog input[type=range]::-moz-range-thumb { width:14px; height:14px; border-radius:50%; border:3px solid var(--card); background:var(--primary); }
+#calendarZoomDialog :focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
+.calendar-zoom-limits { display:flex; justify-content:space-between; margin:0 46px; font-size:10px; color:var(--muted); }
+#calendarZoomResetBtn { width:100%; min-height:36px; margin-top:10px; font-size:12px; }
+#calendarZoomDialog[open] { animation:calendar-zoom-in .16s ease-out; }
+@keyframes calendar-zoom-in { from { opacity:0; translate:0 5px; } to { opacity:1; translate:0 0; } }
+@media (prefers-reduced-motion:reduce) { #calendarZoomDialog[open] { animation:none; } }
+@media (max-width:419px) {
+  #historyOverlay.is-calendar-fullscreen .calendar-week-summary { display:none; }
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-toolbar { gap:3px; }
+}
+@media (orientation:landscape) and (max-width:719px) {
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-toolbar { flex-basis:auto; }
+}
+@media (max-height:420px) {
+  #calendarZoomDialog { padding:10px 14px; }
+  .calendar-zoom-help { margin-bottom:6px; font-size:11px; }
+  .calendar-zoom-axis { padding:5px 0; }
+  #calendarZoomResetBtn { margin-top:6px; }
+}
+
+#historyOverlay.is-calendar-fullscreen.is-calendar-readonly #calendarViewerControls { flex:1 1 0; }
+#historyOverlay.is-calendar-fullscreen.is-calendar-readonly #calendarViewerBtn { flex:1 1 auto; min-width:0; }
+#historyOverlay.is-calendar-fullscreen #calendarViewerMode { flex:0 0 auto; }
+
+@media (max-width:359px) {
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-switch button { padding:5px; }
+  #historyOverlay.is-calendar-fullscreen #calendarProjectColorsBtn,
+  #historyOverlay.is-calendar-fullscreen #calendarZoomBtn { flex-basis:30px; width:30px; min-width:30px; padding:5px; }
+  #historyOverlay.is-calendar-fullscreen #calendarWeekendBtn { font-size:11px; padding:3px 1px; }
+  #historyOverlay.is-calendar-fullscreen .calendar-mode-toolbar { gap:2px; }
+}
+
+#calendarZoomDialog button { border:1px solid var(--line); border-radius:9px; color:var(--primary); background:var(--primary-soft); cursor:pointer; }
+#calendarZoomDialog button:disabled { opacity:.45; cursor:default; }
+#calendarZoomDialog button:hover:not(:disabled) { border-color:var(--primary); }
+#calendarZoomDialog input[type=range]:focus { background:transparent; box-shadow:none; }
+#calendarZoomDialog input[type=range]:focus-visible { border-radius:6px; }
+
+/* The base form theme uses !important fills; range tracks need a transparent surface. */
+#calendarZoomDialog input[type=range], #calendarZoomDialog input[type=range]:focus { background-color:transparent!important; }

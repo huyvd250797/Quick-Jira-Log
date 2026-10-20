@@ -1,3 +1,11 @@
+# V1.17.0 — Calendar Zoom Controls
+
+- Hai trục thu phóng độc lập: Khung giờ/Cột ngày, nút −/+ 25%, thanh kéo 5%, phạm vi 75–200%, đặt lại từng trục/cả hai về 100%.
+- Icon mở bảng gọn trên toolbar tuần; hỗ trợ lịch thường/fullscreen, PC/touch, light/dark, keyboard, reduced motion và viewport dọc/ngang. Lịch tháng/danh sách ẩn icon.
+- Giữ vùng nhìn theo tọa độ ngày/phút, giới hạn tại biên; lưu riêng lựa chọn PC/mobile trong localStorage, giữ profile khi xoay máy.
+- Lưới dùng kích thước thật; giữ draft, snap, highlight, kéo/swap, resize và xác nhận lưu. Zoom không có truy vấn/ghi Jira; lịch người khác vẫn chỉ xem.
+- Giữ backend, phiên đăng nhập, logo và luồng logwork hiện có; cập nhật version/manifest/cache PWA, tài liệu và kiểm thử.
+
 # V1.16.0 — Resize Worklogs on Calendar
 
 - Tay nắm cạnh dưới cho lịch tuần: PC kéo trực tiếp, mobile hiện khi nhấn giữ vào chế độ chỉnh sửa. End-time snap 30 phút, min 30 phút, highlight/tooltip thời lượng, không swap khi resize.

@@ -1,6 +1,31 @@
-# Quick Jira Log V1.16.0 — Resize Worklogs on Calendar
+# Quick Jira Log V1.17.0 — Calendar Zoom Controls
 
 Ứng dụng PWA dùng Jira/WorklogPRO hiện có. Source sẵn sàng push GitHub và deploy Vercel; không thêm database hoặc dependency runtime.
+
+## V1.17.0 — Thu phóng lịch
+
+### Cách dùng
+
+1. Mở **Worklog đã log → Tuần**. Bấm icon **kính lúp có dấu cộng** cạnh nút màu dự án để mở bảng thu phóng. Có ở lịch thường, fullscreen và lịch chỉ xem của người khác; không hiện trong lịch tháng hoặc danh sách.
+2. **Khung giờ** thay đổi chiều cao trục thời gian và block. **Cột ngày** thay đổi độ rộng các ngày. Mỗi trục có nút **− / +** (25 điểm phần trăm/lần) và thanh kéo từ **75% đến 200%** (bước 5%). Thay đổi hiển thị trực tiếp; không cần zoom bằng hai ngón tay.
+3. Bấm tỷ lệ của từng trục để đặt lại trục đó về **100%**; nút **Đặt lại cả hai** trả cả hai về mặc định. Nút tăng/giảm bị vô hiệu tại giới hạn. Phím mũi tên, Home/End dùng được với thanh kéo.
+4. Bấm **×**, chạm ngoài bảng hoặc Escape để đóng. Mở bảng đặt focus vào nút đóng, không mở bàn phím nhập liệu. Escape chỉ đóng bảng đang mở, giữ lịch/fullscreen. Bảng tự nằm trong viewport khi xoay máy, hỗ trợ light/dark và giảm chuyển động.
+
+### Tỷ lệ, vùng xem và lưu tùy chọn
+
+- **100%** theo tỷ lệ lịch V1.16.0: độ cao phút thường là 1px; fullscreen có thể giãn để tận dụng chiều cao. Tỷ lệ chọn nhân với nền này nên fullscreen và xoay máy có thể đổi kích thước pixel nhưng giữ đúng phần trăm của người dùng.
+- Cột ngày vẫn lấp đầy khung nếu toàn bộ tuần đã vừa màn hình. Do đó giảm chiều ngang trên PC rộng có thể không thu nhỏ thêm khi tất cả ngày đã hiển thị vừa; mobile/cuộn ngang sẽ thấy thêm ngày khi giảm tỷ lệ.
+- Khi thay đổi tỷ lệ/kích thước viewport, giữ ngày và thời điểm gần tâm phần lịch đang nhìn. Ở mép đầu/cuối, vị trí được giới hạn theo biên cuộn thực. Thoát fullscreen giữ cơ chế trở lại vị trí trước fullscreen hiện có.
+- Tùy chọn được lưu tại thiết bị/trình duyệt, riêng cho PC và thiết bị cảm ứng chính. Profile được chọn khi mở trang và không đổi giữa lúc xoay máy. Không yêu cầu đăng nhập lại hoặc gọi Jira khi thu phóng. Nếu trình duyệt không cho lưu, vẫn sử dụng được trong phiên hiện tại.
+- Chỉ thay đổi kích thước lưới; toolbar, form logwork và cỡ chữ giao diện không bị phóng cả trang. Không gọi khóa hướng màn hình. Dữ liệu giờ, native Overtime, mô tả và bản nháp giữ nguyên.
+- Tọa độ tạo từ ô trống, kéo/swap, vùng highlight, tay nắm đổi thời lượng dùng kích thước lưới thật. Vẫn bám mốc 30 phút, giữ các kiểm tra giờ trống/quyền và chỉ cập nhật sau icon Lưu lịch + xác nhận. Mở bảng thu phóng kết thúc chế độ kéo hiện tại và giữ bản nháp.
+- Backend Jira/WorklogPRO và luồng log đơn/Bulk không thay đổi. Không thêm dependency runtime hoặc database.
+
+### Triển khai V1.17.0
+
+Deploy nội dung thư mục `Quick-Jira-Log-V1.17.0` lên project Vercel hiện có, giữ nguyên biến môi trường. Mở PWA, chấp nhận **Cập nhật** nếu được hỏi và kiểm tra nhãn **V1.17.0**. Bộ cache mới chứa đủ ba tài nguyên thu phóng.
+
+Chạy `npm test`, `npm run test:zoom`; browser tests cần Playwright/Chromium, có thể đặt `QJL_CHROMIUM_PATH`. Chi tiết và giới hạn kiểm chứng trong `TESTING.md`.
 
 ## V1.16.0 — Chỉnh thời lượng trên lịch
 

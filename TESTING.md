@@ -1,3 +1,18 @@
+# Kiểm thử V1.17.0 — Calendar Zoom Controls
+
+- `npm test`: PASS toàn bộ bộ logic/API kế thừa và `tests/calendar-zoom-tests.js`. Zoom math kiểm tra đầu vào hỏng, giới hạn/bước, hai trục độc lập, fullscreen/fit baseline, focal anchor và clamp ở biên/đổi viewport.
+- `tests/browser/calendar-zoom.cjs`: PASS PC 1440×1000, touch 390×844, 320×683 và landscape 844×390. Nút −/+, slider bàn phím/pointer, 75/100/150/175/200%, reset từng trục/cả hai, đúng kích thước phút/cột, giữ tâm khi không bị giới hạn biên và giữ nháp nguyên vẹn. Chờ khung hình hoàn tất trước đo geometry để không so với layout của frame trước.
+- Zoom không phát sinh request dữ liệu/ghi Jira. Reload lưu đúng profile PC/mobile, profile còn lại giữ mặc định; fullscreen/xoay dọc/ngang giữ tỷ lệ và draft. Tháng ẩn zoom. Tạo ô trống 10:30 và kéo block 08:00 → 09:00, resize đến 10:30 ở 150% bằng mouse/touch thật; trước xác nhận không ghi, sau xác nhận payload và readback giữ 09:00 + 5400 giây.
+- Dialog: focus vào nút đóng, không autofocus textbox; Escape chỉ đóng zoom, backdrop không xuyên thành tạo worklog. Kiểm tra native document fullscreen thật trên Chromium PC, fallback mobile, bounds khi xoay máy, light/dark, reduced motion 320px. Lịch người khác zoom được, vẫn không có resize handle hoặc request ghi.
+- `tests/browser/fullscreen-layout.cjs`: PASS 315/390/430/568/667/844/1024/1440px, icon mới không chồng nút/ra ngoài khung, lịch cá nhân/nháp/readonly, safe-area giả lập, không gọi orientation lock/unlock, diện tích grid và xoay máy.
+- `tests/browser/calendar-interactions.cjs`: PASS PC và 2 viewport touch; click-to-log, staged move, hold/exit, confirm/cancel/discard, overlap, server refusal/unknown-result reconciliation.
+- `tests/browser/calendar-resize.cjs`: PASS 1440×1000, 390×844, 320×683, 844×390; resize min/overlap/cancel, giữ draft, xác nhận, retry/lost response, move composition, fullscreen, OT kéo qua 18:00 tới 19:00, trả về gốc và readonly. Fixture chờ layout ổn định trước đo tay nắm và thả ngay sau mốc auto-scroll; tránh để các lượt xác nhận qua giao thức browser làm cuộn thêm trước khi thả.
+- `tests/browser/live-swap-preview.cjs`: PASS PC/touch 390/320, hover flight, stable hit test, reversal/B→C, draft sau thả, cancel/reduced/cleanup và không ghi Jira.
+- `tests/browser/calendar-viewer.cjs`: PASS PC/touch/landscape, fullscreen-only picker, readonly, MRU 3, stale/403, draft guard, reset và luồng form cá nhân.
+- `tests/browser/branding.cjs`: PASS 4 viewport, cập nhật service worker thật trên localhost tới V1.17.0, giữ localStorage và icon offline. Ba tài nguyên zoom mới có trong precache; giữ tên icon V1.15.2.
+- Đã xem ảnh PC/mobile light/dark. Backend từ ZIP V1.16.0 được so byte, không đổi handler/API/Jira adapter; chỉ thêm thư viện math UI. Kiểm tra syntax, asset references, version và ZIP CRC khi đóng gói.
+- Không chạy toàn bộ chuỗi `test:ui`; các bộ ảnh hưởng trực tiếp nêu trên đã chạy. Chưa kiểm chứng Safari/iPhone vật lý hoặc Jira công ty. Trình duyệt quyết định khả năng native fullscreen/ẩn thanh trình duyệt; local fullscreen vẫn hoạt động.
+
 # Kiểm thử V1.16.0 — Resize Worklogs on Calendar
 
 - `npm test`: PASS toàn bộ logic/API và bộ `tests/calendar-resize-tests.js`. Hồi quy log đơn/Bulk, native OT, form WorklogPRO, guard, history/summary, calendar edits/swaps và user viewer đều giữ trong script kiểm thử.

@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.16.0 – Resize Worklogs on Calendar.",
+  "description": "Quick Jira Log V1.17.0 – Calendar Zoom Controls.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

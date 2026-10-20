@@ -1,3 +1,9 @@
+## V1.17.0 — Thu phóng lịch: đã xây dựng
+
+- Điều khiển riêng chiều cao khung giờ và độ rộng cột ngày bằng −/+, thanh kéo; 75–200%, mặc định 100%.
+- Bảng gọn từ icon trên lịch tuần, giữ vùng xem và bản nháp, lưu tỷ lệ riêng PC/mobile; tương thích fullscreen/xoay máy/lịch người khác.
+- Kéo thả, swap, resize vẫn theo thời gian thật và luồng xác nhận hiện có; không thêm chức năng lập kế hoạch hoặc thay đổi backend logtime.
+
 ## V1.16.0 — Resize Worklogs on Calendar: đã xây dựng
 
 - Kéo cạnh dưới để chỉnh thời lượng, highlight/tooltip, mobile nhấn giữ rồi dùng tay nắm.

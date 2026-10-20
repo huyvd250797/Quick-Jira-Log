@@ -1,0 +1,24 @@
+'use strict';
+const assert=require('node:assert/strict'),Z=require('../lib/calendar-zoom');
+for(const value of [undefined,null,'150',NaN,Infinity,{},[]])assert.equal(Z.percent(value),100);
+assert.equal(Z.percent(0),75);assert.equal(Z.percent(999),200);assert.equal(Z.percent(128),130);
+assert.deepEqual(Z.settings({time:150,day:80}),{time:150,day:80});
+assert.deepEqual(Z.settings(null),{time:100,day:100});
+const base={width:380,height:600,header:60,minutes:600,days:5,timeWidth:60,minDay:170,fullscreen:false,zoom:{time:100,day:100}};
+const normal=Z.dimensions(base);assert.equal(normal.dayWidth,170);assert.equal(normal.minutePx,1);
+const large=Z.dimensions({...base,zoom:{time:200,day:150}});assert.equal(large.dayWidth,255);assert.equal(large.minutePx,2);
+const small=Z.dimensions({...base,zoom:{time:75,day:75}});assert.equal(small.dayWidth,127.5);assert.equal(small.minutePx,.75);
+assert.equal(Z.dimensions({...base,width:1440,zoom:{time:100,day:75}}).width,1440,'do not waste available width when all days fit');
+const tall=Z.dimensions({...base,height:1400,fullscreen:true,zoom:{time:150,day:100}});
+assert(Math.abs(tall.minutePx-(1400-60-2)/600*1.5)<1e-12);
+// Anchor is in logical days/minutes, independent of the displayed pixel scale.
+const old={...normal,viewWidth:380,offsetLeft:0,offsetTop:0},view={left:245,top:170};
+const focus=Z.anchor(view,old),next={...large,viewWidth:380,offsetLeft:0,offsetTop:0};
+const scroll=Z.scrollToAnchor(focus,next,2000,2000),roundtrip=Z.anchor(scroll,next);
+assert(Math.abs(roundtrip.day-focus.day)<1e-9);assert(Math.abs(roundtrip.minute-focus.minute)<1e-9);
+assert.deepEqual(Z.scrollToAnchor({day:-100,minute:-100},next,1000,1000),{left:0,top:0});
+assert.deepEqual(Z.scrollToAnchor({day:100,minute:10000},next,1000,1000),{left:1000,top:1000});
+const rotated={...next,viewWidth:844,height:350,header:36,timeWidth:44};
+const rotationScroll=Z.scrollToAnchor(focus,rotated,2000,2000);
+assert(Math.abs(Z.anchor(rotationScroll,rotated).minute-focus.minute)<1e-9);
+console.log('Zoom: validated percentages, independent real dimensions, fit/fullscreen baseline, focal preservation, rotation and edge clamping passed.');
