@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.18.0 – Smooth Calendar & Save Results.",
+  "description": "Quick Jira Log V1.19.0 – Multi-Swap & Smart Split.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -22,5 +22,5 @@ const short=item(4,'13:30',1800),long=item(5,'09:00',7200);
 assert.equal(D.drop(short,{date:long.date,start:long.start},[short,long],long).problem,'');assert.equal(D.drop(short,long,[short,long],long).changes[1].timeSpentSeconds,7200);
 const blocked=D.drop(short,long,[short,long,item(6,'14:00')],long);assert(blocked.problem);
 const lunch=D.drop(item(7,'11:30',1800),long,[item(7,'11:30',1800),long],long);assert(lunch.problem);
-assert(D.drop(one,{date:one.date,start:'08:30'},[one,item(8,'08:00'),item(9,'09:00')]).problem);
+assert.equal(D.drop(one,{date:one.date,start:'08:30'},[one,item(8,'08:00'),item(9,'09:00')]).changes[0].start,'08:00');
 console.log('Drop swap: snap to partner, unequal durations, third-block/lunch/multiple conflicts passed.');

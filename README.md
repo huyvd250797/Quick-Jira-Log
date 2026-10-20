@@ -1,6 +1,40 @@
-# Quick Jira Log V1.18.0 — Smooth Calendar & Save Results
+# Quick Jira Log V1.19.0 — Multi-Swap & Smart Split
 
 Ứng dụng PWA dùng Jira/WorklogPRO hiện có. Source sẵn sàng push GitHub và deploy Vercel; không thêm database hoặc dependency runtime.
+
+## V1.19.0 — Multi-Swap & Smart Split
+
+### Kéo đổi chỗ nhiều block
+
+- Một block có thể đổi chỗ với một nhóm block nằm gọn trong vùng đích. Ví dụ **2h tại 15:00–17:00** đổi với **08:00–09:30 + 09:30–10:00**: block 2h sang 08:00–10:00, hai block kia sang 15:00–16:30 + 16:30–17:00.
+- Nhóm được xếp theo thứ tự giờ cũ vào vùng nguồn, giữ từng worklog ID, thời lượng, mô tả và Overtime. Không rút ngắn block để cố vừa chỗ.
+- Preview bay cong ngay khi kéo qua: tất cả block bị thay thế bay về vị trí dự kiến. Khi kéo đi chỗ khác, chúng bay về chỗ cũ. Highlight bao gồm mọi vị trí kết quả; nhả tay mới lưu nháp.
+- Chặn nếu một phần nhóm vượt vùng thả, tổng nhóm không vừa vùng nguồn, trùng worklog khác, qua giờ nghỉ hoặc chưa lưu các phần tách. Một lượt hỗ trợ tối đa 12 worklog.
+- Server kiểm tra dữ liệu mới nhất và xếp thứ tự cập nhật an toàn. Khi cần swap vòng, chọn block giải phóng được nhiều vị trí để chuyển tạm; không lặp chuyển tạm một block ngắn. Nếu không có khoảng trống trung gian an toàn thì không ghi.
+
+### Tự tách và ráp qua giờ nghỉ
+
+- Kéo block **2h30 tới 11:00**: preview 11:00–12:00 và 13:30–15:00 nếu trống. Nếu có lịch bên dưới, tìm các khoảng trống tiếp theo trong cùng ngày.
+- Tự ráp trong **08:00–12:00 và 13:30–17:30**. Giữ đúng tổng số giây; không tự chuyển phần dư sang ngày khác hoặc tự thêm giờ Overtime. Di chuyển nguyên block ngoài giờ vẫn theo quy tắc OT cũ.
+- Đến 2 phần: lưu nháp trực tiếp. Hơn 2 phần: mở popup nêu số phần và từng khoảng giờ, với **Hủy / Tiếp tục tách**. Hủy giữ nguyên lịch và các nháp trước đó. Nếu không đủ toàn bộ thời lượng, cảnh báo và không áp dụng phần thiếu.
+- Nháp tách có nhiều block xem trước nhưng là một thay đổi gốc. Bấm icon Lưu để xem toàn bộ các phần rồi xác nhận. Các phần tách chưa lưu phải lưu hoặc bỏ trước khi kéo/resize tiếp; sau lưu, mỗi phần là worklog Jira thật và có thể chỉnh riêng như trước.
+- Hỗ trợ tối đa 32 phần mỗi lần tách. Không tự xóa/gộp các worklog đã tồn tại của cùng subtask.
+
+### Lưu Jira và xử lý lỗi
+
+- Endpoint `calendar-split` giữ ID gốc cho phần đầu, tạo thêm worklog cho các phần còn lại trong **cùng issue**, không đổi trạng thái task. Giữ tổng giờ yêu cầu, mô tả và checkbox Overtime thật của WorklogPRO; không thêm marker vào mô tả.
+- Đọc native WorklogPRO trước khi tách; sao chép các thuộc tính scalar khác qua đúng control trong form thật và đọc lại để xác nhận. Không đoán thuộc tính khi không đọc được. Worklog có giới hạn hiển thị hoặc thuộc tính phức hợp chưa hỗ trợ sẽ bị chặn trước ghi.
+- Kiểm tra tài khoản sở hữu, phiên đăng nhập, same-origin, giờ cũ/thời lượng cũ, ngày/giờ đích, tổng giây và khoảng trống mới nhất. Lịch người khác vẫn chỉ xem.
+- Nếu một bước lỗi, thử xóa phần mới đã xác định đúng và phục hồi worklog gốc; chỉ báo đã phục hồi sau khi đọc lại xác nhận. Không tự ghi đè worklog đã thay đổi bên ngoài. Đây là cơ chế bù trừ, không phải transaction của Jira; lỗi quyền/mạng hoặc giới hạn thời gian vẫn có thể cần đối chiếu thủ công.
+- POST tạo mới không được retry mù khi mất phản hồi. Tìm bản ghi mới duy nhất phù hợp nếu xác định được; nếu chưa rõ, giữ trạng thái cần đối chiếu. Nút kiểm tra sau lỗi của split chỉ đọc xác nhận, không tạo lại các phần còn thiếu. Khi trạng thái chưa rõ, không cho kéo tiếp; hiển thị dữ liệu Jira đọc lại thay vì nhân đôi các phần nháp.
+- Idempotency kế thừa memory/Redis hiện có; Redis được cấu hình sẽ dùng chung giữa các instance. Không có Redis thì không có distributed lock giữa các instance. Vẫn kiểm tra snapshot và đọc kết quả trước khi xác nhận lại; không cam kết transaction nguyên tử khi có thao tác đồng thời ngoài app.
+- Nhóm tách rất phân mảnh hoặc Jira chậm có thể vượt thời gian xử lý; server ngừng thêm bước để dành thời gian phục hồi, và báo rõ nếu chưa xác nhận được kết quả.
+
+### Triển khai
+
+- Version UI, manifest và service worker: **1.19.0**; không đổi logo, dữ liệu đăng nhập hay cấu hình zoom.
+- Giữ cấu trúc Vercel hiện có, router `api/index.js`, không thêm runtime dependency hoặc biến môi trường bắt buộc mới.
+- Chỉ tạo gói source; chưa deploy và chưa ghi vào Jira công ty. Xem `TESTING.md` để biết phạm vi kiểm thử.
 
 ## V1.18.0 — Củng cố trải nghiệm & tốc độ
 

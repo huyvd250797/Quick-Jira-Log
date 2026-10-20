@@ -104,3 +104,7 @@ module.exports=async function handler(req,res) {
   return sendJson(res,outcome.value.status,{...outcome.value.data,replayed:outcome.replayed});
  } catch(error){if(error.status===401)res.setHeader('Set-Cookie',clearSessionCookie());return sendJson(res,error.status||500,{ok:false,error:error.message||'Không xử lý được đổi lịch.',code:error.code,details:error.details});}
 };
+
+// Internal reuse keeps split edits on the same guarded/native Jira update path.
+module.exports.invokeMove=invokeMove;
+module.exports.snapshot=snapshot;

@@ -1,3 +1,17 @@
+# Kiểm thử V1.19.0 — Multi-Swap & Smart Split
+
+- `npm test`: PASS toàn bộ bộ logic/API kế thừa và các bộ mới bên dưới.
+- `tests/calendar-fit-tests.js`: 2h đổi với 90m + 30m, đóng gói đúng thứ tự, vùng nguồn/đích không vừa thì chặn; giữ giây, mô tả/OT; tách 11:00 thành 2 phần; chia 4 phần khi có lịch chen; xác nhận >2, không đủ chỗ, không spill ngày/OT; projection nháp/unknown không nhân đôi phần thật.
+- `tests/calendar-swap-tests.js`: bổ sung API thực với 3 worklog từ 2h ↔ 90m+30m; kiểm chứng cả các bước tạm không trùng nhau. Giữ các ca mất phản hồi, stale, quyền, rollback, không phục hồi đủ và không có chỗ tạm.
+- `tests/calendar-split-tests.js`: fixture nghiệp vụ cho create/native/update/recovery: giữ tổng giây, native OT + thuộc tính, ID gốc, xác nhận >2; replay cùng ID và đọc final state; mất phản hồi tạo mới không POST lần hai; lỗi create/native/phần thứ hai; rollback thành công và rollback lỗi; quyền/tài khoản cũ, visibility, stale, giờ trùng, tổng sai, same-origin.
+- `tests/calendar-split-integration-tests.js`: router + Jira HTTP mock + correction thật + native form thật: shrink gốc → POST tạo phần mới → POST form sao chép OT/thuộc tính → đọc lại; thêm core PUT 403 chuyển native form cho cả OT bật/tắt; verify-only không ghi. Không kết nối Jira công ty.
+- `tests/native-form-tests.js`: giữ hồi quy token/cookies/GET !update → POST đúng form một lần; thêm sao chép thuộc tính qua control thật, không có control thì chặn trước POST.
+- `tests/browser/calendar-fit.cjs`: PASS Chromium PC 1440×1100, touch 390×1000, 320×900, landscape 844×390. Mouse/CDP touch thật: 2 đối tác bay khi giữ, bay về khi kéo đi, 3 highlight, chưa thả không có nháp/ghi; nhả staging, save xác nhận; 4 phần highlight, popup hủy/tiếp tục, review đúng giờ, giữ tổng giờ. Mất phản hồi sau commit giữ unknown, hiện đúng 6 bản ghi thay vì thêm 3 ghost trùng, kiểm tra lại chỉ đọc và không tạo thêm worklog. Dialog nằm trong khung sau animation.
+- Hồi quy UI đã chạy: `live-swap-preview.cjs` (PC + 390 + 320), `calendar-resize.cjs` (4 viewport), `calendar-zoom.cjs` (4), `calendar-experience.cjs` (4), `calendar-performance.cjs` (fixture 400 worklog). Giữ refresh/focal, partial-save/unknown, readonly, thu phóng/kéo cạnh, và không thêm vòng RAF khi đứng yên.
+- `branding.cjs`: PASS icon/help/responsive và SW upgrade thật trên localhost lên cache V1.19.0, storage giữ nguyên, icon offline.
+- Đã kiểm tra syntax toàn bộ JS/CJS, asset references và ZIP CRC; đã xem ảnh review PC/mobile. QA log/ảnh không đóng vào ZIP source.
+- Chưa kiểm chứng iPhone/Safari vật lý hoặc quyền/plugin trên Jira công ty. Mocks không bảo đảm API/version/cấu hình của Jira thực tế giống fixture. Không chạy lại toàn bộ chuỗi `test:ui` không liên quan.
+
 # Kiểm thử V1.18.0 — Smooth Calendar & Save Results
 
 - `npm test`: PASS logic/API hiện có và `tests/calendar-experience-tests.js`. Math kiểm tra focal theo ngày/phút khi origin đổi, phân biệt saved/failed/conflict/unknown/rolledback/waiting và tổng kết chính xác.

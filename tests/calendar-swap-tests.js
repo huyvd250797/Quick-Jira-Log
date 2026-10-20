@@ -54,6 +54,10 @@ let server;
  reset();b=payload();b.requestId='';r=await call(b);assert.equal(r.status,400);
  reset();logs[1].started='2026-10-17T15:00:00.000+0700';b=payload();b.moves[0].date='2026-10-17';b.moves[1].date='2026-10-16';r=await call(b);assert.equal(r.status,200,JSON.stringify(r));assert.equal(logs[0].started,'2026-10-17T15:00:00.000+0700');assert.equal(logs[1].started,'2026-10-16T08:00:00.000+0700');
  reset();logs=[make(1,'08:00',14400,'2026-10-17'),make(2,'13:30',14400,'2026-10-17','CAL-2')];b=payload();b.moves[0].date='2026-10-17';b.moves[0].start='13:30';b.moves[1].date='2026-10-17';r=await call(b);assert.equal(r.status,409);assert.equal(writes.length,0);assert(r.data.error.includes('trống trung gian'));
+ // One two-hour source swaps with two packed targets, without transient overlap.
+ reset();logs=[make(1,'15:00',7200),make(2,'08:00',5400,'2026-10-16','CAL-2'),make(3,'09:30',1800,'2026-10-16','CAL-3')];
+ b={requestId:'multi-swap-packed-fixture-123',moves:logs.map((w,i)=>({key:w.key,worklogId:w.id,expectedStarted:w.started,expectedSeconds:w.timeSpentSeconds,date:'2026-10-16',start:['08:00','15:00','16:30'][i]}))};
+ r=await call(b);assert.equal(r.status,200,JSON.stringify(r));assert.deepEqual(logs.map(x=>x.started.slice(11,16)),['08:00','15:00','16:30']);assert.deepEqual(logs.map(x=>x.timeSpentSeconds),[7200,5400,1800]);assert.equal(writes.length,4);
  // Three-block cyclic swaps use one parking step, including second precision.
  const a=parsed(make(1,'08:00',3601)),bb=parsed(make(2,'10:00')),c=parsed(make(3,'15:00',1800));
  const cycle=schedule([a,bb,c],[D.preview(a,{date:a.date,start:'10:00'}),D.preview(bb,{date:a.date,start:'15:00'}),D.preview(c,{date:a.date,start:'08:00'})],[]);assert.equal(cycle.length,4);assert.equal(cycle.filter(x=>x.temporary).length,1);

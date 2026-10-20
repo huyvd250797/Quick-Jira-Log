@@ -1,3 +1,11 @@
+## V1.19.0 — Đổi chỗ nhiều block & tự ráp lịch qua giờ nghỉ: đã xây dựng
+
+- Đổi một block với nhiều block khi cả vùng đích và vùng nguồn đáp ứng; preview bay/hoàn về ngay khi đang kéo.
+- Tách qua giờ nghỉ, ráp vào chỗ trống cùng ngày, hỏi trước khi hơn 2 phần. Không đủ tổng giờ thì cảnh báo.
+- Giữ nháp → icon Lưu → xác nhận; lưu thành các worklog Jira thật, giữ mô tả và native Overtime.
+- Đọc lại/khôi phục có kiểm tra, trạng thái cần đối chiếu khi mất phản hồi; không retry tạo mới mù.
+- Cần kiểm chứng thêm trên Jira công ty và iPhone/Safari thật trước khi đánh giá tốc độ thực tế.
+
 ## V1.18.0 — Củng cố trải nghiệm & tốc độ: đã xây dựng
 
 - Cuộn tự nhiên trong khung, zoom gộp theo frame, giảm observer/layout/loop và tái sử dụng lịch không đổi.

@@ -29,6 +29,9 @@ const auth={mode:'session',cookie:'JSESSIONID=own-session'};
   return new Response('Saved');
  };
  await nativeFormUpdate(args,auth,()=>dispatched++);assert.equal(calls.length,3);assert.equal(dispatched,1);assert.deepEqual(calls.map(c=>[c.method,c.path]),[['GET','/browse/EPU01-2840'],['GET',openAction],['POST',action]]);
+ // Copies a new split worklog's native attribute, using only controls in its real form.
+ await nativeFormUpdate({...args,copiedAttributes:[{attrTypeId:1,attrValue:'no'},{attrTypeId:9,attrValue:'CUSTOM'}]},auth);
+ await assert.rejects(nativeFormUpdate({...args,copiedAttributes:[{attrTypeId:88,attrValue:'unknown'}]},auth),/thuộc tính gốc/);
  calls=[];await assert.rejects(nativeFormUpdate({...args,started:'2026-10-16T16:00:23.000+0700'},auth));assert.equal(calls.length,0);
  // Missing token, login wall, anonymous identity, cross-origin redirect, GET rejection: no write.
  for(const mode of ['missing-token','login','anonymous','redirect','xsrf-denied']){

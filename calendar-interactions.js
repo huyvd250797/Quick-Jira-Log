@@ -150,11 +150,14 @@ function retargetCalendarHoverJob(job,to,mode) {
   } catch {removeCalendarHoverJob(job);}
 }
 function updateCalendarHoverPreview(g,proposal) {
-  const partner=!proposal.problem&&proposal.swap,id=partner?QuickJiraDrafts.key(partner):null;
-  for(const job of [...calendarHoverMotions.values()])if(job.id!==id){labelCalendarHoverJob(job,job.item);retargetCalendarHoverJob(job,calendarHoverSlot(job.item,job.node),'return');}
-  if(!partner)return;
-  const job=calendarHoverMotions.get(id)||createCalendarHoverJob(partner);
-  if(job){labelCalendarHoverJob(job,proposal.changes[1]);retargetCalendarHoverJob(job,calendarHoverSlot(proposal.changes[1],job.node),'away');}
+  const partners=proposal.problem?[]:(proposal.swaps|| (proposal.swap?[proposal.swap]:[]));
+  const ids=new Set(partners.map(QuickJiraDrafts.key));
+  for(const job of [...calendarHoverMotions.values()])if(!ids.has(job.id)){labelCalendarHoverJob(job,job.item);retargetCalendarHoverJob(job,calendarHoverSlot(job.item,job.node),'return');}
+  for(const partner of partners){
+    const id=QuickJiraDrafts.key(partner),destination=proposal.changes.find(x=>QuickJiraDrafts.key(x)===id);
+    const job=calendarHoverMotions.get(id)||createCalendarHoverJob(partner);
+    if(job&&destination){labelCalendarHoverJob(job,destination);retargetCalendarHoverJob(job,calendarHoverSlot(destination,job.node),'away');}
+  }
 }
 function labelCalendarHoverJob(job,item) {
   const label=[...job.clone.children].find(el=>el.tagName==='SPAN'&&!el.classList.contains('ot-ribbon'));
@@ -183,15 +186,15 @@ function prepareCalendarSaveReport(){
   if(!calendarSaveReport||calendarSaveReport.user!==state.user||calendarSaveReport.complete)
     calendarSaveReport={user:state.user,entries:new Map(),rows:new Map(),complete:false};
   for(const [id,draft] of state.calendarDrafts){
-    const target=QuickJiraDrafts.preview(draft.original,draft.target),entry=calendarSaveReport.entries.get(id);
-    if(!entry||!QuickJiraDrafts.same(entry.target,target))calendarSaveReport.entries.set(id,{original:{...draft.original},target,status:draft.status==='unknown'?'unknown':draft.status==='conflict'?'conflict':'pending',message:''});
+    const target=QuickJiraDrafts.preview(draft.original,draft.target),entry=calendarSaveReport.entries.get(id),signature=JSON.stringify(draft.target);
+    if(!entry||entry.signature!==signature)calendarSaveReport.entries.set(id,{original:{...draft.original},target,segments:draft.target.segments,signature,status:draft.status==='unknown'?'unknown':draft.status==='conflict'?'conflict':'pending',message:''});
   }
   for(const [id,entry] of calendarSaveReport.entries)if(!state.calendarDrafts.has(id)&&entry.status!=='saved')calendarSaveReport.entries.delete(id);
   return calendarSaveReport;
 }
 function renderCalendarSaveReport(){
   const report=prepareCalendarSaveReport(),date=value=>value.split('-').reverse().join('/');
-  $('calendarSaveList').innerHTML=[...report.entries].map(([id,entry])=>`<li data-save-key="${escapeHtml(id)}"><strong>${escapeHtml(entry.original.key)}</strong><span>${escapeHtml(date(entry.original.date))} · ${escapeHtml(entry.original.start)}–${escapeHtml(entry.original.end)} · ${escapeHtml(formatHistoryTimeSpent(QuickJiraDrafts.seconds(entry.original)/60))}</span><b aria-hidden="true">↓</b><span>${escapeHtml(date(entry.target.date))} · ${escapeHtml(entry.target.start)}–${escapeHtml(entry.target.end)} · ${escapeHtml(formatHistoryTimeSpent(QuickJiraDrafts.seconds(entry.target)/60))}</span><span class="calendar-save-status"></span><small class="calendar-save-detail" hidden></small></li>`).join('');
+  $('calendarSaveList').innerHTML=[...report.entries].map(([id,entry])=>`<li data-save-key="${escapeHtml(id)}"><strong>${escapeHtml(entry.original.key)}</strong><span>${escapeHtml(date(entry.original.date))} · ${escapeHtml(entry.original.start)}–${escapeHtml(entry.original.end)} · ${escapeHtml(formatHistoryTimeSpent(QuickJiraDrafts.seconds(entry.original)/60))}</span><b aria-hidden="true">↓</b><span class="calendar-save-target">${escapeHtml(entry.segments ? entry.segments.map(t=>{const part=QuickJiraDrafts.preview(entry.original,t);return `${date(part.date)} · ${part.start}–${part.end} (${formatHistoryTimeSpent(QuickJiraDrafts.seconds(part)/60)})`;}).join('\n') : `${date(entry.target.date)} · ${entry.target.start}–${entry.target.end} · ${formatHistoryTimeSpent(QuickJiraDrafts.seconds(entry.target)/60)}`)}${entry.segments?` · ${entry.segments.length} phần`:''}</span><span class="calendar-save-status"></span><small class="calendar-save-detail" hidden></small></li>`).join('');
   report.rows=new Map([...$('calendarSaveList').children].map(row=>[row.dataset.saveKey,row]));
   syncCalendarSaveReport();
 }
@@ -218,7 +221,7 @@ function setCalendarSaveStatus(drafts,status,message=''){
 }
 
 function calendarPreviewItems() { return QuickJiraDrafts.project(state.historyItems, state.calendarDrafts); }
-function calendarIsDraft(item) { return state.calendarDrafts.has(QuickJiraDrafts.key(item)); }
+function calendarIsDraft(item) { return state.calendarDrafts.has(item.calendarSplitRoot||QuickJiraDrafts.key(item)); }
 function syncCalendarSaveButton() {
   const count = state.calendarDrafts.size, button = $('calendarSaveBtn');
   button.classList.toggle('hidden', !count);
@@ -251,7 +254,7 @@ function openCalendarSave({ closeAfter = false } = {}) {
   $('calendarSaveTitle').textContent = closeAfter ? 'Lịch có thay đổi chưa lưu' : 'Xác nhận lưu lịch';
   renderCalendarSaveReport();
   $('calendarSaveError').textContent=''; $('calendarSaveError').classList.add('hidden');
-  $('calendarSaveHint').textContent=`${state.calendarDrafts.size} worklog sẽ được cập nhật trên Jira. Giữ nguyên mô tả và Overtime. Kiểm tra ngày, giờ và thời lượng trước khi lưu.`;
+  $('calendarSaveHint').textContent=`${state.calendarDrafts.size} worklog sẽ được cập nhật hoặc tách trên Jira. Giữ nguyên mô tả và Overtime. Kiểm tra ngày, giờ và thời lượng trước khi lưu.`;
   const review=[...calendarSaveReport.entries.values()].some(entry=>entry.status!=='pending');
   if(review)$('calendarSaveHint').textContent=`Còn ${state.calendarDrafts.size} thay đổi cần xác nhận. Kiểm tra Jira trước khi lưu phần còn lại. Mô tả và Overtime được giữ nguyên.`;
   $('calendarConfirmSaveBtn').textContent=review?`Kiểm tra và lưu (${state.calendarDrafts.size})`:'Lưu lịch';
@@ -268,12 +271,23 @@ function closeCalendarSave() {
 function stageCalendarMove(item,target,proposal=null,livePreview=false) {
   if(calendarReadOnly()||item?.calendarReadOnly)return;
   if (state.calendarMovePending) return;
+  if([...state.calendarDrafts.values()].some(d=>d.target.segments&&d.status==='unknown'))return calendarFeedback('Cần đối chiếu kết quả tách trước khi chỉnh tiếp. Bấm Lưu lịch để kiểm tra Jira.',true);
   const drop=proposal||QuickJiraDrafts.drop(item,target,calendarPreviewItems());
   if(drop.problem)return calendarFeedback(drop.problem,true);
+  if(drop.requiresConfirmation&&!drop.confirmed){
+    returnCalendarHoverPreview();openCalendarSplitConfirm(item,target,drop);return;
+  }
   if(drop.changes.some(x=>state.calendarDrafts.get(QuickJiraDrafts.key(x))?.status==='unknown')) {
     if(livePreview)returnCalendarHoverPreview();
     return calendarFeedback('Chưa rõ kết quả lần lưu trước. Bấm Lưu lịch để đối chiếu Jira trước khi kéo tiếp.',true);
   }
+  if(drop.segments){
+    const id=QuickJiraDrafts.key(item),previous=state.calendarDrafts.get(id),original=previous?.original||{...item};
+    state.calendarDrafts.set(id,{original,target:{date:drop.segments[0].date,start:drop.segments[0].start,targetSeconds:QuickJiraDrafts.seconds(item),segments:drop.segments},allowMany:drop.segments.length>2,status:'pending',requestId:createRequestId('calendar-split')});
+    returnCalendarHoverPreview();renderCalendarDrafts();
+    calendarFeedback(`Đã chia thành ${drop.segments.length} phần · ${calendarDraftMessage()}`);return;
+  }
+  if(!livePreview&&drop.swaps?.length>1){updateCalendarHoverPreview(null,drop);livePreview=true;}
   const swapMotion=livePreview?null:prepareCalendarSwapMotion(drop);
   // Commit both previews together; each draft retains its own original snapshot.
   for(const moved of drop.changes) {
@@ -289,6 +303,24 @@ function stageCalendarMove(item,target,proposal=null,livePreview=false) {
   calendarFeedback(`${drop.swap?'Đã đổi chỗ ở bản nháp · ':''}${calendarDraftMessage()||'Đã đưa lịch về vị trí gốc.'}`);
 }
 
+let calendarPendingSplit=null;
+function openCalendarSplitConfirm(item,target,proposal){
+  calendarPendingSplit={item:{...item},target,proposal,user:state.user};
+  $('calendarSplitHint').textContent=`${item.key} cần tách thành ${proposal.segments.length} block để giữ đủ ${formatHistoryTimeSpent(QuickJiraDrafts.seconds(item)/60)}. Các phần nằm trong cùng ngày; chưa cập nhật Jira.`;
+  $('calendarSplitList').replaceChildren(...proposal.changes.map(part=>{const row=document.createElement('li');row.textContent=`${part.start}–${part.end} · ${formatHistoryTimeSpent(QuickJiraDrafts.seconds(part)/60)}`;return row;}));
+  $('calendarSplitDialog').showModal();$('calendarSplitCancelBtn').focus({preventScroll:true});
+}
+function closeCalendarSplitConfirm(){calendarPendingSplit=null;$('calendarSplitDialog').close();}
+function calendarSplitBody(draft,verifyOnly=false){return {requestId:draft.requestId,key:draft.original.key,worklogId:draft.original.id,expectedStarted:QuickJiraDrafts.started(draft.original),expectedSeconds:QuickJiraDrafts.seconds(draft.original),targetSeconds:draft.target.targetSeconds,segments:draft.target.segments,allowMany:draft.allowMany===true,verifyOnly};}
+function acceptCalendarSplit(draft,data){
+  const parts=QuickJiraDrafts.parts(draft),ids=new Set();
+  if(data.worklogVerified!==true||data.split!==true||!Array.isArray(data.items)||data.items.length!==parts.length||data.items.some((x,i)=>{const id=String(x.id),invalid=!/^\d+$/.test(id)||x.key!==draft.original.key||ids.has(id)||!QuickJiraDrafts.same(x,parts[i]);ids.add(id);return invalid;})||String(data.items[0].id)!==String(draft.original.id)){
+    const e=new Error('Chưa xác nhận được đầy đủ các phần tách trên Jira.');e.code='RESULT_UNKNOWN';throw e;
+  }
+  state.historyItems=state.historyItems.filter(x=>QuickJiraDrafts.key(x)!==QuickJiraDrafts.key(draft.original));
+  for(const item of data.items)state.historyItems.push({...draft.original,...item,minutes:QuickJiraDrafts.seconds(item)/60,end:QuickJiraDrafts.preview(item,{date:item.date,start:item.start}).end});
+  state.calendarDrafts.delete(QuickJiraDrafts.key(draft.original));setCalendarSaveStatus(draft,'saved',`Đã xác nhận ${data.items.length} phần, giữ đúng tổng thời lượng và Overtime.`);
+}
 function calendarSaveLock(locked) {
   $('historyOverlay').classList.toggle('is-calendar-saving',locked);
   $('calendarSaveDialog').setAttribute('aria-busy',String(locked));
@@ -310,6 +342,11 @@ async function checkCalendarDrafts(user=state.user) {
   const fresh=[...new Map(items.map(item=>[QuickJiraDrafts.key(item),item])).values()];
   for (const draft of drafts) {
     const id=QuickJiraDrafts.key(draft.original),current=fresh.find(item=>QuickJiraDrafts.key(item)===id);
+    if(draft.status==='unknown'&&draft.target.segments){
+      const data=await api('/api?action=calendar-split',{method:'POST',body:JSON.stringify(calendarSplitBody(draft,true))});
+      if(state.user!==user)throw new Error('Phiên làm việc đã thay đổi.');
+      acceptCalendarSplit(draft,data);continue;
+    }
     if (draft.status==='unknown' && current && QuickJiraDrafts.same(current,QuickJiraDrafts.preview(draft.original,draft.target))) {
       state.calendarDrafts.delete(id);setCalendarSaveStatus(draft,'saved','Đã đọc lại và xác nhận đúng vị trí, thời lượng trên Jira.');continue;
     }
@@ -354,6 +391,12 @@ async function saveCalendarDrafts() {
       }
       active=draft;setCalendarSaveStatus(draft,'saving');
       $('calendarSaveHint').textContent=`Đang lưu ${verified+1}/${total} · ${draft.original.key}…`;
+      if(draft.target.segments){
+        draft.requestId ||= createRequestId('calendar-split');
+        const data=await api('/api?action=calendar-split',{method:'POST',requestId:draft.requestId,body:JSON.stringify(calendarSplitBody(draft))});
+        if(state.user!==user)return;
+        acceptCalendarSplit(draft,data);verified++;active=null;syncCalendarSaveButton();continue;
+      }
       const target=QuickJiraDrafts.preview(draft.original,draft.target);
       const resized=QuickJiraDrafts.seconds(target)!==QuickJiraDrafts.seconds(draft.original);
       const data=await api('/api?action=worklog-correction',{method:'PATCH',body:JSON.stringify({
@@ -370,6 +413,7 @@ async function saveCalendarDrafts() {
   } catch (e) {
     error=e;
     if(state.user!==user)return;
+    if(e.details?.rolledBack&&active&&!Array.isArray(active))active.requestId=createRequestId('calendar-split');
     verified=total-state.calendarDrafts.size;
     if(active)setCalendarSaveStatus(active,QuickJiraExperience.failureState(e),e.message||'Chưa xác nhận được thay đổi.');
     if(calendarSaveReport)for(const [id,entry] of calendarSaveReport.entries){
@@ -445,6 +489,7 @@ function cancelCalendarGesture({returnHover=true}={}) {
 }
 function resetCalendarInteraction() { cancelCalendarSwapMotion(); cancelCalendarGesture({returnHover:false}); cancelCalendarHoverMotion(); setCalendarEditMode(false); }
 function calendarBlockClick(event, item) {
+  if(item?.calendarSplitRoot){event.preventDefault();openCalendarSave();return;}
   if (event.target.closest('[data-calendar-resize]') || calendarEditMode || state.calendarMovePending || state.historyLoading || performance.now() < calendarIgnoreClickUntil) { event.preventDefault(); return; }
   if (calendarIsDraft(item)) { openCalendarSave(); return; }
   openCorrection(item);
@@ -521,7 +566,7 @@ function updateCalendarDrag(now=performance.now()) {
   if(!g.resize)updateCalendarHoverPreview(g,proposal);
   const moved=proposal.changes?.[0],problem=proposal.problem;
   const label=moved?`${moved.date.split('-').reverse().join('/')} · ${moved.start}–${moved.end}${g.resize?' · '+formatHistoryTimeSpent(QuickJiraDrafts.seconds(moved)/60):''}`:'Chọn vị trí trong lịch';
-  const detail=problem||(proposal.swap?`Thả để đổi chỗ với ${proposal.swap.key} · Lưu tạm`:'Thả để lưu tạm · Chưa cập nhật Jira');
+  const detail=problem||(proposal.swap?`Thả để đổi chỗ với ${(proposal.swaps||[proposal.swap]).length} block · Lưu tạm`:proposal.segments?`Thả để tách ${proposal.segments.length} phần${proposal.requiresConfirmation?' · Cần xác nhận':''} · Lưu tạm`:'Thả để lưu tạm · Chưa cập nhật Jira');
   const content=label+'|'+detail;
   if(g.ghostContent!==content){
     g.ghostContent=content;g.ghost.querySelector('span').textContent=label;g.ghost.querySelector('small').textContent=detail;
@@ -655,6 +700,8 @@ function setupCalendarInteractions() {
     if (!block || calendarReadOnly() || state.calendarMovePending || state.historyLoading || event.button > 0) return;
     const item = calendarRenderedItems[Number(block.dataset.weekEvent)];
     if (!item) return;
+    if([...state.calendarDrafts.values()].some(d=>d.target.segments&&d.status==='unknown')){calendarFeedback('Cần đối chiếu kết quả tách trước khi chỉnh tiếp. Bấm Lưu lịch để kiểm tra Jira.',true);return;}
+    if(item.calendarSplitRoot){calendarFeedback('Các phần tách đang chờ lưu. Lưu hoặc bỏ bản nháp trước khi kéo tiếp.',true);return;}
     cancelCalendarGesture();
     const rect = block.getBoundingClientRect(), column = block.closest('.week-day-column');
     const scale = column.getBoundingClientRect().height / Number(column.parentElement.dataset.minuteRange);
@@ -705,11 +752,22 @@ function setupCalendarInteractions() {
   });
   document.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
+    if ($('calendarSplitDialog').open) {event.preventDefault();event.stopImmediatePropagation();closeCalendarSplitConfirm();return;}
     if ($('calendarSaveDialog').open) {event.preventDefault();event.stopImmediatePropagation();closeCalendarSave();return;}
     if (calendarGesture || calendarEditMode) { event.preventDefault(); event.stopImmediatePropagation(); cancelCalendarGesture();setCalendarEditMode(false);return; }
     if (calendarSwapMotion||calendarHoverMotions.size) {event.preventDefault();event.stopImmediatePropagation();clearMotion();return;}
     else if ($('calendarLogDialog').open && !state.confirmOpen && !$('logProgressDialog').open) { event.preventDefault(); event.stopImmediatePropagation(); closeCalendarLog(); }
   }, true);
+  $('calendarSplitCancelBtn').addEventListener('click',closeCalendarSplitConfirm);
+  $('calendarSplitDialog').addEventListener('cancel',event=>{event.preventDefault();closeCalendarSplitConfirm();});
+  $('calendarSplitDialog').addEventListener('click',event=>{if(event.target===$('calendarSplitDialog'))closeCalendarSplitConfirm();});
+  $('calendarSplitConfirmBtn').addEventListener('click',()=>{
+    const pending=calendarPendingSplit;closeCalendarSplitConfirm();
+    if(!pending||pending.user!==state.user)return;
+    const current=calendarPreviewItems().find(x=>QuickJiraDrafts.key(x)===QuickJiraDrafts.key(pending.item));
+    if(!current||!QuickJiraDrafts.same(current,pending.item))return calendarFeedback('Bản nháp đã thay đổi. Kéo lại để tính vị trí mới.',true);
+    stageCalendarMove(current,pending.target,{...pending.proposal,confirmed:true});
+  });
   $('calendarSaveBtn').addEventListener('click', () => openCalendarSave());
   $('calendarConfirmSaveBtn').addEventListener('click', () => {void saveCalendarDrafts();});
   $('calendarCancelSaveBtn').addEventListener('click', closeCalendarSave);
