@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.19.4';
+const APP_VERSION = '1.20.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -746,6 +746,7 @@ function setLoggedIn(user) {
   state.invalidLoginCount = 0;
   clearLoginCooldown();
   state.user = user;
+  window.QuickJiraSearch?.login(user);
   invalidateHistoryCache();
   invalidateDayAuditCache();
   document.body.classList.remove('single-log-open');
@@ -777,6 +778,7 @@ function setLoggedOut() {
   setLoginError('');
   closeDesktopEditor();
   state.user = null;
+  window.QuickJiraSearch?.logout();
   state.dashboardSeq += 1;
   state.dashboardDate = '';
   $('dashboardCard').classList.add('hidden');

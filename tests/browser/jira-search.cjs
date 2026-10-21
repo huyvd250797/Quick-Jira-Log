@@ -1,0 +1,32 @@
+'use strict';
+const assert=require('node:assert/strict'),{chromium}=require('playwright'),{server}=require('./serve.cjs');
+(async()=>{
+ await new Promise(r=>server.listen(4226,'127.0.0.1',r));
+ const browser=await chromium.launch({headless:true,executablePath:process.env.QJL_CHROMIUM_PATH,args:['--no-sandbox']});
+ try{for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:320,height:683},{width:844,height:390}]){
+  const context=await browser.newContext({viewport,hasTouch:viewport.width<900,serviceWorkers:'block'}),page=await context.newPage(),errors=[],requests=[];let denied=false;
+  page.on('pageerror',e=>errors.push(e.message));
+  const issue=i=>({key:`EPU01-${i}`,summary:'Hỗ trợ <img src=x onerror=alert(1)> dữ liệu '.repeat(3),project:{key:'EPU01',name:'Điện lực'},issueType:{id:'5',name:'Sub-task',subtask:true},status:{id:'3',name:'In Progress',category:'indeterminate'},assignee:{username:'someone',displayName:'Nhân sự thử nghiệm'},priority:'High',parent:'EPU01-1',updated:'2026-10-22T08:00:00.000+0700',url:`https://task.ascvn.com.vn/browse/EPU01-${i}`});
+  await page.route('**/api?*',async route=>{const u=new URL(route.request().url()),a=u.searchParams.get('action');requests.push({a,method:route.request().method(),params:Object.fromEntries(u.searchParams)});let data={ok:true},status=200;
+   if(a==='status')data={ok:true,authenticated:true,user:{username:'boss',displayName:'Boss'}};
+   if(a==='subtasks')data={ok:true,issues:[]};if(a==='worklog-history')data={ok:true,items:[],skipped:[]};if(a==='day-audit')data={ok:true,occupied:[],available:[]};
+   if(a==='jira-search-options')data={ok:true,projects:[{key:'EPU01',name:'Điện lực'}],statuses:[{id:'3',name:'In Progress'}],types:[{id:'5',name:'Sub-task'},{id:'1',name:'Story'}],warnings:[]};
+   if(a==='calendar-users')data={ok:true,users:[{key:'USER_KEY',username:'someone',displayName:'Nhân sự thử nghiệm'}]};
+   if(a==='jira-search'){const q=u.searchParams.get('q'),offset=Number(u.searchParams.get('startAt')||0);if(denied){status=403;data={ok:false,error:'Không có quyền xem công việc.'};}else{const rows=/^EPU01-\d+$/.test(q)?[issue(Number(q.split('-')[1]))]:Array.from({length:offset?1:25},(_,i)=>issue(offset+i+1));data={ok:true,issues:rows,total:26,startAt:offset,nextStartAt:offset+rows.length,hasMore:!offset};}}
+   await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
+  });
+  await page.goto('http://127.0.0.1:4226');await page.waitForFunction(()=>!QuickJiraBusy.active&&!document.body.classList.contains('booting'));
+  await page.locator(viewport.width<900?'#mobileJiraSearchBtn':'#jiraSearchBtn').click();await page.waitForFunction(()=>document.getElementById('jiraSearchDialog').open&&!QuickJiraBusy.active);
+  assert.equal(await page.locator('#jiraSearchDialog input:focus').count(),0,'Opening must not summon mobile keyboard');
+  await page.locator('#jiraQuery').fill('hỗ trợ');await page.locator('#jiraSearchForm button[type=submit]').click();await page.waitForFunction(()=>!QuickJiraBusy.active);assert.equal(await page.locator('.jira-issue-card').count(),25);assert.equal(await page.locator('.jira-issue-card img').count(),0);
+  await page.locator('#jiraSearchMoreBtn').click();await page.waitForFunction(()=>!QuickJiraBusy.active);assert.equal(await page.locator('.jira-issue-card').count(),26);
+  await page.locator('.jira-issue-card').first().click();await page.waitForFunction(()=>document.getElementById('jiraIssuePeekDialog').open&&!QuickJiraBusy.active);assert.equal(await page.locator('#jiraIssuePeekTitle img').count(),0);assert.equal(await page.locator('#jiraRecentList button').count(),1);await page.locator('#jiraIssuePeekCloseBtn').click();
+  const geometry=await page.evaluate(()=>{const d=document.getElementById('jiraSearchDialog'),r=d.getBoundingClientRect();return {fits:r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1,noHorizontal:d.scrollWidth<=d.clientWidth+1};});assert(geometry.fits&&geometry.noHorizontal);
+  await page.locator('#jiraSearchCloseBtn').click();await page.evaluate(()=>QuickJiraSearch.open());await page.waitForFunction(()=>!QuickJiraBusy.active);assert.equal(await page.locator('#jiraRecentList button').count(),1);
+  await page.evaluate(()=>document.getElementById('jiraSearchFilters').open=true);await page.locator('#jiraProject').fill('EPU01');await page.locator('#jiraStatus').selectOption('3');await page.locator('#jiraType').selectOption('5');await page.locator('#jiraAssignee').selectOption('@person');await page.locator('#jiraPersonQuery').fill('nhân');await page.locator('#jiraPersonFindBtn').click();await page.waitForFunction(()=>!QuickJiraBusy.active);await page.locator('.jira-person-option').click();await page.locator('#jiraSearchForm button[type=submit]').click();await page.waitForFunction(()=>!QuickJiraBusy.active);const last=requests.filter(x=>x.a==='jira-search').at(-1);assert.equal(last.params.assignee,'someone');assert.equal(last.params.project,'EPU01');assert.equal(last.params.status,'3');assert.equal(last.params.type,'5');
+  denied=true;await page.locator('#jiraRecentList button').click();await page.waitForFunction(()=>!QuickJiraBusy.active);assert.equal(await page.locator('#jiraIssuePeekDialog').evaluate(e=>e.open),false);assert((await page.locator('#jiraSearchState').textContent()).includes('quyền'));denied=false;
+  await page.evaluate(()=>{QuickJiraSearch.logout();QuickJiraSearch.login({username:'another'});});assert.equal(await page.locator('#jiraRecentList button').count(),0);assert.equal(await page.locator('.jira-issue-card').count(),0);
+  await page.evaluate(()=>QuickJiraSearch.login({username:'boss'}));assert.equal(await page.locator('#jiraRecentList button').count(),1);
+  assert(requests.every(x=>x.method==='GET'),'All browser search actions read only');assert.deepEqual(errors,[]);await context.close();console.log('Jira search UI passed',viewport);
+ }}finally{await browser.close();await new Promise(r=>server.close(r));}
+})().catch(e=>{console.error(e);server.close();process.exitCode=1;});

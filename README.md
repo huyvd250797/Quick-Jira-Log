@@ -1,4 +1,64 @@
-# Quick Jira Log V1.19.2 — Draft Split Regroup
+# Quick Jira Log V1.20.0 — Tra cứu Jira
+
+## Chức năng mới
+
+- Mở **Tra cứu Jira** từ thanh công cụ PC hoặc thanh điều hướng mobile.
+- Tìm bằng mã đầy đủ (ví dụ `EPU01-2840`) hoặc nội dung từ 2 đến 160 ký tự. Mã đầy đủ được tìm chính xác; nội dung được tìm qua chỉ mục text của Jira dưới dạng cụm từ, không thực thi JQL người dùng nhập.
+- Có thể để trống từ khóa và dùng bộ lọc; nếu để trống cả bộ lọc, Jira trả công việc cập nhật gần đây mà tài khoản có quyền thấy.
+- Bộ lọc: dự án (chọn gợi ý hoặc nhập mã), trạng thái, loại công việc theo Jira (Story/Task/Bug/Sub-task và loại tùy chỉnh), người phụ trách (Tất cả/Tôi/Chưa được giao/Chọn người khác).
+- Khi chọn người khác: nhập tên hoặc username, bấm **Tìm**, chọn đúng nhân sự rồi bấm **Tìm kiếm**. Cần quyền tìm nhân sự trên Jira. Bộ lọc không tự gửi truy vấn sau từng ký tự.
+- Kết quả dạng thẻ hiển thị mã, tiêu đề, dự án/loại, trạng thái, người phụ trách, ưu tiên hoặc công việc cha và thời điểm cập nhật theo giờ Việt Nam. Mỗi trang tối đa 25 công việc; bấm **Tải thêm** để xem tiếp.
+- Bấm thẻ để xem thông tin cơ bản và mở Jira gốc. Mỗi lần mở thẻ/mục vừa xem đều đọc lại Jira để kiểm tra quyền hiện tại.
+- Lưu tối đa 10 **mã công việc vừa xem** theo tài khoản trên trình duyệt/thiết bị hiện tại. Không lưu mô tả, email hay dữ liệu chi tiết trong mục vừa xem; không đồng bộ sang thiết bị khác. Đăng xuất xóa nội dung đang xem khỏi giao diện, còn danh sách mã được giữ để dùng khi đăng nhập lại cùng tài khoản. Có nút Xóa danh sách.
+- Màn hình mobile không tự focus ô nhập khi mở; hỗ trợ light/dark, bố cục lọc thu gọn và khóa tương tác khi đang tải.
+
+V1.20.0 là phiên bản tra cứu, không tạo/sửa issue. Luồng logwork, lịch và Overtime hiện có được giữ nguyên. Màn hình chi tiết đầy đủ (mô tả, subtask, worklog) nằm trong roadmap V1.21.0.
+
+## Nâng cấp từ V1.19.4
+
+1. Giải nén `Quick-Jira-Log_v1.20.0.zip`. Dùng nội dung thư mục `Quick-Jira-Log-V1.20.0` làm root source.
+2. Giữ nguyên các biến môi trường đang sử dụng, đặc biệt `APP_SESSION_SECRET`. Không thêm database, token, biến môi trường hoặc dependency runtime mới.
+3. Với repository hiện có, clone/fetch và giữ các chỉnh sửa riêng trước khi tích hợp source này. Push lên nhánh đang triển khai.
+4. Trong Vercel dùng Framework **Other**, Node.js **24.x**, không Build Command; giữ `vercel.json`, API `/api` và root thư mục chứa `index.html`, `package.json`, `api/`.
+5. Sau deploy, dùng nút cập nhật app hoặc tải lại. Tiêu đề, phiên bản app và footer phải hiện **V1.20.0**. Đăng nhập bằng tài khoản Jira đang dùng.
+6. Mở Tra cứu Jira, thử một mã có quyền xem, một từ khóa, các bộ lọc và Tải thêm. Kiểm tra lịch/logwork cũ vẫn dùng được.
+
+Không có migration database. Có thể quay lại source V1.19.4 bằng deployment trước nếu cần; không cần xóa dữ liệu Jira hoặc đổi secret.
+
+## Kiểm tra và chạy thử
+
+Chạy trong thư mục source với Node.js 24.x:
+
+```bash
+npm ci
+npm test
+node tests/jira-search-tests.js
+```
+
+Các test API dùng Jira giả lập. Test giao diện cần Playwright và Chromium ở môi trường kiểm thử; không cài thêm chúng vào dependencies production. Chạy `npm run test:search-ui` khi đã có trình duyệt; có thể đặt `QJL_CHROMIUM_PATH` trỏ tới Chromium đã cài.
+
+Test Playwright tự khởi chạy server fixture `tests/browser/serve.cjs` với dữ liệu giả lập; không chạy file fixture trực tiếp để dùng app thật. Để chạy app local với API Vercel, cài Vercel CLI và dùng `vercel dev` trong root source, cấu hình các biến của `.env.example` (đặc biệt secret tối thiểu 32 ký tự), mở URL local do CLI hiển thị. Không mở `index.html` bằng `file://` hoặc chỉ dùng static server vì sẽ thiếu API. Có thể triển khai trực tiếp lên Vercel theo phần trên để sử dụng.
+
+Các API mới là GET `/api?action=jira-search` và `/api?action=jira-search-options`, yêu cầu phiên Jira. Server dùng REST API v2 của Jira, chỉ đọc dữ liệu; POST `/rest/api/2/search` là truy vấn đọc. Không cấp thêm quyền so với Jira gốc.
+
+## Lỗi thường gặp
+
+| Hiện tượng | Xử lý |
+| --- | --- |
+| Không có kết quả | Thử mã đầy đủ; đặt lại bộ lọc; dùng cụm từ ngắn hơn. Kết quả phụ thuộc chỉ mục text và quyền Browse Projects trên Jira. |
+| Không tải được bộ lọc | Bấm Tải lại bộ lọc. Có thể nhập mã dự án trực tiếp và tiếp tục tìm bằng các bộ lọc còn có dữ liệu. |
+| Không tìm được nhân sự | Kiểm tra quyền Browse Users; bộ lọc Tôi/Chưa được giao vẫn dùng được. |
+| Phiên hết hạn | Đăng nhập lại; màn hình tra cứu được đóng và dữ liệu hiển thị cũ được dọn. |
+| Không nhớ mục vừa xem | Trình duyệt có thể chặn lưu dữ liệu, dùng chế độ riêng tư hoặc đã xóa dữ liệu website. Danh sách này chỉ lưu cục bộ. |
+| PWA chưa có nút Tra cứu | Kiểm tra deployment và phiên bản V1.20.0; chọn cập nhật ứng dụng hoặc tải lại. |
+
+## Phiên bản tiếp theo
+
+**V1.21.0 — Chi tiết công việc:** mô tả, task cha/subtask, worklog và lối vào logwork phù hợp quyền/quy tắc hiện có. Gửi lại ZIP mới nhất và yêu cầu xây dựng V1.21.0 khi muốn tiếp tục.
+
+Các mục dưới đây là tài liệu lịch sử của các phiên bản trước; hướng dẫn V1.20.0 ở trên là phần áp dụng cho bản hiện tại.
+
+# Lịch sử V1.19.2 — Draft Split Regroup
 
 Ứng dụng PWA dùng Jira/WorklogPRO hiện có. Source sẵn sàng push GitHub và deploy Vercel; không thêm database hoặc dependency runtime.
 

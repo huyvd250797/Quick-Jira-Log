@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.19.4 – Multi-Swap & Smart Split.",
+  "description": "Quick Jira Log V1.20.0 – Tra cứu Jira & Logwork.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

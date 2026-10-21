@@ -1,4 +1,13 @@
-# Kiểm thử V1.19.2 — Draft Split Regroup
+# Kiểm thử V1.20.0 — Tra cứu Jira
+
+- `tests/jira-search-tests.js`: chạy qua HTTP router với Jira giả lập; query theo mã/cụm từ, escape đầu vào, mọi bộ lọc, phân trang, POST-search/GET fallback, metadata chung/theo dự án, metadata lỗi một phần, 400/401/403/502, no-store, chỉ đọc, không lộ email/mô tả hoặc diagnostic thô. Đã đạt.
+- `npm test`: toàn bộ bộ hồi quy nền tảng và API kế thừa, bao gồm test tra cứu mới, đã đạt. Kiểm tra cú pháp 124 tệp JS/CJS và 44 tham chiếu HTML cũng đạt.
+- `npm run test:search-ui`: fixture Playwright 1440×900, 390×844, 320×683, 844×390; thẻ, tải thêm, ký tự HTML trong summary, xem nhanh, lọc nhân sự, recents và tách tài khoản, lỗi quyền, kích thước dialog, không focus input khi mở. Đã bổ sung; chưa chạy được trong phiên này vì môi trường không có Chromium.
+- Chưa có xác minh trên Jira công ty, Safari/iPhone vật lý, GitHub hoặc Vercel. Không có thao tác ghi lên Jira thật trong phiên phát triển.
+
+Checklist sau deploy: phiên bản V1.20.0; mở từ PC/mobile; tìm mã Story/Task/Bug/Sub-task có quyền; tìm cụm từ; thử bộ lọc riêng/kết hợp; người phụ trách Tôi/khác/chưa được giao; tải thêm trên >25 kết quả; đọc lại mục vừa xem; đăng xuất/đăng nhập tài khoản khác; storage bị chặn; empty/error/retry; light/dark, bàn phím và màn hình ngang; logwork/lịch/OT cũ.
+
+# Lịch sử kiểm thử V1.19.2 — Draft Split Regroup
 
 - `npm test`: PASS toàn bộ logic/API kế thừa và `tests/calendar-regroup-tests.js`.
 - `calendar-regroup-tests.js`: kéo từ phần đầu/cuối, tổng giây/mô tả/OT giữ nguyên, phân biệt nhóm với worklog cùng issue, đích trống/không đủ chỗ, tách lại/4 phần/đồng ý >2; đối tác xếp vào đúng các khoảng nguồn, không tự chia đối tác; về gốc và stale/unknown/conflict guard; preview không đổi map nháp.

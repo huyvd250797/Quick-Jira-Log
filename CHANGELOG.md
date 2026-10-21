@@ -1,3 +1,14 @@
+## V1.20.0 — Tra cứu Jira
+
+- Thêm màn hình tra cứu riêng trên PC/mobile, truy vấn theo mã chính xác hoặc cụm nội dung; lọc dự án, trạng thái, loại công việc và người phụ trách.
+- Bộ lọc lấy từ Jira theo phiên đăng nhập; người phụ trách hỗ trợ Tôi, chưa được giao và chọn từ kết quả tìm nhân sự hiện có. Lỗi metadata từng phần vẫn cho tìm bằng phần còn dùng được.
+- Kết quả dạng thẻ, mỗi trang tối đa 25, Tải thêm, tránh lặp mã giữa các trang; có trạng thái rỗng, thử lại, cảnh báo bộ lọc thay đổi và loading khóa toàn app.
+- Xem nhanh thông tin cơ bản và mở Jira gốc; đọc lại theo mã khi mở để kiểm tra quyền hiện tại. Chưa có màn hình mô tả/subtask/worklog đầy đủ của V1.21.0.
+- Tối đa 10 mã vừa xem trên thiết bị, tách riêng theo username; có xóa, không lưu bản sao mô tả/email, không đồng bộ cloud. Đăng xuất dọn dữ liệu màn hình và vô hiệu phản hồi cũ.
+- API mới chỉ GET ở app; truy vấn Jira theo quyền người đăng nhập, escape JQL và Lucene phrase, kiểm tra độ dài/phân trang, no-store, không ghi hoặc thay đổi issue/worklog.
+- Tăng version UI/manifest/service worker lên 1.20.0; cache shell bổ sung stylesheet/script tra cứu. Có package-lock cho project không có runtime dependency.
+- Test API mới và hồi quy được thực hiện với Jira giả lập; không thực hiện thao tác trên Jira công ty, chưa deploy GitHub/Vercel hoặc kiểm thử Safari/iPhone vật lý.
+
 ## V1.19.4 — Tối ưu không gian lịch PC
 
 - Chế độ lịch thường trên PC dùng tiêu đề gọn, bỏ hướng dẫn lặp lại bên dưới tiêu đề. Giữ nút lưu nháp, chuyển lịch/danh sách, tải lại, fullscreen và đóng ở hàng trên.

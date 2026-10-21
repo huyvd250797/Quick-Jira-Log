@@ -7,6 +7,8 @@ const handlers = Object.freeze({
   'status': require('../handlers/status'),
   'subtasks': require('../handlers/subtasks'),
   'issue-info': require('../handlers/issue-info'),
+  'jira-search': require('../handlers/jira-search'),
+  'jira-search-options': require('../handlers/jira-search'),
   'worklog': require('../handlers/worklog'),
   'bulk-worklog': require('../handlers/bulk-worklog'),
   'day-audit': require('../handlers/day-audit'),

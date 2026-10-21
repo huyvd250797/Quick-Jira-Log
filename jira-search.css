@@ -1,0 +1,86 @@
+/* V1.20.0 — Read-only Jira search, cards and account-scoped recents. */
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
+#jiraSearchDialog, #jiraIssuePeekDialog { box-sizing:border-box; color:var(--text); background:var(--card); border:1px solid var(--line); box-shadow:0 24px 90px #0005; padding:0; overscroll-behavior:none; }
+#jiraSearchDialog { position:fixed; inset:0; margin:auto; width:min(1180px,calc(100vw - 32px)); max-width:calc(100vw - 32px); height:min(92dvh,1040px); max-height:92dvh; border-radius:18px; overflow:auto; scrollbar-gutter:stable; }
+#jiraSearchDialog::backdrop, #jiraIssuePeekDialog::backdrop { background:#030b17b8; backdrop-filter:blur(3px); }
+html:has(#jiraSearchDialog[open]),body:has(#jiraSearchDialog[open]) { overflow:hidden; }
+.jira-search-head { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; border-bottom:1px solid var(--line); background:var(--card); }
+#jiraSearchDialog > .jira-search-head { position:sticky; top:0; z-index:3; }
+.jira-search-head > div { min-width:0; }
+.jira-search-head h2 { margin:0; font-size:20px; line-height:1.4; overflow-wrap:anywhere; }
+.jira-search-head p { margin:3px 0 0; color:var(--muted); font-size:12px; }
+.jira-search-head > button { flex:0 0 38px; width:38px; height:38px; }
+.jira-search-form { padding:14px 20px; border-bottom:1px solid var(--line); }
+.jira-query-row, .jira-person-row { display:flex; align-items:center; gap:8px; min-width:0; }
+.jira-query-row > input,.jira-person-row > input { flex:1 1 0; min-width:0; }
+.jira-query-row > button,.jira-person-row > button { flex:0 0 auto; min-height:42px; white-space:nowrap; }
+#jiraSearchDialog input,#jiraSearchDialog select { box-sizing:border-box; width:100%; min-width:0; max-width:100%; min-height:42px; font-size:14px; margin:0; }
+#jiraSearchFilters { margin-top:12px; }
+#jiraSearchFilters summary { padding:5px 0; cursor:pointer; color:var(--muted); font-size:12px; font-weight:650; }
+#jiraFilterCount:not(:empty) { display:inline-grid; place-items:center; min-width:20px; height:20px; margin-left:4px; border-radius:6px; color:var(--primary); background:var(--primary-soft); }
+.jira-filter-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; padding:10px 0 4px; }
+.jira-filter-grid label { display:grid; align-content:start; gap:6px; font-size:12px; color:var(--muted); min-width:0; }
+.jira-person-picker { grid-column:1 / -1; padding:12px; border:1px solid var(--line); border-radius:10px; }
+.jira-person-row { margin-top:6px; }
+#jiraPersonState { font-size:12px; margin:8px 0; color:var(--muted); }
+#jiraPersonResults { display:flex; flex-wrap:wrap; gap:6px; }
+.jira-person-option,.jira-recent-chip { border:1px solid var(--line); background:var(--card); color:var(--primary); border-radius:8px; min-height:36px; padding:7px 10px; cursor:pointer; overflow-wrap:anywhere; text-align:left; }
+.jira-search-note { margin:6px 0 0; font-size:12px; line-height:1.5; color:var(--muted); }
+.jira-search-note:empty { display:none; }
+.jira-search-body { padding:16px 20px 24px; }
+.jira-recents { border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:16px; }
+.jira-recents > div:first-child { display:flex; align-items:center; justify-content:space-between; font-size:12px; margin-bottom:6px; }
+#jiraRecentList { display:flex; gap:6px; flex-wrap:wrap; }
+.jira-results-heading { display:flex; align-items:baseline; flex-wrap:wrap; justify-content:space-between; gap:6px 16px; font-size:13px; }
+#jiraSearchScope { font-size:12px; color:var(--muted); overflow-wrap:anywhere; }
+.jira-search-state { font-size:12px; line-height:1.5; color:var(--muted); margin:8px 0 12px; overflow-wrap:anywhere; }
+.jira-search-state.is-error { padding:10px 12px; color:#a92c46; background:#fff0f3; border:1px solid #e7b5c0; border-radius:9px; }
+html[data-theme=dark] .jira-search-state.is-error { color:#ffabbc; background:#351e2a; border-color:#714253; }
+.jira-search-results { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.jira-issue-card { display:flex; flex-direction:column; gap:10px; min-width:0; width:100%; padding:16px; text-align:left; border:1px solid var(--line); border-radius:12px; background:var(--card); color:var(--text); cursor:pointer; transition:border-color .15s,background-color .15s; }
+.jira-issue-card:hover { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 4%,var(--card)); }
+.jira-issue-card:focus-visible,.jira-recent-chip:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+.jira-card-top { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.jira-issue-key { color:var(--primary); font-size:13px; font-weight:750; overflow-wrap:anywhere; }
+.jira-status { display:inline-block; max-width:100%; border-radius:6px; padding:4px 7px; font-size:11px; line-height:1.3; color:var(--muted); background:color-mix(in srgb,var(--muted) 12%,transparent); overflow-wrap:anywhere; }
+.jira-status-indeterminate { color:var(--primary); background:var(--primary-soft); }
+.jira-status-done { color:#18714d; background:#ddf4e9; }
+html[data-theme=dark] .jira-status-done { color:#87dfb8; background:#173b30; }
+.jira-card-title { display:block; font-size:14px; font-weight:600; line-height:1.5; overflow-wrap:anywhere; }
+.jira-card-meta,.jira-card-foot { display:flex; flex-wrap:wrap; justify-content:space-between; gap:5px 12px; color:var(--muted); font-size:12px; line-height:1.5; overflow-wrap:anywhere; }
+.jira-card-foot { margin-top:auto; padding-top:8px; border-top:1px solid var(--line); font-size:11px; }
+.jira-more { display:block; margin:18px auto 0; min-width:160px; min-height:42px; }
+#jiraIssuePeekDialog { position:fixed; inset:0; margin:auto; width:min(640px,calc(100vw - 32px)); max-width:calc(100vw - 32px); max-height:90dvh; overflow:auto; border-radius:16px; }
+#jiraIssuePeekDialog .jira-search-head { align-items:flex-start; }
+#jiraIssuePeekDialog h2 { margin-top:6px; font-size:18px; }
+#jiraIssuePeekInfo { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:20px; margin:0; }
+#jiraIssuePeekInfo > div { min-width:0; }
+#jiraIssuePeekInfo dt { font-size:12px; color:var(--muted); margin-bottom:5px; }
+#jiraIssuePeekInfo dd { font-size:14px; margin:0; overflow-wrap:anywhere; }
+#jiraIssuePeekDialog footer { padding:14px 20px; border-top:1px solid var(--line); }
+#jiraIssueOpenLink { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:10px 16px; border-radius:9px; text-decoration:none; }
+#jiraSearchDialog [hidden],#jiraIssuePeekDialog [hidden] { display:none!important; }
+@media (max-width:899px) {
+  #mobileTaskbar { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #jiraSearchDialog { inset:0; width:100%; max-width:100%; height:100dvh; max-height:100dvh; border:0; border-radius:0; scrollbar-gutter:auto; }
+  .jira-search-head { padding:12px 14px; padding-top:max(12px,env(safe-area-inset-top)); gap:10px; }
+  .jira-search-head h2 { font-size:18px; }
+  .jira-search-head p { font-size:11px; }
+  .jira-search-form { padding:12px 14px; }
+  .jira-query-row { gap:6px; }
+  .jira-query-row > button { padding:9px 11px; font-size:12px; }
+  #jiraSearchDialog input,#jiraSearchDialog select { font-size:16px; min-height:44px; }
+  .jira-filter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .jira-search-body { padding:14px 14px max(20px,env(safe-area-inset-bottom)); }
+  .jira-search-results { grid-template-columns:minmax(0,1fr); gap:10px; }
+  .jira-issue-card { padding:14px; }
+  #jiraIssuePeekDialog { inset:auto 0 0; width:100%; max-width:100%; border-radius:20px 20px 0 0; max-height:92dvh; }
+  #jiraIssuePeekDialog footer { padding-bottom:max(16px,env(safe-area-inset-bottom)); }
+}
+@media (max-width:359px) { .jira-filter-grid { grid-template-columns:minmax(0,1fr); } }
+@media (min-width:900px) and (max-width:1199px) {
+  .brand-copy { min-width:0; }
+  .brand-actions .header-tool-btn { justify-content:center; width:42px; min-width:42px; padding:7px; }
+  .brand-actions .header-tool-btn > span:not(.header-tool-icon) { display:none; }
+}
+@media (prefers-reduced-motion:reduce) { .jira-issue-card { transition:none; } }
