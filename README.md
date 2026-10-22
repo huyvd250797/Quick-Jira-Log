@@ -1,4 +1,36 @@
-# Quick Jira Log V1.21.0 — Chi tiết công việc
+# Quick Jira Log V1.22.0 — Cập nhật nhanh công việc Jira
+
+## Chức năng phiên bản này
+
+- Trong Chi tiết công việc, bấm **Cập nhật** để đổi một thông tin mỗi lần: trạng thái, người phụ trách hoặc độ ưu tiên. Không tự ghi khi đổi lựa chọn; bấm **Xem lại thay đổi → Xác nhận gửi** mới gửi Jira.
+- **Trạng thái:** đọc các transition thực tế, không giả định To Do/In Progress/Done. Transition có trường bắt buộc hiển thị tên trường và yêu cầu mở Jira để hoàn tất; bản này chưa nhập form transition tùy chỉnh. Không tự chọn giá trị mặc định hoặc bỏ qua validator.
+- **Người phụ trách:** tìm theo họ tên/username, chỉ trả người có thể được giao chính issue đó (tối đa 50 kết quả; nhập cụ thể hơn nếu chưa thấy). Server kiểm tra lại người được chọn trước khi ghi. Chỉ có Chưa được giao khi đọc được cấu hình cho phép và có quyền Assign Issues.
+- **Độ ưu tiên:** chỉ hiển thị giá trị từ `editmeta` cho phép sửa trên issue, có quyền Edit Issues và thao tác `set`. Không dùng danh sách ưu tiên toàn hệ thống để giả định quyền.
+- Tab **Bình luận**: đọc từng trang 25 bản ghi mới nhất trước, Tải thêm và Thử lại; hiển thị người gửi, ngày giờ Việt Nam, nội dung an toàn. Gửi tối đa 10.000 ký tự theo quyền hiển thị mặc định của Jira; chưa chọn nhóm/role hạn chế, sửa/xóa bình luận hoặc đính kèm.
+- App kiểm tra quyền và thời điểm cập nhật lại trước khi ghi; nếu issue đã thay đổi kể từ lúc tải lựa chọn, yêu cầu tải lại. Đây là kiểm tra phía app, không phải khóa giao dịch Jira: thay đổi đồng thời ngay sau kiểm tra vẫn do Jira/workflow quyết định.
+- Sau khi Jira nhận lệnh, app đọc lại dữ liệu để đối chiếu. Phân biệt **đã xác nhận**, **Jira đã nhận nhưng chưa đối chiếu**, **chưa rõ kết quả** và **bị từ chối**. Mất phản hồi không tự gửi lại lệnh/bình luận.
+- Khi kết quả chưa rõ, tạm khóa gửi tiếp trên issue trong phiên xem; mở Jira kiểm tra, rồi bấm **Tôi đã kiểm tra trên Jira** để tạo yêu cầu mới nếu cần. Nút này là xác nhận người dùng, không phải chứng minh backend đã lưu. Giữ nội dung bình luận nếu lỗi/chưa rõ.
+- Chống gửi lặp cùng request ID dùng store hiện có: memory của instance khi không có Redis, Redis nếu đã cấu hình. Không bảo đảm chống trùng toàn hệ thống sau restart/chuyển instance/TTL khi chỉ dùng memory. Không tự retry mutation; không thêm database hoặc biến môi trường bắt buộc.
+- Xem trước xác nhận và form cập nhật dùng dialog phù hợp PC/mobile, không tự mở bàn phím. Giữ nguyên luồng logwork/lịch/Overtime hiện có. Thao tác Jira có thể kích hoạt email, automation và workflow của công ty.
+
+## Nâng cấp và kiểm tra
+
+1. Giải nén `Quick-Jira-Log_v1.22.0.zip`, dùng `Quick-Jira-Log-V1.22.0` làm root. Giữ các chỉnh sửa riêng khi tích hợp source và giữ nguyên biến môi trường, đặc biệt `APP_SESSION_SECRET`.
+2. Vercel: Framework **Other**, Node.js **24.x**, không Build Command; root chứa `index.html`, `package.json`, `api/`, giữ `vercel.json`. Không migration database, không thêm dependency runtime.
+3. Sau deploy, tải lại/cập nhật PWA và kiểm tra **V1.22.0**. Dùng issue thử nghiệm có quyền: đọc bình luận; thử mỗi thay đổi riêng; hủy ở bước xác nhận; đối chiếu Jira gốc. Không dùng issue sản xuất quan trọng để thử workflow.
+4. Trong thư mục source chạy `npm ci`, `npm test`. Bộ API mới: `npm run test:update`; fixture UI: `npm run test:update-ui` (cần Playwright/Chromium, có thể chỉ định `QJL_CHROMIUM_PATH`). Hướng dẫn local/GitHub/Vercel kế thừa ở dưới; tình trạng kiểm chứng hiện tại nằm trong `TESTING.md`.
+
+API mới: GET `/api?action=jira-update-options&key=KEY`, `jira-update-users&key=KEY&q=...`, `jira-comments&key=KEY&startAt=0`; POST `/api?action=jira-update` nhận `key`, `kind` (`comment/transition/assignee/priority`), `value`, `expectedUpdated`, `requestId`. Không nhận tùy ý endpoint hoặc trường Jira khác. Các API cần phiên, no-store; POST kiểm tra origin theo cơ chế app hiện có. Bình luận/nhân sự không lưu vào local storage. Không đổi backend ghi worklog.
+
+Nếu lựa chọn hết hiệu lực hoặc HTTP 409: bấm **Tải lại lựa chọn**, chọn và xác nhận lại. Nếu HTTP 403: kiểm tra quyền trên Jira, không bypass quyền. Nếu trường bắt buộc/validator: thông báo lỗi được rút gọn, mở Jira để xử lý. Nếu kết quả chưa rõ: kiểm tra Jira trước; không bấm gửi nhiều lần.
+
+## Phiên bản tiếp theo
+
+**V1.23.0 — Tạo công việc Jira:** tạo Story, Task, Bug hoặc Subtask từ app; chọn dự án và loại, lấy trường bắt buộc/giá trị hợp lệ theo metadata Jira, chọn công việc cha cho Subtask, xem lại trước khi tạo và mở chi tiết sau thành công. Trường tùy chỉnh như Sub-task Type phải lấy ID thực tế, không mặc định hard-code. Đây là roadmap dự kiến, chưa triển khai trong V1.22.0.
+
+Phần dưới là tài liệu kế thừa; hướng dẫn V1.22.0 ở trên được ưu tiên cho bản hiện hành.
+
+# Lịch sử V1.21.0 — Chi tiết công việc
 
 ## Mới trong V1.21.0
 

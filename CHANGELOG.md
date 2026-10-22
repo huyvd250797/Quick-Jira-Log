@@ -1,3 +1,12 @@
+## V1.22.0 — Cập nhật nhanh công việc Jira
+
+- Tab Bình luận: đọc phân trang, hiển thị an toàn, gửi với bước xem lại/xác nhận, kiểm tra quyền Add Comments.
+- Cập nhật từng thông tin: transition thực tế, người phụ trách có thể nhận issue, priority từ editmeta; không sửa tùy ý field hoặc giả định ID.
+- Đọc lại quyền/metadata và chặn khi issue đã đổi; transition có trường bắt buộc dẫn người dùng sang Jira với tên trường cụ thể.
+- Đối chiếu sau ghi, phân biệt kết quả đã xác nhận/đã nhận chưa kiểm chứng/chưa rõ/bị từ chối. Không tự retry mutation; lưu receipt chống lặp theo store sẵn có, khóa gửi tiếp khi chưa rõ và yêu cầu kiểm tra Jira.
+- Bổ sung API có session/origin check, chọn lọc dữ liệu, no-store; các handler ghi logwork không thay đổi.
+- Nâng version/cache shell 1.22.0, bổ sung script UI, README/ROADMAP/TESTING và bộ test API/UI mới.
+
 ## V1.21.0 — Chi tiết công việc
 
 - Mở chi tiết từ thẻ/mục vừa xem, gồm tab Mô tả, Subtask, Worklog; bố cục PC/mobile, điều hướng cha/con/Quay lại, đóng giữ vị trí tra cứu.

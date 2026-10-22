@@ -1,4 +1,16 @@
-# Kiểm thử V1.21.0 — Chi tiết công việc
+# Kiểm thử V1.22.0 — Cập nhật nhanh Jira
+
+- `npm test`: PASS bộ logic/API kế thừa và `tests/jira-update-tests.js` mới, trên Node.js 24 với Jira giả lập.
+- Test mới chạy qua HTTP router có session: quyền theo issue, priority allowedValues, người có thể được giao (lọc inactive/không lộ email), unassign theo required, trường transition bắt buộc, dữ liệu stale, phân trang bình luận 25+1, no-store, origin, method, JSON/key/comment validation, phiên hết hạn.
+- Test ghi xác nhận priority/assignee/unassign/transition/comment; replay request không ghi lần hai; mất phản hồi sau khi Jira đã ghi không retry; HTTP 503 sau ghi báo chưa rõ; đọc sau ghi không khớp báo đã nhận nhưng chưa xác nhận; lỗi field Jira rút gọn không lộ diagnostic thô; metadata lỗi một phần không chặn thao tác khác đọc được.
+- `tests/jira-action-ui-tests.js`: PASS kiểm thử trạng thái UI bằng DOM fixture trên Node: xem lại/hủy không ghi, chặn trường bắt buộc, xác nhận mới gửi, giữ nháp bình luận khi sửa trường khác, refresh sau xác nhận, lỗi mạng khóa gửi tiếp/giữ nội dung, thao tác đã kiểm tra Jira và dọn dữ liệu khi đổi tài khoản. Đây không phải kiểm chứng bố cục/trình duyệt.
+- `tests/browser/jira-update.cjs` đã viết cho PC 1440×900, mobile 390×844/320×683 và ngang 844×390: xem lại/hủy không POST, xác nhận mới POST, trường bắt buộc, nhân sự, bình luận/Tải thêm, HTML an toàn, receipt chưa rõ khóa gửi tiếp và khung không tràn. **Chưa chạy được** vì thiếu executable Chromium khi chạy `npm run test:update-ui`; không đánh dấu UI đã đạt.
+- Chưa thao tác trên Jira công ty, Safari/iPhone thật, GitHub hoặc Vercel. Store chống lặp mới kiểm thử nhánh memory, chưa kiểm thử Redis thật; giới hạn cross-instance/TTL được nêu trong README.
+- Kiểm tra cú pháp 135 tệp JS/CJS, 374 ID HTML không trùng, 47 tham chiếu asset, binding DOM của tra cứu/cập nhật và asset cache: PASS. Các handler ghi Jira/worklog cũ giữ nguyên byte so với ZIP V1.21.0 được cung cấp; router chỉ bổ sung handler mới.
+
+Checklist sau deploy: kiểm tra V1.22.0; issue thử có quyền/thiếu quyền; workflow có và không có trường bắt buộc; priority theo dự án; người nhận hợp lệ/không hợp lệ/chưa được giao; bình luận rỗng/dài/wiki/>25 trang; hủy xác nhận không ghi; dữ liệu đổi đồng thời; lỗi mạng trước/sau ghi và đối chiếu Jira; logout/đổi tài khoản; light/dark, bàn phím, portrait/landscape; hồi quy chi tiết cha/con, logwork, lịch/OT và lưu nháp. Xác nhận thêm với Jira công ty vì workflow/validator/plugin có thể khác fixture.
+
+# Lịch sử kiểm thử V1.21.0 — Chi tiết công việc
 
 - `npm test`: PASS toàn bộ bộ logic/API kế thừa và test chi tiết mới, trên Node.js 24; dữ liệu Jira giả lập.
 - `tests/jira-detail-tests.js`: PASS HTTP router/session/quyền, key/offset, whitelist dữ liệu riêng tư, phân trang subtask 25+5, GET fallback, đúng parent, worklog từng giây/0/null, Jira bỏ qua phân trang 25+25+10 không sót/lặp, lỗi 401/403/404/502 và đọc lại quyền trước từng trang. Không có thao tác ghi Jira ngoài POST search chỉ đọc.

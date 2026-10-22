@@ -53,3 +53,31 @@
 @media (max-height:480px) {
   #jiraIssuePeekTitle { -webkit-line-clamp:2; }
 }
+.jira-action-dialog { position:fixed; inset:0; margin:auto; padding:0; width:min(600px,calc(100vw - 32px)); max-width:calc(100vw - 32px); max-height:90dvh; border-radius:16px; overflow:auto; box-sizing:border-box; color:var(--text); background:var(--card); border:1px solid var(--line); box-shadow:0 24px 90px #0005; overscroll-behavior:none; }
+.jira-action-dialog::backdrop { background:#030b17b8; backdrop-filter:blur(3px); }
+.jira-action-dialog[open] { animation:qjl-jira-action-in 160ms ease-out; }
+@keyframes qjl-jira-action-in { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce) { .jira-action-dialog[open] { animation:none; } }
+.jira-action-dialog .jira-search-head { position:sticky; top:0; z-index:1; }
+.jira-action-body { padding:16px 20px; min-width:0; }
+.jira-action-form { display:grid; gap:10px; margin:16px 0; min-width:0; }
+.jira-action-form > div { min-width:0; }
+.jira-action-form label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+.jira-action-form input,.jira-action-form select,.jira-action-form textarea { box-sizing:border-box; width:100%; min-width:0; max-width:100%; font:inherit; color:var(--text); background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px; }
+.jira-action-form textarea { resize:vertical; }
+.jira-action-find { display:flex; gap:8px; }
+.jira-action-find input { flex:1; width:0; }
+.jira-action-find button { flex:none; }
+#jiraEditPeople { display:grid; gap:6px; max-height:240px; overflow:auto; }
+#jiraEditPeople button { overflow-wrap:anywhere; }
+.jira-action-confirm footer { display:flex; justify-content:flex-end; gap:8px; padding:14px 20px; border-top:1px solid var(--line); }
+#jiraUpdateConfirmSummary { white-space:pre-wrap; overflow-wrap:anywhere; max-height:45dvh; overflow:auto; }
+.jira-action-dialog [hidden] { display:none!important; }
+#jiraIssuePeekDialog footer { flex-wrap:wrap; }
+@media (max-width:899px) {
+ .jira-detail-tabs { gap:0; padding-left:6px; padding-right:6px; }
+ .jira-detail-tabs button { font-size:12px; padding:9px 4px; }
+ .jira-action-dialog:not(.jira-action-confirm) { width:100%; max-width:100%; height:100dvh; max-height:100dvh; border-radius:0; border:0; }
+ .jira-action-body { padding:14px; padding-bottom:max(14px,env(safe-area-inset-bottom)); }
+ .jira-action-form input,.jira-action-form textarea,.jira-action-form select { font-size:16px; }
+}
