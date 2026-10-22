@@ -45,5 +45,5 @@ window.QuickJiraEditor=(()=>{
   instances.set(textarea,api);if(QuickJiraEditorCodec.canVisual(textarea.value))surface.innerHTML=visualHtml(textarea.value);else change('source',false);report();
  }
  function clear(){for(const entry of [...instances.values()])entry.destroy();}
- return {mount,clear,flush(){for(const entry of instances.values())entry.flush();},setWiki(textarea,value){instances.get(textarea)?.setWiki(value);}};
+ return {mount,clear,unmount(textarea){instances.get(textarea)?.destroy();},flush(textarea){if(textarea){instances.get(textarea)?.flush();return;}for(const entry of instances.values())entry.flush();},setWiki(textarea,value){instances.get(textarea)?.setWiki(value);}};
 })();

@@ -13,7 +13,10 @@ Boss chọn mở rộng sang thao tác Jira trên mobile; logwork tiếp tục l
 | V1.25.1 | Sửa Subtask & đọc mô tả | Context cha, metadata tương thích, ảnh inline, cuộn tự ẩn, màu status, icon filter | Quyền/schema/readback, attachment đúng issue, timers/RAF | API và Chromium PC/mobile/ngang với Jira giả lập; cần kiểm chứng Jira công ty | Đã xây dựng source, chưa deploy |
 | V1.26.0 | Soạn mô tả Jira trực quan | Thanh định dạng, bảng/danh sách/màu, xem trước trước tạo | Tương thích Jira wiki, giữ draft và kiểm tra nội dung | Định dạng ghi/đọc lại đúng Jira, thao tác gọn trên mobile | Đã xây dựng source V1.26.0, kiểm thử Jira giả lập; chưa deploy |
 
-| V1.27.0 | Mẫu Subtask | Mẫu Summary/Type/Estimate/Description; áp dụng rồi chỉnh trước tạo | Lưu theo tài khoản, kiểm tra metadata dự án | Không tạo tự động, đúng cha và lựa chọn Jira hiện tại | Đề xuất, chưa xây dựng |
+| V1.27.0 | Sửa thông tin Subtask | Summary, custom Sub-task Type, Original Estimate, Description; xem trước/sau | Edit Issues/editmeta, updated/revision, PUT chỉ trường đổi, idempotency/readback | Logic/API và Chromium bốn viewport với Jira giả lập; cần xác nhận Jira công ty | Đã xây dựng source; chưa deploy |
+| V1.28.0 | Sửa Story/Task/Bug | Summary, Estimate, Description của công việc cha; xác nhận trước lưu | Kiểm tra metadata/quyền theo issue, đối chiếu sau ghi | Lưu đúng trường theo loại và quyền thực tế | Đề xuất, chưa xây dựng |
+
+Roadmap hiện tại theo lựa chọn mới của Boss: V1.27 sửa Subtask. Mẫu Subtask và tạo nhiều Subtask không nằm trong phạm vi.
 
 ## Lịch sử các bản logwork đã xây dựng
 

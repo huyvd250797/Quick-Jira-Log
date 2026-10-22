@@ -21,6 +21,8 @@ const handlers = Object.freeze({
   'jira-update-users': require('../handlers/jira-quick-update'),
   'jira-comments': require('../handlers/jira-quick-update'),
   'jira-update': require('../handlers/jira-quick-update'),
+  'jira-subtask-edit-options': require('../handlers/jira-subtask-edit'),
+  'jira-subtask-edit': require('../handlers/jira-subtask-edit'),
   'jira-create-projects': require('../handlers/jira-create'),
   'jira-create-types': require('../handlers/jira-create'),
   'jira-create-meta': require('../handlers/jira-create'),

@@ -1,3 +1,10 @@
+# V1.27.0 — Sửa thông tin Subtask
+
+- Sửa Summary, custom Sub-task Type, Original Estimate và Description theo edit metadata/quyền Jira; editor trực quan, giữ mô tả không sửa.
+- Xem lại trước/sau; chỉ gửi trường đổi; kiểm tra updated/schema trước PUT, đối chiếu sau ghi, khóa khi kết quả chưa rõ.
+- Cập nhật chi tiết và thẻ kết quả sau thành công; bố cục PC/mobile và dark/light.
+- Test API và Chromium xuyên router/session/editmeta/PUT/readback; giữ backend logwork/OT/lịch nguyên vẹn.
+
 # V1.26.0 — Soạn mô tả trực quan
 
 - Editor đậm/nghiêng, tiêu đề, danh sách, bảng, màu; Soạn thảo/Wiki/Xem trước, chuyển về Jira wiki trước tạo. Giữ nguyên macro chưa hỗ trợ trong Wiki.

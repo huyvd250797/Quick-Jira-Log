@@ -10,10 +10,10 @@
 .jira-editor-toolbar { display:flex; flex-wrap:wrap; gap:4px; align-items:center; padding:7px; border-bottom:1px solid var(--line); background:var(--card); }
 .jira-editor-toolbar button { min-width:34px; min-height:34px; padding:7px; display:grid; place-items:center; border-color:var(--line); color:var(--text); background:var(--bg); }
 .jira-editor-toolbar button[aria-pressed=true] { background:var(--primary-soft); color:var(--primary); border-color:var(--primary); }
-#jiraCreateDialog .jira-editor-toolbar select { width:auto; min-height:34px; max-width:130px; font-size:12px; padding:6px 8px!important; }
-#jiraCreateDialog .jira-editor-color { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; margin:0; border:1px solid var(--line); border-radius:7px; overflow:hidden; position:relative; background:var(--bg); color:var(--text); font-weight:700; }
+:is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-editor-toolbar select { width:auto; min-height:34px; max-width:130px; font-size:12px; padding:6px 8px!important; }
+:is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-editor-color { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; margin:0; border:1px solid var(--line); border-radius:7px; overflow:hidden; position:relative; background:var(--bg); color:var(--text); font-weight:700; }
 .jira-editor-color span { border-bottom:3px solid #538ee5; line-height:19px; }
-#jiraCreateDialog .jira-editor-color input[type=color] { position:absolute; inset:0; opacity:0; width:100%; height:100%; min-height:0; padding:0; cursor:pointer; }
+:is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-editor-color input[type=color] { position:absolute; inset:0; opacity:0; width:100%; height:100%; min-height:0; padding:0; cursor:pointer; }
 .jira-editor-surface,.jira-editor-preview { min-height:200px; max-height:430px; overflow:auto; padding:13px 14px; font-size:14px; line-height:1.6; color:var(--text); overflow-wrap:anywhere; overscroll-behavior:contain; }
 .jira-editor-surface:empty::before { content:attr(data-placeholder); color:var(--muted); pointer-events:none; }
 .jira-editor-surface:focus { outline:2px solid var(--primary); outline-offset:-2px; }
@@ -27,22 +27,22 @@
 .jira-editor-surface th { background:var(--primary-soft); font-weight:650; }
 .jira-editor-table-panel { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:10px; background:var(--card); border-bottom:1px solid var(--line); }
 .jira-editor-table-panel > button { grid-column:1/-1; background:var(--primary-soft); color:var(--primary); }
-#jiraCreateDialog .jira-editor-table-panel label { font-size:12px; margin:0; }
-#jiraCreateDialog .jira-editor-table-panel input { min-height:34px; padding:6px; font-size:12px; }
+:is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-editor-table-panel label { font-size:12px; margin:0; }
+:is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-editor-table-panel input { min-height:34px; padding:6px; font-size:12px; }
 .jira-editor-table-actions { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:5px; }
 .jira-editor-table-actions button { border-color:var(--line); }
 .jira-editor-bottom { display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:7px 10px; border-top:1px solid var(--line); font-size:11px; color:var(--muted); }
 .jira-editor-message { color:var(--muted); }
 .jira-editor-message:empty { display:none; }
 .jira-editor-count { margin-left:auto; flex:none; }
-#jiraCreateDialog .jira-editor textarea.jira-editor-source { display:block; border:0; border-radius:0; background:var(--bg)!important; min-height:230px; padding:13px 14px; margin:0; resize:vertical; font-family:ui-monospace,monospace; font-size:13px; }
+:is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-editor textarea.jira-editor-source { display:block; border:0; border-radius:0; background:var(--bg)!important; min-height:230px; padding:13px 14px; margin:0; resize:vertical; font-family:ui-monospace,monospace; font-size:13px; }
 .jira-editor-preview table { min-width:0; width:100%; table-layout:fixed; }
 .jira-editor-preview :is(th,td) { min-width:0; overflow-wrap:anywhere; }
 .jira-create-description-preview { padding-top:12px; margin-top:16px; border-top:1px solid var(--line); }
 .jira-create-description-preview h3 { font-size:13px; }
 .jira-project-quick { margin-bottom:12px; position:relative; }
 .jira-project-quick label { display:block; margin-bottom:6px; color:var(--text); font-size:13px; font-weight:600; }
-#jiraCreateDialog .jira-project-quick input { width:100%; min-width:0; box-sizing:border-box; min-height:44px; border:1px solid var(--line); border-radius:9px; color:var(--text); font-size:14px; padding:10px 12px; }
+:is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-project-quick input { width:100%; min-width:0; box-sizing:border-box; min-height:44px; border:1px solid var(--line); border-radius:9px; color:var(--text); font-size:14px; padding:10px 12px; }
 .jira-project-suggestions { display:grid; gap:2px; margin-top:5px; border:1px solid var(--line); border-radius:9px; background:var(--bg); padding:4px; max-height:220px; overflow:auto; overscroll-behavior:contain; }
 .jira-project-suggestions button { display:flex; align-items:center; gap:10px; text-align:left; width:100%; min-height:40px; margin:0; padding:9px; border:0; border-radius:6px; background:transparent; color:var(--text); font-size:13px; cursor:pointer; }
 .jira-project-suggestions button span { min-width:0; overflow-wrap:anywhere; color:var(--muted); }
@@ -54,8 +54,8 @@
  .jira-editor-toolbar { gap:4px; padding:6px; }
  .jira-editor-toolbar { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
  .jira-editor-toolbar button { min-width:36px; min-height:36px; }
- #jiraCreateDialog .jira-editor-toolbar select { grid-column:3/5; width:100%; max-width:none; }
- #jiraCreateDialog .jira-editor-color { width:100%; height:36px; box-sizing:border-box; }
+ :is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-editor-toolbar select { grid-column:3/5; width:100%; max-width:none; }
+ :is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-editor-color { width:100%; height:36px; box-sizing:border-box; }
  .jira-editor-surface,.jira-editor-preview { min-height:210px; max-height:46dvh; padding:12px; font-size:16px; }
- #jiraCreateDialog .jira-editor textarea.jira-editor-source { font-size:16px; }
+ :is(#jiraCreateDialog,#jiraSubtaskEditDialog) .jira-editor textarea.jira-editor-source { font-size:16px; }
 }

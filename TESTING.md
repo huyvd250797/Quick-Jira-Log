@@ -1,3 +1,10 @@
+# Kiểm thử V1.27.0
+
+- `test:subtask-edit`: quyền Edit Issues, editmeta/operations, custom ID và allowedValues, không nhận parent/issuetype, Estimate phút và giữ remaining, required/độ dài/ký tự, xóa mô tả/type optional/0m, CSRF, updated/schema conflict, quyền bị thu, replay, mất phản hồi và đọc lại không khớp, hết phiên.
+- `test:subtask-edit-ui`: bốn viewport Chromium với session/router thật, Jira giả lập tại fetch. Đọc giá trị, không thay đổi không gửi; Summary-only giữ nguyên wiki gốc; xác nhận/quay lại, giữ draft khi đóng, conflict không PUT, tải lại xác nhận, sửa cả Type/Estimate/Description, toast/refreshed detail/card, khóa kết quả chưa rõ qua đóng mở, kiểm tra thủ công/tải lại, read-only permission. Kiểm tra không tràn khung và dark/light.
+- Hồi quy `npm test`, `test:editor-ui`, `test:update-ui`. Syntax/HTML ID/asset/cache/ZIP kiểm tra trước bàn giao. Không đóng QA screenshots vào source.
+- Chưa kiểm chứng Jira công ty, Safari/iPhone vật lý, Redis thật hoặc deploy. Chi tiết sử dụng/giới hạn trong RELEASE_V1.27.0.md.
+
 # Kiểm thử V1.26.0
 
 - `npm test`: toàn bộ logic/API kế thừa và `tests/jira-editor-tests.js` (escape, màu, markup lồng, bảng, danh sách, nội dung không an toàn).

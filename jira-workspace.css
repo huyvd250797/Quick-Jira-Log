@@ -70,11 +70,11 @@ html[data-theme=dark] .jira-status.jira-tone-slate { color:#c3d0e1; background:#
  .jira-file-upload button { justify-self:end; }
 }
 @keyframes qjl-jira-action-in { from { opacity:0; } to { opacity:1; } }
-:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraIssuePeekDialog) { color-scheme:light; }
-html[data-theme=dark] :is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraIssuePeekDialog) { color-scheme:dark; }
-:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog) :is(input,textarea,select) { background-color:var(--bg)!important; color:var(--text); border-color:var(--line); }
-:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog) select { appearance:auto; -webkit-appearance:auto; background-image:none!important; padding:10px 12px!important; }
-:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog) :is(.secondary,.icon-btn) { background:var(--card); color:var(--primary); border-color:var(--line); }
+:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraIssuePeekDialog,#jiraSubtaskEditDialog,#jiraSubtaskConfirmDialog) { color-scheme:light; }
+html[data-theme=dark] :is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraIssuePeekDialog,#jiraSubtaskEditDialog,#jiraSubtaskConfirmDialog) { color-scheme:dark; }
+:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraSubtaskEditDialog,#jiraSubtaskConfirmDialog) :is(input,textarea,select) { background-color:var(--bg)!important; color:var(--text); border-color:var(--line); }
+:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraSubtaskEditDialog,#jiraSubtaskConfirmDialog) select { appearance:auto; -webkit-appearance:auto; background-image:none!important; padding:10px 12px!important; }
+:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraSubtaskEditDialog,#jiraSubtaskConfirmDialog) :is(.secondary,.icon-btn) { background:var(--card); color:var(--primary); border-color:var(--line); }
 #jiraSearchDialog[open] { display:flex; flex-direction:column; overflow:hidden; scrollbar-gutter:auto; }
 #jiraSearchDialog > .jira-search-head { position:static; flex:none; padding:16px 20px; }
 .jira-workspace-toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 20px; flex:none; border-bottom:1px solid var(--line); }

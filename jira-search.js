@@ -97,7 +97,7 @@ window.QuickJiraSearch=(()=>{
   function clearDetail(){detailContext=null;detailStack=[];detailOrigin=null;detailRetry=null;
     window.QuickJiraReading?.reset();
     $('jiraDetailCreateSubBtn').hidden=true;
-    window.QuickJiraActions?.clear();window.QuickJiraAttachments?.clear();
+    window.QuickJiraActions?.clear();window.QuickJiraAttachments?.clear();window.QuickJiraSubtaskEdit?.clear();
     $('jiraIssuePeekKey').textContent='';$('jiraIssuePeekTitle').textContent='';$('jiraIssuePeekTitle').removeAttribute('title');$('jiraIssueOpenLink').removeAttribute('href');
     for(const id of ['jiraIssuePeekInfo','jiraIssueDescription','jiraSubtaskList','jiraWorklogList'])$(id).replaceChildren();
     $('jiraDetailNotice').hidden=true;$('jiraDetailRetryBtn').hidden=true;$('jiraDetailLogBtn').hidden=true;$('jiraDetailBackBtn').hidden=true;$('jiraDetailParentBtn').hidden=true;
@@ -117,7 +117,7 @@ window.QuickJiraSearch=(()=>{
   function renderDetail(){
     const item=detailContext.issue;
     $('jiraDetailCreateSubBtn').hidden=item.issueType.subtask;
-    window.QuickJiraActions?.setIssue(item);window.QuickJiraAttachments?.setIssue(item);
+    window.QuickJiraActions?.setIssue(item);window.QuickJiraAttachments?.setIssue(item);window.QuickJiraSubtaskEdit?.setIssue(item);
     $('jiraIssuePeekKey').textContent=item.key;$('jiraIssuePeekTitle').textContent=item.summary;$('jiraIssuePeekTitle').title=item.summary;
     const fields=[['Dự án',item.project.name||item.project.key],['Loại',item.issueType.name],['Trạng thái',item.status.name],['Người phụ trách',item.assignee?.displayName||item.assignee?.username||'Chưa được giao'],['Ưu tiên',item.priority||'—'],['Cập nhật',dateLabel(item.updated)||'—']];
     const tone=({'green':'green','yellow':'amber','blue':'blue','blue-gray':'slate','medium-gray':'slate','brown':'amber'})[item.status.colorName]||({done:'green',indeterminate:'blue',new:'slate'})[item.status.category]||'slate';
@@ -209,5 +209,5 @@ window.QuickJiraSearch=(()=>{
   $('jiraRecentClearBtn').onclick=()=>{recent=[];if(!writeRecent())$('jiraSearchState').textContent='Đã xóa khỏi phiên xem này; trình duyệt chưa cho phép cập nhật dữ liệu lưu trên thiết bị.';renderRecent();};
   for(const id of ['jiraSearchResults','jiraRecentList'])$(id).addEventListener('click',e=>{const button=e.target.closest('[data-jira-open]');if(button)void openIssue(button.dataset.jiraOpen);});
   if(typeof state!=='undefined'&&state.user)login(state.user);
-  return {login,logout,open,openCreated:key=>openIssue(key),async refreshDetail(key,tab='description'){if(detailContext?.issue.key!==key)return;await openIssue(key,{replace:true});if(detailContext?.issue.key===key)selectDetailTab(tab);}};
+  return {login,logout,open,openCreated:key=>openIssue(key),async refreshDetail(key,tab='description'){if(detailContext?.issue.key!==key)return;await openIssue(key,{replace:true});if(detailContext?.issue.key===key){const top=resultPane.scrollTop;items=items.map(x=>x.key===key?{...x,...detailContext.issue}:x);renderItems();resultPane.scrollTop=top;selectDetailTab(tab);}}};
 })();

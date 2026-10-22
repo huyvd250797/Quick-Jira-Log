@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.26.0</title>
+  <title>Quick Jira Log · V1.27.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="/jira-search.css" />
   <link rel="stylesheet" href="/jira-detail.css" />
   <link rel="stylesheet" href="/jira-editor.css">
+  <link rel="stylesheet" href="/jira-subtask-edit.css">
   <link rel="stylesheet" href="/jira-workspace.css" />
 </head>
 <body class="booting">
@@ -41,7 +42,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.26.0</div>
+      <div class="boot-version">V1.27.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -50,7 +51,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.26.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.27.0</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -456,7 +457,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.26.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.27.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -537,6 +538,7 @@
   <script src="/lib/jira-editor-codec.js" defer></script>
   <script src="/jira-editor.js" defer></script>
   <script src="/jira-create.js" defer></script>
+  <script src="/jira-subtask-edit.js" defer></script>
   <script src="/jira-search.js" defer></script>
   <script src="/jira-attachments.js" defer></script>
   <script src="/jira-detail-reading.js" defer></script>
@@ -585,7 +587,7 @@
   </dialog>
   <dialog id="jiraQuickEditDialog" class="jira-action-dialog" aria-labelledby="jiraQuickEditTitle">
     <header class="jira-search-head"><div><span id="jiraQuickEditKey" class="jira-issue-key"></span><h2 id="jiraQuickEditTitle">Cập nhật công việc</h2></div><button id="jiraQuickEditCloseBtn" class="icon-btn" type="button" aria-label="Đóng cập nhật">×</button></header>
-    <div class="jira-action-body"><p id="jiraEditState" class="jira-search-state" role="status" aria-live="polite"></p><button id="jiraEditReloadBtn" class="secondary" type="button">Tải lại lựa chọn</button>
+    <div class="jira-action-body"><button id="jiraEditSubtaskBtn" class="primary" type="button" hidden>Sửa thông tin Subtask</button><p id="jiraEditState" class="jira-search-state" role="status" aria-live="polite"></p><button id="jiraEditReloadBtn" class="secondary" type="button">Tải lại lựa chọn</button>
       <form id="jiraQuickEditForm" class="jira-action-form" hidden>
         <label for="jiraEditKind">Thông tin cần cập nhật</label><select id="jiraEditKind"><option value="transition">Trạng thái</option><option value="assignee">Người phụ trách</option><option value="priority">Độ ưu tiên</option></select>
         <div id="jiraEditTransitionGroup"><label for="jiraEditTransition">Chuyển trạng thái</label><select id="jiraEditTransition"></select><p id="jiraTransitionHint" class="jira-search-note"></p></div>
@@ -614,5 +616,11 @@
     <footer id="jiraCreateFooter" class="jira-create-footer"><button id="jiraCreateResetBtn" class="text-btn" type="button">Xóa bản nháp</button><button id="jiraCreateReviewBtn" class="primary" type="submit" form="jiraCreateForm" disabled>Xem lại &amp; tạo</button></footer>
   </dialog>
   <dialog id="jiraCreateConfirmDialog" class="jira-action-dialog jira-action-confirm" aria-labelledby="jiraCreateConfirmTitle"><header class="jira-search-head"><h2 id="jiraCreateConfirmTitle">Xác nhận tạo công việc</h2></header><div class="jira-action-body"><div id="jiraCreatePreview"></div><p class="jira-search-note">Chỉ tạo sau khi xác nhận; thông báo và workflow áp dụng theo Jira.</p></div><footer><button id="jiraCreateCancelBtn" class="secondary" type="button">Quay lại</button><button id="jiraCreateConfirmBtn" class="primary" type="button">Xác nhận tạo</button></footer></dialog>
+  <dialog id="jiraSubtaskEditDialog" class="jira-action-dialog" aria-labelledby="jiraSubtaskEditTitle">
+    <header class="jira-search-head"><div><span id="jiraSubtaskEditKey" class="jira-issue-key"></span><h2 id="jiraSubtaskEditTitle">Sửa thông tin Subtask</h2></div><button id="jiraSubtaskEditCloseBtn" class="icon-btn" type="button" aria-label="Đóng sửa Subtask">×</button></header>
+    <div class="jira-action-body"><p id="jiraSubtaskParent"></p><p id="jiraSubtaskEditState" class="jira-search-state" role="status" aria-live="polite"></p><p id="jiraSubtaskReceipt" role="status" hidden></p><button id="jiraSubtaskCheckedBtn" class="secondary" type="button" hidden>Tôi đã kiểm tra trên Jira</button><button id="jiraSubtaskReloadBtn" class="text-btn" type="button">Tải lại thông tin</button><div id="jiraSubtaskReloadConfirm" hidden><p>Tải lại sẽ thay phần đang sửa bằng dữ liệu mới nhất từ Jira.</p><button id="jiraSubtaskReloadNo" class="secondary" type="button">Giữ phần đang sửa</button><button id="jiraSubtaskReloadYes" class="secondary" type="button">Tải lại</button></div><form id="jiraSubtaskEditForm" class="jira-action-form" hidden novalidate><div id="jiraSubtaskEditFields"></div></form></div>
+    <footer><a id="jiraSubtaskNativeLink" class="text-btn" target="_blank" rel="noopener noreferrer">Mở Jira ↗</a><button id="jiraSubtaskReviewBtn" class="primary" type="submit" form="jiraSubtaskEditForm" disabled>Xem lại thay đổi</button></footer>
+  </dialog>
+  <dialog id="jiraSubtaskConfirmDialog" class="jira-action-dialog jira-action-confirm" aria-labelledby="jiraSubtaskConfirmTitle"><header class="jira-search-head"><h2 id="jiraSubtaskConfirmTitle">Xác nhận sửa Subtask</h2></header><div class="jira-action-body"><div id="jiraSubtaskChanges"></div></div><footer><button id="jiraSubtaskCancelBtn" class="secondary" type="button">Quay lại</button><button id="jiraSubtaskSaveBtn" class="primary" type="button">Lưu thay đổi</button></footer></dialog>
 </body>
 </html>

@@ -1,0 +1,22 @@
+#jiraSubtaskEditDialog { width:min(780px,calc(100vw - 32px)); height:min(92dvh,1000px); max-height:92dvh; overflow:hidden; }
+#jiraSubtaskEditDialog[open] { display:flex; flex-direction:column; }
+#jiraSubtaskEditDialog > header,#jiraSubtaskEditDialog > footer { flex:none; }
+#jiraSubtaskEditDialog > .jira-action-body { flex:1; min-height:0; overflow:auto; overscroll-behavior:none; }
+#jiraSubtaskEditDialog footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 20px max(14px,env(safe-area-inset-bottom)); border-top:1px solid var(--line); }
+#jiraSubtaskEditDialog .jira-subtask-field { margin-bottom:10px; }
+#jiraSubtaskEditDialog [disabled] { opacity:.65; cursor:not-allowed; }
+#jiraSubtaskParent { color:var(--muted); font-size:13px; margin:0 0 14px; }
+#jiraSubtaskReceipt,#jiraSubtaskReloadConfirm { padding:12px; border:1px solid var(--line); background:var(--bg); border-radius:10px; overflow-wrap:anywhere; }
+#jiraSubtaskReloadConfirm button { margin:4px; }
+#jiraEditSubtaskBtn { margin-bottom:8px; width:100%; }
+#jiraSubtaskConfirmDialog { width:min(780px,calc(100vw - 24px)); overflow:hidden; }
+#jiraSubtaskConfirmDialog[open] { display:flex; flex-direction:column; }
+#jiraSubtaskConfirmDialog .jira-action-body { min-height:0; overflow:auto; }
+.jira-subtask-change { border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:14px; overflow-wrap:anywhere; }
+.jira-subtask-change h3 { margin:0 0 10px; font-size:15px; }
+.jira-subtask-before,.jira-subtask-after { min-width:0; }
+.jira-subtask-before > span,.jira-subtask-after > span { display:block; color:var(--muted); font-size:12px; margin:10px 0 5px; }
+.jira-subtask-before > div { max-height:160px; overflow:auto; white-space:pre-wrap; color:var(--muted); font-size:13px; }
+.jira-subtask-after > div { white-space:pre-wrap; }
+.jira-subtask-after .jira-content { white-space:normal; }
+@media(max-width:899px) { #jiraSubtaskEditDialog { width:100%; max-width:100%; height:100dvh; max-height:100dvh; } #jiraSubtaskEditDialog footer { padding-left:14px; padding-right:14px; } }
