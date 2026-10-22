@@ -1,3 +1,39 @@
+# Quick Jira Log V1.25.1 — Sửa tạo Subtask & đọc mô tả
+
+## Thay đổi bản sửa
+
+1. **Subtask từ công việc cha:** bấm + Subtask trong chi tiết Story/Task/Bug sẽ tải một context đã kiểm tra trên server gồm cha, dự án, các loại Subtask hợp lệ và form ban đầu. Không cần tải danh sách dự án rồi tự chọn lại cha. Khóa dự án/cha; mở ngay form loại Subtask đầu tiên được Jira cho phép, vẫn đổi được sang loại Subtask khác. Sau xác nhận, backend kiểm tra metadata, parent và các trường trước khi ghi; đọc lại để xác nhận parent của issue vừa tạo.
+2. **Tương thích metadata:** V1.25.0 chỉ nhận cờ phân trang `last` và chỉ coi loại là Subtask khi bản ghi create metadata có `subtask: true`. V1.25.1 nhận `last`/`isLast`; nếu metadata thiếu cờ subtask thì đối chiếu ID với danh mục `/issuetype` của Jira. Chỉ giữ loại vốn được phép tạo trong dự án, không đoán theo tên, không tự thêm quyền. Đây là các ca lỗi tương thích đã tái hiện bằng Jira giả lập; chưa có response lỗi Jira công ty để kết luận đó là nguyên nhân duy nhất của lỗi Boss gặp. Nếu Jira thực sự từ chối quyền/validator, form nêu lỗi và có nút tải lại, không báo đã tạo khi chưa ghi.
+3. **Filter:** thay icon xoay vòng dùng để chạy filter bằng kính lúp. Giữ hàng filter gọn và phần tìm/đổi filter có thể mở khi cần.
+4. **Ảnh ngay trong mô tả:** dữ liệu issue đọc thêm attachment metadata; resolve ảnh HTML (`img`) và wiki `!filename!`, `!filename|...!`, đường dẫn attachment/thumbnail theo ID hoặc filename duy nhất của chính issue. Ảnh raster tải qua endpoint xác thực của app, click mở popup. Không dùng URL ảnh ngoài làm đích proxy, không chuyển cookie/password cho client/host khác. Ảnh không thuộc issue hoặc không hỗ trợ có link mở Jira thay vì tự tải URL lạ. HTML vẫn lọc script, event handler, iframe, SVG và các thuộc tính không an toàn.
+5. Ảnh gốc <=3 MiB xem trực tiếp; ảnh lớn hơn dùng thumbnail của Jira nếu có, ghi rõ ảnh xem trước; bản gốc mở Jira. Nếu ảnh không tải được, hiển thị đường mở Jira. Giới hạn upload/download app và quyền attachment của V1.25.0 vẫn giữ nguyên; không thêm dịch vụ lưu trữ hoặc nén ảnh gốc. Macro/plugin đặc thù, media ADF và ảnh bên ngoài không được tái tạo toàn bộ.
+6. **Cuộn mô tả dài:** hai icon lên đầu/xuống cuối nằm trong khung chi tiết, trên footer. Khi cuộn sẽ fade in; ngừng khoảng 1 giây bắt đầu fade out 300ms. Nút điều khiển đúng vùng nội dung, không cuộn cả trang; nút ở đầu/cuối tương ứng bị vô hiệu hóa. Đổi tab hoặc đóng chi tiết dọn timer/trạng thái. Điều hướng bằng bàn phím giữ nút khi đang focus để không mất vị trí; reduced motion bỏ hiệu ứng và cuộn tức thời.
+7. **Màu trạng thái:** chip trong chi tiết dùng `statusCategory.colorName` Jira trả về; nếu thiếu thì dùng category key. Done/green xanh lá, nền xanh nhạt; blue, amber và xám tương ứng các category khác. Có bảng màu dark/light, giữ nguyên tên trạng thái, không suy luận theo chữ Done hoặc dịch tên.
+
+Không đổi luồng logwork/Overtime/lịch hoặc các API ghi worklog.
+
+## Nâng cấp, chạy và triển khai
+
+- Giải nén `Quick-Jira-Log_v1.25.1.zip`, mở `Quick-Jira-Log-V1.25.1`. Giữ biến môi trường đang dùng, đặc biệt `APP_SESSION_SECRET`. Không thêm dependency runtime, database, migration hay biến môi trường mới.
+- Node **24.x**: `npm ci`, `npm test`. QA browser: `npm run test:detail-fixes`, `npm run test:workspace-ui`, `npm run test:attachments-ui`. Cần Playwright/Chromium ở môi trường QA, có thể chỉ định `QJL_CHROMIUM_PATH`; không đóng browser vào ZIP.
+- Vercel giữ cấu hình cũ: Framework Other, Node24, không build command, root có index.html/api/package.json, dùng vercel.json. Với GitHub, clone/fetch và tích hợp trước commit/push, không force push ghi đè. Bản này chỉ bàn giao source, chưa push/deploy.
+- Sau deploy tải lại PWA, kiểm tra nhãn V1.25.1. Thử + Subtask từ Story/Task/Bug, điền các trường rồi xác nhận; mở Jira kiểm tra đúng cha. Thử mô tả có ảnh, click ảnh, màu status, cuộn/dừng 1 giây, filter kính lúp; kiểm tra quyền bị thu và nút tải lại. Hồi quy logwork/OT/lịch/nháp.
+- Có thể rollback deployment trước, không cần chuyển đổi dữ liệu. Rollback app không xóa issue/tệp đã tạo trên Jira. Quyền và validator Jira vẫn là quyết định cuối cùng.
+
+API mới: GET `/api?action=jira-create-subtask-context&key=CAL-1` (option `type` để đổi loại con); session/no-store. `jira-attachment-content` thêm `thumbnail=1` nhưng vẫn đối chiếu file thuộc issue và chỉ đọc URL thumbnail cùng Jira. Không nhận URL tùy ý từ client.
+
+## Kiểm thử và giới hạn
+
+Đã kiểm thử logic/API và Chromium PC1440×900, mobile390×844/320×683, ngang844×390 với Jira giả lập. Test mới chạy xuyên trình duyệt → router/session thật của app → metadata/POST Jira giả lập → readback, không chỉ giả lập kết quả thành công ở frontend. Có các ca thiếu subtask, isLast, tạo con của Story/Task/Bug, từ chối quyền/tải lại không ghi, ảnh HTML/wiki/thumbnail, không tải tracker ngoài, cuộn/fade và màu. Chưa thao tác Jira công ty, Safari/iPhone thật, Redis thật hoặc deploy; cần đối chiếu sau cập nhật. Chi tiết trong TESTING.md.
+
+## Tiếp theo — đề xuất chưa xây dựng
+
+**V1.26.0 — Soạn mô tả Jira trực quan:** thanh định dạng chữ/màu, tiêu đề, danh sách, bảng và xem trước trước khi tạo, giữ tương thích Jira wiki. Chờ Boss chọn. Gửi ZIP mới nhất để phát triển tiếp.
+
+Phần dưới là lịch sử; hướng dẫn V1.25.1 ở trên được ưu tiên.
+
+---
+
 # Quick Jira Log V1.25.0 — Ảnh & tệp, Filter gọn & Subtask
 
 ## Nội dung phiên bản

@@ -95,6 +95,7 @@ window.QuickJiraSearch=(()=>{
     }catch(e){if(token===generation){$('jiraPersonResults').replaceChildren();$('jiraPersonState').textContent=e.message;}}});
   }
   function clearDetail(){detailContext=null;detailStack=[];detailOrigin=null;detailRetry=null;
+    window.QuickJiraReading?.reset();
     $('jiraDetailCreateSubBtn').hidden=true;
     window.QuickJiraActions?.clear();window.QuickJiraAttachments?.clear();
     $('jiraIssuePeekKey').textContent='';$('jiraIssuePeekTitle').textContent='';$('jiraIssuePeekTitle').removeAttribute('title');$('jiraIssueOpenLink').removeAttribute('href');
@@ -119,8 +120,10 @@ window.QuickJiraSearch=(()=>{
     window.QuickJiraActions?.setIssue(item);window.QuickJiraAttachments?.setIssue(item);
     $('jiraIssuePeekKey').textContent=item.key;$('jiraIssuePeekTitle').textContent=item.summary;$('jiraIssuePeekTitle').title=item.summary;
     const fields=[['Dự án',item.project.name||item.project.key],['Loại',item.issueType.name],['Trạng thái',item.status.name],['Người phụ trách',item.assignee?.displayName||item.assignee?.username||'Chưa được giao'],['Ưu tiên',item.priority||'—'],['Cập nhật',dateLabel(item.updated)||'—']];
-    $('jiraIssuePeekInfo').innerHTML=fields.map(([name,value])=>`<div><dt>${esc(name)}</dt><dd>${esc(value)}</dd></div>`).join('');
-    $('jiraIssueDescription').innerHTML=(item.descriptionHtml?QuickJiraContent.rendered(item.descriptionHtml):'')||(item.description.text?QuickJiraContent.render(item.description.text):'<p class="jira-search-note">Chưa có mô tả.</p>');
+    const tone=({'green':'green','yellow':'amber','blue':'blue','blue-gray':'slate','medium-gray':'slate','brown':'amber'})[item.status.colorName]||({done:'green',indeterminate:'blue',new:'slate'})[item.status.category]||'slate';
+    $('jiraIssuePeekInfo').innerHTML=fields.map(([name,value])=>`<div><dt>${esc(name)}</dt><dd>${name==='Trạng thái'?`<span class="jira-status jira-tone-${tone}">${esc(value)}</span>`:esc(value)}</dd></div>`).join('');
+    const media={key:item.key,attachments:item.attachments||[]};
+    $('jiraIssueDescription').innerHTML=(item.descriptionHtml?QuickJiraContent.rendered(item.descriptionHtml,media):'')||(item.description.text?QuickJiraContent.render(item.description.text,media):'<p class="jira-search-note">Chưa có mô tả.</p>');
     $('jiraDescriptionNotice').hidden=!item.description.truncated;
     $('jiraDetailParentBtn').hidden=!item.parent;$('jiraDetailParentBtn').textContent=item.parent?`↳ ${item.parent}`:'';
     $('jiraDetailBackBtn').hidden=!detailStack.length;
@@ -164,6 +167,7 @@ window.QuickJiraSearch=(()=>{
     });
   }
   function selectDetailTab(name,load=true){if(!detailContext)return;detailContext.tab=name;detailMessage();
+    window.QuickJiraReading?.reset();
     for(const tab of ['description','subtasks','worklogs','files','comments']){const active=tab===name;$('jiraTab-'+tab).setAttribute('aria-selected',String(active));$('jiraTab-'+tab).tabIndex=active?0:-1;$('jiraPanel-'+tab).hidden=!active;}
     $('jiraDetailBody').scrollTop=0;
     if(name==='files'){if(load)void window.QuickJiraAttachments?.load();return;}

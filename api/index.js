@@ -24,6 +24,7 @@ const handlers = Object.freeze({
   'jira-create-projects': require('../handlers/jira-create'),
   'jira-create-types': require('../handlers/jira-create'),
   'jira-create-meta': require('../handlers/jira-create'),
+  'jira-create-subtask-context': require('../handlers/jira-create'),
   'jira-create-users': require('../handlers/jira-create'),
   'jira-create-reporters': require('../handlers/jira-create'),
   'jira-create-parents': require('../handlers/jira-create'),

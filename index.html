@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.25.0</title>
+  <title>Quick Jira Log · V1.25.1</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -40,7 +40,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.25.0</div>
+      <div class="boot-version">V1.25.1</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -49,7 +49,7 @@
     <section class="brand">
       <img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.25.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.25.1</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -455,7 +455,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.25.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.25.1 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -536,10 +536,11 @@
   <script src="/jira-create.js" defer></script>
   <script src="/jira-search.js" defer></script>
   <script src="/jira-attachments.js" defer></script>
+  <script src="/jira-detail-reading.js" defer></script>
   <dialog id="jiraSearchDialog" aria-labelledby="jiraSearchTitle">
     <header class="jira-search-head"><div><h2 id="jiraSearchTitle">Công việc Jira</h2></div><button id="jiraSearchCloseBtn" class="icon-btn" type="button" aria-label="Đóng tra cứu">×</button></header>
     <div class="jira-workspace-toolbar"><div class="jira-source-switch" role="group" aria-label="Nguồn công việc"><button id="jiraSearchModeBtn" type="button" aria-pressed="true">Tìm kiếm</button><button id="jiraFilterModeBtn" type="button" aria-pressed="false">Filter Jira</button></div><button id="jiraCreateBtn" class="primary" type="button"><span aria-hidden="true">+</span> Tạo công việc</button></div>
-    <form id="jiraSavedForm" class="jira-search-form" hidden><div class="jira-saved-select"><label for="jiraSavedSelect" class="sr-only">Filter đã lưu</label><select id="jiraSavedSelect"><option value="">Chọn filter</option></select><button class="primary" type="submit" title="Tải công việc" aria-label="Tải công việc từ filter">↻</button><button id="jiraFilterExpandBtn" class="secondary" type="button" aria-expanded="true" aria-label="Tìm hoặc đổi filter" title="Tìm filter">⌕</button></div><div id="jiraFilterTools"><div class="jira-saved-find"><label for="jiraSavedName" class="sr-only">Tên filter trên Jira</label><input id="jiraSavedName" type="search" maxlength="100" placeholder="Tìm filter theo tên" autocomplete="off"><button id="jiraSavedFindBtn" class="secondary" type="button">Tìm</button></div><details class="jira-filter-id"><summary>Dùng ID filter</summary><label for="jiraSavedId">ID filter<input id="jiraSavedId" type="text" inputmode="numeric" maxlength="20" placeholder="Ví dụ 12345" autocomplete="off"></label></details><p id="jiraSavedState" class="jira-search-note" role="status"></p><button id="jiraSavedRetryBtn" class="text-btn" type="button" hidden>Tải lại filter</button></div></form>
+    <form id="jiraSavedForm" class="jira-search-form" hidden><div class="jira-saved-select"><label for="jiraSavedSelect" class="sr-only">Filter đã lưu</label><select id="jiraSavedSelect"><option value="">Chọn filter</option></select><button class="primary" type="submit" title="Tìm công việc theo filter" aria-label="Tìm công việc theo filter"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button><button id="jiraFilterExpandBtn" class="secondary" type="button" aria-expanded="true" aria-label="Tìm hoặc đổi filter" title="Tìm filter"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button></div><div id="jiraFilterTools"><div class="jira-saved-find"><label for="jiraSavedName" class="sr-only">Tên filter trên Jira</label><input id="jiraSavedName" type="search" maxlength="100" placeholder="Tìm filter theo tên" autocomplete="off"><button id="jiraSavedFindBtn" class="secondary" type="button">Tìm</button></div><details class="jira-filter-id"><summary>Dùng ID filter</summary><label for="jiraSavedId">ID filter<input id="jiraSavedId" type="text" inputmode="numeric" maxlength="20" placeholder="Ví dụ 12345" autocomplete="off"></label></details><p id="jiraSavedState" class="jira-search-note" role="status"></p><button id="jiraSavedRetryBtn" class="text-btn" type="button" hidden>Tải lại filter</button></div></form>
     <form id="jiraSearchForm" class="jira-search-form">
       <div class="jira-query-row"><label for="jiraQuery" class="sr-only">Mã hoặc nội dung công việc</label><input id="jiraQuery" type="search" maxlength="160" minlength="2" placeholder="Mã hoặc nội dung · ví dụ EPU01-2840" autocomplete="off" enterkeyhint="search" /><button class="primary" type="submit">Tìm kiếm</button></div>
       <details id="jiraSearchFilters"><summary>Bộ lọc <span id="jiraFilterCount"></span></summary><div class="jira-filter-grid">
@@ -576,6 +577,7 @@
         <div id="jiraCommentList"></div><button id="jiraCommentsMoreBtn" class="secondary jira-more" type="button" hidden>Tải thêm bình luận</button>
       </section>
     </div>
+    <div id="jiraDetailScrollTools" class="jira-detail-scroll-tools" role="group" aria-label="Cuộn mô tả" aria-hidden="true"><button id="jiraDetailTopBtn" class="icon-btn" type="button" tabindex="-1" title="Lên đầu mô tả" aria-label="Cuộn lên đầu mô tả"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14M12 20V8m-6 6 6-6 6 6"/></svg></button><button id="jiraDetailBottomBtn" class="icon-btn" type="button" tabindex="-1" title="Xuống cuối mô tả" aria-label="Cuộn xuống cuối mô tả"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20h14M12 4v12m-6-6 6 6 6-6"/></svg></button></div>
     <footer><button id="jiraDetailCreateSubBtn" class="secondary" type="button" hidden>＋ Subtask</button><button id="jiraDetailUpdateBtn" class="secondary" type="button">Cập nhật</button><button id="jiraDetailLogBtn" class="primary" type="button" hidden>Logwork</button><a id="jiraIssueOpenLink" class="secondary" target="_blank" rel="noopener noreferrer">Mở Jira ↗</a></footer>
   </dialog>
   <dialog id="jiraQuickEditDialog" class="jira-action-dialog" aria-labelledby="jiraQuickEditTitle">

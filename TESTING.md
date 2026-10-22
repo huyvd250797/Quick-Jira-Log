@@ -1,3 +1,16 @@
+# Kiểm thử V1.25.1
+
+- `npm test`: logic/API kế thừa cùng các ca create context, metadata last/isLast, thiếu subtask và lookup ID; parent/loại không hợp lệ/quyền bị từ chối không ghi. Field required/default/validation/schema/idempotency/readback tiếp tục được kiểm tra.
+- `tests/jira-attachment-tests.js`: bổ sung ảnh wiki theo filename, query proxy đúng issue, không tải URL lạ, ảnh trong code giữ nguyên; ảnh >3 MiB chỉ đọc thumbnail hợp lệ cùng host và bounded response. Tiếp tục kiểm tra auth/quyền/CSRF/idempotency/lost response/no-store và nội dung binary.
+- `tests/browser/jira-detail-fixes.cjs`: Chromium trên 1440×900,390×844,320×683,844×390, chạy frontend tới API router/session thật, mock fetch ở biên Jira. Tạo subtask từ Story/Task/Bug, metadata không có subtask và dùng isLast, required Sub-task Type, Reporter/Assign to me/Estimate/Description; xác nhận POST và readback parent. Từ chối quyền có nút retry, không ghi; tải lại khôi phục form. Ảnh HTML/wiki và thumbnail lớn được tải qua handler thật, ảnh 720px không tràn mobile, click popup; script/event và tracker ngoài không hoạt động. Done chip xanh, scroll controls đúng đầu/cuối, fade sau dừng và vị trí trong khung.
+- `test:workspace-ui`, `test:attachments-ui`: hồi quy bốn viewport, filter/layout/25+1/revision và create/subtask/draft/receipt, upload/download/preview/unknown lock.
+- `test:detail-ui` và `test:update-ui`: hồi quy phần chi tiết/cập nhật nhanh. JS/CJS syntax, HTML ID/asset, cache shell và ZIP CRC kiểm tra trước bàn giao.
+- Ảnh QA nội bộ không đóng trong ZIP. Không có thao tác Jira công ty, Safari/iPhone vật lý, Redis thật, GitHub hoặc deploy. Các kết quả trên không khẳng định cấu hình/validator công ty đã được kiểm chứng.
+
+Checklist sau deploy: version1.25.1, tạo một subtask thử trong Story/Task/Bug và xem parent/6 trường trên Jira; quyền/create screen/subtask scheme thực tế; ảnh và thumbnail riêng tư, hết phiên và ảnh lớn không có thumbnail; status Jira custom category, iPhone cuộn/dừng/nhấn nút/xoay ngang; lịch/logwork/OT không đổi.
+
+---
+
 # Kiểm thử V1.25.0
 
 - `npm test`: bộ logic/API kế thừa, filter/create/quick-update/logwork; bổ sung tệp, Estimate và đổi Reporter theo quyền.

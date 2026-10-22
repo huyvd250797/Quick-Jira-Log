@@ -15,6 +15,7 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:320
   if(a==='jira-attachment-content')return route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lp0AAAAASUVORK5CYII=','base64')});
   if(a==='jira-attachment-upload'){uploads.push(JSON.parse(route.request().postData()));data={ok:true,outcome:unknown?'unknown':'confirmed',message:unknown?'Kiểm tra Jira trước khi tải lại.':'Đã tải tệp.'};}
   if(a==='jira-create-projects')data={ok:true,projects:[{key:'CAL',name:'Dự án'}]};if(a==='jira-create-types')data={ok:true,types:[{id:'1',name:'Story',subtask:false},meta.type,{id:'6',name:'Subtask khác',subtask:true}]};if(a==='jira-create-meta')data={...meta,type:{...meta.type,id:q.get('type')}};if(a==='jira-create-parents')data={ok:true,items:[issue('CAL-1')]};
+  if(a==='jira-create-subtask-context')data={ok:true,parent:issue('CAL-1'),types:[meta.type,{id:'6',name:'Subtask khác',subtask:true}],meta:{...meta,type:{...meta.type,id:q.get('type')||'5'}}};
   if(a==='jira-create-reporters'||a==='jira-create-users')data={ok:true,users:[{username:'alice',displayName:'Alice'}]};
   if(a==='jira-create'){creates.push(JSON.parse(route.request().postData()));data={ok:true,outcome:'confirmed',key:'CAL-100',message:'Đã tạo CAL-100'};}
   await route.fulfill({contentType:'application/json',body:JSON.stringify(data)});

@@ -29,13 +29,14 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
    if(mode==='lost')throw Error('lost AFTER Jira created');if(mode==='write503')return Response.json({}, {status:503});
    return Response.json(mode==='missing-key'?{}:{key,id:String(number)},{status:201});
   }
+  if(path==='/rest/api/2/issuetype')return Response.json(types);
   if(path==='/rest/api/2/project')return Response.json([{key:'CAL',name:'Dự án <script>'},{key:'OTHER',name:'Dự án khác'}]);
   if(path==='/rest/api/2/mypermissions')return Response.json({permissions:{CREATE_ISSUES:{havePermission:mode!=='denied'},ASSIGN_ISSUES:{havePermission:mode!=='no-assign'},MODIFY_REPORTER:{havePermission:mode==='modify-reporter'}}});
   if(path.startsWith('/rest/api/2/issue/createmeta/CAL/issuetypes')){
    if(mode==='legacy')return Response.json({}, {status:404});
    const typeRows=mode==='paged'?[...types,...Array.from({length:51},(_,i)=>({id:String(1000+i),name:'Type '+i,subtask:false}))]:types;
-   const rows=path.endsWith('/issuetypes')?typeRows:fields(),start=Number(u.searchParams.get('startAt')||0),values=rows.slice(start,start+50);
-   return Response.json({start,last:start+values.length>=rows.length,size:values.length,total:rows.length,values});
+   let rows=path.endsWith('/issuetypes')?typeRows:fields();if(mode==='missing-subtask'&&path.endsWith('/issuetypes'))rows=rows.map(({subtask,...rest})=>rest);const start=Number(u.searchParams.get('startAt')||0),values=rows.slice(start,start+50);
+   return Response.json({start,...(mode==='missing-subtask'?{isLast:start+values.length>=rows.length}:{last:start+values.length>=rows.length}),size:values.length,total:rows.length,values});
   }
   if(path==='/rest/api/2/issue/createmeta'){assert.equal(u.searchParams.get('projectKeys'),'CAL');return Response.json({projects:[{key:'CAL',issuetypes:types.map(t=>({...t,fields:Object.fromEntries(fields().map(r=>[r.fieldId,r]))}))}]});}
   if(path==='/rest/api/2/user/search')return Response.json([{name:'alice',displayName:'Alice',active:true}]);
@@ -84,6 +85,9 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
  mode='';r=await request('jira-create',{},body(m),{origin:'https://evil.example'});assert.equal(r.status,403);r=await request('jira-create',{},'null');assert.equal(r.status,400);r=await request('jira-create',{},'{bad');assert.equal(r.status,400);r=await request('jira-create');assert.equal(r.status,405);
  r=await request('jira-create-meta',{project:'../x',type:'5'});assert.equal(r.status,400);r=await request('jira-create-types',{project:'CAL'},{ });assert.equal(r.status,405);r=await request('jira-create-projects',{},undefined,{cookie:''});assert.equal(r.status,401);
  mode='expired';r=await request('jira-create-projects');assert.equal(r.status,401);assert(r.headers.get('set-cookie'));
+ mode='missing-subtask';r=await request('jira-create-subtask-context',{key:'CAL-1'});assert.equal(r.status,200);assert.equal(r.data.parent.key,'CAL-1');assert.equal(r.data.meta.type.subtask,true);assert.deepEqual(r.data.types.map(t=>t.id),['5']);assert(r.data.meta.fields.some(f=>f.id==='summary'));
+ r=await request('jira-create-subtask-context',{key:'CAL-1',type:'1'});assert.equal(r.status,400);r=await request('jira-create-subtask-context',{key:'CAL-5'});assert.equal(r.status,400);
+ mode='denied';r=await request('jira-create-subtask-context',{key:'CAL-1'});assert.equal(r.status,403);
  mode='modify-reporter';m=await meta();assert(m.canModifyReporter);p=body(m);p.fields.reporter='alice';p.fields.timetracking='2h 30m';r=await request('jira-create',{},p);assert.equal(r.data.outcome,'confirmed');assert.deepEqual(created.get(r.data.key).reporter,{name:'alice'});assert.deepEqual(created.get(r.data.key).timetracking,{originalEstimate:'2h 30m'});
  console.log('Jira create: dynamic IDs/fields, modern paging/legacy, parent/project/type, assignee/reporter, defaults/unsupported, validation/permissions/CSRF, verified writes, concurrent/replay/lost response passed');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=oldFetch;if(oldSecret===undefined)delete process.env.APP_SESSION_SECRET;else process.env.APP_SESSION_SECRET=oldSecret;if(server)await new Promise(r=>server.close(r));});

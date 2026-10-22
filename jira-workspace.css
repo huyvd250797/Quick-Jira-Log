@@ -1,4 +1,24 @@
 /* V1.25 — Compact workspace and attachment views. */
+.jira-saved-select button { display:grid; place-items:center; }
+.jira-status.jira-tone-green { color:#176b45; background:#dcf4e5; }
+.jira-status.jira-tone-blue { color:#1557a5; background:#e1edfc; }
+.jira-status.jira-tone-amber { color:#805500; background:#fff0c2; }
+.jira-status.jira-tone-slate { color:#455570; background:#e8edf4; }
+html[data-theme=dark] .jira-status.jira-tone-green { color:#94e2b8; background:#183e30; }
+html[data-theme=dark] .jira-status.jira-tone-blue { color:#a4caff; background:#193854; }
+html[data-theme=dark] .jira-status.jira-tone-amber { color:#f4d481; background:#44381d; }
+html[data-theme=dark] .jira-status.jira-tone-slate { color:#c3d0e1; background:#29384b; }
+.jira-inline-image { display:inline-flex; max-width:100%; flex-direction:column; gap:5px; margin:8px 0; white-space:normal; vertical-align:top; }
+.jira-inline-image-open { display:block; width:fit-content; max-width:100%; margin:0; padding:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--bg); cursor:zoom-in; }
+.jira-inline-image-open img { display:block; max-width:100%; height:auto; max-height:70dvh; object-fit:contain; margin:0; }
+.jira-inline-image-error,.jira-image-fallback,.jira-image-quality { font-size:12px; color:var(--muted); }
+.jira-image-fallback { display:inline-block; padding:10px 12px; border:1px solid var(--line); border-radius:9px; background:var(--bg); }
+.jira-inline-image-error { padding:10px; border:1px solid var(--line); border-radius:9px; }
+.jira-detail-scroll-tools { position:absolute; bottom:var(--jira-reading-bottom,84px); right:max(20px,env(safe-area-inset-right)); display:flex; flex-direction:column; gap:7px; z-index:3; opacity:0; transform:translateY(5px); pointer-events:none; visibility:hidden; transition:opacity 300ms ease,transform 220ms ease,visibility 0s linear 300ms; }
+.jira-detail-scroll-tools.is-visible { opacity:1; transform:translateY(0); pointer-events:auto; visibility:visible; transition:opacity 180ms ease,transform 180ms ease; }
+#jiraIssuePeekDialog .jira-detail-scroll-tools button { display:grid; place-items:center; width:42px; min-width:42px; height:42px; padding:0; border:1px solid var(--line); border-radius:50%; background:var(--card); color:var(--primary); box-shadow:0 3px 14px #0002; }
+#jiraIssuePeekDialog .jira-detail-scroll-tools button:disabled { opacity:.38; cursor:default; }
+@media (prefers-reduced-motion:reduce) { .jira-detail-scroll-tools,.jira-detail-scroll-tools.is-visible { transition:none; transform:none; } }
 .jira-saved-select > select { flex:1; min-width:0; }
 #jiraSavedForm .jira-saved-select { margin:0; }
 #jiraSavedForm { padding:10px 14px; }

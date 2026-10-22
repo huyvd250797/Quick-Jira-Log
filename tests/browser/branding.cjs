@@ -72,7 +72,7 @@ const server = http.createServer((req, res) => {
     assert((await page.evaluate(() => caches.keys())).includes('quick-jira-log-v1.15.1-shell'));
     const nav = page.waitForEvent('load');
     await page.locator('#appUpdateBtn').click(); await nav;
-    await page.waitForFunction(async () => (await caches.keys()).includes('quick-jira-log-v1.25.0-shell') && !(await caches.keys()).includes('quick-jira-log-v1.15.1-shell'));
+    await page.waitForFunction(async () => (await caches.keys()).includes('quick-jira-log-v1.25.1-shell') && !(await caches.keys()).includes('quick-jira-log-v1.15.1-shell'));
     assert.equal(await page.evaluate(() => localStorage.getItem('branding-upgrade-data')), 'preserve-me');
     const manifest = await page.evaluate(async () => (await fetch('/manifest.webmanifest')).json());
     assert.equal(manifest.start_url, '/'); assert.equal(manifest.scope, '/');

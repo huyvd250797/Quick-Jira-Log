@@ -1,3 +1,11 @@
+# V1.25.1 — Sửa tạo Subtask & đọc mô tả
+
+- Khởi tạo Subtask theo context cha trên server, tự chọn loại con hợp lệ đầu tiên, giữ cha khi đổi loại, thông báo lỗi/tải lại. Tương thích last/isLast và bổ sung cờ subtask theo ID danh mục Jira nếu create metadata thiếu.
+- Filter dùng icon kính lúp; bổ sung ảnh trong HTML/wiki mô tả qua attachment proxy đúng issue, click xem lớn, thumbnail cho ảnh lớn và fallback mở Jira.
+- Hai nút lên đầu/xuống cuối mô tả fade in khi cuộn, ngừng 1 giây fade out; giới hạn trong khung, hỗ trợ reduced motion/bàn phím.
+- Chip trạng thái có màu theo category/colorName Jira, bảng màu dark/light.
+- Test API/HTTP và luồng Chromium xuyên router/session/create/readback; hồi quy filter/create/attachments, không đổi các handler logwork/OT/lịch.
+
 # V1.25.0 — Ảnh & tệp, Filter gọn & Subtask
 
 - Tab tệp, xem ảnh, tải xuống qua session hoặc mở Jira; tải <=3 MiB theo quyền, tuần tự tối đa 10 tệp, đối chiếu ID/tên/size, chống lặp theo request và khóa khi kết quả chưa rõ.
