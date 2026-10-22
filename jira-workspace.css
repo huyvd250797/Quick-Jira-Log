@@ -1,0 +1,79 @@
+/* V1.24 — One workspace hierarchy; fixed actions and independent result scrolling. */
+@keyframes qjl-jira-action-in { from { opacity:0; } to { opacity:1; } }
+:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraIssuePeekDialog) { color-scheme:light; }
+html[data-theme=dark] :is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraIssuePeekDialog) { color-scheme:dark; }
+:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog) :is(input,textarea,select) { background-color:var(--bg)!important; color:var(--text); border-color:var(--line); }
+:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog) select { appearance:auto; -webkit-appearance:auto; background-image:none!important; padding:10px 12px!important; }
+:is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog) :is(.secondary,.icon-btn) { background:var(--card); color:var(--primary); border-color:var(--line); }
+#jiraSearchDialog[open] { display:flex; flex-direction:column; overflow:hidden; scrollbar-gutter:auto; }
+#jiraSearchDialog > .jira-search-head { position:static; flex:none; padding:16px 20px; }
+.jira-workspace-toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 20px; flex:none; border-bottom:1px solid var(--line); }
+.jira-source-switch { display:inline-flex; padding:3px; gap:3px; border:1px solid var(--line); border-radius:11px; background:var(--bg); }
+.jira-source-switch button { padding:9px 16px; border:0; border-radius:8px; background:transparent; color:var(--muted); font-size:13px; cursor:pointer; }
+.jira-source-switch button[aria-pressed=true] { color:var(--primary); background:var(--primary-soft); }
+#jiraCreateBtn { width:auto; min-width:145px; min-height:40px; margin:0; padding:9px 14px; font-size:13px; white-space:nowrap; border-radius:10px; }
+#jiraSearchDialog > .jira-search-form { flex:0 0 auto; max-height:40dvh; overflow:auto; background:var(--card); }
+#jiraSearchResultsPane { flex:1 1 0; min-height:0; overflow:auto; overscroll-behavior:contain; overflow-anchor:none; background:var(--bg); }
+#jiraSearchResultsPane .jira-issue-card { box-shadow:0 2px 8px #00000004; }
+#jiraSearchDialog input,#jiraSearchDialog select { background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:9px; padding:10px 12px; }
+.jira-saved-find,.jira-saved-select { display:flex; gap:8px; align-items:end; }
+.jira-saved-find input,.jira-saved-select label { flex:1; min-width:0; }
+.jira-saved-find button,.jira-saved-select button { flex:none; width:auto; min-height:42px; padding:9px 14px; margin:0; font-size:13px; }
+.jira-saved-select { margin-top:10px; }
+.jira-saved-select label,.jira-filter-id label { display:grid; gap:6px; color:var(--muted); font-size:12px; }
+.jira-filter-id { margin-top:10px; color:var(--muted); font-size:12px; }
+.jira-filter-id summary { cursor:pointer; }
+.jira-filter-id label { margin-top:8px; max-width:320px; }
+.jira-create-dialog { width:min(840px,calc(100vw - 40px)); height:min(90dvh,920px); }
+.jira-create-dialog > .jira-search-head { position:static; padding:18px 22px; }
+.jira-create-dialog .jira-search-head h2 { font-size:19px; }
+.jira-create-body { padding:16px 22px; background:var(--bg); }
+#jiraCreateState:empty { display:none; }
+#jiraCreateState:not(:empty) { padding:10px 12px; background:var(--card); border:1px solid var(--line); border-radius:10px; }
+.jira-create-section,#jiraCreateParentGroup { padding:18px; margin:0 0 14px; background:var(--card); border:1px solid var(--line); border-radius:13px; }
+.jira-section-heading { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.jira-section-heading h3 { margin:0; font-size:14px; }
+.jira-section-heading p { margin:3px 0 0; font-size:12px; color:var(--muted); }
+.jira-step-number { display:grid; place-items:center; flex:none; width:28px; height:28px; border-radius:9px; color:var(--primary); background:var(--primary-soft); font-size:12px; font-weight:750; }
+.jira-create-scope { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:0; }
+.jira-create-scope > div:last-child { grid-column:auto; }
+#jiraCreateManualProject { margin-top:12px; font-size:12px; color:var(--muted); }
+#jiraCreateManualProject summary { cursor:pointer; }
+#jiraCreateManualProject .jira-action-find { display:flex; align-items:center; gap:8px; }
+#jiraCreateManualProject button { margin:0; width:auto; white-space:nowrap; }
+.jira-create-field input,.jira-create-field select { min-height:44px; }
+.jira-create-field input[readonly] { color:var(--muted); background:var(--bg); }
+.jira-create-empty { display:grid; justify-items:center; gap:8px; text-align:center; color:var(--muted); padding:28px 16px; }
+.jira-create-empty > span { display:grid; place-items:center; width:42px; height:42px; font-size:25px; color:var(--primary); background:var(--primary-soft); border-radius:13px; }
+.jira-create-empty strong { color:var(--text); font-size:14px; }
+.jira-create-empty p { margin:0; font-size:12px; }
+.jira-create-footer { flex:none; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 22px; border-top:1px solid var(--line); background:var(--card); }
+.jira-create-footer button { width:auto; margin:0; min-height:44px; font-size:13px; padding:10px 14px; border-radius:10px; }
+.jira-create-footer button:disabled { opacity:.45; cursor:default; }
+#jiraCreateReceipt { padding:20px; background:var(--card); border:1px solid var(--line); border-radius:13px; }
+#jiraCreateReceiptText { line-height:1.6; overflow-wrap:anywhere; }
+.jira-create-receipt-actions button,.jira-create-receipt-actions a { width:auto; padding:10px 12px; font-size:13px; border-radius:9px; }
+@media (min-width:900px) {
+ #jiraCreateContent { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:12px; }
+ #jiraCreateContent > * { grid-column:1/-1; }
+ #jiraCreateContent:has(#jiraCreateParentGroup:not([hidden])) > :is(.jira-create-section:first-child,#jiraCreateParentGroup) { grid-column:auto; }
+}
+@media (max-width:899px) {
+ .jira-workspace-toolbar { gap:8px; padding:10px 14px; }
+ .jira-source-switch { flex:1; }
+ .jira-source-switch button { flex:1; padding:9px 7px; font-size:12px; white-space:nowrap; }
+ #jiraCreateBtn { min-width:0; padding:10px; font-size:12px; }
+ #jiraSearchDialog > .jira-search-form { max-height:37dvh; }
+ .jira-saved-find button,.jira-saved-select button { font-size:12px; padding:9px 10px; }
+ .jira-create-dialog > .jira-search-head { padding:14px max(14px,env(safe-area-inset-right)) 14px max(14px,env(safe-area-inset-left)); }
+ .jira-create-body { padding:12px max(12px,env(safe-area-inset-right)) 16px max(12px,env(safe-area-inset-left)); }
+ .jira-create-section,#jiraCreateParentGroup { padding:14px; }
+ .jira-create-scope { grid-template-columns:minmax(0,1fr); gap:12px; }
+ .jira-create-footer { padding:10px max(14px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left)); }
+}
+@media (max-height:480px) and (max-width:899px) {
+ #jiraSearchDialog > .jira-search-head,.jira-create-dialog > .jira-search-head { padding-top:7px; padding-bottom:7px; }
+ .jira-search-head p { display:none; }
+ .jira-workspace-toolbar { padding-top:6px; padding-bottom:6px; }
+ .jira-create-footer { padding-top:7px; padding-bottom:7px; }
+}

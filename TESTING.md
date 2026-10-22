@@ -1,4 +1,16 @@
-# Kiểm thử V1.23.0 — Tạo công việc Jira
+# Kiểm thử V1.24.0 — Filter Jira & giao diện tạo
+
+- API filter: `tests/jira-filter-tests.js` PASS sở hữu/yêu thích/shared theo tên, fallback owner không gán nhầm filter người khác, dữ liệu chọn lọc/no-store, giữ nguyên JQL có ORDER BY trong literal, phân trang 25+1/revision đổi, quyền/phiên/method/validation và GET fallback. Không có thao tác ghi filter/issue.
+- `tests/jira-create-tests.js`, `tests/jira-create-ui-tests.js`: PASS cả metadata không có operations qua HTTP/form; restriction có trả về vẫn bị chặn. Test form cập nhật theo chọn dự án tự tải loại. Luồng ghi/receipt/required/cha/nhân sự cũ giữ nguyên.
+- Chromium 153 qua Playwright, `tests/browser/jira-create.cjs`: PASS PC 1440×900, mobile 390×844/320×683 và ngang 844×390. Chọn dự án tự tải loại, chọn cha/Sub-task Type, preview an toàn, hủy không POST, giữ draft, xác nhận mới ghi/mở chi tiết, receipt chưa rõ chặn tạo tiếp. Kiểm tra khung không tràn và nút review cố định. Lỗi dịch khung trong animation được tái hiện rồi sửa và chạy lại đạt.
+- `tests/browser/jira-filters.cjs`: PASS 4 viewport trên. Đổi nguồn, chọn filter, 25+1, revision đổi/retry từ đầu, quay từ chi tiết giữ cuộn, không ghi Jira. Ảnh UI PC/mobile light/dark được kiểm tra; sửa gradient select bị phóng to và màu nền mất tương phản. Ảnh QA không đóng vào ZIP.
+- `test:search-ui`, `test:detail-ui`, `test:update-ui`: PASS hồi quy 4 viewport trên. `npm test`: PASS toàn bộ logic/API kế thừa và test filter mới.
+- Syntax 146 JS/CJS, 422 ID HTML không trùng, 49 tham chiếu asset, binding DOM, cache shell và JSON: PASS. Handler có sẵn, lib ghi Jira, scheduler và quick-update giữ nguyên byte từ ZIP đầu vào. Thư viện mô tả create field là phần backend được sửa cho metadata thiếu operations.
+- Không có thao tác trên Jira công ty, Safari/iPhone vật lý, GitHub/Vercel hoặc Redis thật. Chromium dùng để QA nằm ngoài source, không thêm dependency/binary vào app.
+
+Sau deploy: kiểm tra V1.24.0; filter sở hữu/yêu thích/chia sẻ/ID và filter bị thu quyền; so kết quả/thứ tự với Jira gốc; filter đổi điều kiện giữa các trang; metadata có/không operations; dự án/loại/required thực tế; tạo issue thử và đối chiếu. Kiểm tra iPhone dark/light, bàn phím và footer khi cuộn; hồi quy logwork/OT/lịch/nháp kéo thả.
+
+# Lịch sử kiểm thử V1.23.0 — Tạo công việc Jira
 
 - `npm test`: PASS bộ hồi quy logic/API kế thừa, `tests/jira-create-tests.js` và `tests/jira-create-ui-tests.js` với Jira giả lập trên Node.js 24. Các ca bổ sung Story/Task/Bug và điều chỉnh thông báo form cũng được chạy lại bằng bộ test riêng, đạt.
 - API/field tests: ID custom field/Sub-task Type thực tế; metadata mới phân trang >50 và fallback cũ; required/default/unsupported/cascading; reporter chỉ current user; assignee active/được nhận; cha cùng dự án, không là Subtask; chọn một/nhiều, labels, số/ngày/ngày giờ/URL; dữ liệu đổi, quyền, JSON/field injection, method/origin, no-store và hết phiên.

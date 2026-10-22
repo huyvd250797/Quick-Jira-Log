@@ -22,7 +22,7 @@ class Element{
   throw Error('Unexpected '+a);
  }};
  vm.runInNewContext(fs.readFileSync(path.join(root,'jira-create.js'),'utf8'),sandbox);const ui=sandbox.window.QuickJiraCreate;
- await ui.open();assert(el('jiraCreateDialog').open);assert.equal(posts.length,0);el('jiraCreateProject').value='CAL';await el('jiraCreateProjectBtn').onclick();el('jiraCreateType').value='5';await el('jiraCreateType').onchange();assert(!el('jiraCreateForm').hidden);
+ await ui.open();assert(el('jiraCreateDialog').open);assert.equal(posts.length,0);el('jiraCreateProjectSelect').value='CAL';await el('jiraCreateProjectSelect').onchange();el('jiraCreateType').value='5';await el('jiraCreateType').onchange();assert(!el('jiraCreateForm').hidden);
  el('jiraCreateForm').onsubmit({preventDefault(){}});assert(!el('jiraCreateConfirmDialog').open);assert(el('jiraCreateState').textContent.includes('cha'));
  el('jiraCreateParentQuery').value='CAL-1';await el('jiraCreateParentFindBtn').onclick();el('jiraCreateParents').children[0].onclick();el('jcf-summary').value='<script>Literal text</script>';el('jcf-customfield_12345').value='10';
  el('jiraCreateForm').onsubmit({preventDefault(){}});assert(el('jiraCreateConfirmDialog').open);assert.equal(posts.length,0);assert(!el('jiraCreatePreview').innerHTML.includes('<script>'));el('jiraCreateCancelBtn').onclick();await Promise.resolve();assert.equal(posts.length,0);

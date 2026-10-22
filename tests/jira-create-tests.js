@@ -17,6 +17,7 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
   if(mode==='complex'||mode==='complex-default')rows.push(f('customfield_99','Trường plugin','object',true,{hasDefaultValue:mode==='complex-default'}));
   if(mode==='paged')for(let i=100;i<151;i++)rows.push(f('customfield_'+i,'Text '+i,'string'));
   if(mode==='bad-meta')rows.push(f('../bad','Invalid','string',true));
+  if(mode==='no-operations')for(const field of rows)delete field.operations;
   return rows;
  }
  global.fetch=async(url,options={})=>{
@@ -70,6 +71,7 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
  mode='denied';r=await request('jira-create-types',{project:'CAL'});assert.equal(r.status,403);r=await request('jira-create',{},body(m));assert.equal(r.status,403);
  mode='complex';m=await meta();assert(m.blocked.some(x=>x.id==='customfield_99'));r=await request('jira-create',{},body(m));assert.equal(r.status,422);
  mode='complex-default';m=await meta();assert.equal(m.blocked.length,0);r=await request('jira-create',{},body(m));assert.equal(r.data.outcome,'confirmed');assert(!Object.hasOwn(created.get(r.data.key),'customfield_99'));
+ mode='no-operations';m=await meta();assert.equal(m.blocked.length,0);r=await request('jira-create',{},body(m));assert.equal(r.data.outcome,'confirmed');
  mode='paged';m=await meta();assert(m.fields.length>50);assert(calls.some(c=>c.query.get('startAt')==='50'));
  mode='legacy';m=await meta();r=await request('jira-create',{},body(m));assert.equal(r.data.outcome,'confirmed');assert(calls.some(c=>c.path==='/rest/api/2/issue/createmeta'));
  mode='bad-meta';r=await request('jira-create-meta',{project:'CAL',type:'5'});assert.equal(r.status,502);

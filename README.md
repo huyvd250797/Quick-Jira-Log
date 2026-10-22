@@ -1,4 +1,41 @@
-# Quick Jira Log V1.23.0 — Tạo công việc Jira
+# Quick Jira Log V1.24.0 — Filter Jira & giao diện tạo mới
+
+## Nội dung phiên bản này
+
+Theo yêu cầu mới của Boss, V1.24.0 thay mục “Công việc của tôi” bằng **lấy công việc từ filter đã lưu trên Jira**. Không xây dựng danh sách được giao/reporter/watching riêng.
+
+- Mở Công việc Jira từ nút tra cứu đang có. Tiêu đề/đóng ở trên, thanh thao tác ngay dưới gồm **Tìm kiếm**, **Filter Jira**, **Tạo công việc**. Nút tạo không còn nằm riêng ở tiêu đề.
+- **Filter Jira:** tải filter sở hữu và yêu thích; tìm thêm filter theo tên nếu Jira hỗ trợ endpoint tìm kiếm. Hiển thị tên/chủ sở hữu, đánh dấu ★ cho yêu thích. Nếu chưa có trong danh sách có thể dùng ID từ đường dẫn Jira. Với Jira cũ không liệt kê được filter sở hữu, hãy Favourite filter trên Jira hoặc dùng ID.
+- Bấm **Xem công việc** để chạy đúng JQL và ORDER BY đã lưu. App không thay đổi điều kiện filter bằng các bộ lọc thủ công của chế độ Tìm kiếm. Mỗi trang 25 công việc, có Tải thêm; đọc lại quyền/filter trước mỗi trang. Nếu điều kiện filter đổi giữa các trang, dừng và yêu cầu tải lại từ đầu. Dữ liệu issue thay đổi đồng thời vẫn có thể làm phân trang dịch chuyển; tải lại để có kết quả mới nhất.
+- Chọn công việc để xem chi tiết/cập nhật nhanh theo quyền hiện tại. Đóng chi tiết giữ vị trí trong vùng cuộn danh sách. Chuyển nguồn Tìm kiếm/Filter xóa kết quả nguồn cũ để tránh trộn dữ liệu. Đăng nhập tài khoản khác dọn lựa chọn/kết quả; không lưu JQL hoặc danh sách filter vào local storage.
+- Danh sách filter được giới hạn theo endpoint (tối đa 100 mỗi lần tìm, tổng hiển thị tối đa 200); có cảnh báo rút gọn và tìm tên/ID để truy cập thêm. Chỉ trả tên, ID, chủ sở hữu và favourite ra client; JQL chỉ dùng trên server. Không chỉnh sửa hoặc tạo filter trên Jira.
+
+## Giao diện tạo và lỗi đã xử lý
+
+- Form tạo chia thành **Dự án & loại công việc**, **Công việc cha** nếu là Subtask, **Nội dung công việc**. PC đặt phần dự án và cha cạnh nhau để giảm chiều cao; mobile theo một cột.
+- Chọn dự án bằng danh sách sẽ tự tải loại công việc; chọn loại sẽ tải form. Có phần thu gọn nhập mã dự án trực tiếp khi cần. Luôn giữ nút **Xem lại & tạo** dưới cùng, gắn đúng form bằng thuộc tính `form`, bật khi metadata hợp lệ; tiêu đề/đóng và footer cố định, chỉ cuộn nội dung.
+- Khi Jira bỏ qua thuộc tính `operations` trong metadata tạo, app vẫn xử lý trường dựa vào create screen. Nếu Jira trả rõ danh sách operations không có `set`, trường vẫn bị chặn. Quyền Create Issues, required/default, allowedValues và kiểm tra lại trước POST được giữ nguyên; không vượt quyền Jira.
+- Sửa animation mở gây lệch khung mobile; chuyển sang fade không dịch khung ra ngoài viewport. Chuẩn hóa ô chọn/ô nhập, mũi tên native, tương phản dark/light và khoảng cách các nhóm.
+- Luồng vẫn là **nhập → xem lại → xác nhận → ghi Jira → đối chiếu → mở chi tiết**. Mất phản hồi không tự POST lại; giữ receipt và bước kiểm tra Jira trước yêu cầu mới. Giữ nháp trong phiên khi đóng/mở, dọn khi logout.
+
+Giới hạn trường plugin/required chưa hỗ trợ của V1.23.0 vẫn áp dụng: app nêu tên và dẫn sang Jira. Không có quyền/validator từ chối cũng cần xử lý theo thông báo thực tế; chưa xác minh trên Jira công ty trong phiên phát triển. Các handler logwork, lịch và OT giữ nguyên.
+
+## Nâng cấp, kiểm tra và triển khai
+
+1. Giải nén `Quick-Jira-Log_v1.24.0.zip`, dùng root `Quick-Jira-Log-V1.24.0`. Giữ chỉnh sửa riêng và biến môi trường, đặc biệt `APP_SESSION_SECRET`. Không thêm database, migration hay dependency runtime.
+2. Node.js **24.x**: `npm ci`, `npm test`. Test filter: `npm run test:filters`. Giao diện: `npm run test:workspace-ui` (Playwright và Chromium chỉ cần cho QA; có thể đặt `QJL_CHROMIUM_PATH`). Xem `TESTING.md` cho bằng chứng và giới hạn.
+3. GitHub/Vercel giữ cấu hình hiện có: clone/fetch, tích hợp trước commit/push, không force-push; Vercel Framework **Other**, Node **24.x**, không Build Command, root chứa `api/`, `index.html`, `package.json`, giữ `vercel.json`. Không tự push/deploy trong bản bàn giao này.
+4. Sau deploy cập nhật PWA/tải lại, kiểm tra **V1.24.0**. Thử filter sở hữu/yêu thích/ID, Tải thêm, quay lại danh sách; thử một issue trong dự án thử nghiệm và đối chiếu Jira. Không có migration. Có thể quay lại deployment trước; việc rollback app không xóa issue đã tạo.
+
+API mới (GET, session/no-store): `/api?action=jira-saved-filters&q=...`, `/api?action=jira-filter-issues&filterId=ID&startAt=0`. Trang tiếp theo nhận `revision` từ phản hồi đầu để phát hiện filter đổi. Không nhận JQL tùy ý từ client, không dùng `searchUrl` của filter làm đích request. Các giới hạn/luồng tạo của V1.23.0 được mô tả trong phần lịch sử bên dưới.
+
+## Phiên bản tiếp theo
+
+**V1.25.0 — Ảnh & tệp:** xem đính kèm trong chi tiết, mở/tải tệp và tải lên theo quyền Jira; kiểm tra giới hạn kích thước và hiển thị tiến trình/kết quả. Đây là mục roadmap dự kiến, chưa triển khai trong V1.24.0.
+
+Gửi ZIP mới nhất để phát triển tiếp. Phần dưới là tài liệu lịch sử; hướng dẫn V1.24.0 ở trên được ưu tiên.
+
+# Lịch sử V1.23.0 — Tạo công việc Jira
 
 ## Chức năng mới và cách dùng
 

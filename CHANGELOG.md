@@ -1,3 +1,12 @@
+## V1.24.0 — Filter Jira & giao diện tạo mới
+
+- Thay roadmap Công việc của tôi bằng truy cập filter đã lưu: sở hữu/yêu thích, tìm tên/ID, giữ nguyên JQL và ORDER BY, phân trang và kiểm tra revision/quyền. Không sửa luồng chọn task để logwork.
+- Sắp xếp lại workspace Jira: tiêu đề, thanh nguồn/tạo, điều kiện, vùng kết quả cuộn độc lập; đóng chi tiết giữ vị trí.
+- Form tạo: chọn dự án tự tải loại, nhóm rõ ràng, PC hai khối đầu cạnh nhau/mobile một cột, footer xem lại cố định và nút gắn đúng form. Giữ xác nhận/receipt chống gửi lặp.
+- Cho phép metadata create screen không có operations; vẫn tôn trọng restriction rõ ràng và quyền/required/allowedValues. Có test HTTP và form cho trường hợp này.
+- Sửa animation làm khung mobile lệch viewport, nền/arrow select và dark/light. Thêm CSS workspace vào cache shell, version 1.24.0.
+- Kiểm thử Chromium thực tế trên 4 viewport và kiểm tra ảnh PC/mobile light/dark, cùng API/logic hồi quy. Chưa kiểm chứng Jira công ty/Safari thật; chi tiết trong TESTING.md.
+
 ## V1.23.0 — Tạo công việc Jira
 
 - Nút Tạo trong tra cứu, shortcut tạo Subtask từ chi tiết công việc cha, form PC/mobile theo metadata dự án/loại và ID custom field thực tế.
