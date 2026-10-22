@@ -1,4 +1,31 @@
-# Quick Jira Log V1.20.0 — Tra cứu Jira
+# Quick Jira Log V1.21.0 — Chi tiết công việc
+
+## Mới trong V1.21.0
+
+- Từ kết quả Tra cứu Jira hoặc mục vừa xem, bấm thẻ để mở chi tiết ngay trong app. PC dùng popup rộng; mobile dùng toàn màn hình, giữ tiêu đề, tab và nút thao tác, cuộn riêng nội dung.
+- **Mô tả:** thông tin dự án, loại, trạng thái, người phụ trách, ưu tiên, thời điểm cập nhật và mô tả. Hỗ trợ một phần Jira wiki: tiêu đề, danh sách, chữ đậm, bảng, code và liên kết HTTP/HTTPS. Không chạy HTML/script từ Jira. ADF được chuyển thành văn bản; ảnh, tệp và các macro không hỗ trợ cần mở Jira gốc. Nội dung trên 200.000 ký tự được rút gọn và có thông báo.
+- **Subtask:** hiển thị mã, tiêu đề, trạng thái và người phụ trách; 25 bản ghi mỗi lần, có Tải thêm. Bấm để xem chi tiết subtask; có nút công việc cha và Quay lại. Điều hướng và tải lại đều đọc lại quyền từ Jira.
+- **Worklog:** người log, ngày/giờ Việt Nam, thời lượng chính xác đến giây và mô tả; 25 bản ghi mỗi lần. “Giờ đã tải” chỉ cộng các bản ghi đã tải, không phải toàn bộ giờ của công việc, không phải thống kê Overtime. Jira cũ trả toàn bộ worklog sẽ được phân trang trên server app.
+- Subtask/worklog chỉ tải khi mở tab. Lỗi một phần có Thử lại và không chặn xem mô tả. Nội dung hiển thị theo quyền Jira hiện tại; danh sách rỗng không đồng nghĩa tài khoản có quyền xem mọi bản ghi.
+- Đóng chi tiết giữ kết quả, vị trí cuộn và mục đang chọn trong tra cứu. Tải lại chi tiết đưa về tab Mô tả và làm mới các trang liên quan.
+- Nút **Logwork** xuất hiện khi công việc nằm trong danh sách subtask logwork hiện có của app; bấm sẽ kiểm tra lại danh sách, rồi mở đúng form logwork đang dùng. Vẫn cần nhập/xác nhận theo luồng hiện có; thao tác xem chi tiết không ghi dữ liệu Jira. Không có nút này không có nghĩa Jira từ chối quyền, vì danh sách ứng viên của app có bộ lọc/giới hạn riêng.
+
+## Nâng cấp từ V1.20.0
+
+1. Giải nén `Quick-Jira-Log_v1.21.0.zip`, dùng thư mục `Quick-Jira-Log-V1.21.0` làm root source. Giữ các chỉnh sửa riêng khi tích hợp.
+2. Giữ nguyên biến môi trường, đặc biệt `APP_SESSION_SECRET`. Không có database, migration hoặc dependency runtime mới.
+3. Vercel: Framework **Other**, Node.js **24.x**, không Build Command; root chứa `index.html`, `package.json`, `api/`. Giữ cấu hình `vercel.json`.
+4. Sau triển khai, cập nhật/tải lại app và kiểm tra phiên bản **V1.21.0**. Thử mở mô tả, subtask, worklog, Tải thêm, công việc cha, Quay lại và logwork từ một subtask hợp lệ.
+
+Chạy `npm ci` và `npm test` với Node.js 24.x. Test mới: `npm run test:detail`; test giao diện: `npm run test:detail-ui` (cần Playwright/Chromium, có thể đặt `QJL_CHROMIUM_PATH`). Các test dùng Jira giả lập. Xem `TESTING.md` về phạm vi đã kiểm chứng và kiểm tra sau deploy.
+
+API mới (GET, yêu cầu phiên Jira): `/api?action=jira-issue&key=KEY`, `jira-issue-subtasks`, `jira-issue-worklogs`; hai API danh sách nhận `startAt`. Chỉ đọc bằng quyền người đăng nhập, no-store, không thêm custom-field ID, không sửa luồng lịch/logwork/Overtime.
+
+**Phiên bản tiếp theo: V1.22.0 — Cập nhật nhanh:** bình luận, chuyển trạng thái, người phụ trách và ưu tiên theo lựa chọn/quyền thực tế từ Jira. Chưa triển khai trong bản này.
+
+Phần dưới là tài liệu V1.20.0 kế thừa; hướng dẫn phiên bản hiện hành ở trên được ưu tiên.
+
+# Lịch sử V1.20.0 — Tra cứu Jira
 
 ## Chức năng mới
 

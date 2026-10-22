@@ -5,7 +5,7 @@ Boss chọn mở rộng sang thao tác Jira trên mobile; logwork tiếp tục l
 | Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Phụ thuộc/trạng thái |
 | --- | --- | --- | --- | --- | --- |
 | V1.20.0 | Tra cứu Jira | Mã/nội dung; lọc dự án, trạng thái, loại, người phụ trách; thẻ, tải thêm, 10 mã vừa xem | API đọc theo quyền Jira; local storage theo username | Truy vấn/metadata, phân trang, lỗi quyền và phiên hết hạn qua test giả lập; cần xác nhận thêm trên Jira thật/mobile thật | Đã xây dựng source; không ghi issue |
-| V1.21.0 | Chi tiết công việc | Mô tả, task cha/subtask, worklog; mở luồng logwork theo quy tắc app | Read API, hiển thị nội dung an toàn, phân trang từng phần | Xem được nội dung dài, phân cấp và worklog đúng quyền; trạng thái rỗng/lỗi rõ | Dự kiến, sau V1.20.0 |
+| V1.21.0 | Chi tiết công việc | Mô tả, task cha/subtask, worklog; mở luồng logwork theo quy tắc app | Read API, hiển thị nội dung an toàn, phân trang từng phần | API/nội dung và hồi quy đạt với Jira giả lập; fixture UI đã viết, cần chạy Chromium và kiểm chứng Jira thật | Đã xây dựng source; chưa deploy |
 | V1.22.0 | Cập nhật nhanh | Bình luận, chuyển trạng thái, assignee, priority | Đọc lựa chọn và transition thực tế, kiểm tra quyền, xác minh sau ghi | Chỉ hiển thị lựa chọn hợp lệ; xử lý trường bắt buộc và lỗi | Dự kiến, sau chi tiết |
 | V1.23.0 | Tạo issue | Story/Task/Subtask theo dự án và loại | Metadata trường bắt buộc/tùy chỉnh từ Jira | Tạo theo đúng cấu hình dự án, không tự giả định ID Sub-task Type | Dự kiến, cần khảo sát Jira thực tế |
 | V1.24.0 | Công việc của tôi | Được giao, do mình tạo, đang theo dõi; bộ lọc cá nhân | Các query riêng theo quyền hiện tại | Kết quả/bộ lọc chính xác và truy cập nhanh chi tiết | Dự kiến |

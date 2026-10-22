@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.20.0 – Tra cứu Jira & Logwork.",
+  "description": "Quick Jira Log V1.21.0 – Chi tiết công việc & Logwork.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

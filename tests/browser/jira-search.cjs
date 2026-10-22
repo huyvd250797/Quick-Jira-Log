@@ -12,6 +12,7 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright'),{ser
    if(a==='subtasks')data={ok:true,issues:[]};if(a==='worklog-history')data={ok:true,items:[],skipped:[]};if(a==='day-audit')data={ok:true,occupied:[],available:[]};
    if(a==='jira-search-options')data={ok:true,projects:[{key:'EPU01',name:'Điện lực'}],statuses:[{id:'3',name:'In Progress'}],types:[{id:'5',name:'Sub-task'},{id:'1',name:'Story'}],warnings:[]};
    if(a==='calendar-users')data={ok:true,users:[{key:'USER_KEY',username:'someone',displayName:'Nhân sự thử nghiệm'}]};
+   if(a==='jira-issue'){if(denied){status=403;data={ok:false,error:'Không có quyền xem công việc.'};}else data={ok:true,issue:{...issue(Number(u.searchParams.get('key').split('-')[1])),description:{text:'h2. Nội dung\n* Mục thứ nhất\n<script>literal</script>',truncated:false}}};}
    if(a==='jira-search'){const q=u.searchParams.get('q'),offset=Number(u.searchParams.get('startAt')||0);if(denied){status=403;data={ok:false,error:'Không có quyền xem công việc.'};}else{const rows=/^EPU01-\d+$/.test(q)?[issue(Number(q.split('-')[1]))]:Array.from({length:offset?1:25},(_,i)=>issue(offset+i+1));data={ok:true,issues:rows,total:26,startAt:offset,nextStartAt:offset+rows.length,hasMore:!offset};}}
    await route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
   });

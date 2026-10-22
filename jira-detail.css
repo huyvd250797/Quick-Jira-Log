@@ -1,0 +1,55 @@
+/* V1.21.0 — Fixed header/tabs/footer, scroll only the detail content. */
+#jiraIssuePeekDialog { width:min(920px,calc(100vw - 32px)); height:min(92dvh,980px); max-height:92dvh; overflow:hidden; }
+#jiraIssuePeekDialog[open] { display:flex; flex-direction:column; }
+#jiraIssuePeekDialog > .jira-search-head { flex:0 0 auto; padding:14px 18px; }
+#jiraIssuePeekDialog .jira-detail-actions { display:flex; gap:6px; flex:0 0 auto; }
+#jiraIssuePeekDialog .jira-detail-actions button { width:36px; min-width:36px; height:36px; }
+#jiraIssuePeekTitle { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; }
+#jiraIssuePeekDialog .jira-detail-nav { display:flex; align-items:center; flex-wrap:wrap; gap:4px 12px; padding:0 18px; flex:0 0 auto; }
+#jiraIssuePeekDialog .jira-detail-nav:has(button:not([hidden])) { padding-top:7px; padding-bottom:7px; border-bottom:1px solid var(--line); }
+.jira-detail-nav button { font-size:12px; overflow-wrap:anywhere; }
+.jira-detail-tabs { display:flex; gap:4px; flex:0 0 auto; padding:8px 18px; border-bottom:1px solid var(--line); }
+.jira-detail-tabs button { flex:1 1 0; min-width:0; border:0; border-radius:8px; background:transparent; color:var(--muted); padding:9px 8px; font-weight:650; font-size:13px; cursor:pointer; }
+.jira-detail-tabs button[aria-selected=true] { color:var(--primary); background:var(--primary-soft); }
+.jira-detail-tabs button:focus-visible { outline:2px solid var(--primary); outline-offset:1px; }
+.jira-detail-body { flex:1 1 0; min-height:0; overflow:auto; padding:0 18px 18px; overscroll-behavior:none; overflow-anchor:none; }
+#jiraIssuePeekDialog #jiraIssuePeekInfo { grid-template-columns:repeat(3,minmax(0,1fr)); padding:16px 0; gap:14px; border-bottom:1px solid var(--line); }
+.jira-detail-section-title { font-size:14px; margin:16px 0 10px; }
+.jira-content { min-width:0; font-size:14px; line-height:1.65; overflow-wrap:anywhere; }
+.jira-content p { margin:0 0 5px; white-space:pre-wrap; }
+.jira-content-gap { height:8px; }
+.jira-content h2,.jira-content h3,.jira-content h4,.jira-content h5,.jira-content h6 { font-size:15px; margin:14px 0 7px; }
+.jira-content ul,.jira-content ol { padding-left:23px; margin:8px 0; }
+.jira-content pre { margin:10px 0; padding:12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); overflow:auto; max-width:100%; white-space:pre; }
+.jira-content code { font-family:ui-monospace,monospace; font-size:12px; }
+.jira-content a { color:var(--primary); text-decoration:underline; }
+.jira-content-table { overflow:auto; margin:10px 0; max-width:100%; border:1px solid var(--line); border-radius:8px; }
+.jira-content table { border-collapse:collapse; min-width:100%; font-size:12px; }
+.jira-content th,.jira-content td { padding:7px 9px; border:1px solid var(--line); text-align:left; min-width:90px; vertical-align:top; }
+.jira-content th { background:var(--primary-soft); }
+#jiraSubtaskList { display:grid; gap:10px; }
+.jira-subtask { display:grid; gap:7px; width:100%; min-width:0; padding:13px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--text); text-align:left; cursor:pointer; }
+.jira-subtask:hover { border-color:var(--primary); }
+.jira-subtask > strong { font-size:14px; font-weight:600; line-height:1.5; overflow-wrap:anywhere; }
+.jira-worklog { padding:14px 0; border-bottom:1px solid var(--line); }
+.jira-worklog-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:13px; }
+.jira-worklog-head strong { color:var(--primary); }
+.jira-worklog-author { font-size:12px; color:var(--muted); margin:5px 0 10px; overflow-wrap:anywhere; }
+.jira-worklog .jira-content { font-size:13px; }
+#jiraIssuePeekDialog footer { flex:0 0 auto; display:flex; justify-content:flex-end; align-items:center; gap:8px; padding:12px 18px; background:var(--card); }
+#jiraIssuePeekDialog footer button,#jiraIssuePeekDialog footer a { margin:0; min-height:40px; border-radius:9px; padding:9px 14px; text-decoration:none; font-size:13px; }
+#jiraIssuePeekDialog [role=tabpanel]:focus { outline:none; }
+@media (max-width:899px) {
+  #jiraIssuePeekDialog { inset:0; width:100%; max-width:100%; height:100dvh; max-height:100dvh; border:0; border-radius:0; }
+  #jiraIssuePeekDialog > .jira-search-head { padding:12px 14px; padding-top:max(12px,env(safe-area-inset-top)); }
+  #jiraIssuePeekDialog h2 { font-size:16px; line-height:1.45; }
+  #jiraIssuePeekDialog #jiraIssuePeekInfo { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  #jiraIssuePeekDialog #jiraIssuePeekInfo dd { font-size:13px; }
+  .jira-detail-tabs { padding:7px 12px; }
+  .jira-detail-body { padding:0 14px 16px; }
+  #jiraIssuePeekDialog .jira-detail-nav { padding-left:14px; padding-right:14px; }
+  #jiraIssuePeekDialog footer { padding:10px 14px max(12px,env(safe-area-inset-bottom)); }
+}
+@media (max-height:480px) {
+  #jiraIssuePeekTitle { -webkit-line-clamp:2; }
+}

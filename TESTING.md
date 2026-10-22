@@ -1,4 +1,15 @@
-# Kiểm thử V1.20.0 — Tra cứu Jira
+# Kiểm thử V1.21.0 — Chi tiết công việc
+
+- `npm test`: PASS toàn bộ bộ logic/API kế thừa và test chi tiết mới, trên Node.js 24; dữ liệu Jira giả lập.
+- `tests/jira-detail-tests.js`: PASS HTTP router/session/quyền, key/offset, whitelist dữ liệu riêng tư, phân trang subtask 25+5, GET fallback, đúng parent, worklog từng giây/0/null, Jira bỏ qua phân trang 25+25+10 không sót/lặp, lỗi 401/403/404/502 và đọc lại quyền trước từng trang. Không có thao tác ghi Jira ngoài POST search chỉ đọc.
+- Bộ trên kiểm tra Jira wiki/ADF, bảng/code/link, escape HTML, chặn javascript/data/URL chứa credential, giới hạn nội dung 200.000 ký tự.
+- Kiểm tra cú pháp 129 tệp JS/CJS, 46 tham chiếu asset HTML và 336 ID không trùng: PASS.
+- `tests/browser/jira-detail.cjs`: đã viết cho 1440×900, 390×844, 320×683, 844×390: tab lazy, Tải thêm, cha/con/Quay lại, lỗi/thử lại từng phần, nội dung an toàn, giữ kết quả tra cứu, shortcut logwork không ghi và kích thước khung. **Chưa chạy được**: môi trường thiếu executable Chromium khi gọi `npm run test:detail-ui`. Không đánh dấu UI đã PASS.
+- Fixture UI tra cứu cũ đã cập nhật theo API chi tiết mới. Chưa xác minh Jira công ty, Safari/iPhone vật lý, GitHub hoặc Vercel.
+
+Checklist sau deploy: phiên bản V1.21.0; mô tả trống/dài/wiki/ADF; bảng/code không tràn viền; công việc cha/subtask nhiều trang; worklog >25 bản ghi và thời lượng có giây; người log khác nhau; lỗi quyền từng tab và retry; logout/đổi tài khoản; đóng giữ vị trí; PC/mobile portrait/landscape/light/dark; shortcut Logwork mở form đúng subtask rồi xác nhận theo luồng cũ; hồi quy lịch, kéo thả, lưu nháp, OT và tổng hợp.
+
+# Lịch sử kiểm thử V1.20.0 — Tra cứu Jira
 
 - `tests/jira-search-tests.js`: chạy qua HTTP router với Jira giả lập; query theo mã/cụm từ, escape đầu vào, mọi bộ lọc, phân trang, POST-search/GET fallback, metadata chung/theo dự án, metadata lỗi một phần, 400/401/403/502, no-store, chỉ đọc, không lộ email/mô tả hoặc diagnostic thô. Đã đạt.
 - `npm test`: toàn bộ bộ hồi quy nền tảng và API kế thừa, bao gồm test tra cứu mới, đã đạt. Kiểm tra cú pháp 124 tệp JS/CJS và 44 tham chiếu HTML cũng đạt.

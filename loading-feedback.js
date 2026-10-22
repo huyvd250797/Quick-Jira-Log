@@ -13,7 +13,7 @@ window.QuickJiraBusy = (() => {
   function titleFor(path,method='GET') {
     const action=new URL(path,location.href).searchParams.get('action');
     const labels={'login':'Đang đăng nhập Jira…','logout':'Đang đăng xuất…','status':'Đang kiểm tra phiên Jira…','subtasks':'Đang tải danh sách Sub-task…','issue-info':'Đang lấy thông tin công việc…','day-audit':'Đang kiểm tra giờ đã log…','worklog-history':'Đang cập nhật giờ làm…','calendar-history':'Đang tải lịch worklog…','calendar-users':'Đang tìm nhân sự trên Jira…','calendar-moves':'Đang lưu thay đổi lịch…','calendar-split':'Đang xử lý tách lịch…','worklog-correction':method==='DELETE'?'Đang xóa worklog…':'Đang lưu chỉnh sửa worklog…','worklog':'Đang logwork…','bulk-worklog':'Đang logwork hàng loạt…'};
-    const searchLabels={'jira-search':'Đang tìm công việc trên Jira…','jira-search-options':'Đang tải bộ lọc Jira…'};
+    const searchLabels={'jira-search':'Đang tìm công việc trên Jira…','jira-search-options':'Đang tải bộ lọc Jira…','jira-issue':'Đang đọc chi tiết công việc…','jira-issue-subtasks':'Đang tải subtask…','jira-issue-worklogs':'Đang tải worklog…'};
     return labels[action]||searchLabels[action]||'Đang xử lý dữ liệu…';
   }
   function current() {

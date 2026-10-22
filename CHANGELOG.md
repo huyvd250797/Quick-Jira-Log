@@ -1,3 +1,12 @@
+## V1.21.0 — Chi tiết công việc
+
+- Mở chi tiết từ thẻ/mục vừa xem, gồm tab Mô tả, Subtask, Worklog; bố cục PC/mobile, điều hướng cha/con/Quay lại, đóng giữ vị trí tra cứu.
+- Hiển thị an toàn Jira wiki và văn bản ADF, giới hạn nội dung dài và mở Jira gốc để xem phần không hỗ trợ. Không nhúng HTML/script/ảnh tùy ý.
+- Tải từng tab và phân trang 25; worklog giữ chính xác số giây, hiển thị người log/ngày giờ/nội dung và tổng giờ đã tải. Hỗ trợ Jira Server bỏ qua tham số phân trang worklog.
+- Kiểm tra quyền khi đọc từng phần, dữ liệu phản hồi được chọn lọc, không lưu mô tả vào local storage; lỗi từng tab có thử lại, không khóa các phần đọc được.
+- Logwork từ chi tiết kiểm tra lại danh sách ứng viên và mở form hiện có, không tự ghi Jira; giữ nguyên luồng lịch, sửa giờ, kéo thả, Overtime.
+- Bổ sung test API/nội dung và fixture UI, cập nhật app/manifest/cache shell lên 1.21.0. Kiểm thử thực tế được ghi trong TESTING.md.
+
 ## V1.20.0 — Tra cứu Jira
 
 - Thêm màn hình tra cứu riêng trên PC/mobile, truy vấn theo mã chính xác hoặc cụm nội dung; lọc dự án, trạng thái, loại công việc và người phụ trách.
