@@ -1,3 +1,12 @@
+# V1.25.0 — Ảnh & tệp, Filter gọn & Subtask
+
+- Tab tệp, xem ảnh, tải xuống qua session hoặc mở Jira; tải <=3 MiB theo quyền, tuần tự tối đa 10 tệp, đối chiếu ID/tên/size, chống lặp theo request và khóa khi kết quả chưa rõ.
+- Backend multipart Jira với X-Atlassian-Token no-check; giới hạn request/response, kiểm tra issue/quyền, cùng host, không retry mutation, không cache nội dung riêng tư.
+- Thu gọn bộ lọc sau tìm; bỏ mô tả dài, ẩn Vừa xem trong filter và thông báo dư khi đã có kết quả.
+- Render mô tả bằng HTML đã lọc an toàn từ Jira; fallback wiki có màu, giữ cấu trúc phổ biến.
+- Subtask shortcut khóa đúng cha/dự án, chỉ loại con và giữ cha khi đổi loại; ưu tiên sáu trường, thêm Estimate, icon Assign to me mobile, Reporter current user và đổi theo quyền.
+- Kiểm thử API/Jira giả lập, browser PC/mobile/ngang và hồi quy; README/ROADMAP/TESTING cập nhật. Chưa deploy hoặc kiểm chứng Jira công ty/Safari thật.
+
 ## V1.24.0 — Filter Jira & giao diện tạo mới
 
 - Thay roadmap Công việc của tôi bằng truy cập filter đã lưu: sở hữu/yêu thích, tìm tên/ID, giữ nguyên JQL và ORDER BY, phân trang và kiểm tra revision/quyền. Không sửa luồng chọn task để logwork.

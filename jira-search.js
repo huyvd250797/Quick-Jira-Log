@@ -6,6 +6,8 @@ window.QuickJiraSearch=(()=>{
   let owner='',generation=0,busy=false,loadedOptions=false,items=[],recent=[],next=0,more=false,savedQuery=null,person=null,source=null,lastRetry=null;
   let detailContext=null,detailStack=[],detailOrigin=null,detailRetry=null;
   let mode='search',filtersLoaded=false;
+  function compactFilter(value){$('jiraFilterTools').hidden=value;$('jiraFilterExpandBtn').setAttribute('aria-expanded',String(!value));}
+  $('jiraFilterExpandBtn').onclick=()=>compactFilter(!$('jiraFilterTools').hidden);
   const resultPane=$('jiraSearchResultsPane');
   const storeKey=()=>`quick-jira-log:jira-recent:v1:${encodeURIComponent(owner)}`;
   function writeRecent(){try{localStorage.setItem(storeKey(),JSON.stringify(recent));return true;}catch{return false;}}
@@ -16,8 +18,8 @@ window.QuickJiraSearch=(()=>{
   function clearView(){
     window.QuickJiraCreate?.reset();
     clearDetail();
-    items=[];savedQuery=null;next=0;more=false;lastRetry=null;loadedOptions=false;person=null;
-    mode='search';filtersLoaded=false;$('jiraSavedForm').reset();$('jiraSavedSelect').innerHTML='<option value="">Chọn filter</option>';$('jiraSavedState').textContent='';$('jiraSavedRetryBtn').hidden=true;renderMode();
+    items=[];savedQuery=null;next=0;more=false;lastRetry=null;loadedOptions=false;person=null;dialog.classList.remove('has-jira-results');
+    mode='search';filtersLoaded=false;compactFilter(false);$('jiraSavedForm').reset();$('jiraSavedSelect').innerHTML='<option value="">Chọn filter</option>';$('jiraSavedState').textContent='';$('jiraSavedRetryBtn').hidden=true;renderMode();
     $('jiraSearchForm').reset();$('jiraPersonPicker').hidden=true;$('jiraPersonResults').replaceChildren();$('jiraPersonState').textContent='';
     $('jiraProjectOptions').replaceChildren();setOptions('jiraStatus',[],'Tất cả trạng thái');setOptions('jiraType',[],'Tất cả loại công việc');
     $('jiraSearchResults').replaceChildren();$('jiraSearchMoreBtn').hidden=true;$('jiraSearchRetryBtn').hidden=true;
@@ -37,12 +39,12 @@ window.QuickJiraSearch=(()=>{
   function countFilters(){const n=['jiraProject','jiraStatus','jiraType','jiraAssignee'].filter(id=>$(id).value.trim()).length;$('jiraFilterCount').textContent=n?String(n):'';}
   function changed(){if(savedQuery){$('jiraSearchState').textContent='Điều kiện đã thay đổi. Bấm Tìm kiếm để cập nhật kết quả.';$('jiraSearchState').classList.remove('is-error');$('jiraSearchMoreBtn').hidden=true;$('jiraSearchRetryBtn').hidden=true;lastRetry=null;}}
   function setOptions(id,values,label){const select=$(id),old=select.value;select.innerHTML=`<option value="">${label}</option>`+values.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');if(values.some(x=>x.id===old))select.value=old;}
-  function renderMode(){for(const value of ['search','filter'])$(value==='search'?'jiraSearchModeBtn':'jiraFilterModeBtn').setAttribute('aria-pressed',String(mode===value));$('jiraSearchForm').hidden=mode!=='search';$('jiraSavedForm').hidden=mode!=='filter';}
-  async function changeMode(value){if(busy||QuickJiraBusy.active||value===mode)return;mode=value;renderMode();items=[];savedQuery=null;next=0;more=false;lastRetry=null;renderItems();$('jiraSearchRetryBtn').hidden=true;$('jiraSearchCount').textContent=value==='filter'?'Công việc từ filter':'Kết quả tìm kiếm';$('jiraSearchScope').textContent='';$('jiraSearchState').textContent=value==='filter'?'Chọn filter Jira rồi bấm Xem công việc.':'Nhập từ khóa hoặc dùng bộ lọc rồi tìm kiếm.';resultPane.scrollTop=0;if(value==='filter'&&!filtersLoaded)await loadSavedFilters();}
+  function renderMode(){dialog.classList.toggle('jira-filter-mode',mode==='filter');for(const value of ['search','filter'])$(value==='search'?'jiraSearchModeBtn':'jiraFilterModeBtn').setAttribute('aria-pressed',String(mode===value));$('jiraSearchForm').hidden=mode!=='search';$('jiraSavedForm').hidden=mode!=='filter';}
+  async function changeMode(value){if(busy||QuickJiraBusy.active||value===mode)return;mode=value;renderMode();dialog.classList.remove('has-jira-results');items=[];savedQuery=null;next=0;more=false;lastRetry=null;renderItems();$('jiraSearchRetryBtn').hidden=true;$('jiraSearchCount').textContent=value==='filter'?'Công việc từ filter':'Kết quả tìm kiếm';$('jiraSearchScope').textContent='';$('jiraSearchState').textContent=value==='filter'?'Chọn filter Jira rồi bấm Xem công việc.':'Nhập từ khóa hoặc dùng bộ lọc rồi tìm kiếm.';resultPane.scrollTop=0;if(value==='filter'&&!filtersLoaded)await loadSavedFilters();}
   async function loadSavedFilters(){return run('Đang tải filter đã lưu trên Jira…',async token=>{
     $('jiraSavedRetryBtn').hidden=true;try{const data=await api('/api?'+new URLSearchParams({action:'jira-saved-filters',q:$('jiraSavedName').value.trim()}));if(token!==generation)return;
      const old=$('jiraSavedSelect').value;$('jiraSavedSelect').innerHTML='<option value="">Chọn filter</option>'+data.filters.map(f=>`<option value="${esc(f.id)}">${f.favourite?'★ ':''}${esc(f.name)}${f.owner?' · '+esc(f.owner):''}</option>`).join('');if(data.filters.some(f=>f.id===old))$('jiraSavedSelect').value=old;
-     filtersLoaded=true;$('jiraSavedState').textContent=[data.filters.length?'Chọn filter sở hữu, yêu thích hoặc được chia sẻ.':'Chưa có filter trong danh sách; thử tìm theo tên hoặc dùng ID.',data.limited?'Danh sách đã rút gọn; tìm tên cụ thể hơn.':'',...data.warnings].filter(Boolean).join(' ');$('jiraSavedRetryBtn').hidden=!data.warnings.length;
+     filtersLoaded=true;$('jiraSavedState').textContent=data.filters.length?'':'Chưa có filter phù hợp.';$('jiraSavedRetryBtn').hidden=!data.warnings.length;
     }catch(e){if(token===generation){$('jiraSavedState').textContent=e.message;$('jiraSavedRetryBtn').hidden=false;}}
   });}
   async function loadOptions(){return run('Đang tải bộ lọc Jira…',async token=>{
@@ -77,7 +79,7 @@ window.QuickJiraSearch=(()=>{
         const data=await api('/api?'+new URLSearchParams({action:params.mode==='filter'?'jira-filter-issues':'jira-search',...params,startAt:String(startAt)}));if(token!==generation)return;
         const firstNew=data.issues.find(x=>!items.some(old=>old.key===x.key));
         items=append?[...new Map([...items,...data.issues].map(x=>[x.key,x])).values()]:data.issues;savedQuery={...params};next=data.nextStartAt;more=data.hasMore;
-        if(data.revision)savedQuery.revision=data.revision;
+        if(data.revision)savedQuery.revision=data.revision;if(params.mode==='filter')compactFilter(true);dialog.classList.add('has-jira-results');
         const top=resultPane.scrollTop;renderItems();resultPane.scrollTop=top;
         $('jiraSearchCount').textContent=`${items.length} / ${data.total} công việc`;
         const labels=[params.project,params.q?`“${params.q}”`:''];$('jiraSearchScope').textContent=data.filter?`Filter: ${data.filter.name}`:labels.filter(Boolean).join(' · ')||'Theo bộ lọc đã chọn';
@@ -94,7 +96,7 @@ window.QuickJiraSearch=(()=>{
   }
   function clearDetail(){detailContext=null;detailStack=[];detailOrigin=null;detailRetry=null;
     $('jiraDetailCreateSubBtn').hidden=true;
-    window.QuickJiraActions?.clear();
+    window.QuickJiraActions?.clear();window.QuickJiraAttachments?.clear();
     $('jiraIssuePeekKey').textContent='';$('jiraIssuePeekTitle').textContent='';$('jiraIssuePeekTitle').removeAttribute('title');$('jiraIssueOpenLink').removeAttribute('href');
     for(const id of ['jiraIssuePeekInfo','jiraIssueDescription','jiraSubtaskList','jiraWorklogList'])$(id).replaceChildren();
     $('jiraDetailNotice').hidden=true;$('jiraDetailRetryBtn').hidden=true;$('jiraDetailLogBtn').hidden=true;$('jiraDetailBackBtn').hidden=true;$('jiraDetailParentBtn').hidden=true;
@@ -114,11 +116,11 @@ window.QuickJiraSearch=(()=>{
   function renderDetail(){
     const item=detailContext.issue;
     $('jiraDetailCreateSubBtn').hidden=item.issueType.subtask;
-    window.QuickJiraActions?.setIssue(item);
+    window.QuickJiraActions?.setIssue(item);window.QuickJiraAttachments?.setIssue(item);
     $('jiraIssuePeekKey').textContent=item.key;$('jiraIssuePeekTitle').textContent=item.summary;$('jiraIssuePeekTitle').title=item.summary;
     const fields=[['Dự án',item.project.name||item.project.key],['Loại',item.issueType.name],['Trạng thái',item.status.name],['Người phụ trách',item.assignee?.displayName||item.assignee?.username||'Chưa được giao'],['Ưu tiên',item.priority||'—'],['Cập nhật',dateLabel(item.updated)||'—']];
     $('jiraIssuePeekInfo').innerHTML=fields.map(([name,value])=>`<div><dt>${esc(name)}</dt><dd>${esc(value)}</dd></div>`).join('');
-    $('jiraIssueDescription').innerHTML=item.description.text?QuickJiraContent.render(item.description.text):'<p class="jira-search-note">Chưa có mô tả.</p>';
+    $('jiraIssueDescription').innerHTML=(item.descriptionHtml?QuickJiraContent.rendered(item.descriptionHtml):'')||(item.description.text?QuickJiraContent.render(item.description.text):'<p class="jira-search-note">Chưa có mô tả.</p>');
     $('jiraDescriptionNotice').hidden=!item.description.truncated;
     $('jiraDetailParentBtn').hidden=!item.parent;$('jiraDetailParentBtn').textContent=item.parent?`↳ ${item.parent}`:'';
     $('jiraDetailBackBtn').hidden=!detailStack.length;
@@ -162,8 +164,9 @@ window.QuickJiraSearch=(()=>{
     });
   }
   function selectDetailTab(name,load=true){if(!detailContext)return;detailContext.tab=name;detailMessage();
-    for(const tab of ['description','subtasks','worklogs','comments']){const active=tab===name;$('jiraTab-'+tab).setAttribute('aria-selected',String(active));$('jiraTab-'+tab).tabIndex=active?0:-1;$('jiraPanel-'+tab).hidden=!active;}
+    for(const tab of ['description','subtasks','worklogs','files','comments']){const active=tab===name;$('jiraTab-'+tab).setAttribute('aria-selected',String(active));$('jiraTab-'+tab).tabIndex=active?0:-1;$('jiraPanel-'+tab).hidden=!active;}
     $('jiraDetailBody').scrollTop=0;
+    if(name==='files'){if(load)void window.QuickJiraAttachments?.load();return;}
     if(name==='comments'){if(load)void window.QuickJiraActions?.loadComments();return;}
     if(name!=='description'){const part=detailContext.parts[name];if(load&&!part.loaded)void loadPart(name);else{renderPart(name);if(part.error)detailMessage(part.error,()=>loadPart(name));}}
   }

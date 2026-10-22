@@ -1,3 +1,17 @@
+# Kiểm thử V1.25.0
+
+- `npm test`: bộ logic/API kế thừa, filter/create/quick-update/logwork; bổ sung tệp, Estimate và đổi Reporter theo quyền.
+- `tests/jira-attachment-tests.js`: metadata chỉ trả dữ liệu cần thiết, issue/quyền/phiên, giới hạn và chuyển hướng, binary/headers, CSRF, payload, multipart, đọc lại ID/tên/size, replay và mất phản hồi không retry. Estimate encode/validation. Jira được giả lập qua fetch, router/session thật chạy HTTP local.
+- `tests/jira-create-tests.js`: bổ sung timetracking originalEstimate và readback seconds, Modify Reporter/candidate; giữ required/default/allowedValues/parent/schema/idempotency cũ.
+- `tests/browser/jira-attachments.cjs`: Chromium PC 1440×900, mobile390×844/320×683, ngang844×390: màu Jira RGB, bảng và loại HTML nguy hiểm; preview/download thật qua browser; chọn file/tải/unknown lock; Subtask chỉ loại con/khóa cha/dự án/giữ cha khi đổi loại; Reporter mặc định/đổi, Assign to me, Estimate và payload tạo.
+- `test:workspace-ui`: hồi quy filter và form tạo trên bốn viewport; kết quả filter thu gọn và vẫn giữ scroll/25+1/revision. Ảnh QA được xem, không đóng vào ZIP.
+- `test:search-ui`, `test:detail-ui`, `test:update-ui`: hồi quy giao diện các phần bị ảnh hưởng. Syntax, ID/asset/cache và ZIP được kiểm tra trước đóng gói.
+- Không có Jira công ty, Safari/iPhone vật lý, Redis production, GitHub/Vercel hoặc thao tác Jira thật. Browser và dữ liệu kiểm thử không nằm trong runtime dependencies.
+
+Sau deploy: xác nhận Jira bật attachment/Create Attachments, limit; thử tệp an toàn rồi đối chiếu Jira, mất quyền, file lớn mở Jira; mô tả macro/color/table; các trường create screen thực tế và parent; Estimate theo cấu hình giờ/ngày của Jira; Reporter có/không Modify Reporter; iPhone tải/mở tệp và xoay ngang. Hồi quy logwork/OT/lịch/nháp như bản trước.
+
+---
+
 # Kiểm thử V1.24.0 — Filter Jira & giao diện tạo
 
 - API filter: `tests/jira-filter-tests.js` PASS sở hữu/yêu thích/shared theo tên, fallback owner không gán nhầm filter người khác, dữ liệu chọn lọc/no-store, giữ nguyên JQL có ORDER BY trong literal, phân trang 25+1/revision đổi, quyền/phiên/method/validation và GET fallback. Không có thao tác ghi filter/issue.

@@ -1,4 +1,54 @@
-/* V1.24 — One workspace hierarchy; fixed actions and independent result scrolling. */
+/* V1.25 — Compact workspace and attachment views. */
+.jira-saved-select > select { flex:1; min-width:0; }
+#jiraSavedForm .jira-saved-select { margin:0; }
+#jiraSavedForm { padding:10px 14px; }
+#jiraFilterTools { margin-top:10px; }
+#jiraSavedState:empty { display:none; }
+#jiraSearchDialog.has-jira-results.jira-filter-mode #jiraRecentSection { display:none; }
+#jiraSearchDialog.has-jira-results #jiraSearchState:not(.is-error) { display:none; }
+#jiraSearchDialog.has-jira-results #jiraSearchScope { display:none; }
+#jiraSearchDialog > .jira-search-head { padding-top:10px; padding-bottom:10px; }
+.jira-files-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.jira-files-heading h3 { margin:0; font-size:16px; }
+.jira-file-upload { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; padding:12px; border:1px dashed var(--line); border-radius:12px; margin:12px 0; background:var(--bg); }
+.jira-file-upload label { grid-column:1/-1; font-size:13px; font-weight:650; }
+.jira-file-upload small { margin-left:8px; color:var(--muted); font-weight:400; }
+.jira-file-upload input { min-width:0; max-width:100%; width:100%; font-size:13px; color:var(--text); }
+.jira-file-upload button { width:auto; margin:0; font-size:13px; }
+.jira-file-card { display:grid; grid-template-columns:38px minmax(0,1fr); gap:12px; padding:14px 0; border-bottom:1px solid var(--line); }
+.jira-file-card strong { display:block; overflow-wrap:anywhere; font-size:14px; }
+.jira-file-card small { display:block; color:var(--muted); margin-top:5px; font-size:12px; }
+.jira-file-symbol { width:38px; height:42px; display:grid; place-items:center; border-radius:9px; color:var(--primary); background:var(--primary-soft); font-size:24px; }
+.jira-file-actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:6px; }
+.jira-file-actions :is(button,a) { width:auto; font-size:12px; padding:6px 0; margin:0; color:var(--primary); text-decoration:none; }
+.jira-file-preview { width:min(1040px,96vw); max-height:95dvh; }
+.jira-file-preview[open] { display:flex; flex-direction:column; }
+.jira-file-preview .jira-search-head { flex:none; }
+.jira-file-preview h2 { overflow-wrap:anywhere; font-size:15px; }
+.jira-file-image { min-height:0; overflow:auto; display:flex; justify-content:center; }
+.jira-file-image img { max-width:100%; max-height:75dvh; object-fit:contain; }
+.jira-file-preview p { margin:8px 16px; font-size:13px; }
+.jira-file-preview p:empty { display:none; }
+#jiraDetailTabs { overflow-x:auto; overscroll-behavior:contain; }
+#jiraDetailTabs button { flex:none; min-width:0; padding:12px 14px; white-space:nowrap; }
+.jira-content table { border-collapse:collapse; }
+.jira-content td,.jira-content th { padding:8px; border:1px solid var(--line); }
+.jira-content { overflow-x:auto; }
+.jira-preset-parent .jira-search-head p,.jira-preset-parent .jira-section-heading { display:none; }
+.jira-preset-parent .jira-create-scope { grid-template-columns:minmax(0,1fr); }
+.jira-preset-parent .jira-create-scope > div:first-child { display:none; }
+.jira-preset-parent #jiraCreateParentGroup > label,.jira-preset-parent #jiraCreateParentGroup .jira-action-find { display:none; }
+.jira-preset-parent #jiraCreateParentState { margin:0; font-size:13px; line-height:1.6; overflow-wrap:anywhere; }
+.jira-preset-parent :is(.jira-create-section,#jiraCreateParentGroup) { padding:12px 14px; }
+.jira-preset-parent #jiraCreateFields { padding-top:2px; }
+@media (max-width:899px) {
+ .jira-assign-me-label { display:none; }
+ .jira-assign-me { min-width:40px; min-height:40px; font-size:18px!important; }
+ #jiraSearchDialog > .jira-search-head { padding-top:8px; padding-bottom:8px; }
+ #jiraDetailTabs button { padding:11px 10px; font-size:12px; }
+ .jira-file-upload { grid-template-columns:minmax(0,1fr); }
+ .jira-file-upload button { justify-self:end; }
+}
 @keyframes qjl-jira-action-in { from { opacity:0; } to { opacity:1; } }
 :is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraIssuePeekDialog) { color-scheme:light; }
 html[data-theme=dark] :is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDialog,#jiraIssuePeekDialog) { color-scheme:dark; }

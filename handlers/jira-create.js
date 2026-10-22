@@ -2,7 +2,7 @@
 const {sendJson,readJson,assertSameOrigin,methodNotAllowed}=require('../lib/http');
 const {getSession,clearSessionCookie}=require('../lib/session');
 const create=require('../lib/jira-create');
-const reads={'jira-create-projects':(_,auth)=>create.projects(auth),'jira-create-types':create.types,'jira-create-meta':create.metadata,'jira-create-users':create.users,'jira-create-parents':create.parents};
+const reads={'jira-create-projects':(_,auth)=>create.projects(auth),'jira-create-types':create.types,'jira-create-meta':create.metadata,'jira-create-users':create.users,'jira-create-reporters':create.reporters,'jira-create-parents':create.parents};
 module.exports=async(req,res)=>{
  const write=req.query.action==='jira-create',method=write?'POST':'GET';if(req.method!==method)return methodNotAllowed(res,[method]);
  if(write&&!assertSameOrigin(req))return sendJson(res,403,{ok:false,error:'Nguồn yêu cầu không hợp lệ.'});

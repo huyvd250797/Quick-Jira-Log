@@ -13,7 +13,7 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
  let mode='',mutations=0,calls=[],created=new Map(),number=100;
  const types=[{id:'1',name:'Story',subtask:false},{id:'2',name:'Task',subtask:false},{id:'3',name:'Bug',subtask:false},{id:'5',name:'Sub-task',subtask:true}];
  const f=(fieldId,name,type,required=false,rest={})=>({fieldId,name,required,hasDefaultValue:false,operations:['set'],schema:{type},...rest});
- function fields(){const rows=[f('summary','Tiêu đề','string',true),f('description','Mô tả','string'),f('reporter','Người báo cáo','user',true),f('assignee','Người nhận','user',false,{hasDefaultValue:true}),f('priority','Ưu tiên','priority',false,{allowedValues:[{id:'1',name:'High'},{id:'2',name:'Low'}]}),f('customfield_12345','Sub-task Type','option',true,{allowedValues:[{id:mode==='changed'?'999':'10001',value:'Testing <img>'},{id:'10002',value:'Developing'},{id:'10003',value:'Disabled',disabled:true}]}),f('labels','Nhãn','array',false,{schema:{type:'array',items:'string'}}),f('customfield_9','Số','number'),f('duedate','Ngày hết hạn','date'),f('customfield_10','Lịch','datetime'),f('components','Thành phần','array',false,{schema:{type:'array',items:'component'},allowedValues:[{id:'7',name:'API'},{id:'8',name:'UI'}]})];
+ function fields(){const rows=[f('summary','Tiêu đề','string',true),f('description','Mô tả','string'),f('timetracking','Estimate','timetracking'),f('reporter','Người báo cáo','user',true),f('assignee','Người nhận','user',false,{hasDefaultValue:true}),f('priority','Ưu tiên','priority',false,{allowedValues:[{id:'1',name:'High'},{id:'2',name:'Low'}]}),f('customfield_12345','Sub-task Type','option',true,{allowedValues:[{id:mode==='changed'?'999':'10001',value:'Testing <img>'},{id:'10002',value:'Developing'},{id:'10003',value:'Disabled',disabled:true}]}),f('labels','Nhãn','array',false,{schema:{type:'array',items:'string'}}),f('customfield_9','Số','number'),f('duedate','Ngày hết hạn','date'),f('customfield_10','Lịch','datetime'),f('components','Thành phần','array',false,{schema:{type:'array',items:'component'},allowedValues:[{id:'7',name:'API'},{id:'8',name:'UI'}]})];
   if(mode==='complex'||mode==='complex-default')rows.push(f('customfield_99','Trường plugin','object',true,{hasDefaultValue:mode==='complex-default'}));
   if(mode==='paged')for(let i=100;i<151;i++)rows.push(f('customfield_'+i,'Text '+i,'string'));
   if(mode==='bad-meta')rows.push(f('../bad','Invalid','string',true));
@@ -30,7 +30,7 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
    return Response.json(mode==='missing-key'?{}:{key,id:String(number)},{status:201});
   }
   if(path==='/rest/api/2/project')return Response.json([{key:'CAL',name:'Dự án <script>'},{key:'OTHER',name:'Dự án khác'}]);
-  if(path==='/rest/api/2/mypermissions')return Response.json({permissions:{CREATE_ISSUES:{havePermission:mode!=='denied'},ASSIGN_ISSUES:{havePermission:mode!=='no-assign'}}});
+  if(path==='/rest/api/2/mypermissions')return Response.json({permissions:{CREATE_ISSUES:{havePermission:mode!=='denied'},ASSIGN_ISSUES:{havePermission:mode!=='no-assign'},MODIFY_REPORTER:{havePermission:mode==='modify-reporter'}}});
   if(path.startsWith('/rest/api/2/issue/createmeta/CAL/issuetypes')){
    if(mode==='legacy')return Response.json({}, {status:404});
    const typeRows=mode==='paged'?[...types,...Array.from({length:51},(_,i)=>({id:String(1000+i),name:'Type '+i,subtask:false}))]:types;
@@ -38,6 +38,7 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
    return Response.json({start,last:start+values.length>=rows.length,size:values.length,total:rows.length,values});
   }
   if(path==='/rest/api/2/issue/createmeta'){assert.equal(u.searchParams.get('projectKeys'),'CAL');return Response.json({projects:[{key:'CAL',issuetypes:types.map(t=>({...t,fields:Object.fromEntries(fields().map(r=>[r.fieldId,r]))}))}]});}
+  if(path==='/rest/api/2/user/search')return Response.json([{name:'alice',displayName:'Alice',active:true}]);
   if(path==='/rest/api/2/user/assignable/search'){assert.equal(u.searchParams.get('project'),'CAL');return Response.json([{name:'alice',displayName:'Alice',active:true,emailAddress:'private-email'},{name:'inactive',active:false}]);}
   if(path==='/rest/api/2/search'){
    assert(body.jql.includes('issuetype NOT IN subTaskIssueTypes()'));assert(body.jql.includes('project = "CAL"'));
@@ -45,7 +46,7 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
   }
   if(path.startsWith('/rest/api/2/issue/')){
    const key=path.split('/').at(-1);
-   if(created.has(key)){if(mode==='verify-denied')return Response.json({}, {status:403});const data=structuredClone(created.get(key));if(mode==='ignored-field')data.customfield_12345={id:'999'};return Response.json({key,fields:data});}
+   if(created.has(key)){if(mode==='verify-denied')return Response.json({}, {status:403});const data=structuredClone(created.get(key));if(data.timetracking)data.timetracking.originalEstimateSeconds=require('../lib/jira-create-fields').estimateSeconds(data.timetracking.originalEstimate);if(mode==='ignored-field')data.customfield_12345={id:'999'};return Response.json({key,fields:data});}
    return Response.json({key,fields:{summary:'Công việc cha',project:{key:key.startsWith('OTHER')?'OTHER':'CAL'},issuetype:{id:key==='CAL-5'?'5':'1',subtask:key==='CAL-5'}}});
   }
   throw Error('Unexpected '+path);
@@ -83,5 +84,6 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
  mode='';r=await request('jira-create',{},body(m),{origin:'https://evil.example'});assert.equal(r.status,403);r=await request('jira-create',{},'null');assert.equal(r.status,400);r=await request('jira-create',{},'{bad');assert.equal(r.status,400);r=await request('jira-create');assert.equal(r.status,405);
  r=await request('jira-create-meta',{project:'../x',type:'5'});assert.equal(r.status,400);r=await request('jira-create-types',{project:'CAL'},{ });assert.equal(r.status,405);r=await request('jira-create-projects',{},undefined,{cookie:''});assert.equal(r.status,401);
  mode='expired';r=await request('jira-create-projects');assert.equal(r.status,401);assert(r.headers.get('set-cookie'));
+ mode='modify-reporter';m=await meta();assert(m.canModifyReporter);p=body(m);p.fields.reporter='alice';p.fields.timetracking='2h 30m';r=await request('jira-create',{},p);assert.equal(r.data.outcome,'confirmed');assert.deepEqual(created.get(r.data.key).reporter,{name:'alice'});assert.deepEqual(created.get(r.data.key).timetracking,{originalEstimate:'2h 30m'});
  console.log('Jira create: dynamic IDs/fields, modern paging/legacy, parent/project/type, assignee/reporter, defaults/unsupported, validation/permissions/CSRF, verified writes, concurrent/replay/lost response passed');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=oldFetch;if(oldSecret===undefined)delete process.env.APP_SESSION_SECRET;else process.env.APP_SESSION_SECRET=oldSecret;if(server)await new Promise(r=>server.close(r));});

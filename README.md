@@ -1,3 +1,37 @@
+# Quick Jira Log V1.25.0 — Ảnh & tệp, Filter gọn & Subtask
+
+## Nội dung phiên bản
+
+- **Ảnh & tệp** trong chi tiết Story/Task/Bug/Subtask: liệt kê tên, kích thước, người tải; xem ảnh trong popup, tải xuống hoặc mở tệp trên Jira. Tải nhiều tệp (tối đa 10/lần) tuần tự; đọc lại danh sách để xác nhận từng tệp, thông báo kết quả. Không có chức năng xóa tệp trong bản này.
+- Chỉ hiển thị tải lên khi Jira bật attachment và tài khoản có **Create Attachments** tại issue. Backend đọc lại quyền/issue trước khi ghi. Theo quyền Jira hiện tại, không dùng tài khoản đặc quyền. Mất phản hồi không tự gửi lại; dừng các tệp còn lại, nêu số đã xác nhận và yêu cầu đối chiếu trước khi tải tiếp.
+- **Giới hạn 3 MiB/tệp** (hoặc thấp hơn nếu Jira giới hạn), kể cả ảnh; dùng JSON base64 dưới ngưỡng request của backend hiện tại. Không nén/thay đổi ảnh gốc. Tệp lớn hơn mở trên Jira để xem/tải và tải lên trực tiếp. Nội dung <=3 MiB được lấy qua endpoint xác thực của app, kiểm tra tệp thuộc đúng issue, không gửi cookie/password ra client hoặc sang host khác. Ảnh PNG/JPEG/GIF/WebP/AVIF có xem trước; SVG/HTML và loại khác chỉ tải hoặc mở Jira. Chuyển hướng ra ngoài Jira bị chặn trong proxy. Mở Jira dùng phiên trình duyệt Jira riêng nếu cần đăng nhập.
+- **Filter:** sau khi tải kết quả chỉ giữ một hàng chọn filter + tải lại + tìm filter. Bấm icon tìm để mở phần tên/ID khi cần. Bỏ đoạn giải thích dài và các thông báo thành công dư; ẩn mục Vừa xem trong danh sách filter đã có kết quả để ưu tiên không gian.
+- **Mô tả:** ưu tiên `renderedFields.description` do Jira render; bảo toàn màu chữ/nền, tiêu đề, đậm/nghiêng, danh sách, bảng, code và link an toàn. Lọc bỏ script/event/form/iframe/CSS không hỗ trợ. Không chèn HTML Jira thô. Nếu không có HTML, render wiki markup, gồm `{color:#de350b}...{color}`. Macro/plugin đặc thù và ảnh nhúng trong mô tả chưa tái tạo đầy đủ; xem ảnh qua tab Ảnh & tệp hoặc mở Jira.
+- **Tạo Subtask từ chi tiết:** giữ đúng issue cha đang xem, khóa dự án/cha, chỉ đưa ra loại Subtask hợp lệ. Đổi loại vẫn giữ cha. Tải metadata mới và kiểm tra cha cùng dự án trước ghi; không tạo con của một Subtask.
+- Thứ tự form ưu tiên **Summary → Sub-task Type → Reporter → Assignee → Estimate → Description**, rồi các trường Jira khác nếu có. Sub-task Type lấy đúng custom field/allowedValues từ create screen, không dùng Issue Type hay số lượng subtask để thay thế. Reporter mặc định current user; chỉ cho đổi khi có Modify Reporter và nhân sự hợp lệ. Assignee tìm/chọn hoặc **Assign to me** (mobile là icon người + check, có nhãn truy cập). Backend kiểm tra lại assignable trước tạo.
+- Estimate dùng `timetracking.originalEstimate`, hỗ trợ `w/d/h/m`, ví dụ `2h 30m`; không phải giờ đã log. Quy đổi kiểm chứng theo lịch 8h/ngày, 5 ngày/tuần của app hiện tại. Nếu cấu hình Jira khác, đối chiếu có thể trả đã tạo/chưa xác nhận thay vì báo thành công sai.
+- Chỉ gửi trường được create metadata cho phép. Nếu create screen không có một trong các trường mong muốn, cần quản trị Jira thêm vào screen; app không tự dựng field ID hoặc vượt cấu hình. Trường plugin bắt buộc chưa hỗ trợ vẫn chặn và nêu rõ.
+
+## Nâng cấp và kiểm tra
+
+1. Giải nén `Quick-Jira-Log_v1.25.0.zip`, mở `Quick-Jira-Log-V1.25.0`. Giữ biến môi trường cũ, đặc biệt `APP_SESSION_SECRET`. Không có dependency runtime, database hoặc migration mới.
+2. Node **24.x**: `npm ci`, `npm test`. Riêng API tệp: `npm run test:attachments`; browser: `npm run test:attachments-ui` và `npm run test:workspace-ui` (Playwright/Chromium chỉ dùng QA, có thể đặt `QJL_CHROMIUM_PATH`).
+3. Triển khai Vercel như bản trước: root chứa `api/`, Framework Other, Node24, không Build Command, giữ `vercel.json`. GitHub clone/fetch và tích hợp trước commit/push, không force push. Bản bàn giao chưa push/deploy.
+4. Sau deploy tải lại PWA, kiểm tra V1.25.0. Thử filter; mô tả có màu/bảng; tạo Subtask ở Story/Task/Bug rồi đối chiếu parent và sáu trường. Thử upload tệp thử, preview/download/thu quyền/quá giới hạn, logout và hồi quy lịch/logwork/OT. Xem TESTING.md cho bằng chứng và giới hạn.
+5. Có thể quay lại deployment trước; rollback app không xóa issue hay tệp đã tạo trên Jira. Không có dữ liệu app cần chuyển đổi. Store idempotency dùng cơ chế memory/Redis hiện có; memory không đảm bảo qua cold-start/nhiều instance. Tắt tự retry và bước đối chiếu vẫn cần thiết.
+
+API thêm: GET `jira-attachments`, GET `jira-attachment-content` (key/id/download), POST `jira-attachment-upload`; GET `jira-create-reporters`. Mọi API dùng session/no-store, POST kiểm tra same-origin. Không nhận URL tùy ý từ client. Không thay đổi luồng logwork, lịch hoặc WorklogPRO Overtime.
+
+## Phiên bản tiếp theo — đề xuất
+
+**V1.26.0 — Soạn mô tả Jira trực quan:** thanh định dạng đậm/nghiêng, tiêu đề, danh sách, bảng, màu chữ và xem trước khi tạo; giữ nội dung tương thích Jira wiki markup. Chưa triển khai, chờ Boss chọn.
+
+Gửi ZIP mới nhất để xây dựng bản tiếp theo. Phần dưới là lịch sử; hướng dẫn V1.25.0 ở trên được ưu tiên.
+
+---
+
+# Lịch sử V1.24.0
+
 # Quick Jira Log V1.24.0 — Filter Jira & giao diện tạo mới
 
 ## Nội dung phiên bản này
