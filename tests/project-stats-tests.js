@@ -1,0 +1,28 @@
+'use strict';
+const assert=require('node:assert/strict'),http=require('node:http');
+const api=require('../api'),{createSessionCookie}=require('../lib/session'),{aggregate}=require('../lib/project-stats');
+const original=global.fetch;let server,mode='',searchCalls=[],logCalls=[],writes=0;
+const issue=n=>({key:`CAL-${n}`,fields:{summary:n===1?'<img src=x>':'Công việc '+n,project:{key:'CAL'},issuetype:{subtask:n!==3}}});
+const log=(id,key='a',start='2026-10-22T08:00:00.000+0700',seconds=1800)=>({id:String(id),author:{key,name:key,displayName:key==='a'?'Thành viên A':'Thành viên B'},started:start,timeSpentSeconds:seconds,comment:'Mô tả'});
+(async()=>{process.env.APP_SESSION_SECRET='project-stats-secret-with-more-than-32-characters';delete process.env.WORKLOGPRO_OVERTIME_ATTRIBUTE_ID;
+ const cookie=createSessionCookie({mode:'basic',username:'boss',password:'fixture',me:{name:'boss'}}).split(';')[0];
+ global.fetch=async(url,options={})=>{const u=new URL(url),p=u.pathname,m=options.method||'GET';assert.equal(u.origin,'https://task.ascvn.com.vn');if(m!=='GET'&&p!=='/rest/api/2/search'){writes++;throw Error('WRITE FORBIDDEN');}
+  if(p==='/rest/api/2/search'){const body=m==='POST'?JSON.parse(options.body):Object.fromEntries(u.searchParams);assert.equal(body.jql,'project = "CAL" ORDER BY id ASC');assert(!body.jql.includes('worklogDate'));searchCalls.push(body);if(mode==='search-denied')return Response.json({}, {status:403});if(mode==='unauth')return Response.json({}, {status:401});const start=Number(body.startAt);if(mode==='empty')return Response.json({startAt:start,total:0,issues:[]});if(mode==='limit')return Response.json({startAt:start,total:5001,issues:Array.from({length:10},(_,n)=>issue(start+n+1))});return Response.json({startAt:mode==='wrong-page'?start+1:start,total:12,issues:Array.from({length:start===0?10:2},(_,n)=>issue(start+n+1))});}
+  const match=p.match(/issue\/CAL-(\d+)\/worklog/);if(match){const n=Number(match[1]),start=Number(u.searchParams.get('startAt'));logCalls.push([n,start]);if(mode==='denied'&&n===2)return Response.json({}, {status:403});let rows=n===1?[log(101),log(102),log(103,'b'),log(104,'a','2026-10-21T17:30:00.000Z'),log(105,'a','2026-10-20T17:00:00.000Z')]:n===2?[log(201)]:n===3?[log(301)]:[];
+   if(mode==='malformed'&&n===1)return Response.json({total:1,startAt:0});if(mode==='repeat'&&n===1)return Response.json({total:2,startAt:start,worklogs:[log(101)]});if(mode==='pages'&&n===1)return Response.json({total:2,startAt:start,worklogs:start?[log(102)]:[log(101)]});return Response.json({startAt:0,total:rows.length,worklogs:rows});}
+  if(p.endsWith('/attr'))return mode==='ot-denied'?Response.json({}, {status:403}):Response.json([{id:1,name:'Over Time?',type:'BOOL',enabled:true}]);
+  if(p==='/rest/com.deniz.jira.worklog/latest/worklog'){const id=u.searchParams.get('id');return Response.json({projects:[{issues:[{key:'CAL-1',workLogs:[{id,workLogAttributes:[{attrTypeId:1,attrValue:id==='103'?'yes':'no'}]}]}]}]});}
+  throw Error('Unexpected '+m+' '+p);
+ };
+ server=http.createServer((req,res)=>api(req,res));await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
+ const request=async(extra={},auth=true,method='GET')=>{const r=await original(base+'/api?'+new URLSearchParams({action:'project-stats',project:'CAL',from:'2026-10-22',to:'2026-10-22',...extra}),{method,headers:auth?{cookie}:{}});return {status:r.status,data:await r.json(),headers:r.headers};};
+ let a=await request(),b=await request({startAt:10});assert.equal(a.status,200);assert(a.data.hasMore);assert.equal(b.data.hasMore,false);assert.equal(a.data.items.length,6);assert.equal(a.headers.get('cache-control'),'no-store');const all=[...a.data.items,...b.data.items],r=aggregate([...all,...all]);assert.equal(r.seconds,10800);assert.equal(r.subtasks,2);assert.equal(r.people.length,2);assert.equal(r.people[0].seconds,9000);assert.equal(r.people[0].subtasks,2);assert.equal(r.people[1].subtasks,1);assert.equal(r.people[1].overtime,1800);assert.equal(r.people[0].issues.find(t=>t.key==='CAL-3').isSubtask,false);assert.equal(r.people.reduce((s,p)=>s+p.share,0),100);assert.equal(writes,0);
+ assert.equal((await request({},false)).status,401);assert.equal((await request({},true,'POST')).status,405);
+ for(const extra of [{project:'CAL" OR 1=1'},{from:'2026-02-30'},{to:'2027-10-22'},{startAt:-1},{startAt:5001}])assert.equal((await request(extra)).status,400);
+ mode='pages';logCalls=[];a=await request();assert(logCalls.some(([n,s])=>n===1&&s===1));assert.equal(a.data.warnings.length,0);
+ for(mode of ['denied','malformed','repeat']){a=await request();assert.equal(a.status,200);assert(a.data.warnings.length>0,mode);}
+ mode='ot-denied';a=await request();assert(a.data.items.every(i=>!i.overtimeKnown));assert.equal(aggregate(a.data.items).people.reduce((n,p)=>n+p.unknown,0),10800);
+ mode='empty';a=await request();assert.equal(a.data.total,0);assert.equal(a.data.hasMore,false);assert.equal(aggregate(a.data.items).people.length,0);mode='limit';a=await request({startAt:4990});assert(a.data.limited);assert(!a.data.hasMore);assert(a.data.warnings.some(x=>x.includes('5.000')));
+ mode='wrong-page';assert.equal((await request()).status,502);mode='search-denied';assert.equal((await request()).status,403);mode='unauth';a=await request();assert.equal(a.status,401);assert(a.headers.get('set-cookie'));
+ assert.equal(writes,0);console.log('Project statistics: auth, read-only scope, pages, date timezone, exact author/unique Subtasks, native OT, partial/error cases passed.');
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=original;if(server)await new Promise(r=>server.close(r));});

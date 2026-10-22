@@ -1,4 +1,40 @@
-# Quick Jira Log V1.29.0 — Ảnh trong trình soạn thảo
+# Quick Jira Log V1.30.0 — Thống kê dự án
+
+## Sử dụng chức năng mới
+
+1. Đăng nhập Jira như hiện tại. Trên PC bấm **Thống kê dự án** ở thanh công cụ; trên mobile bấm **Dự án** ở taskbar (4 mục trên cùng một hàng).
+2. Nhập/chọn mã dự án từ danh sách gợi ý. Nếu không tải được danh sách, vẫn có thể nhập mã trực tiếp.
+3. Chọn **Tháng**, **Tuần** hiện tại hoặc nhập khoảng ngày **Tùy chọn** (tối đa 93 ngày). Bấm **Xem thống kê**; đây cũng là nút tải lại dữ liệu mới nhất.
+4. Xem tổng giờ, số thành viên có log, số Subtask duy nhất và các thanh so sánh giờ theo thành viên. Lọc thành viên hoặc sắp xếp theo giờ, số Subtask, tên mà không gọi lại Jira. % tổng giờ luôn lấy mẫu số là tổng giờ dự án trong kỳ, không đổi theo bộ lọc thành viên. Chiều dài thanh so với người có giờ cao nhất; % được ghi rõ dưới thanh.
+5. Bấm thành viên để mở các công việc đã log; bấm công việc để xem từng worklog, ngày/giờ, mô tả, thời lượng và trạng thái OT. Màn hình thống kê chỉ đọc, không có sửa/xóa.
+
+### Quy tắc thống kê
+
+- Cộng chính xác `timeSpentSeconds` theo tác giả worklog (key/accountId/name), không theo Assignee hay người sửa sau cùng. Hiển thị giờ/phút sau khi cộng; không làm tròn từng worklog. Kỳ dựa trên ngày `started` quy đổi Asia/Ho_Chi_Minh, gồm cả hai ngày đầu/cuối; worklog qua nửa đêm tính toàn bộ theo ngày bắt đầu, không tự chia giờ qua ngày khác.
+- **Subtask đã log**: số issue có `issuetype.subtask=true` khác nhau theo người trong kỳ. Nhiều log hoặc nhiều block tách của cùng Subtask chỉ đếm một lần. A và B cùng log trên một Subtask thì mỗi người tính một; KPI dự án chỉ đếm một Subtask duy nhất. Không cộng số Subtask của các thành viên để tính KPI này. Không phải số Subtask được giao, đã hoàn thành hoặc custom Sub-task Type.
+- Tổng giờ gồm cả log trực tiếp trên Story/Task/Bug/các loại khác; chúng được ghi là **Công việc khác**, không cộng số Subtask. Không dùng aggregate timespent của cha để tránh cộng trùng giờ con.
+- Chỉ hiện người có worklog trong kỳ mà tài khoản đang đăng nhập được phép xem; không suy ra danh sách toàn bộ nhân sự/những người 0h từ vai trò dự án. Worklog hạn chế hiển thị hoặc issue ẩn có thể bị Jira bỏ khỏi kết quả: app luôn ghi phạm vi quyền xem, không tuyên bố là toàn bộ dữ liệu công ty.
+- OT đọc thuộc tính thật từ WorklogPRO qua luồng hiện có; không suy từ giờ trong/ngoài ca hoặc marker mô tả. Không đọc được thì ghi **Chưa rõ OT**; giờ đó vẫn nằm trong tổng giờ, không tự gán là giờ thường.
+
+### Độ đầy đủ và tốc độ
+
+- Quét mọi issue được phép xem của dự án theo `id ASC`, không lọc ứng viên bằng worklogDate/worklogAuthor hoặc Assignee. Đọc 10 issue mỗi lượt, tối đa 5 luồng đọc worklog; tiếp tục đọc các trang worklog đến đủ total. Tìm kiếm POST là truy vấn đọc; chỉ fallback GET khi Jira trả 403/404/405. Không có API ghi Jira trong chức năng này.
+- Tiến trình tải ở giữa màn hình, nền tối và khóa thao tác trong toàn bộ lượt quét; báo số công việc đã đọc. Nút xem không gửi trùng khi đang tải. Đổi tài khoản/đăng xuất xóa dữ liệu và vô hiệu kết quả cũ. Không lưu báo cáo/PII xuống localStorage/database; kết quả giữ trong bộ nhớ phiên mở, có thời điểm cập nhật. Mỗi lần bấm Xem thống kê truy vấn mới, không có cache báo cáo dùng chung giữa tài khoản.
+- Giới hạn 5.000 issue mỗi lần thống kê, 10.000 worklog/issue, thời gian đọc giới hạn theo lượt; OT xác minh tối đa 120 bản ghi mỗi lượt và có deadline. Nếu vượt giới hạn, thiếu/sai/lặp trang, lỗi quyền hay kết nối: ghi **Tạm tính — dữ liệu chưa đầy đủ**, giữ phần đã đọc và nêu issue/lỗi cần xử lý. Có thể bấm Xem thống kê để quét lại. OT chưa biết hiển thị riêng, không làm mất tổng giờ.
+- Đây là lượt đọc nhiều request, không phải snapshot giao dịch. App cảnh báo khi tổng số issue thay đổi hoặc lặp issue giữa các lượt; thay đổi đồng thời khác vẫn có thể xảy ra, cần tải lại/đối chiếu Jira khi chốt báo cáo. Không dùng giới hạn ngày để hứa thời gian tải cố định: dự án có nhiều issue/worklog sẽ tải lâu hơn.
+- Không thêm dependency runtime, database, biến môi trường hay migration. Giữ nguyên API ghi logwork, lịch, giờ làm việc, Overtime, editor ảnh và luồng Jira hiện có. API mới `GET /api?action=project-stats&project=CAL&from=2026-10-01&to=2026-10-31&startAt=0`; mỗi trang trả dữ liệu đã lọc ngày và trạng thái đọc, bắt buộc session.
+
+### Triển khai và kiểm tra
+
+Tiếp tục hướng dẫn cài đặt, APP_SESSION_SECRET, GitHub và Vercel ở các mục bên dưới. Runtime Node 24; `npm run test`, `npm run test:project-stats`; kiểm tra browser dùng `QJL_CHROMIUM_PATH=/path/to/chromium npm run test:project-stats-ui` với Playwright trong môi trường QA. Không đóng gói Chromium/Playwright hay node_modules vào source. Deploy bản mới theo kết nối GitHub hiện có hoặc import Vercel với cấu hình sẵn; chưa push/deploy trong lần bàn giao này. Không có migration/reset dữ liệu. Muốn quay lại: deploy lại source V1.29.0; dữ liệu Jira không bị chuyển đổi bởi báo cáo.
+
+Đã kiểm tra API qua router/session và Chromium với Jira giả lập trên PC/mobile/ngang, giao diện light/dark. Chưa xác minh với Jira công ty và Safari/iPhone thật; cần đối chiếu một dự án/kỳ có số liệu đã biết và quyền thực tế sau deploy.
+
+**Phiên bản kế tiếp đề xuất:** V1.31.0 — Phân tích Sub-task Type theo thành viên: từ một người mở phân bổ giờ theo trường custom Sub-task Type trên Jira, rồi xem các Subtask thuộc nhóm. Chưa xây dựng/chưa chốt.
+
+---
+
+## Tính năng kế thừa V1.29.0 — Ảnh trong trình soạn thảo
 
 ## Soạn mô tả có ảnh
 

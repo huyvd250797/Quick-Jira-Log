@@ -1,3 +1,22 @@
+# V1.30.0 — Kiểm tra thống kê dự án
+
+- `npm run test`: toàn bộ logic/API hồi quy và tests mới (đã chạy đạt).
+- `npm run test:project-stats`: router/session, read-only search, đọc trang issue/worklog, ngày +0700 và UTC qua ngày, người ghi khác assignee, shared Subtask, nhiều log dedupe, giờ công việc cha, xác minh OT thật/unknown, sai đầu vào/401/403/405, lỗi/thiếu/lặp trang (đã chạy đạt).
+- `QJL_CHROMIUM_PATH=/path/to/chromium npm run test:project-stats-ui`: frontend thật → API/router/session → mock Jira fetch; 1440×900, 390×844, 320×683, 844×390. Kiểm tra dự án/ngày, hai trang dự án, KPI/drilldown/lọc/sort, XSS escaped, CSP, loading khóa nền, partial và cleanup, light/dark/không tràn viền, taskbar4 cột (đã chạy đạt).
+- Các bài browser Jira/editor ảnh và calendar là kiểm tra hồi quy bổ sung, ghi kết quả chạy thực tế trong RELEASE_V1.30.0.md.
+- QA chạy ngoài source, không thêm dependency runtime. Không kiểm tra bằng tài khoản Jira công ty hoặc Safari/iPhone thật; không thay thế bước đối chiếu số liệu sau deploy.
+
+## Checklist đối chiếu Jira thật
+
+1. Chọn dự án và một ngày đã biết dữ liệu, xác nhận cùng phạm vi quyền xem/múi giờ; đối chiếu tổng giờ và mỗi tác giả, không dùng assignee.
+2. Một người log cùng Subtask nhiều lần/tách block vẫn đếm một; hai người dùng chung Subtask, tổng dự án vẫn chỉ một Subtask.
+3. Kiểm tra giờ trên Story/Task/Bug vào tổng nhưng không tăng số Subtask.
+4. OT thật có quyền đọc hiện đúng, thiếu quyền OT hiện unknown; thiếu issue/worklog báo phạm vi/partial, không suy ra 0h toàn dự án.
+5. Lặp lại sau sửa/xóa worklog trên Jira: Xem thống kê lấy mới. Dự án lớn hơn 5.000 issue phải báo tạm tính.
+6. Kiểm tra iPhone dọc/ngang, ô ngày/select không tràn, cuộn chỉ trong báo cáo; đợi loading xong mới tương tác.
+
+---
+
 # Kiểm thử V1.29.0
 
 - `test:images`: chữ ký raster/3 MiB/rỗng/giả SVG, image wiki/canVisual, local blob và attachment preview an toàn, bỏ tham chiếu chờ khỏi mô tả ban đầu, CSP không mở img host ngoài. Parent API test thêm scope Description cho loại mới bất kỳ, chỉ cho ghi Description.

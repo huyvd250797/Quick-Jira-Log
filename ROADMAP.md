@@ -16,9 +16,12 @@ Boss chọn mở rộng sang thao tác Jira trên mobile; logwork tiếp tục l
 | V1.27.0 | Sửa thông tin Subtask | Summary, custom Sub-task Type, Original Estimate, Description; xem trước/sau | Edit Issues/editmeta, updated/revision, PUT chỉ trường đổi, idempotency/readback | Logic/API và Chromium bốn viewport với Jira giả lập; cần xác nhận Jira công ty | Đã xây dựng source; chưa deploy |
 | V1.28.0 | Sửa Story/Task/Bug | Summary, Original Estimate, Description; editor và trước/sau | Edit Issues/editmeta, scope server, updated/revision, PUT trường đổi/readback | Logic/API và Chromium bốn viewport với Jira giả lập; cần xác nhận Jira công ty | Đã xây dựng source; chưa deploy |
 | V1.29.0 | Ảnh trong trình soạn thảo | Chọn/paste/chèn/cỡ ảnh, tải sau xác nhận; tạo mới rồi hoàn thiện mô tả; popup zoom | Blob draft, wiki refs, attachment/Description scope, quyền/updated/readback, phục hồi từng bước | API và Chromium bốn viewport/Jira giả lập, cần xác nhận Jira công ty/iPhone | Đã xây dựng source; chưa deploy |
-| V1.30.0 | Logwork từ mọi công việc | Chọn Subtask log từ chi tiết/tra cứu ngoài filter đang mở | Kiểm tra quyền và quy tắc giờ, form xác nhận hiện có | Log đúng issue/thời điểm, không trùng giờ | Đề xuất, chưa xây dựng |
+| V1.30.0 | Thống kê dự án | Giờ, Subtask, tỷ trọng theo thành viên; lọc kỳ và drilldown worklog | Project scan/read đủ trang, tác giả/múi giờ, OT, partial và session | API và Chromium PC/mobile/ngang với Jira giả lập; đối chiếu Jira công ty sau deploy | Đã xây dựng source; chưa deploy |
+| V1.31.0 | Phân tích Sub-task Type theo thành viên | Phân bổ giờ theo loại Subtask và mở các công việc thuộc nhóm | Trường custom Sub-task Type thực tế, metadata, drilldown | Nhóm đúng trường Jira; giờ khớp báo cáo thành viên | Đề xuất, chưa xây dựng/chưa chốt |
 
 V1.29 chuyển sang ảnh trong editor theo lựa chọn Boss; lịch sử thay đổi Jira vẫn là ý tưởng chưa xây dựng/chưa gán phiên bản mới.
+
+V1.30 chuyển sang Thống kê dự án theo lựa chọn Boss; các roadmap đề xuất trước đó không được tự triển khai.
 
 Roadmap hiện tại theo lựa chọn của Boss: V1.27 sửa Subtask, V1.28 mở rộng sửa Story/Task/Bug. Mẫu Subtask và tạo nhiều Subtask không nằm trong phạm vi.
 

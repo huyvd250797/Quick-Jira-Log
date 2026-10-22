@@ -1,3 +1,12 @@
+# V1.30.0 — Thống kê dự án
+
+- Thêm công cụ PC và mục Dự án trong taskbar mobile 4 cột; màn hình riêng cho dự án/tuần/tháng/ngày tùy chọn.
+- Tổng hợp giây theo tác giả worklog, đếm Subtask duy nhất theo người và toàn dự án, tỷ trọng giờ; gồm giờ công việc cha nhưng không đếm chúng như Subtask.
+- Biểu đồ thanh, lọc/sắp xếp tại chỗ, chi tiết thành viên → công việc → từng worklog; OT thật hoặc chưa xác định.
+- API đọc chuyên biệt: quét project/id ASC theo nhóm, đọc đủ trang worklog, giới hạn đồng thời/deadline; không dựa worklogDate/Author index; session/no-store, không ghi Jira.
+- Cảnh báo dữ liệu tạm tính/giới hạn/quyền/lỗi trang; giữ dữ liệu đã đọc, luôn ghi phạm vi quyền xem. Loading khóa nền xuyên suốt; dọn bộ nhớ khi đổi tài khoản/đăng xuất.
+- Thêm API/aggregation tests và browser PC/mobile/ngang/CSP/khóa nền/light-dark. Không sửa core scheduling, ghi worklog hay editor ảnh; không thêm runtime dependency/migration.
+
 # V1.29.0 — Ảnh trong trình soạn thảo
 
 - Chọn/paste/drop ảnh, chèn tại caret, cỡ ảnh, xóa/chèn lại vị trí và preview cục bộ; metadata ảnh Jira hiện có; codec giữ wiki ảnh.

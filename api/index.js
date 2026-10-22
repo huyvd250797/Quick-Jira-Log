@@ -2,6 +2,7 @@
 const { withJiraReadScope } = require('../lib/jira-read-scope');
 
 const handlers = Object.freeze({
+  'project-stats': require('../handlers/project-stats'),
   'login': require('../handlers/login'),
   'logout': require('../handlers/logout'),
   'status': require('../handlers/status'),
