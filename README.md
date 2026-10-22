@@ -1,3 +1,100 @@
+# Quick Jira Log V1.29.0 — Ảnh trong trình soạn thảo
+
+## Soạn mô tả có ảnh
+
+- Khi tạo công việc/Subtask hoặc sửa thông tin Story/Task/Bug/Subtask, mở **Ảnh**, chọn ảnh PNG/JPEG/GIF/WebP/AVIF. Có thể dán ảnh từ clipboard vào vùng Soạn thảo hoặc kéo tệp ảnh vào vị trí con trỏ trên PC. Trên mobile dùng Chọn ảnh từ bộ chọn tệp/Photos. HEIC/SVG chưa hỗ trợ; chọn bản JPEG khi cần.
+- Đặt con trỏ trước khi chọn hoặc bấm Chèn. Ảnh xuất hiện đúng vị trí trong mô tả; chữ trước/sau giữ nguyên. Chạm ảnh trong Soạn thảo để chọn cỡ 240/480/960px hoặc nguyên cỡ, hoặc Xóa vị trí ảnh. Muốn đổi vị trí: xóa vị trí cũ, đặt con trỏ mới rồi Chèn lại từ danh sách ảnh. Nhiều vị trí có thể dùng chung một ảnh, chỉ đính kèm một tệp.
+- Có thể chèn ảnh đính kèm hiện có của issue từ danh sách trong panel Ảnh. Cú pháp ảnh đơn giản `!filename!`, `!filename|width=480!` được giữ qua Soạn thảo/Wiki/Xem trước. Cú pháp nâng cao chưa hỗ trợ vẫn ở Wiki, không tự làm mất nội dung. Ảnh chưa tải/không hỗ trợ xem trực tiếp có placeholder hoặc đường mở Jira.
+- Chọn ảnh chỉ giữ File/blob trong bộ nhớ trình duyệt. Không tải Jira khi chọn, chèn, xem trước hoặc quay lại từ xác nhận. Chỉ tải các ảnh mới còn được tham chiếu trong mô tả khi bấm xác nhận lưu/tạo. Xóa vị trí trước xác nhận thì ảnh không dùng không được tải lên. Tối đa 10 ảnh trong bản nháp, 3 MiB/ảnh hoặc giới hạn Jira thấp hơn. Tệp chưa dùng vẫn chiếm một vị trí trong danh sách cho tới khi reset bản nháp.
+- Giữ nguyên byte ảnh, không nén hoặc chuyển định dạng. Tên đính kèm được tạo riêng `qjl-<mã ngẫu nhiên>.<đuôi>` để tránh trùng tên trong Jira wiki; tên tệp gốc vẫn hiện trong danh sách đang soạn. Bản nháp ảnh không lưu lâu dài trên thiết bị, không được khôi phục sau tải lại app/đăng xuất.
+
+## Xác nhận, tải ảnh và phục hồi lỗi
+
+**Sửa công việc đang có:** xem lại nội dung trước/sau cùng ảnh rồi xác nhận. App đọc lại metadata/updated trước tải, đính kèm tuần tự, đối chiếu lại các trường gốc và revision, rồi lưu thay đổi với updated mới. Nếu ngoài app sửa dữ liệu trong quá trình này, app dừng thay vì ghi đè; ảnh đã đính kèm vẫn ở Jira. Không tự xóa tệp đã tải khi hủy/xóa vị trí hoặc khi một bước sau lỗi.
+
+**Tạo công việc mới:** xác nhận tạo → tạo issue với phần mô tả chữ → tải ảnh → hoàn thiện Description chứa ảnh. Nếu mô tả chỉ có ảnh, phần mô tả ban đầu là “Ảnh đính kèm đang được bổ sung.”. Không ghi tham chiếu ảnh chưa tồn tại vào mô tả ban đầu. Cần quyền Create Issues, Create Attachments và Edit Issues/Description sau khi tạo; workflow hoặc edit screen có thể hạn chế bước cuối.
+
+Nếu bước ảnh/mô tả lỗi sau khi tạo, biên nhận ghi rõ issue đã tạo, có **Kiểm tra & tiếp tục ảnh** để hoàn thiện trên chính mã đó. Không gọi tạo issue lần nữa. Tệp đã xác nhận không tải lại. Khi mất phản hồi tải ảnh, đối chiếu tên ngẫu nhiên và size duy nhất trên danh sách Jira; nếu chưa chứng minh được thì yêu cầu Boss kiểm tra Jira trước khi thử phần còn thiếu. Nếu mất phản hồi ghi mô tả, đọc lại thấy đúng mô tả cuối thì xác nhận hoàn tất; nếu chưa rõ, không tự gửi lại.
+
+Giữ trang đang mở để tiếp tục ảnh. Đóng/mở form giữ bộ nhớ trong phiên; reset bản nháp, đổi context khiến form bị dọn, tải lại app hoặc đăng xuất sẽ mất File đang chờ. Khi đó đối chiếu issue/tệp trên Jira rồi chọn lại tệp thiếu; không tạo lại issue đã có. Nếu kết quả tạo issue chưa rõ và chưa có mã đáng tin cậy, app không tự tải ảnh vào một issue đoán được.
+
+## Xem ảnh lớn trong chi tiết
+
+- Bấm ảnh trong Description hoặc Xem ảnh ở tab tệp để mở popup.
+- Nút **+ / −**, thanh kéo **100–500%**, **Vừa khung**; PC dùng bánh xe và double click, kéo chuột để xem phần ảnh đang phóng. Mobile dùng pinch hai ngón, chạm hai lần và kéo ảnh. Khung ảnh chặn pan ra ngoài; đổi kích thước/xoay màn hình thì fit lại.
+- Đóng popup/mở ảnh khác đưa về vừa khung; không làm zoom hoặc kéo giao diện phía sau.
+- Ảnh lớn hơn giới hạn proxy hiện có dùng thumbnail nếu Jira có. Popup ghi rõ đang xem thumbnail; phóng to không tạo thêm độ nét, mở Jira để lấy ảnh gốc. Giới hạn proxy/bảo vệ phiên của các bản trước giữ nguyên.
+
+## Cài đặt, kiểm thử và triển khai
+
+Giải nén `Quick-Jira-Log_v1.29.0.zip`, dùng `Quick-Jira-Log-V1.29.0`. Node **24.x**: `npm ci`, `npm run test`. Không thêm dependency runtime, database, migration hoặc biến môi trường bắt buộc; giữ APP_SESSION_SECRET và cấu hình Vercel hiện tại. Cấu hình CSP thêm `blob:` chỉ ở img-src để preview ảnh cục bộ; script/connect vẫn cùng origin. Version/cache shell/manifest đổi 1.29.0. Hướng dẫn GitHub/Vercel đầy đủ nằm tiếp trong README. Source chưa push/deploy.
+
+Backend thêm GET/POST `jira-description-edit-options` / `jira-description-edit` để hoàn thiện Description sau tạo. Chỉ nhận trường Description, vẫn Edit Issues/editmeta, revision/updated, origin/session, idempotency và đọc lại sau ghi; không nhận sửa Summary/parent/type qua endpoint này. Tải tệp tiếp tục qua endpoint Jira attachment đã có; không thêm host hoặc kho lưu trữ ngoài.
+
+- `npm run test`: logic/API kế thừa, renderer/codec ảnh, chữ ký định dạng/giới hạn file, CSP và scope Description riêng.
+- `npm run test:images-ui`: Chromium bốn viewport 1440×900,390×844,320×683,844×390 với CSP Vercel. Frontend → session/router thật → mock Jira multipart/upload/PUT → readback; vị trí ảnh, cỡ, preview không ghi, Subtask/Story, mất phản hồi ảnh không trùng, tạo xong thiếu quyền ảnh/tiếp tục không tạo lại, mất phản hồi mô tả/đọc lại, paste ảnh, zoom/pan/pinch.
+- Hồi quy editor/tạo công việc, sửa công việc cha, đính kèm và chi tiết ảnh: `test:editor-ui`, `test:parent-edit-ui`, `test:attachments-ui`, `test:detail-fixes`.
+- Chưa kiểm chứng Jira công ty, Safari/iPhone vật lý, clipboard hệ điều hành thật, Redis thật hoặc deploy. Pinch/paste được mô phỏng trong Chromium. Sau deploy cần thử Photos iPhone, quyền Attach/Edit sau Create, Jira wiki/renderedFields và workflow công ty; kiểm tra lịch/logwork/OT tiếp tục như cũ.
+
+Rollback deployment không xóa issue, ảnh hay các cập nhật đã ghi Jira. Không có migration. Ảnh/nội dung bản nháp chỉ tồn tại trong bộ nhớ; không dựa vào rollback để phục hồi bản nháp.
+
+## Phiên bản kế tiếp — đề xuất chưa xây dựng
+
+**V1.30.0 — Logwork từ mọi công việc:** mở rộng logwork từ chi tiết/tra cứu Jira tới các Subtask được phép log, không phụ thuộc danh sách filter logwork đang mở; chọn thời điểm, xem lại và ghi theo ràng buộc giờ hiện hành. Chờ Boss chọn.
+
+---
+
+Lịch sử các bản trước; hướng dẫn/roadmap V1.29.0 ở trên được ưu tiên:
+
+# Quick Jira Log V1.28.0 — Sửa thông tin Story/Task/Bug
+
+## Cách sử dụng
+
+1. Mở Story, Task hoặc Bug từ kết quả tra cứu/filter Jira.
+2. Bấm **Cập nhật → Sửa thông tin Story/Task/Bug** (tên nút theo loại đang xem).
+3. Sửa **Summary**, **Estimate**, **Description** theo quyền và edit screen Jira của chính công việc đó. Những trường không được phép sửa bị khóa, có lý do và đường Mở Jira.
+4. Bấm **Xem lại thay đổi** để xem giá trị trước/sau; mô tả mới có xem trước định dạng. Quay lại giữ nội dung; chỉ **Lưu thay đổi** mới gửi Jira.
+5. Sau khi Jira ghi và app đọc lại xác nhận, có toast; chi tiết và thẻ trong danh sách đang mở cập nhật giá trị mới.
+
+Description dùng editor trực quan hiện có: đậm/nghiêng, màu, tiêu đề, danh sách, bảng, Soạn thảo/Wiki/Xem trước. Mô tả không sửa giữ nguyên chuỗi gốc khi chỉ thay trường khác. Macro nâng cao tiếp tục sửa trong Wiki; mô tả không phải chuỗi wiki hoặc dài quá 20.000 ký tự chỉ xem/mở Jira để sửa.
+
+Estimate là **Original Estimate**, dùng giờ/phút (`2h 30m`, `90m`, `0m`), giữ Remaining Estimate khi Jira trả về số hợp lệ. Không nhận đơn vị ngày/tuần hoặc số thập phân trong form sửa để tránh đoán cấu hình Jira. Không xóa Estimate về null; dùng 0m đặt bằng 0. Quyền/legacy time tracking/validator Jira vẫn quyết định có được ghi hay không.
+
+Đóng/mở lại form trong cùng chi tiết giữ phần đang sửa; Tải lại có bước xác nhận thay bằng dữ liệu mới. Đổi issue, tải lại chi tiết, tải lại app hoặc đăng xuất xóa bản sửa trong bộ nhớ. Không lưu draft vào thiết bị.
+
+## Phạm vi và tính chính xác
+
+- Hỗ trợ loại Jira có tên Story, Task, Bug (không phân biệt hoa/thường), có `subtask: false`; không hardcode issue type ID. Epic và các loại custom/đổi tên chưa được mở trong bản này. Subtask tiếp tục dùng luồng bốn trường của V1.27.0.
+- Công việc cha chỉ có ba trường trên; không hiện hoặc phụ thuộc trường Sub-task Type. Backend có endpoint riêng, không nhận ghi custom Sub-task Type, parent hay issuetype qua chức năng sửa công việc cha.
+- Dùng chung bộ xử lý quyền/metadata/validation với Subtask nhưng phân biệt scope phía server. Mỗi lần lưu đọc lại Edit Issues, editmeta, updated và revision; chỉ gửi trường thực sự đổi. Metadata/quyền/loại/updated thay đổi thì yêu cầu tải lại và xem lại trước khi gửi.
+- Sau PUT kiểm tra lại giá trị các trường đổi, issue type ID và quan hệ parent (kể cả công việc không có parent). Không đổi issue type, cha, Subtask con, luồng logwork/lịch/OT trong source này. Thông báo và automation Jira vẫn áp dụng bình thường.
+- Kiểm tra updated trước PUT không phải khóa giao dịch tuyệt đối; vẫn có cửa sổ thay đổi đồng thời giữa kiểm tra và ghi. Chỉ gửi trường thay đổi giúp giảm ghi đè dữ liệu khác.
+- Không tự retry PUT. Mất phản hồi hoặc chưa đối chiếu được không báo thành công và khóa lưu trong phiên theo tài khoản/mã issue. Mở Jira đối chiếu, rồi bấm Tôi đã kiểm tra trên Jira để tải dữ liệu mới. Khóa trong bộ nhớ mất khi tải lại app; sau lỗi chưa rõ luôn kiểm tra Jira trước khi gửi yêu cầu mới.
+- Dùng idempotency hiện có; production nhiều serverless instance nên giữ cấu hình Redis tùy chọn đã có. Không thêm lưu trữ hoặc biến môi trường bắt buộc.
+
+## Source và triển khai
+
+Giải nén `Quick-Jira-Log_v1.28.0.zip`, mở thư mục `Quick-Jira-Log-V1.28.0`. Node **24.x**; `npm ci`, `npm test`. Giữ cấu hình Vercel và APP_SESSION_SECRET hiện tại. Không thêm dependency runtime, database hoặc migration. Hướng dẫn GitHub/Vercel/cấu hình đầy đủ tiếp tục nằm trong README bên dưới. Bản này chỉ bàn giao source, chưa push/deploy.
+
+API mới: GET `/api?action=jira-parent-edit-options&key=CAL-2`; POST `/api?action=jira-parent-edit` nhận key, revision, expectedUpdated, requestId và values (`summary`, `estimate`, `description`). Session HttpOnly, kiểm tra origin, no-store, giới hạn body 96 KiB. API Subtask cũ giữ nguyên URL và phạm vi.
+
+Version, manifest và cache shell cập nhật 1.28.0. Sau deploy tải lại PWA và kiểm tra nhãn phiên bản. Có thể rollback deployment; rollback app không hoàn tác các giá trị đã sửa trên Jira. Dùng lịch sử Jira để đối chiếu khi cần khôi phục dữ liệu.
+
+## Kiểm thử và giới hạn
+
+- `npm test`: bộ logic/API kế thừa, Subtask và `tests/jira-parent-edit-tests.js` mới: cả Story/Task/Bug với ID khác nhau, whitelist, quyền, readonly, stale/schema/type conflict, parent, Estimate/remaining, replay/lost response/readback, CSRF/hết phiên và nội dung quá giới hạn.
+- `npm run test:parent-edit-ui`: Chromium PC1440×900, mobile390×844/320×683, ngang844×390. Frontend chạy qua router/session thật, mock Jira tại fetch; đọc/sửa/xem lại/giữ draft/xác nhận/đối chiếu, danh sách cập nhật, xung đột, mất phản hồi, khóa quyền và dark/light. Các viewport lần lượt thử Story, Task, Bug, Story.
+- `npm run test:subtask-edit-ui` và `npm run test:update-ui`: hồi quy sửa Subtask và các thao tác cập nhật nhanh cũ.
+- Chưa truy cập Jira công ty, Safari/iPhone vật lý, Redis thật hoặc deploy. Sau triển khai cần thử một Story/Task/Bug có quyền, kiểm tra dữ liệu thật, validator/edit screen/time tracking của công ty và hồi quy lịch/logwork/OT.
+
+## Phiên bản kế tiếp — đề xuất, chưa xây dựng
+
+**V1.29.0 — Lịch sử thay đổi Jira:** xem ai đã sửa, thời điểm và giá trị trước/sau trong chi tiết công việc; hỗ trợ tải thêm và lọc theo trường để đối chiếu các lần cập nhật. Chờ Boss chọn.
+
+---
+
+Lịch sử các bản trước; hướng dẫn/roadmap V1.28.0 ở trên được ưu tiên:
+
 # Quick Jira Log V1.27.0 — Sửa thông tin Subtask
 
 ## Chức năng và cách sử dụng

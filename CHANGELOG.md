@@ -1,3 +1,18 @@
+# V1.29.0 — Ảnh trong trình soạn thảo
+
+- Chọn/paste/drop ảnh, chèn tại caret, cỡ ảnh, xóa/chèn lại vị trí và preview cục bộ; metadata ảnh Jira hiện có; codec giữ wiki ảnh.
+- Xác nhận rồi tải ảnh; tạo mới ba bước tạo issue/tải/hoàn thiện Description, biên nhận tiếp tục trên issue đã tạo, không tạo lại khi phần ảnh lỗi.
+- Đối chiếu ảnh chưa rõ kết quả, không tự retry mutation; giữ dấu vết ảnh đã tải. Scope Description backend riêng có quyền/metadata/revision/readback.
+- Popup ảnh zoom 100–500%, nút/slider/wheel/pinch/pan/fit. CSP img-src thêm blob cho preview, giới hạn proxy giữ nguyên.
+- API/Chromium bốn viewport với Jira giả lập và hồi quy các luồng liên quan. Không đổi luồng lịch/logwork/OT.
+
+# V1.28.0 — Sửa thông tin Story/Task/Bug
+
+- Mở form Summary/Original Estimate/Description trong Cập nhật cho Story/Task/Bug; editor trực quan, xem lại trước/sau và xác nhận.
+- Dùng chung validation với Subtask theo scope server, endpoint riêng; không gọi custom field Sub-task Type cho công việc cha.
+- Quyền/editmeta/updated/revision kiểm tra trước PUT; chỉ gửi trường đổi; đối chiếu type/parent và dữ liệu sau ghi, giữ khóa khi kết quả chưa rõ.
+- Bổ sung test API và Chromium xuyên router/session/Jira giả lập; hồi quy Subtask/cập nhật nhanh; giữ luồng lịch/logwork/OT.
+
 # V1.27.0 — Sửa thông tin Subtask
 
 - Sửa Summary, custom Sub-task Type, Original Estimate và Description theo edit metadata/quyền Jira; editor trực quan, giữ mô tả không sửa.

@@ -117,25 +117,28 @@ window.QuickJiraCreate=(()=>{
   if(ctx.projectQueryDirty){errorInfo('Chọn dự án trong gợi ý, hoặc xóa nội dung tìm dự án để dùng dự án đang chọn.');return;}
   try{if(ctx.project!==$('jiraCreateProject').value.trim().toUpperCase()||ctx.meta.type.id!==$('jiraCreateType').value)throw Error('Dự án hoặc loại đã đổi. Hãy tải lại form.');if(ctx.meta.type.subtask&&!ctx.parent)throw Error('Hãy tìm và chọn công việc cha.');
    window.QuickJiraEditor?.flush();const {fields,labels}=values();if(!fields.summary?.trim())throw Error('Cần nhập tiêu đề công việc.');
+   ctx.imageBatch=window.QuickJiraEditor?.batch($('jcf-description'))||[];ctx.fullDescription=fields.description||'';
    pending={project:ctx.project,type:ctx.meta.type.id,parent:ctx.meta.type.subtask?ctx.parent.key:'',revision:ctx.meta.revision,fields,requestId:crypto.randomUUID()};
+   if(ctx.imageBatch.length)pending.fields={...fields,description:QuickJiraEditorImages.withoutPending(ctx.fullDescription,ctx.imageBatch)};
    const lines=[['Dự án',ctx.project],['Loại',ctx.meta.type.name],...(pending.parent?[['Công việc cha',pending.parent]]:[]),...labels];
-   $('jiraCreatePreview').innerHTML='<dl>'+lines.map(([label,value])=>`<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('')+'</dl>'+(fields.description&&window.QuickJiraContent?'<section class="jira-create-description-preview"><h3>Xem trước mô tả</h3><div class="jira-content">'+QuickJiraContent.render(fields.description)+'</div></section>':'');
+   $('jiraCreatePreview').innerHTML='<dl>'+lines.map(([label,value])=>`<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('')+'</dl>'+(fields.description&&window.QuickJiraContent?'<section class="jira-create-description-preview"><h3>Xem trước mô tả</h3><div class="jira-content">'+QuickJiraEditor.render($('jcf-description'),fields.description)+'</div></section>':'');
    confirmation.showModal();$('jiraCreateCancelBtn').focus({preventScroll:true});
   }catch(e){errorInfo(e.message);}
  }
  function receipt(result){ctx.receipt=result;$('jiraCreateContent').hidden=true;$('jiraCreateReceipt').hidden=false;$('jiraCreateReceiptText').textContent=result.message;$('jiraCreateFooter').hidden=true;
   const valid=/^[A-Z][A-Z0-9_]*-\d+$/.test(result.key||'');$('jiraCreateOpenBtn').hidden=!valid;$('jiraCreateReceiptLink').hidden=!valid;if(valid)$('jiraCreateReceiptLink').href='https://task.ascvn.com.vn/browse/'+encodeURIComponent(result.key);
-  $('jiraCreateCheckedBtn').hidden=result.outcome==='confirmed';$('jiraCreateAnotherBtn').hidden=result.outcome!=='confirmed';info('');
+  $('jiraCreateCheckedBtn').hidden=result.outcome==='confirmed';$('jiraCreateAnotherBtn').hidden=result.outcome!=='confirmed';const incomplete=ctx.imageJob&&!ctx.imageJob.done;$('jiraCreateImagesRetryBtn').hidden=!incomplete;$('jiraCreateImagesCheckBtn').hidden=!(incomplete&&(ctx.imageJob.finalizeUnknown||ctx.imageJob.batch.some(i=>i.status==='unknown')));info('');
  }
  async function submit(){if(!pending||!ctx||ctx.receipt||busy||QuickJiraBusy.active)return;const body=pending,current=ctx;pending=null;confirmation.close();let openKey='';
   await run('Đang tạo công việc và đối chiếu Jira…',async captured=>{try{
    const data=await api('/api?action=jira-create',{method:'POST',body:JSON.stringify(body)});if(ctx!==captured)return;
-   if(['confirmed','unknown','accepted_unverified'].includes(data.outcome)){receipt(data);showToast(data.message);if(data.outcome==='confirmed')openKey=data.key;}
+   if(['confirmed','unknown','accepted_unverified'].includes(data.outcome)){if(data.outcome==='confirmed'&&captured.imageBatch?.length){captured.imageJob={key:data.key,batch:captured.imageBatch,description:captured.fullDescription,initialDescription:body.fields.description.trim(),requestId:crypto.randomUUID()};try{await QuickJiraEditorImages.finishCreated(captured.imageJob);if(ctx!==captured)return;data.message='Đã tạo '+data.key+', đính kèm ảnh và hoàn thiện mô tả.';}catch(e){if(ctx===captured)receipt({...data,message:'Đã tạo '+data.key+'. '+e.message});return;}}receipt(data);showToast(data.message);if(data.outcome==='confirmed')openKey=data.key;}
    else errorInfo(data.message||'Jira từ chối tạo. Kiểm tra lại form.');
   }catch(e){if(ctx!==captured)return;const uncertain=e.code==='RESULT_UNKNOWN'||e.code!=='NOT_SENT'&&(!e.status||e.status>=500);if(uncertain)receipt({outcome:'unknown',message:'Chưa xác định kết quả gửi. Kiểm tra Jira trước khi tạo yêu cầu mới.'});else errorInfo(e.message+(e.status===409?' Bấm tải lại form để cập nhật cấu hình.':''));}});
   if(ctx===current&&openKey){dialog.close();await window.QuickJiraSearch?.openCreated(openKey);}
  }
  async function open({parent=null}={}){if(!user()||busy||QuickJiraBusy.active)return;
+  if(parent&&ctx?.imageJob&&!ctx.imageJob.done&&!window.confirm('Công việc '+ctx.imageJob.key+' đã tạo nhưng còn ảnh chưa hoàn tất. Bỏ phần ảnh đang chờ để tạo Subtask khác?'))return;
   if(parent&&ctx&&!ctx.receipt&&ctx.meta&&!window.confirm('Thay bản nháp đang nhập bằng form Subtask cho '+parent.key+'?'))return;
   if(ctx?.owner!==user())reset();
   if(ctx?.receipt&&parent){if(ctx.receipt.outcome!=='confirmed'&&!window.confirm('Lần tạo trước chưa xác định đầy đủ kết quả. Boss đã kiểm tra Jira và muốn mở form Subtask mới?'))return;reset();}
@@ -145,7 +148,7 @@ window.QuickJiraCreate=(()=>{
   if(!dialog.open)dialog.showModal();$('jiraCreateCloseBtn').focus({preventScroll:true});
   if(fresh){if(parent)await loadSubtaskContext();else await loadProjects();}
  }
- function newDraft(){if(busy||QuickJiraBusy.active)return;const exists=ctx?.meta&&!ctx.receipt;if(exists&&!window.confirm('Xóa thông tin trong bản nháp này?'))return;reset();void open();}
+ function newDraft(){if(busy||QuickJiraBusy.active)return;const exists=ctx?.meta&&!ctx.receipt||ctx?.imageJob&&!ctx.imageJob.done;if(exists&&!window.confirm('Xóa thông tin trong bản nháp này?'))return;reset();void open();}
  $('jiraCreateBtn').onclick=()=>open();$('jiraCreateCloseBtn').onclick=()=>dialog.close();$('jiraCreateProjectBtn').onclick=loadTypes;$('jiraCreateProjectsRetryBtn').onclick=loadProjects;$('jiraCreateMetaRetryBtn').onclick=()=>ctx?.presetParent?loadSubtaskContext($('jiraCreateType').value):loadMeta();$('jiraCreateType').onchange=loadMeta;
  $('jiraCreateProjectSelect').onchange=()=>{if(ctx?.presetParent)return;$('jiraCreateProject').value=$('jiraCreateProjectSelect').value;return loadTypes();};
  $('jiraCreateProjectQuery').addEventListener('input',suggestProjects);
@@ -161,5 +164,7 @@ window.QuickJiraCreate=(()=>{
  $('jiraCreateAnotherBtn').onclick=newDraft;$('jiraCreateOpenBtn').onclick=()=>{const key=ctx?.receipt?.key;if(key){dialog.close();void window.QuickJiraSearch?.openCreated(key);}};
  dialog.addEventListener('close',()=>{if(source?.isConnected)source.focus({preventScroll:true});});
  for(const d of [dialog,confirmation]){d.addEventListener('keydown',e=>e.stopPropagation());d.addEventListener('cancel',e=>{if(busy||QuickJiraBusy.active)e.preventDefault();});}
+ async function resumeImages(checked=false){if(!ctx?.imageJob||busy||QuickJiraBusy.active)return;if(checked&&!window.confirm('Boss đã kiểm tra công việc và tệp trên Jira? Chỉ thử lại ảnh còn thiếu và mô tả chưa lưu.'))return;let key='';await run('Đang hoàn thiện ảnh và mô tả…',async c=>{try{if(checked){await QuickJiraEditorImages.reconcile(c.imageJob.batch,c.imageJob.key,{retryMissing:true});c.imageJob.finalizeUnknown=false;c.imageJob.requestId=crypto.randomUUID();}await QuickJiraEditorImages.finishCreated(c.imageJob);if(ctx!==c)return;receipt({outcome:'confirmed',key:c.imageJob.key,message:'Đã hoàn thiện ảnh và mô tả '+c.imageJob.key+'.'});key=c.imageJob.key;showToast('Đã hoàn thiện ảnh và mô tả.');}catch(e){if(ctx===c)receipt({outcome:'confirmed',key:c.imageJob.key,message:'Công việc đã tạo. '+e.message});}});if(key){dialog.close();await window.QuickJiraSearch?.openCreated(key);}}
+ $('jiraCreateImagesRetryBtn').onclick=()=>resumeImages();$('jiraCreateImagesCheckBtn').onclick=()=>resumeImages(true);
  return {open,reset};
 })();

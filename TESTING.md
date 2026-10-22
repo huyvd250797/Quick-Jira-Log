@@ -1,3 +1,17 @@
+# Kiểm thử V1.29.0
+
+- `test:images`: chữ ký raster/3 MiB/rỗng/giả SVG, image wiki/canVisual, local blob và attachment preview an toàn, bỏ tham chiếu chờ khỏi mô tả ban đầu, CSP không mở img host ngoài. Parent API test thêm scope Description cho loại mới bất kỳ, chỉ cho ghi Description.
+- `test:images-ui`: bốn viewport Chromium chạy CSP Vercel, API/session thật tới mock Jira. Ảnh tại caret/đổi cỡ/preview không ghi, sửa Story/Subtask, upload mất phản hồi nhưng có trên Jira đối chiếu không trùng; tạo xong thiếu quyền đính kèm rồi tiếp tục chỉ upload/PUT, mất phản hồi PUT được đọc lại, paste ảnh mô phỏng, popup zoom/slider/pan/pinch và khung không tràn.
+- `npm run test`, `test:editor-ui`, `test:parent-edit-ui`, `test:attachments-ui`, `test:detail-fixes` hồi quy. Syntax/JSON/assets/version/ZIP kiểm tra trước bàn giao. QA screenshots nội bộ không đóng source.
+- Chưa chạy Jira công ty/Safari/iPhone vật lý/clipboard OS thật/Redis thật/deploy; xem checklist trong RELEASE_V1.29.0.md.
+
+# Kiểm thử V1.28.0
+
+- `test:parent-edit`: cả Story/Task/Bug với ID Jira khác nhau; đúng ba trường, không phụ thuộc discovery Sub-task Type, không nhận subtype/parent/issuetype; quyền/Editmeta/readonly, estimate/remaining, parent có/không, stale/type/schema conflict, CSRF, replay/lost response, readback mismatch, unsupported type/ADF/độ dài, hết phiên.
+- `test:parent-edit-ui`: bốn viewport Chromium, frontend → session/router thật → mock Jira editmeta/PUT → đọc lại. Không thay đổi không gửi; sửa Summary giữ nguyên wiki; trước/sau, quay lại/đóng giữ nháp, ba trường/preview, toast + detail/card, xung đột trước gửi/tải lại, chưa rõ kết quả khóa qua đóng mở và kiểm tra thủ công, quyền bị thu và dark/light/không tràn. Story/Task/Bug được phân bổ trong bốn viewport.
+- `npm test`, `test:subtask-edit-ui`, `test:update-ui` hồi quy logic/API kế thừa và UI hai luồng liên quan. Syntax/JSON/version/HTML asset/ZIP kiểm tra trước bàn giao. QA screenshots nội bộ không đóng source.
+- Chưa kiểm chứng Jira công ty/Safari/iPhone vật lý/Redis thật/deploy; xem RELEASE_V1.28.0.md và checklist sau triển khai.
+
 # Kiểm thử V1.27.0
 
 - `test:subtask-edit`: quyền Edit Issues, editmeta/operations, custom ID và allowedValues, không nhận parent/issuetype, Estimate phút và giữ remaining, required/độ dài/ký tự, xóa mô tả/type optional/0m, CSRF, updated/schema conflict, quyền bị thu, replay, mất phản hồi và đọc lại không khớp, hết phiên.

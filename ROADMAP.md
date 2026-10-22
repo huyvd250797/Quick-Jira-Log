@@ -14,9 +14,13 @@ Boss chọn mở rộng sang thao tác Jira trên mobile; logwork tiếp tục l
 | V1.26.0 | Soạn mô tả Jira trực quan | Thanh định dạng, bảng/danh sách/màu, xem trước trước tạo | Tương thích Jira wiki, giữ draft và kiểm tra nội dung | Định dạng ghi/đọc lại đúng Jira, thao tác gọn trên mobile | Đã xây dựng source V1.26.0, kiểm thử Jira giả lập; chưa deploy |
 
 | V1.27.0 | Sửa thông tin Subtask | Summary, custom Sub-task Type, Original Estimate, Description; xem trước/sau | Edit Issues/editmeta, updated/revision, PUT chỉ trường đổi, idempotency/readback | Logic/API và Chromium bốn viewport với Jira giả lập; cần xác nhận Jira công ty | Đã xây dựng source; chưa deploy |
-| V1.28.0 | Sửa Story/Task/Bug | Summary, Estimate, Description của công việc cha; xác nhận trước lưu | Kiểm tra metadata/quyền theo issue, đối chiếu sau ghi | Lưu đúng trường theo loại và quyền thực tế | Đề xuất, chưa xây dựng |
+| V1.28.0 | Sửa Story/Task/Bug | Summary, Original Estimate, Description; editor và trước/sau | Edit Issues/editmeta, scope server, updated/revision, PUT trường đổi/readback | Logic/API và Chromium bốn viewport với Jira giả lập; cần xác nhận Jira công ty | Đã xây dựng source; chưa deploy |
+| V1.29.0 | Ảnh trong trình soạn thảo | Chọn/paste/chèn/cỡ ảnh, tải sau xác nhận; tạo mới rồi hoàn thiện mô tả; popup zoom | Blob draft, wiki refs, attachment/Description scope, quyền/updated/readback, phục hồi từng bước | API và Chromium bốn viewport/Jira giả lập, cần xác nhận Jira công ty/iPhone | Đã xây dựng source; chưa deploy |
+| V1.30.0 | Logwork từ mọi công việc | Chọn Subtask log từ chi tiết/tra cứu ngoài filter đang mở | Kiểm tra quyền và quy tắc giờ, form xác nhận hiện có | Log đúng issue/thời điểm, không trùng giờ | Đề xuất, chưa xây dựng |
 
-Roadmap hiện tại theo lựa chọn mới của Boss: V1.27 sửa Subtask. Mẫu Subtask và tạo nhiều Subtask không nằm trong phạm vi.
+V1.29 chuyển sang ảnh trong editor theo lựa chọn Boss; lịch sử thay đổi Jira vẫn là ý tưởng chưa xây dựng/chưa gán phiên bản mới.
+
+Roadmap hiện tại theo lựa chọn của Boss: V1.27 sửa Subtask, V1.28 mở rộng sửa Story/Task/Bug. Mẫu Subtask và tạo nhiều Subtask không nằm trong phạm vi.
 
 ## Lịch sử các bản logwork đã xây dựng
 
