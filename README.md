@@ -1,4 +1,56 @@
-# Quick Jira Log V1.22.0 — Cập nhật nhanh công việc Jira
+# Quick Jira Log V1.23.0 — Tạo công việc Jira
+
+## Chức năng mới và cách dùng
+
+1. Mở **Tra cứu Jira → ＋ Tạo**. Chọn hoặc nhập mã dự án, bấm **Tải loại công việc**, chọn loại mà Jira cho phép (Story, Task, Bug, Subtask hoặc loại cấu hình riêng). Danh sách dự án là các dự án nhìn thấy được; quyền Create Issues kiểm tra khi chọn. Danh sách giới hạn 1.000 dự án, vẫn cho nhập mã trực tiếp.
+2. App lấy trường tạo theo đúng dự án/loại, gồm ID thực tế của trường tùy chỉnh như **Sub-task Type**. Nhập tiêu đề, mô tả, ưu tiên và các trường xuất hiện; dấu * chỉ trường bắt buộc. Không dùng Issue Type thay cho Sub-task Type.
+3. Với Subtask: tìm cha theo mã/nội dung, chọn từ kết quả cùng dự án; server đọc lại và không nhận một Subtask làm cha. Có thể bấm **＋ Subtask** ở chi tiết một công việc cha để mở form, chọn sẵn cha sau khi kiểm tra. Nếu dự án có nhiều loại Subtask thì cần chọn loại phù hợp.
+4. Người phụ trách tìm theo dự án, chọn trong tối đa 50 người có thể nhận việc. Server kiểm tra lại ngay trước khi tạo; để trống dùng mặc định Jira nếu có. Người báo cáo, nếu có trên form, luôn là tài khoản đang đăng nhập; chưa hỗ trợ đổi reporter.
+5. Bấm **Xem lại trước khi tạo → Xác nhận tạo**. Hủy bước xác nhận không ghi Jira. App đọc lại quyền và cấu hình; nếu metadata đổi, cần tải lại form và kiểm tra lựa chọn. Sau khi Jira tạo, app đọc lại các trường đã gửi để đối chiếu, rồi mở chi tiết công việc khi xác nhận được.
+
+### Trường hỗ trợ và giới hạn
+
+- Hỗ trợ văn bản ngắn, mô tả nhiều dòng (Jira wiki dạng văn bản), số, ngày, ngày giờ, Có/Không, chọn một/chọn nhiều theo ID, nhãn, assignee và reporter hiện tại. Trường chọn cần có allowedValues từ Jira. Tiêu đề tối đa 255 ký tự, textarea 20.000, nhãn tối đa 100; các trường chọn dùng danh sách Jira trả về.
+- Trường plugin phức tạp, cascading select, rich editor riêng, user picker tùy chỉnh hoặc kiểu chưa có bộ xử lý sẽ được ghi rõ là chưa hỗ trợ. Nếu trường đó bắt buộc và không có mặc định, app chặn tạo và nêu tên trường để mở form Jira gốc. Trường có mặc định để trống được bỏ khỏi payload để Jira tự áp dụng; app không tự đoán giá trị mặc định.
+- Đọc metadata bằng API phân trang Jira Server/Data Center; chỉ fallback API createmeta cũ khi endpoint mới trả 404/405/501, giữ nguyên tài khoản và quyền. Tải đủ trang trước khi cho tạo; tối đa 500 trường/loại metadata cho mỗi danh sách, không âm thầm bỏ trường bắt buộc. Validator/plugin Jira vẫn có thể từ chối ngoài thông tin metadata; app hiển thị lỗi rút gọn.
+- Chưa tạo đính kèm, sửa description của issue đã có, bulk create, ép trạng thái ban đầu hoặc thay đổi workflow. Không tự log giờ hoặc chuyển Done sau khi tạo. Subtask mới muốn log vẫn cần đáp ứng bộ lọc/ràng buộc logwork của app; tải lại danh sách Subtask để cập nhật ứng viên.
+
+### Bản nháp và kết quả gửi
+
+- Đóng form giữ bản nháp trong bộ nhớ của trang cho cùng tài khoản; mở **＋ Tạo** để tiếp tục. Đăng xuất/tải lại trang mất nháp. Đổi dự án/loại hoặc tải lại form sẽ xóa dữ liệu nhập theo schema cũ; Xóa bản nháp hỏi xác nhận. Mở shortcut Subtask khi đang có nháp cũng hỏi trước khi thay nháp. Không lưu mô tả/nhân sự vào local storage.
+- Khi đã tạo và đối chiếu thành công, hiển thị mã/link, mở chi tiết; mở lại form thấy kết quả, cần bấm **Tạo công việc khác** để bắt đầu yêu cầu mới.
+- Jira đã nhận nhưng đọc lại không khớp/không đọc được: hiển thị **đã nhận, chưa xác minh**, giữ mã/link nếu có. Mất phản hồi/HTTP 5xx sau POST: hiển thị **chưa rõ kết quả**, không tự gửi lại. Tạm ẩn form tạo; kiểm tra Jira rồi bấm **Tôi đã kiểm tra trên Jira** trước khi tạo yêu cầu mới. Đây là xác nhận của người dùng, không phải bằng chứng server đã lưu. Trạng thái này chỉ giữ trong phiên trang; sau reload vẫn cần kiểm tra Jira thủ công nếu lần trước chưa rõ.
+- Chống lặp dùng request ID và store có sẵn (memory trên cùng instance hoặc Redis nếu đã cấu hình). Nhánh memory không bảo đảm qua nhiều instance/restart/TTL; không thêm database, không tự retry POST tạo. Đổi nội dung/yêu cầu mới có ID mới, vì vậy không dùng tạo mới để thay cho kiểm tra kết quả cũ.
+
+## Nâng cấp, chạy và triển khai
+
+1. Giải nén `Quick-Jira-Log_v1.23.0.zip`, root là `Quick-Jira-Log-V1.23.0`. Giữ chỉnh sửa riêng khi tích hợp; giữ các biến môi trường hiện tại, đặc biệt `APP_SESSION_SECRET`. Không có migration hoặc dependency runtime mới.
+2. Trong root, với Node.js **24.x**, chạy `npm ci` và `npm test`. Test riêng: `npm run test:create`; fixture trình duyệt: `npm run test:create-ui` (cần Playwright/Chromium, có thể đặt `QJL_CHROMIUM_PATH`). Test dùng Jira giả lập, xem `TESTING.md` để biết phần chưa kiểm chứng.
+3. Local có API: cấu hình `.env.example`, dùng `vercel dev` trong root với Vercel CLI; không mở file HTML bằng `file://` hoặc static server để dùng thật. Không commit `.env` chứa secret.
+4. GitHub: repo có source cần clone/fetch, tích hợp và giữ chỉnh sửa riêng trước khi commit/push; không force-push để xử lý `fetch first`. Repo mới: `git init`, `git add .`, `git commit -m "Release v1.23.0"`, thêm remote của Boss rồi `git push -u origin main` (đặt nhánh main trước nếu cần). Không có push/deploy tự động từ ZIP.
+5. Vercel kết nối repo/nhánh: Framework **Other**, Node.js **24.x**, không Build Command; root chứa `index.html`, `package.json`, `api/`, giữ `vercel.json` và biến môi trường. Deploy rồi tải lại/cập nhật PWA, kiểm tra **V1.23.0**; thử một issue trong dự án thử nghiệm và đối chiếu Jira. Các lần sau deploy từ push lên nhánh đã kết nối.
+6. Không đổi schema dữ liệu app. Có thể quay lại deployment V1.22.0; việc rollback app không xóa các issue đã tạo trên Jira. Không cần reset database hay đổi secret.
+
+API mới (cần session, no-store): GET `jira-create-projects`, `jira-create-types&project=KEY`, `jira-create-meta&project=KEY&type=ID`, `jira-create-users&project=KEY&q=...`, `jira-create-parents&project=KEY&q=...` (hoặc `key=ISSUE-1`); POST `/api?action=jira-create` nhận `project`, `type`, `parent`, `revision`, `fields`, `requestId`. Chỉ nhận field có trong metadata hỗ trợ; kiểm tra origin theo cơ chế app và không cho client chọn endpoint/field tùy ý. API metadata chỉ đọc, POST duy nhất tạo issue. Luồng logwork, OT, lịch, sửa nhanh cũ giữ nguyên.
+
+| Hiện tượng | Cách xử lý |
+| --- | --- |
+| Không thấy dự án | Nhập mã trực tiếp; kiểm tra quyền Browse/Create Issues. |
+| Không có loại công việc | Kiểm tra quyền Create Issues và issue type scheme của dự án. |
+| Cần trường app chưa hỗ trợ | Dùng link Mở form tạo trên Jira, gửi tên/kiểu trường để xem xét bổ sung. |
+| HTTP 409 cấu hình đổi | Tải lại form theo loại, nhập và chọn lại rồi xem trước; dữ liệu schema cũ bị xóa. |
+| Không tìm thấy cha/người nhận | Chọn đúng dự án, nhập mã/tên cụ thể hơn; cần quyền xem/giao phù hợp. |
+| Chưa rõ kết quả tạo | Kiểm tra Jira theo tiêu đề, reporter và thời điểm tạo, không gửi lặp. |
+
+Tài liệu REST chính thức: https://docs.atlassian.com/software/jira/docs/api/REST/9.12.7/ và https://developer.atlassian.com/server/jira/platform/jira-rest-api-examples/ . Chưa xác minh cấu hình Jira công ty trong phiên phát triển.
+
+## Phiên bản tiếp theo
+
+**V1.24.0 — Công việc của tôi:** truy cập nhanh công việc được giao, do mình tạo và đang theo dõi; lọc dự án/trạng thái/loại, mở chi tiết, cập nhật nhanh và vào logwork theo quy tắc hiện có. Dữ liệu theo quyền Jira, có phân trang và giữ vị trí khi quay lại. Đây là roadmap dự kiến, chưa xây dựng trong V1.23.0.
+
+Gửi ZIP V1.23.0 mới nhất nếu muốn xây dựng phiên bản tiếp theo. Phần dưới là tài liệu lịch sử; hướng dẫn V1.23.0 ở trên được ưu tiên.
+
+# Lịch sử V1.22.0 — Cập nhật nhanh công việc Jira
 
 ## Chức năng phiên bản này
 

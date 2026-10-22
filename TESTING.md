@@ -1,4 +1,15 @@
-# Kiểm thử V1.22.0 — Cập nhật nhanh Jira
+# Kiểm thử V1.23.0 — Tạo công việc Jira
+
+- `npm test`: PASS bộ hồi quy logic/API kế thừa, `tests/jira-create-tests.js` và `tests/jira-create-ui-tests.js` với Jira giả lập trên Node.js 24. Các ca bổ sung Story/Task/Bug và điều chỉnh thông báo form cũng được chạy lại bằng bộ test riêng, đạt.
+- API/field tests: ID custom field/Sub-task Type thực tế; metadata mới phân trang >50 và fallback cũ; required/default/unsupported/cascading; reporter chỉ current user; assignee active/được nhận; cha cùng dự án, không là Subtask; chọn một/nhiều, labels, số/ngày/ngày giờ/URL; dữ liệu đổi, quyền, JSON/field injection, method/origin, no-store và hết phiên.
+- Ghi/đối chiếu: payload Jira thật qua mock fetch; xác nhận từng trường đã gửi, tự động hóa làm field khác thì không báo đã xác minh; concurrent/replay cùng request chỉ POST một lần trong memory store; mất phản hồi sau tạo/HTTP 503 không retry; thiếu mã hoặc đọc lại bị từ chối trả đã nhận/chưa xác nhận; thông báo lỗi rút gọn không lộ diagnostic.
+- `jira-create-ui-tests.js`: PASS trạng thái bằng DOM fixture: form theo metadata, bắt buộc chọn cha, preview escape HTML, hủy không POST, giữ nháp khi đóng/mở, xác nhận mới POST, mở chi tiết, shortcut kiểm tra cha, receipt chưa rõ khóa tạo tiếp, xác nhận kiểm tra Jira và reset. Không coi đây là test bố cục/browser.
+- `tests/browser/jira-create.cjs` đã viết cho 1440×900, 390×844, 320×683, 844×390. Đã thử chạy `npm run test:create-ui` nhưng thiếu executable Chromium, **chưa chạy được**. Chưa kiểm chứng Safari/iPhone thật, Jira công ty, Redis thật, GitHub hoặc Vercel.
+- Syntax 142 JS/CJS, 408 ID HTML không trùng, 48 tham chiếu asset, binding DOM và asset service worker: PASS. Các handler có sẵn, thư viện ghi Jira, scheduler và quick-update giữ nguyên byte so với ZIP V1.22.0 được cung cấp.
+
+Checklist sau deploy: V1.23.0/PWA mới; Story/Task/Bug/Subtask theo cấu hình dự án; trường Sub-task Type có đúng ID/giá trị; required/default và plugin phức tạp; đọc/tìm/đổi cha, đổi dự án; người nhận được phép/không được phép, reporter hiện tại; hủy xác nhận không ghi; metadata/permission thay đổi giữa chừng; lỗi mạng sau POST, đối chiếu Jira trước tạo lại; nhiều trang metadata; light/dark, bàn phím, màn hình ngang/dọc; logout dọn draft; hồi quy tra cứu, chi tiết, cập nhật nhanh, logwork/OT/lịch và nháp kéo thả.
+
+# Lịch sử kiểm thử V1.22.0 — Cập nhật nhanh Jira
 
 - `npm test`: PASS bộ logic/API kế thừa và `tests/jira-update-tests.js` mới, trên Node.js 24 với Jira giả lập.
 - Test mới chạy qua HTTP router có session: quyền theo issue, priority allowedValues, người có thể được giao (lọc inactive/không lộ email), unassign theo required, trường transition bắt buộc, dữ liệu stale, phân trang bình luận 25+1, no-store, origin, method, JSON/key/comment validation, phiên hết hạn.

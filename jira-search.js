@@ -12,6 +12,7 @@ window.QuickJiraSearch=(()=>{
     $('jiraRecentList').innerHTML=recent.map(key=>`<button type="button" class="jira-recent-chip" data-jira-open="${esc(key)}">${esc(key)}</button>`).join('');
   }
   function clearView(){
+    window.QuickJiraCreate?.reset();
     clearDetail();
     items=[];savedQuery=null;next=0;more=false;lastRetry=null;loadedOptions=false;person=null;
     $('jiraSearchForm').reset();$('jiraPersonPicker').hidden=true;$('jiraPersonResults').replaceChildren();$('jiraPersonState').textContent='';
@@ -79,6 +80,7 @@ window.QuickJiraSearch=(()=>{
     }catch(e){if(token===generation){$('jiraPersonResults').replaceChildren();$('jiraPersonState').textContent=e.message;}}});
   }
   function clearDetail(){detailContext=null;detailStack=[];detailOrigin=null;detailRetry=null;
+    $('jiraDetailCreateSubBtn').hidden=true;
     window.QuickJiraActions?.clear();
     $('jiraIssuePeekKey').textContent='';$('jiraIssuePeekTitle').textContent='';$('jiraIssuePeekTitle').removeAttribute('title');$('jiraIssueOpenLink').removeAttribute('href');
     for(const id of ['jiraIssuePeekInfo','jiraIssueDescription','jiraSubtaskList','jiraWorklogList'])$(id).replaceChildren();
@@ -98,6 +100,7 @@ window.QuickJiraSearch=(()=>{
   function emptyPart(){return {items:[],next:0,total:null,loaded:false,more:false,limited:false,error:''};}
   function renderDetail(){
     const item=detailContext.issue;
+    $('jiraDetailCreateSubBtn').hidden=item.issueType.subtask;
     window.QuickJiraActions?.setIssue(item);
     $('jiraIssuePeekKey').textContent=item.key;$('jiraIssuePeekTitle').textContent=item.summary;$('jiraIssuePeekTitle').title=item.summary;
     const fields=[['Dự án',item.project.name||item.project.key],['Loại',item.issueType.name],['Trạng thái',item.status.name],['Người phụ trách',item.assignee?.displayName||item.assignee?.username||'Chưa được giao'],['Ưu tiên',item.priority||'—'],['Cập nhật',dateLabel(item.updated)||'—']];
@@ -164,6 +167,7 @@ window.QuickJiraSearch=(()=>{
   $('jiraDetailParentBtn').onclick=()=>detailContext?.issue.parent&&openIssue(detailContext.issue.parent);
   $('jiraDetailBackBtn').onclick=()=>detailStack.length&&openIssue(detailStack.at(-1),{back:true});
   $('jiraDetailRetryBtn').onclick=()=>detailRetry?.();$('jiraDetailLogBtn').onclick=prepareDetailLog;
+  $('jiraDetailCreateSubBtn').onclick=()=>detailContext&&window.QuickJiraCreate?.open({parent:detailContext.issue});
   $('jiraSubtasksMoreBtn').onclick=()=>loadPart('subtasks',true);$('jiraWorklogsMoreBtn').onclick=()=>loadPart('worklogs',true);
   $('jiraSubtaskList').onclick=e=>{const button=e.target.closest('[data-jira-child]');if(button)void openIssue(button.dataset.jiraChild);};
   $('jiraDetailTabs').addEventListener('click',e=>{const button=e.target.closest('[data-jira-tab]');if(button)selectDetailTab(button.dataset.jiraTab);});
@@ -181,5 +185,5 @@ window.QuickJiraSearch=(()=>{
   $('jiraRecentClearBtn').onclick=()=>{recent=[];if(!writeRecent())$('jiraSearchState').textContent='Đã xóa khỏi phiên xem này; trình duyệt chưa cho phép cập nhật dữ liệu lưu trên thiết bị.';renderRecent();};
   for(const id of ['jiraSearchResults','jiraRecentList'])$(id).addEventListener('click',e=>{const button=e.target.closest('[data-jira-open]');if(button)void openIssue(button.dataset.jiraOpen);});
   if(typeof state!=='undefined'&&state.user)login(state.user);
-  return {login,logout,open,async refreshDetail(key,tab='description'){if(detailContext?.issue.key!==key)return;await openIssue(key,{replace:true});if(detailContext?.issue.key===key)selectDetailTab(tab);}};
+  return {login,logout,open,openCreated:key=>openIssue(key),async refreshDetail(key,tab='description'){if(detailContext?.issue.key!==key)return;await openIssue(key,{replace:true});if(detailContext?.issue.key===key)selectDetailTab(tab);}};
 })();

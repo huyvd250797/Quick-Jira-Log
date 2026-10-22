@@ -1,3 +1,12 @@
+## V1.23.0 — Tạo công việc Jira
+
+- Nút Tạo trong tra cứu, shortcut tạo Subtask từ chi tiết công việc cha, form PC/mobile theo metadata dự án/loại và ID custom field thực tế.
+- Hỗ trợ văn bản/số/ngày/ngày giờ/boolean/chọn một/chọn nhiều/nhãn/assignee/reporter hiện tại; lấy allowedValues và required/default từ Jira. Báo rõ và chặn khi trường bắt buộc chưa hỗ trợ, không đoán default hay ID Sub-task Type.
+- Kiểm tra quyền Create Issues, cha cùng dự án và không phải Subtask, người nhận assignable; xem trước/xác nhận trước khi ghi, đọc lại schema để phát hiện cấu hình thay đổi.
+- Đối chiếu các trường đã gửi sau tạo; mở chi tiết khi đã xác nhận, giữ mã/link nếu chưa kiểm chứng; không retry POST khi mất phản hồi, receipt và chống lặp bằng store hiện có.
+- Giữ nháp trong bộ nhớ trang, dọn khi logout/đổi tài khoản, báo trước khi thay nháp bằng shortcut. Không đổi các handler logwork/OT/lịch/cập nhật nhanh cũ.
+- Version/cache shell 1.23.0, API/UI và test mới; README/ROADMAP/TESTING cập nhật phạm vi và giới hạn xác minh.
+
 ## V1.22.0 — Cập nhật nhanh công việc Jira
 
 - Tab Bình luận: đọc phân trang, hiển thị an toàn, gửi với bước xem lại/xác nhận, kiểm tra quyền Add Comments.
