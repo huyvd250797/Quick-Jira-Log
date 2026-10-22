@@ -11,7 +11,9 @@ Boss chọn mở rộng sang thao tác Jira trên mobile; logwork tiếp tục l
 | V1.24.0 | Filter Jira & giao diện tạo | Chọn filter sở hữu/yêu thích/tìm tên/ID; xem công việc; làm lại workspace và form tạo | Giữ JQL/ORDER BY trên server, revision/quyền từng trang, create metadata tương thích và xác nhận | API/logic và luồng Chromium trên PC/390/320/ngang đạt; ảnh light/dark kiểm tra, cần xác nhận Jira/Safari thật | Đã xây dựng source; thay cho Công việc của tôi theo yêu cầu Boss, chưa deploy |
 | V1.25.0 | Ảnh & tệp; workspace gọn | Preview/download/upload; mô tả màu; tạo Subtask đúng cha và sáu trường | Session, quyền, giới hạn 3 MiB, multipart/readback, sanitizer, metadata Estimate/Reporter | API và Chromium PC/mobile/ngang đạt với Jira giả lập; cần kiểm chứng Jira công ty/Safari | Đã xây dựng source, chưa deploy |
 | V1.25.1 | Sửa Subtask & đọc mô tả | Context cha, metadata tương thích, ảnh inline, cuộn tự ẩn, màu status, icon filter | Quyền/schema/readback, attachment đúng issue, timers/RAF | API và Chromium PC/mobile/ngang với Jira giả lập; cần kiểm chứng Jira công ty | Đã xây dựng source, chưa deploy |
-| V1.26.0 | Soạn mô tả Jira trực quan | Thanh định dạng, bảng/danh sách/màu, xem trước trước tạo | Tương thích Jira wiki, giữ draft và kiểm tra nội dung | Định dạng ghi/đọc lại đúng Jira, thao tác gọn trên mobile | Đề xuất; chưa xây dựng, chờ Boss chọn |
+| V1.26.0 | Soạn mô tả Jira trực quan | Thanh định dạng, bảng/danh sách/màu, xem trước trước tạo | Tương thích Jira wiki, giữ draft và kiểm tra nội dung | Định dạng ghi/đọc lại đúng Jira, thao tác gọn trên mobile | Đã xây dựng source V1.26.0, kiểm thử Jira giả lập; chưa deploy |
+
+| V1.27.0 | Mẫu Subtask | Mẫu Summary/Type/Estimate/Description; áp dụng rồi chỉnh trước tạo | Lưu theo tài khoản, kiểm tra metadata dự án | Không tạo tự động, đúng cha và lựa chọn Jira hiện tại | Đề xuất, chưa xây dựng |
 
 ## Lịch sử các bản logwork đã xây dựng
 

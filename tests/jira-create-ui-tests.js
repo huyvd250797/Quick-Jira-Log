@@ -9,7 +9,7 @@ class Element{
  }
  get innerHTML(){return this.html||'';}get selectedOptions(){return this.options.filter(o=>o.selected);}
  addEventListener(name,fn){(this.listeners[name]??=[]).push(fn);}fire(name,e={}){for(const fn of this.listeners[name]||[])fn(e);}
- showModal(){this.open=true;}close(){this.open=false;queueMicrotask(()=>this.fire('close'));}focus(){}replaceChildren(){this.children=[];}append(e){this.children.push(e);}removeAttribute(k){delete this[k];}
+ showModal(){this.open=true;}close(){this.open=false;queueMicrotask(()=>this.fire('close'));}focus(){}replaceChildren(){this.children=[];}append(e){this.children.push(e);}removeAttribute(k){delete this[k];}setAttribute(k,v){this[k]=v;}
 }
 (async()=>{
  const root=path.join(__dirname,'..');for(const m of fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll(/\bid="([^"]+)"/g))nodes.set(m[1],new Element(m[1]));

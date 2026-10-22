@@ -1,3 +1,10 @@
+# V1.26.0 — Soạn mô tả trực quan
+
+- Editor đậm/nghiêng, tiêu đề, danh sách, bảng, màu; Soạn thảo/Wiki/Xem trước, chuyển về Jira wiki trước tạo. Giữ nguyên macro chưa hỗ trợ trong Wiki.
+- Chọn filter tự tải, bỏ kính lúp xanh trùng chức năng.
+- Gợi ý mã/tên dự án và đồng bộ combobox, tự tải loại.
+- Bổ sung kiểm thử editor/codec/project picker trên PC và mobile; không đổi backend ghi logwork.
+
 # V1.25.1 — Sửa tạo Subtask & đọc mô tả
 
 - Khởi tạo Subtask theo context cha trên server, tự chọn loại con hợp lệ đầu tiên, giữ cha khi đổi loại, thông báo lỗi/tải lại. Tương thích last/isLast và bổ sung cờ subtask theo ID danh mục Jira nếu create metadata thiếu.

@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.25.1 – Ảnh & tệp, mô tả Jira, tạo Subtask & Logwork.",
+  "description": "Quick Jira Log V1.26.0 – Ảnh & tệp, mô tả Jira, tạo Subtask & Logwork.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

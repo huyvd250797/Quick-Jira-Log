@@ -1,3 +1,10 @@
+# Kiểm thử V1.26.0
+
+- `npm test`: toàn bộ logic/API kế thừa và `tests/jira-editor-tests.js` (escape, màu, markup lồng, bảng, danh sách, nội dung không an toàn).
+- `npm run test:editor-ui`: bốn viewport Chromium; chọn dự án bằng gợi ý, đồng bộ combobox/loại, required description, định dạng/chèn/sửa bảng, preview, Wiki nâng cao không mất dữ liệu, giới hạn nội dung, giữ nháp, tạo issue/Subtask gửi wiki.
+- `npm run test:workspace-ui`, `npm run test:detail-fixes`, `npm run test:attachments-ui`: hồi quy filter/create, tạo đúng cha qua router/session thật và tệp/ảnh. Jira ở biên mạng được giả lập.
+- QA screenshots chỉ dùng nội bộ, không đóng ZIP. Chưa kiểm chứng Jira công ty hoặc Safari/iPhone thật.
+
 # Kiểm thử V1.25.1
 
 - `npm test`: logic/API kế thừa cùng các ca create context, metadata last/isLast, thiếu subtask và lookup ID; parent/loại không hợp lệ/quyền bị từ chối không ghi. Field required/default/validation/schema/idempotency/readback tiếp tục được kiểm tra.
