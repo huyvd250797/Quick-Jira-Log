@@ -10,7 +10,9 @@ const release=()=>{holdLogs=false;for(const r of held.splice(0))r();};
   if(p==='/rest/api/2/project')return Response.json([{key:'CAL',name:'Dự án kiểm thử'},{key:'OTHER',name:'Dự án khác'}]);
   if(p==='/rest/api/2/status'||p==='/rest/api/2/issuetype')return Response.json([]);
   if(p==='/rest/api/2/search'){const b=m==='POST'?JSON.parse(opts.body):Object.fromEntries(u.searchParams);const project=b.jql.includes('project = "CAL"')?'CAL':b.jql.includes('project = "OTHER"')?'OTHER':'';
-   const issues=[['CAL-1',true],['CAL-2',true],['OTHER-1',false]].filter(([key])=>!project||key.startsWith(project+'-')).map(([key,subtask])=>({key,fields:{summary:'Nội dung <script>an toàn</script>',project:{key:key.split('-')[0]},issuetype:{subtask}}}));return Response.json({startAt:0,total:issues.length,issues});}
+   const issues=[['CAL-1',true],['CAL-2',true],['OTHER-1',false]].filter(([key])=>!project||key.startsWith(project+'-')).map(([key,subtask])=>({key,fields:{summary:'Nội dung <script>an toàn</script>',project:{key:key.split('-')[0]},issuetype:{subtask}}}));if(mode==='seeded')for(const i of issues){const id=i.key==='CAL-1'?'100':'300',w={id,author:{key:'a',displayName:'Thành viên A'},started:'2026-10-22T08:00:00.000+0700',timeSpentSeconds:3600,comment:'Log theo ngày'};
+   i.fields.worklog=i.key==='CAL-2'?{startAt:0,total:0,worklogs:[]}:i.key==='CAL-1'?{startAt:0,total:2,worklogs:[w,{...w,id:'101',author:{key:'b',displayName:'Thành viên B'},started:'2012-01-01T08:00:00.000+0700',timeSpentSeconds:1800}]}:{startAt:0,total:20,worklogs:[w]};
+   }return Response.json({startAt:0,total:issues.length,issues});}
   if(p.endsWith('/worklog')){
    logCalls.push(p);if(holdLogs&&(!holdKey||p.includes(holdKey)))await new Promise(r=>held.push(r));if(mode==='partial'&&p.includes('CAL-2'))return Response.json({}, {status:403});
    const id=p.includes('CAL-1')?'100':p.includes('CAL-2')?'200':'300',start=Number(u.searchParams.get('startAt'));
@@ -38,7 +40,21 @@ const release=()=>{holdLogs=false;for(const r of held.splice(0))r();};
   if(process.env.QJL_QA_DIR&&viewport.width===390){fs.mkdirSync(process.env.QJL_QA_DIR,{recursive:true});await page.screenshot({path:process.env.QJL_QA_DIR+'/startup-skeleton.png'});}
   await page.locator(viewport.width<900?'#mobileHistoryBtn':'#historyBtn').click();assert(await page.locator('#historyOverlay').isVisible());await page.locator('#closeHistoryBtn').click();
   holdSubtasks=false;for(const r of subtaskHeld.splice(0))r();holdHistory=false;for(const r of historyHeld.splice(0))r();await page.waitForFunction(()=>QuickJiraBusy.count===0);
+  await page.waitForFunction(()=>getComputedStyle(document.body).position!=='fixed');
+  await page.evaluate(()=>{const filler=document.createElement('div');filler.id='qaScrollFiller';filler.style.height='2000px';document.body.append(filler);window.scrollTo({left:0,top:300,behavior:'instant'});});
+  await page.evaluate(()=>QuickJiraProjectReport.open());
+  assert.equal(await page.evaluate(()=>document.body.style.top),'-300px');
+  assert.equal(await page.evaluate(()=>{document.body.dispatchEvent(new TouchEvent('touchstart',{touches:[new Touch({identifier:1,target:document.body,clientX:10,clientY:100})],bubbles:true}));return document.body.dispatchEvent(new TouchEvent('touchmove',{touches:[new Touch({identifier:1,target:document.body,clientX:10,clientY:10})],bubbles:true,cancelable:true}));}),false,'Outside touch scroll is cancelled');
+  await page.locator('#psClose').click();await page.waitForFunction(()=>getComputedStyle(document.body).position!=='fixed');
+  assert.equal(await page.evaluate(()=>scrollY),300,'Closing restores previous page position');
+  await page.evaluate(()=>{document.getElementById('qaScrollFiller').remove();window.scrollTo(0,0);});
   await page.locator(viewport.width<900?'#mobileProjectStatsBtn':'#projectStatsBtn').click();await page.waitForFunction(()=>QuickJiraBusy.count===0);assert.equal(await page.locator('#psScope').inputValue(),'all');
+  assert.equal(await page.evaluate(()=>getComputedStyle(document.body).position),'fixed');
+  const anchor=await page.locator('.ps-head').boundingBox();
+  await page.mouse.move(viewport.width-3,viewport.height-3);await page.mouse.wheel(0,1000);
+  assert.equal(Math.round((await page.locator('.ps-head').boundingBox()).y),Math.round(anchor.y),'Header must not move with outside scroll');
+  assert.equal(await page.evaluate(()=>document.body.dispatchEvent(new WheelEvent('wheel',{deltaY:400,cancelable:true,bubbles:true}))),false,'Outside wheel must be cancelled');
+
   await page.locator('#psAnchor').fill('2024-02-15');await page.locator('#psAnchor').dispatchEvent('change');assert.equal(await page.locator('#psFrom').inputValue(),'2024-02-01');assert.equal(await page.locator('#psTo').inputValue(),'2024-02-29');await page.locator('#psPeriod').selectOption('week');await page.locator('#psAnchor').fill('2026-10-22');await page.locator('#psAnchor').dispatchEvent('change');assert.equal(await page.locator('#psFrom').inputValue(),'2026-10-19');assert.equal(await page.locator('#psTo').inputValue(),'2026-10-25');
   await page.locator('#psPeriod').selectOption('custom');await page.locator('#psFrom').fill('2026-10-22');await page.locator('#psTo').fill('2026-10-22');holdLogs=true;await page.locator('#psLoad').click();await page.waitForFunction(()=>QuickJiraProjectReport.running);await page.waitForFunction(()=>document.getElementById('backgroundTasks').textContent.includes('0/3'));
   assert.equal(await page.evaluate(()=>QuickJiraBusy.active),false);await page.locator('#psClose').click();assert(await page.locator('#projectStatsDialog').isHidden());await page.locator(viewport.width<900?'#mobileHistoryBtn':'#historyBtn').click();assert(await page.locator('#backgroundTasks').isVisible());assert((await page.locator('#backgroundTasks').textContent()).includes('0/3 · 0%'));
@@ -50,10 +66,24 @@ const release=()=>{holdLogs=false;for(const r of held.splice(0))r();};
   for(const theme of ['light','dark']){await page.evaluate(t=>document.documentElement.dataset.theme=t,theme);await page.waitForTimeout(250);assert(await page.locator('#projectStatsDialog').evaluate(d=>{const r=d.getBoundingClientRect();return r.right<=innerWidth+1&&r.bottom<=innerHeight+1&&d.scrollWidth<=d.clientWidth+1;}));if(process.env.QJL_QA_DIR){fs.mkdirSync(process.env.QJL_QA_DIR,{recursive:true});await page.screenshot({path:process.env.QJL_QA_DIR+'/background-'+viewport.width+'-'+theme+'.png'});}}
   if(viewport.width===390){
    await page.locator('#psScope').selectOption('all');await page.locator('#psPeriod').selectOption('all');
+   mode='seeded';logCalls=[];await page.locator('#psLoad').click();await page.waitForTimeout(120);await page.waitForFunction(()=>!QuickJiraProjectReport.running);
+   assert.equal(logCalls.filter(p=>p.includes('CAL-1')||p.includes('CAL-2')).length,0,'Complete/empty search worklogs skip separate GETs');
+   assert.equal(logCalls.filter(p=>p.includes('OTHER-1')).length,1,'Partial embedded data falls back');
+   assert((await page.locator('#psKpis').textContent()).includes('2h 30m'));
+   await page.reload();await page.waitForFunction(()=>!QuickJiraProjectReport.restoring&&document.getElementById('projectStatsDialog').open);
+   assert((await page.locator('#psKpis').textContent()).includes('2h 30m'),'Embedded worklogs restore from issue-page checkpoint');
+   mode='';
    holdKey='CAL-2';holdLogs=true;logCalls=[];await page.locator('#psLoad').click();
    await page.waitForFunction(async()=>{const s=await QuickJiraReportStorage.load('boss');return s?.pages.filter(p=>p.kind==='logs').length===2;});
    assert.equal(await page.locator('#backgroundTasks button').count(),1);
    await page.locator('#psClose').click();
+   const run=await page.evaluate(async()=>(await QuickJiraReportStorage.load('boss')).meta.runID),stamp=await page.evaluate(()=>performance.timeOrigin);
+   await page.locator('#filterIssueSearch').fill('CAL');await page.locator('#brandRefreshBtn').click();
+   await page.waitForFunction(()=>!document.getElementById('brandRefreshBtn').disabled);
+   assert.equal(await page.locator('#filterIssueSearch').inputValue(),'CAL');
+   assert.equal(await page.evaluate(()=>performance.timeOrigin),stamp,'Logo refresh must not reload');
+   assert.equal(await page.evaluate(async()=>(await QuickJiraReportStorage.load('boss')).meta.runID),run,'Logo must not restart report');
+   assert(await page.evaluate(()=>QuickJiraProjectReport.running));
    const box=await page.locator('#backgroundTasks').boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.mouse.move(40,130,{steps:12});await page.mouse.up();
    assert(await page.locator('#projectStatsDialog').isHidden(),'Dragging must not open statistics');
    assert(await page.evaluate(()=>!!localStorage.getItem('qjl-task-position-v1')));
@@ -68,6 +98,11 @@ const release=()=>{holdLogs=false;for(const r of held.splice(0))r();};
    assert.equal(logCalls.filter(p=>p.includes('CAL-1')).length,already,'Committed worklog page must not be fetched again');
    assert((await page.locator('#psKpis').textContent()).includes('3h 30m'));
    const bubble=await page.locator('#backgroundTasks').boundingBox();assert(bubble.x>=0&&bubble.y>=0&&bubble.x+bubble.width<=viewport.width+1&&bubble.y+bubble.height<=viewport.height+1);
+   // Repair a V1.32-style hole rather than trusting a later completed cursor.
+   await page.evaluate(async()=>{const s=await QuickJiraReportStorage.load('boss'),p=s.pages.find(p=>p.kind==='logs'&&p.issue==='CAL-1');await new Promise((resolve,reject)=>{const r=indexedDB.open('qjl-report-resume-v1',1);r.onsuccess=()=>{const db=r.result,tx=db.transaction('pages','readwrite');tx.objectStore('pages').delete(p.key);tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});});
+   logCalls=[];await page.reload();await page.waitForFunction(()=>!QuickJiraProjectReport.restoring&&!QuickJiraProjectReport.running&&document.getElementById('psKpis').textContent.includes('3h 30m'));
+   assert.equal(logCalls.filter(p=>p.includes('CAL-1')).length,1,'Missing page must be repaired');
+   assert.equal(logCalls.filter(p=>p.includes('OTHER-1')).length,0,'Valid checkpoint pages remain reusable');
    // Paused task survives another reload without auto-starting.
    holdLogs=true;await page.locator('#psLoad').click();await page.waitForFunction(()=>QuickJiraProjectReport.running);
    await page.locator('#psPause').click();release();await page.waitForFunction(()=>!QuickJiraProjectReport.running&&QuickJiraProjectReport.paused);
@@ -77,11 +112,13 @@ const release=()=>{holdLogs=false;for(const r of held.splice(0))r();};
    await page.locator('#psPause').click();await page.waitForFunction(()=>!QuickJiraProjectReport.running&&!QuickJiraProjectReport.paused);
    assert((await page.locator('#psKpis').textContent()).includes('3h 30m'));
    // If storage becomes full, computation remains correct and warns instead of silently promising recovery.
-   await page.evaluate(()=>{window.qaCommit=QuickJiraReportStorage.commit;QuickJiraReportStorage.commit=async()=>{throw Error('quota fixture');};});
+   await page.evaluate(()=>{window.qaCommit=QuickJiraReportStorage.commit;QuickJiraReportStorage.commit=async()=>{throw new DOMException('quota fixture','QuotaExceededError');};});
    await page.locator('#psLoad').click();await page.waitForTimeout(120);await page.waitForFunction(()=>!QuickJiraProjectReport.running);
-   assert((await page.locator('#psWarning').textContent()).includes('Chưa lưu được tiến độ'));
+   assert((await page.locator('#psWarning').textContent()).includes('QuotaExceededError'));
    assert((await page.locator('#psKpis').textContent()).includes('3h 30m'));
    await page.evaluate(()=>QuickJiraReportStorage.commit=window.qaCommit);
+   await page.reload();await page.waitForFunction(()=>!QuickJiraProjectReport.restoring&&!QuickJiraProjectReport.running&&document.getElementById('psKpis').textContent.includes('3h 30m'));
+   console.log('Quota failure cannot advance checkpoint past missing pages; reload recovers exact totals');
    console.log('Reload mid-report resumes committed cursors, preserves route/filter, exact totals and draggable bubble');
    await page.locator('#psScope').selectOption('one');await page.locator('#psProject').fill('CAL');await page.locator('#psProject').dispatchEvent('change');
   }

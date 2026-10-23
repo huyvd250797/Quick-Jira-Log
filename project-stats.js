@@ -23,34 +23,48 @@ window.QuickJiraProjectReport=(()=>{
  async function checkpoint(j,page=null){
   if(!valid(j)||j.storageDisabled)return;
   try{const ok=await QuickJiraReportStorage.commit(j.owner,j.runID,page,meta(j));if(!ok&&valid(j)){j.paused=true;j.storageDisabled=true;j.storageWarning='Tác vụ đã thay đổi ở cửa sổ khác. Hãy mở một thống kê mới.';}}
-  catch(e){j.storageWarning='Chưa lưu được tiến độ trên thiết bị. Giữ app mở để tiếp tục.';}
+  catch(e){j.storageDisabled=true;j.storageWarning=storageMessage(e);}
+ }
+ function storageMessage(e){const name=['QuotaExceededError','InvalidStateError','AbortError','SecurityError','DataCloneError','UnknownError','NotFoundError'].includes(e?.name)?e.name:'StorageError';
+  return (name==='QuotaExceededError'?'Bộ nhớ thiết bị không đủ để lưu tiến độ. ':name==='SecurityError'?'Trình duyệt đang chặn lưu dữ liệu. ':'Chưa lưu được tiến độ trên thiết bị. ')+ 'Giữ app mở để tiếp tục; khi mở lại chỉ khôi phục đến mốc đã lưu thành công. ('+name+')';
  }
  function flush(){const j=job;if(!j)return Promise.resolve();return checkpoint(j);}
+ function addIssue(j,t){
+  if(j.keys.has(t.key))return;
+  const {worklogs,...info}=t,row={...info,offset:0,total:null,ids:new Set(),done:false,error:'',inflight:false};
+  if(worklogs){row.offset=worklogs.nextStartAt;row.total=worklogs.total;row.done=!worklogs.hasMore;for(const id of worklogs.ids)row.ids.add(id);for(const x of worklogs.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask});}
+  j.keys.add(t.key);j.issues.push(row);
+ }
  async function restore(user,token){
   try{
    const saved=await QuickJiraReportStorage.load(user);if(!saved||owner!==user||seq!==token||job)return;
    const m=saved.meta,j={...m,owner:user,controller:new AbortController(),issues:[],keys:new Set(),items:new Map(),verified:new Set(),running:false,finished:m.status==='complete',task:null,receiptHandle:null,hasRendered:true,storageDisabled:false};
    const issuePages=saved.pages.filter(p=>p.kind==='issues').sort((a,b)=>a.offset-b.offset);
-   for(const p of issuePages)for(const t of p.payload.issues){if(j.keys.has(t.key))continue;j.keys.add(t.key);j.issues.push({...t,offset:0,total:null,ids:new Set(),done:false,error:'',inflight:false});}
+   let issueCursor=0;
+   for(const p of issuePages){if(p.offset!==issueCursor||p.payload.issues.some(t=>j.keys.has(t.key)))break;for(const t of p.payload.issues)addIssue(j,t);issueCursor=p.payload.nextStartAt;}
+   let repair=issueCursor!==m.offset;
+   if(repair){j.offset=issueCursor;j.phase='issues';j.finished=false;}
    const byKey=new Map(j.issues.map(t=>[t.key,t]));
    for(const p of saved.pages.filter(p=>p.kind==='logs').sort((a,b)=>a.offset-b.offset)){
-    const t=byKey.get(p.issue);if(!t)continue;for(const id of p.payload.ids)t.ids.add(id);
+    const t=byKey.get(p.issue);if(!t||t.done||p.offset!==t.offset)continue;for(const id of p.payload.ids)t.ids.add(id);
     for(const x of p.payload.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask});
     t.total=p.payload.total;t.offset=p.payload.nextStartAt;t.done=!p.payload.hasMore;
    }
    for(const p of saved.pages.filter(p=>p.kind==='ot'))for(const x of p.payload){const item=j.items.get(x.id);if(item){Object.assign(item,x);j.verified.add(x.id);}}
    for(const [key,error] of m.failures||[]){const t=byKey.get(key);if(t)t.error=error;}
-   j.resumeNotice='Đã khôi phục dữ liệu lưu '+new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}).format(new Date(m.savedAt));
+   if(!repair&&j.phase!=='issues'&&j.issues.some(t=>!t.done&&!t.error)){repair=true;j.phase='worklogs';j.finished=false;}
+   j.recovering=(m.status==='running'||repair)&&!j.paused;
+   j.resumeNotice='Đã khôi phục dữ liệu lưu '+new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}).format(new Date(m.savedAt))+(repair?' · Kiểm tra và đọc bù checkpoint thiếu':'');
    job=j;for(const id of ['psScope','psProject','psPeriod','psAnchor','psYear','psFrom','psTo','psSort'])if(m.ui?.[id]!==undefined)$(id).value=m.ui[id];period();
    if(m.status==='running'&&!m.paused)j.paused=false;
    summarize(j);paint(j);if(m.view==='stats')await open();
    requestAnimationFrame(()=>{if(valid(j))d.querySelector('.ps-body').scrollTop=m.scroll||0;});
-   if(m.status==='running'&&!j.paused)void execute(j);else if(j.paused){makeTask(j);paint(j);}
+   if((m.status==='running'||repair)&&!j.paused)void execute(j);else if(j.paused){makeTask(j);paint(j);}
   }catch(e){if(owner===user&&seq===token)$('psState').textContent='Chưa khôi phục được dữ liệu đã lưu. Có thể chạy thống kê mới.';}
  }
  function login(user){owner=String(user?.username||'');clear();$('projectStatsBtn').classList.toggle('hidden',!owner);const token=seq;restoring=restore(owner,token).finally(()=>{if(seq===token)restoring=null;});}
  function logout({preserve=false}={}){const previous=owner;owner='';clear();if(previous&&!preserve)void QuickJiraReportStorage.clear(previous).catch(()=>{});if(d.open)d.close();$('projectStatsBtn').classList.add('hidden');}
- async function open(){if(!owner||QuickJiraBusy.active)return;origin=document.activeElement;closeDesktopEditor();closeAllToolOverlays({restore:true});if(!d.open)d.showModal();document.documentElement.classList.add('project-stats-open');document.body.classList.add('project-stats-open');$('psClose').focus({preventScroll:true});
+ async function open(){if(!owner||QuickJiraBusy.active)return;origin=document.activeElement;closeDesktopEditor();closeAllToolOverlays({restore:true});QuickJiraStatsScroll.lock();if(!d.open)d.showModal();document.documentElement.classList.add('project-stats-open');document.body.classList.add('project-stats-open');$('psClose').focus({preventScroll:true});
   if(job)paint(job);if(projectsLoaded)return;const token=seq;try{const data=await api('/api?action=jira-search-options');if(token!==seq)return;projectsLoaded=true;$('psProjects').innerHTML=data.projects.map(p=>`<option value="${esc(p.key)}" label="${esc(p.name)}"></option>`).join('');if(data.warnings.length&&!job)$('psState').textContent='Có thể nhập trực tiếp mã dự án để thống kê.';}catch(e){if(token===seq&&!job)$('psState').textContent=e.message;}
  }
  function render(){if(!report)return;const filter=$('psPerson').value;let people=report.people.filter(p=>!filter||p.id===filter);const sort=$('psSort').value;people.sort(sort==='name'?(a,b)=>a.name.localeCompare(b.name):sort==='tasks'?(a,b)=>b.subtasks-a.subtasks||b.seconds-a.seconds:(a,b)=>b.seconds-a.seconds);
@@ -74,7 +88,7 @@ window.QuickJiraProjectReport=(()=>{
   clearTimeout(j.paintTimer);j.paintTimer=0;j.lastPaint=performance.now();
   const p=progress(j),caption=(j.filter.project||'Tất cả dự án')+' · '+(j.filter.all==='1'?'Toàn thời gian':j.filter.from.split('-').reverse().join('/')+'–'+j.filter.to.split('-').reverse().join('/'))+(j.resumeNotice?' · '+j.resumeNotice:'');
   const errors=j.issues.filter(t=>t.error).map(t=>t.key+': '+t.error);
-  const status=j.running?(j.paused?'Đang tạm dừng…':p.label):j.paused?'Đã tạm dừng':j.error||errors.length||j.warnings.length?'Dữ liệu tạm tính — cần xử lý':'Đã tải xong dữ liệu được phép xem';
+  const status=j.recovering?'Đang khôi phục tiến độ':j.running?(j.paused?'Đang tạm dừng…':p.label):j.paused?'Đã tạm dừng':j.error||errors.length||j.warnings.length?'Dữ liệu tạm tính — cần xử lý':'Đã tải xong dữ liệu được phép xem';
   if(matches(j)){
    $('psState').innerHTML=`<div class="ps-progress-head"><span>${j.running?'<i class="ps-spinner" aria-hidden="true"></i>':''}<strong>${esc(status)}</strong></span><b>${p.done}/${p.total??'?'} · ${p.percent}%</b></div><div class="ps-progress-track" aria-hidden="true"><i style="width:${p.percent==='—'?15:p.percent}%"></i></div><small>${esc(caption)}</small>`;
    $('psContent').hidden=j.running&&!report;$('projectStatsDialog').classList.toggle('ps-is-loading',j.running&&!report);
@@ -104,13 +118,13 @@ window.QuickJiraProjectReport=(()=>{
   }
  }
  async function execute(j){
-  if(!valid(j)||j.running)return;j.running=true;j.finished=false;j.paused=false;j.error='';working=true;if(!j.task)makeTask(j);paint(j);
+  if(!valid(j)||j.running)return;j.running=true;j.recovering=false;j.finished=false;j.paused=false;j.error='';working=true;if(!j.task)makeTask(j);paint(j);
   try{
    while(j.phase==='issues'&&valid(j)&&!j.paused){
     const pageOffset=j.offset,d=await request(j,{op:'issues',startAt:j.offset});if(!valid(j))return;
     if(j.total!==null&&j.total!==d.total)j.warnings.push('Danh sách công việc thay đổi trong lúc tải; cần đối chiếu lại.');
     if(d.issues.some(t=>j.keys.has(t.key))||(d.hasMore&&d.nextStartAt<=j.offset))throw Error('Trang công việc bị lặp hoặc không tiến lên.');
-    j.total=d.total;for(const t of d.issues){j.keys.add(t.key);j.issues.push({...t,offset:0,total:null,ids:new Set(),done:false,error:'',inflight:false});}
+    j.total=d.total;for(const t of d.issues)addIssue(j,t);
     j.offset=d.nextStartAt;if(!d.hasMore)j.phase='worklogs';await checkpoint(j,{key:'issues|'+pageOffset,kind:'issues',offset:pageOffset,payload:d});if(valid(j))paint(j);
    }
    if(j.phase==='worklogs'&&!j.paused){
@@ -137,7 +151,7 @@ window.QuickJiraProjectReport=(()=>{
   if(($('psScope').value==='one'&&!f.project)||(f.project&&!/^[A-Z][A-Z0-9_]{0,99}$/.test(f.project))||(f.all!=='1'&&(!QuickJiraUi.validDate(f.from)||!QuickJiraUi.validDate(f.to)||f.to<f.from))){$('psState').textContent='Nhập mã dự án và khoảng ngày hợp lệ.';return;}
   if(job?.running&&matches(job))return;
   stopJob();seq++;report=null;items=[];selected='';$('psContent').hidden=true;$('psWarning').hidden=true;d.querySelector('.ps-body').scrollTop=0;
-  job={filter:Object.freeze(f),owner,controller:new AbortController(),offset:0,total:null,phase:'issues',issues:[],keys:new Set(),items:new Map(),warnings:[],paused:false,running:false,error:'',task:null,runID:crypto.randomUUID(),verified:new Set(),storageDisabled:false};const current=job;try{await QuickJiraReportStorage.start(owner,meta(current));}catch(e){current.storageWarning='Chưa lưu được tiến độ trên thiết bị. Giữ app mở để tiếp tục.';current.storageDisabled=true;}if(valid(current)){void execute(current);}
+  job={filter:Object.freeze(f),owner,controller:new AbortController(),offset:0,total:null,phase:'issues',issues:[],keys:new Set(),items:new Map(),warnings:[],paused:false,running:false,error:'',task:null,runID:crypto.randomUUID(),verified:new Set(),storageDisabled:false};const current=job;try{await QuickJiraReportStorage.start(owner,meta(current));}catch(e){current.storageWarning=storageMessage(e);current.storageDisabled=true;}if(valid(current)){void execute(current);}
  }
  function changed(){period();if(job){report=null;$('psContent').hidden=true;if(!job.running)summarize(job);paint(job);}}
  $('psPause').onclick=()=>{if(!job)return;if(job.paused&&!job.running)void execute(job);else{job.paused=true;paint(job);}};

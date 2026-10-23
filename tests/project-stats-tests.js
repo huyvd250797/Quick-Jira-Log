@@ -10,6 +10,16 @@ const log=(id,author='a',started='2026-10-22T08:00:00.000+0700')=>({id:String(id
   if(p==='/rest/api/2/search'){
    const b=m==='POST'?JSON.parse(opts.body):Object.fromEntries(u.searchParams);queries.push(b);assert(!b.jql.includes('worklogDate'));assert(!b.jql.includes('worklogAuthor'));assert(!b.jql.includes('assignee'));
    if(mode==='unauth')return Response.json({}, {status:401});if(mode==='denied')return Response.json({}, {status:403});
+   if(mode==='benchmark'){const start=Number(b.startAt);return Response.json({startAt:start,total:1000,issues:Array.from({length:100},(_,i)=>({key:'CAL-'+(start+i+1),fields:{summary:'Small log',project:{key:'CAL'},issuetype:{subtask:true},worklog:{startAt:0,total:1,worklogs:[log(start+i+10000)]}}}))});}
+   if(mode==='no-worklog'&&b.fields.includes('worklog'))return Response.json({errorMessages:['unsupported worklog field']},{status:400});
+   if(mode==='embedded'){return Response.json({startAt:0,total:6,issues:[
+    {key:'CAL-1',fields:{summary:'Complete',project:{key:'CAL'},issuetype:{subtask:true},worklog:{startAt:0,total:2,worklogs:[log(101),log(102,'b','2012-01-01T08:00:00.000+0700')]}}},
+    {key:'CAL-2',fields:{summary:'Empty',project:{key:'CAL'},issuetype:{subtask:true},worklog:{startAt:0,total:0,worklogs:[]}}},
+    {key:'CAL-3',fields:{summary:'Partial',project:{key:'CAL'},issuetype:{subtask:true},worklog:{startAt:0,total:30,worklogs:[log(103)]}}},
+    {key:'CAL-4',fields:{summary:'Missing',project:{key:'CAL'},issuetype:{subtask:true}}},
+    {key:'CAL-5',fields:{summary:'Malformed',project:{key:'CAL'},issuetype:{subtask:true},worklog:{startAt:0,total:1,worklogs:[{id:'104'}]}}},
+    {key:'CAL-6',fields:{summary:'Conflicting empty',project:{key:'CAL'},issuetype:{subtask:true},timespent:1800,worklog:{startAt:0,total:0,worklogs:[]}}}
+   ]});}
    const start=Number(b.startAt),project=b.jql.includes('project = "CAL"')?'CAL':'OTHER';
    return Response.json({startAt:mode==='bad-page'?start+1:start,total:mode==='empty'?0:start+1,issues:mode==='empty'?[]:[{key:project+'-1',fields:{summary:'Fixture',project:{key:project},issuetype:{subtask:true}}}]});
   }
@@ -43,11 +53,20 @@ const log=(id,author='a',started='2026-10-22T08:00:00.000+0700')=>({id:String(id
  mode='big';const large=await request({op:'worklogs',key:'CAL-1',ot:'0'});assert.equal(large.data.items.length,500);assert.equal(large.data.nextStartAt,500);
  const tail=await request({op:'worklogs',key:'CAL-1',ot:'0',startAt:500});assert.equal(tail.data.items.length,1);assert(!tail.data.hasMore);assert.equal(aggregate([...large.data.items,...tail.data.items]).seconds,501*1800);mode='';
 
+ mode='embedded';r=await request({project:'CAL'});assert.equal(r.status,200);assert.equal(r.data.issues[0].worklogs.items.length,1,'Embedded data is filtered by actual worklog date');
+ assert.equal(r.data.issues[0].worklogs.ids.length,2);assert(!r.data.issues[0].worklogs.hasMore);assert.equal(r.data.issues[1].worklogs.total,0);
+ for(const i of r.data.issues.slice(2))assert.equal(i.worklogs,undefined,'Partial/missing/malformed fields must use paged GET');
+ r=await request({project:'CAL',all:1});assert.equal(r.data.issues[0].worklogs.items.length,2);mode='';
+ mode='no-worklog';r=await request({project:'CAL'});assert.equal(r.status,200);assert(!queries.at(-1).fields.includes('worklog'));
+ mode='benchmark';let count=0,seconds=0,requests=0;
+ for(let cursor=0;cursor<1000;cursor+=100){const page=await request({project:'CAL',all:1,startAt:cursor});assert.equal(page.status,200);requests++;for(const i of page.data.issues){assert(i.worklogs&&!i.worklogs.hasMore);count++;seconds+=aggregate(i.worklogs.items).seconds;}}
+ assert.equal(count,1000);assert.equal(seconds,1000*1800);assert.equal(requests,10);
+ console.log('Fixture 1,000 complete small worklogs: raw-hour requests 1,010 → 10; exact total unchanged (OT requests excluded).');mode='';
  assert.equal(filters({all:'1',startAt:'10001'}).startAt,10001);
  for(const q of [{project:'CAL" OR 1=1'},{from:'2026-02-30'},{to:'2020-01-01'},{startAt:-1},{startAt:'1.2'},{op:'delete'},{op:'worklogs',key:'OTHER-1',project:'CAL'}])assert.equal((await request(q)).status,400);
  assert.equal((await request({},false)).status,401);assert.equal((await request({},true,'POST')).status,405);
  mode='bad-page';assert.equal((await request()).status,502);mode='bad-worklog';assert.equal((await request({op:'worklogs',key:'CAL-1'})).status,502);mode='worklog-denied';assert.equal((await request({op:'worklogs',key:'CAL-1'})).status,403);
  mode='ot-denied';r=await request({op:'worklogs',key:'CAL-1'});assert(r.data.items.every(x=>!x.overtimeKnown));mode='denied';assert.equal((await request()).status,403);mode='empty';r=await request();assert.equal(r.data.issues.length,0);assert(!r.data.hasMore);
  mode='unauth';r=await request();assert.equal(r.status,401);assert(r.headers.get('set-cookie'));assert.equal(writes,0);
- console.log('Project stats V1.32: raw hours/OT batches, all/one projects, unlimited valid range/all-time, paged issues/worklogs beyond old caps, timezone/author/native OT, auth/validation/errors/no writes passed.');
+ console.log('Project stats V1.32.1: raw hours/OT batches, all/one projects, unlimited valid range/all-time, paged issues/worklogs beyond old caps, timezone/author/native OT, auth/validation/errors/no writes passed.');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=original;if(server)await new Promise(r=>server.close(r));});

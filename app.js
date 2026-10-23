@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.32.0';
+const APP_VERSION = '1.32.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1245,6 +1245,7 @@ function lockOverlayBody() {
 }
 
 function unlockOverlayBody() {
+  if (!document.body.classList.contains('settings-open') || window.QuickJiraStatsScroll?.locked) return;
   const overlays = ['settingsOverlay', 'plannerOverlay', 'historyOverlay']
     .map(id => $(id))
     .filter(Boolean);

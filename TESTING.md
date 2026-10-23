@@ -1,3 +1,29 @@
+# Kiểm thử V1.32.1
+
+## Đã chạy đạt
+
+- npm test: toàn bộ unit/API hồi quy của dự án.
+- tests/project-stats-tests.js: embedded đầy đủ/rỗng được xác thực theo ngày +0700, partial/missing/malformed/empty nhưng timespent dương phải fallback; HTTP400 khi không hỗ trợ worklog thử lại trường cơ bản; giữ quyền/OT/500 pagination.
+- Fixture 1.000 issue có log đầy đủ: 10 request search đủ tổng 500h; cách cũ cần 10 search + 1.000 GET riêng. Không tính OT/metadata, không đo thời gian Jira công ty.
+- Chromium background-loading qua frontend/router/session thật và Jira giả lập, viewport 1440×900/390×844/320×683/844×390: fixed body, outside wheel/touch bị chặn, header giữ vị trí, đóng khôi phục scrollY=300; chuyển qua lại lịch/thống kê.
+- Trên 390px: complete/empty embedded bỏ GET riêng, partial vẫn GET; tổng giờ/Subtask và phục hồi sau reload khớp. Logo không navigation (performance.timeOrigin giữ nguyên), giữ ô tìm và runID thống kê đang chạy.
+- Xóa một trang worklog trong checkpoint đã hoàn tất để mô phỏng lỗ lưu V1.32: tự đọc bù đúng issue, không đọc lại issue có trang hợp lệ, tổng không trùng. QuotaExceededError: cảnh báo có mã, không cập nhật cursor qua trang lỗi; reload vẫn đọc tiếp đủ.
+- Các bài nền/pause/resume/reload/filter/account/stale/write protection/CSP/light-dark/layout kế thừa tiếp tục đạt.
+- Hồi quy Chromium bốn viewport: calendar-experience, jira-parent-edit và jira-editor-images đạt.
+- Kiểm tra cú pháp JS, JSON/ID/asset/cache shell và ZIP. Ảnh QA nội bộ light/dark đã xem, không đóng gói.
+
+## Sau deploy
+
+Thử Safari/iPhone thật: chuyển lịch → thống kê, scroll ở nội dung/biên/backdrop, đóng trở lại đúng vị trí; bàn phím/xoay màn hình, kéo thẻ; logo không reset form/báo cáo. Đối chiếu giờ với Jira cùng quyền/kỳ, đặc biệt issue có >20 log hoặc trường worklog bị ẩn. Mô phỏng app ra nền/hết phiên và lưu cục bộ bị chặn.
+
+Chưa kiểm chứng Safari/iPhone vật lý, Jira công ty, quota/storage eviction thực hoặc benchmark thời gian trên server thật. Ảnh lỗi cũ không cung cấp DOMException gốc nên không kết luận nguyên nhân chính xác; bản mới có mã chẩn đoán và tránh bỏ sót checkpoint. Chưa push/deploy.
+
+Lệnh chạy lại: Node24.x npm ci && npm test; môi trường QA cài Playwright và Chromium riêng rồi QJL_CHROMIUM_PATH=/path/to/chromium npm run test:ui.
+
+---
+
+## Kết quả lịch sử V1.32.0
+
 # Kiểm thử V1.32.0
 
 ## Đã chạy

@@ -22,3 +22,9 @@ html[data-theme="dark"] #appIconDialog { background: #0d1828; }
 @keyframes icon-help-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes icon-help-out { to { opacity: 0; transform: translateY(12px); } }
 @media (prefers-reduced-motion: reduce) { #appIconDialog[open], #appIconDialog.icon-help-closing { animation: none; } }
+.logo-refresh-btn{display:inline-flex;align-items:center;justify-content:center;flex:none;border:0;padding:0;background:transparent!important;box-shadow:none;cursor:pointer;border-radius:15px}
+.logo-refresh-btn:focus-visible{outline:2px solid var(--primary);outline-offset:4px}
+.logo-refresh-btn.is-refreshing{opacity:.7}
+.logo-refresh-btn.is-refreshing img{animation:qjl-logo-breathe .9s ease-in-out infinite}
+@keyframes qjl-logo-breathe{50%{opacity:.55;transform:scale(.94)}}
+@media(prefers-reduced-motion:reduce){.logo-refresh-btn.is-refreshing img{animation:none}}

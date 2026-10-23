@@ -1,3 +1,51 @@
+# Quick Jira Log V1.32.1 — Khóa cuộn & đọc worklog hiệu quả hơn
+
+## Đã sửa theo yêu cầu Boss
+
+- Thống kê cố định trong viewport; khóa nền bằng body fixed và chặn wheel/touch ở ngoài hoặc tại biên vùng cuộn. Chỉ thanh bộ lọc/nội dung bên trong được cuộn; đóng trả lại vị trí trang. Xử lý chuyển quyền khóa từ lịch/tool overlay và chặn timer đóng màn hình cũ gỡ khóa của thống kê.
+- Thẻ thống kê nền có nền riêng sáng/tối, viền, bóng đổ nổi và tay nắm nhỏ. Khi kéo tăng độ nổi; bấm mở/kéo di chuyển, vị trí và giới hạn viewport giữ nguyên.
+- **Bấm logo góc trên để làm mới dữ liệu:** cập nhật dashboard và danh sách Subtask ở nền, giữ bộ lọc tìm tại chỗ/vị trí cuộn/form đang nhập; không location.reload, không đăng nhập lại, không reset báo cáo đang chạy hoặc gửi lại lệnh ghi Jira. Logo có animation và chống bấm lặp khi đang làm mới. Các màn hình khác vẫn có nút tải lại riêng như cũ.
+
+## Thuật toán đọc thống kê
+
+Search yêu cầu thêm trường worklog. Nếu Jira trả một danh sách worklog **đầy đủ và hợp lệ** (startAt=0, số bản ghi bằng total), app dùng luôn trang đó để cộng giờ, thay cho GET riêng trên từng issue. Trường rỗng có total=0 chỉ được dùng khi không mâu thuẫn với timespent dương. Không dùng riêng timespent hay JQL worklogDate để suy ra tổng kỳ.
+
+Trường thiếu/ẩn, danh sách bị cắt, sai metadata/ID/ngày/tác giả/thời lượng hoặc vượt ngân sách dữ liệu phản hồi sẽ quay về đọc đầy đủ endpoint worklog theo trang. Mỗi trang search dành tối đa khoảng 1,5MB cho dữ liệu worklog chuẩn hóa; phần không vừa không bị coi là rỗng. Nếu Jira từ chối trường worklog bằng HTTP400, search thử lại không có trường này rồi dùng luồng đọc cũ. Trang issue/worklog, múi giờ, tác giả, OT thật và quyền vẫn theo bản trước.
+
+Fixture 1.000 issue, mỗi issue có một log đầy đủ trong search: cần **10 request đọc giờ thay vì 1.010** theo cách cũ, tổng giây giữ nguyên. Con số này không gồm request metadata/OT, không phải cam kết nhanh hơn 99% theo thời gian thực. Hiệu quả trên Jira thật phụ thuộc tỷ lệ issue được trả đầy đủ, độ trễ mạng và pha đối chiếu OT; issue nhiều log bị cắt vẫn phải đọc riêng.
+
+## Checkpoint và cảnh báo trong ảnh
+
+Ảnh không chứa mã lỗi lưu trữ gốc nên chưa thể kết luận là hết dung lượng hay lỗi kết nối kho trình duyệt. Bản này không che cảnh báo:
+- Tự mở lại kết nối IndexedDB và thử một lần đối với InvalidStateError/UnknownError.
+- Hiển thị mã lỗi chuẩn; QuotaExceededError thông báo thiếu bộ nhớ, SecurityError thông báo trình duyệt chặn lưu.
+- Khi lưu thất bại, ngừng đẩy cursor mới của lượt đó: app vẫn tính trong RAM, mốc trên thiết bị dừng ở lần commit thành công. Không để cursor pha hoàn tất vượt qua trang chưa lưu.
+- Khi phục hồi, kiểm tra các trang liên tục; checkpoint V1.32 bị thiếu trang được đọc bù trước khi chốt. Trang hợp lệ vẫn dùng lại, không cộng trùng.
+- Worklog lấy sẵn từ search được lưu trong checkpoint trang issue, được phục hồi chính xác và không lưu trùng sang trang worklog riêng.
+
+Không thể bảo đảm khôi phục dữ liệu mà trình duyệt chưa ghi thành công hoặc đã xóa. Không thêm lưu mật khẩu/token/request ghi. Giữ quy tắc logout chủ động xóa, hết phiên có thể đăng nhập cùng account để tiếp tục; JavaScript có thể bị hệ điều hành tạm dừng.
+
+## Cài đặt và cập nhật
+
+Giải nén **Quick-Jira-Log_v1.32.1.zip**, mở **Quick-Jira-Log-V1.32.1**. Node24.x:
+
+```bash
+npm ci
+npm test
+```
+
+Giữ nguyên APP_SESSION_SECRET và cấu hình Vercel đang dùng. Không thêm package runtime, database server, biến môi trường hay migration. Hướng dẫn GitHub/Vercel/biến môi trường chi tiết được kế thừa ở bên dưới. Chưa push/deploy.
+
+PWA shell/cache và version tăng 1.32.1, thêm stats-scroll-lock.js/soft-refresh.js. Không yêu cầu xóa dữ liệu website khi cập nhật; checkpoint 1.32.0 được đọc tiếp/đọc bù. Nếu rollback về 1.32.0, hãy chạy **Xem thống kê mới**, vì bản cũ chưa xử lý worklog nằm trong trang search; không dùng lại checkpoint tạo bằng 1.32.1.
+
+Xem RELEASE_V1.32.1.md và TESTING.md. Cần thử Safari/iPhone thật và đối chiếu số liệu Jira công ty sau deploy.
+
+**Kế tiếp đề xuất: V1.33.0 — Phân tích Sub-task Type theo thành viên:** phân bổ giờ theo custom field thật, drilldown công việc trong từng loại. Chưa xây dựng/chưa chốt.
+
+---
+
+## Tài liệu nền V1.32.0 (các thay đổi V1.32.1 ở trên được ưu tiên)
+
 # Quick Jira Log V1.32.0 — Loading animation & khôi phục thống kê
 
 ## Cách sử dụng bản mới

@@ -14,16 +14,24 @@ function filters(q){
 }
 async function issuePage(f,auth){
  // Scan visible issues, not the potentially truncated worklogDate/Author index.
- const params={jql:(f.project?`project = "${f.project}" `:'')+'ORDER BY id ASC',startAt:f.startAt,maxResults:100,fields:['summary','project','issuetype']};
+ const params={jql:(f.project?`project = "${f.project}" `:'')+'ORDER BY id ASC',startAt:f.startAt,maxResults:100,fields:['summary','project','issuetype','worklog','timespent']};
  let r=await jiraFetch('/rest/api/2/search',{method:'POST',body:params,timeoutMs:6000},auth);
+ if(r.response.status===400){params.fields=params.fields.filter(x=>x!=='worklog');r=await jiraFetch('/rest/api/2/search',{method:'POST',body:params,timeoutMs:6000},auth);}
  if([403,404,405].includes(r.response.status))r=await jiraFetch('/rest/api/2/search?'+new URLSearchParams({...params,fields:params.fields.join(',')}),{timeoutMs:6000},auth);
  if(!r.response.ok)throw new JiraError(`Không đọc được danh sách công việc (HTTP ${r.response.status}).`,r.response.status);
  const d=r.data;
  if(!Array.isArray(d?.issues)||!Number.isSafeInteger(d.total)||d.total<0||Number(d.startAt)!==f.startAt||d.issues.length>100||(!d.issues.length&&f.startAt<d.total))throw new JiraError('Jira trả thiếu hoặc sai trang công việc.',502);
+ let budget=1500000;
  const seen=new Set(),issues=d.issues.map(i=>{
   const project=String(i.fields?.project?.key||'');
   if(!keyPattern.test(i.key||'')||!project||(f.project&&project!==f.project)||typeof i.fields?.issuetype?.subtask!=='boolean'||seen.has(i.key))throw new JiraError('Thông tin công việc không hợp lệ.',502);
-  seen.add(i.key);return {key:i.key,project,summary:String(i.fields.summary||''),isSubtask:i.fields.issuetype.subtask};
+  // Only complete, validated embedded pages replace an issue worklog GET.
+  // Missing/hidden/partial/malformed fields always use the existing paged reader.
+  let worklogs=null;const embedded=i.fields?.worklog;
+  if(Array.isArray(embedded?.worklogs)&&embedded.startAt===0&&Number.isSafeInteger(embedded.total)&&embedded.total>=0&&embedded.worklogs.length===embedded.total&&!(embedded.total===0&&Number(i.fields.timespent)>0)){
+   try{const page=normalizeWorklogs(embedded,{...f,startAt:0},i.key),bytes=Buffer.byteLength(JSON.stringify(page));if(bytes<=budget){worklogs=page;budget-=bytes;}}catch{}
+  }
+  seen.add(i.key);return {key:i.key,project,summary:String(i.fields.summary||''),isSubtask:i.fields.issuetype.subtask,...(worklogs?{worklogs}:{} )};
  });
  return {issues,total:d.total,nextStartAt:f.startAt+issues.length,hasMore:f.startAt+issues.length<d.total};
 }
@@ -32,8 +40,12 @@ async function worklogPage(f,q,auth){
  if(!keyPattern.test(key)||(f.project&&!key.startsWith(f.project+'-')))throw new JiraError('Mã công việc không thuộc phạm vi đã chọn.',400);
  const r=await jiraFetch(`/rest/api/2/issue/${encodeURIComponent(key)}/worklog?startAt=${f.startAt}&maxResults=500`,{timeoutMs:5000},auth);
  if(!r.response.ok)throw new JiraError(`Không đọc được worklog ${key} (HTTP ${r.response.status}).`,r.response.status);
- const d=r.data;
- if(!Array.isArray(d?.worklogs)||!Number.isSafeInteger(d.total)||d.total<0||Number(d.startAt)!==f.startAt||d.worklogs.length>500||(!d.worklogs.length&&f.startAt<d.total))throw new JiraError('Jira trả thiếu hoặc sai trang worklog.',502);
+ const page=normalizeWorklogs(r.data,f,key);
+ if(q.ot!=='0')await enrichHistory(page.items,auth);
+ return page;
+}
+function normalizeWorklogs(d,f,key){
+ if(!Array.isArray(d?.worklogs)||!Number.isSafeInteger(d.total)||d.total<0||Number(d.startAt)!==f.startAt||d.worklogs.length>500||d.worklogs.length+f.startAt>d.total||(!d.worklogs.length&&f.startAt<d.total))throw new JiraError('Jira trả thiếu hoặc sai trang worklog.',502);
  const seen=new Set(),items=[];
  for(const w of d.worklogs){
   const id=String(w.id||''),date=parseJiraStartedAtWorkTimezone(w.started),a=w.author||{},authorId=String(a.key||a.accountId||a.name||''),seconds=Number(w.timeSpentSeconds);
@@ -41,7 +53,6 @@ async function worklogPage(f,q,auth){
   seen.add(id);if(!f.all&&(date.date<f.from||date.date>f.to))continue;
   items.push({id,key,authorId,authorName:String(a.displayName||a.name||authorId),date:date.date,start:String(w.started),seconds,description:readLabel(w.comment).description,overtime:false,overtimeKnown:false});
  }
- if(q.ot!=='0')await enrichHistory(items,auth);
  const next=f.startAt+d.worklogs.length;
  return {key,items,ids:[...seen],total:d.total,nextStartAt:next,hasMore:next<d.total};
 }

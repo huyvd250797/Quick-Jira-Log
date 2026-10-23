@@ -1,3 +1,12 @@
+# V1.32.1 — Khóa cuộn & đọc worklog hiệu quả hơn
+
+- Khóa nền cố định, wheel/touch guard, giữ vị trí khi đóng thống kê; sửa xung đột timer unlock của lịch/tool overlay.
+- Tận dụng worklog đầy đủ đã có trong search, bỏ GET riêng thừa; fallback cho thiếu/ẩn/cắt/sai/mâu thuẫn dữ liệu. Giữ OT thật và quy tắc tính.
+- Thẻ nền có viền, bóng nổi, tay nắm và trạng thái đang kéo; tương phản sáng/tối.
+- Logo làm mới dashboard/Subtask tại chỗ, không reload/reset phiên/form/tác vụ thống kê.
+- Checkpoint ngừng tăng cursor sau lỗi lưu, chẩn đoán lỗi và mở lại kết nối khi phù hợp; kiểm tra liên tục và đọc bù trang thiếu khi phục hồi.
+- Kiểm thử request reduction, embedded/partial fallback/restore, scroll/touch/position/soft refresh, quota/repair và hồi quy. Chưa deploy.
+
 # V1.32.0 — Loading animation & khôi phục thống kê
 
 - Skeleton shimmer tại các vùng đọc, dashboard animation; chỉ thống kê dùng thẻ tiến độ nổi. Giữ bảo vệ khi ghi/xác thực.

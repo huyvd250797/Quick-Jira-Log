@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.32.0</title>
+  <title>Quick Jira Log · V1.32.1</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -43,16 +43,16 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.32.0</div>
+      <div class="boot-version">V1.32.1</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
   </div>
   <main class="shell">
     <section class="brand">
-      <img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
+      <button id="brandRefreshBtn" class="logo-refresh-btn" type="button" aria-label="Làm mới dữ liệu, giữ phiên hiện tại" title="Làm mới dữ liệu"><img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" /></button>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.32.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.32.1</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -460,7 +460,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.32.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.32.1 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -641,6 +641,6 @@
  </form>
  <main class="ps-body"><div id="psState" role="status" aria-live="polite">Chọn dự án để xem thống kê.</div><p id="psWarning" class="ps-warning" hidden></p><section id="psContent" hidden><div id="psKpis" class="ps-kpis"></div><div class="ps-list-tools"><label>Thành viên<select id="psPerson"><option value="">Tất cả</option></select></label><label>Sắp xếp<select id="psSort"><option value="hours">Giờ đã log</option><option value="tasks">Subtask đã log</option><option value="name">Tên thành viên</option></select></label></div><div id="psPeople"></div><section id="psDetail" hidden aria-label="Chi tiết thành viên"></section></section><details class="ps-note"><summary>Cách tính dữ liệu</summary><p>Theo ngày làm việc · Giờ Việt Nam. Chỉ gồm dữ liệu tài khoản có quyền xem. Subtask được đếm riêng theo từng người ghi worklog, không theo Assignee; một Subtask chung có thể xuất hiện ở nhiều thành viên. Giờ trên Story/Task/Bug vẫn được cộng.</p></details></main>
  </dialog>
- <script src="/lib/project-stats.js" defer></script><script src="/project-stats.js" defer></script><script src="/resume-state.js" defer></script>
+ <script src="/lib/project-stats.js" defer></script><script src="/stats-scroll-lock.js" defer></script><script src="/project-stats.js" defer></script><script src="/resume-state.js" defer></script><script src="/soft-refresh.js" defer></script>
 </body>
 </html>
