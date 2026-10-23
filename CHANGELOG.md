@@ -1,3 +1,12 @@
+# V1.31.0 — Loading nền & bộ lọc thống kê
+
+- Chuyển mọi API đọc sang trạng thái nền không khóa toàn app; có khay tác vụ, spinner/tên, danh sách tác vụ đồng thời; bảo vệ ghi Jira/xác thực được giữ lại.
+- Thống kê: tất cả/một dự án, toàn thời gian/năm/tháng/tuần/tùy chọn; ngày mốc và năm chọn được. Lọc từng worklog theo ngày Việt Nam, không lấy tổng lịch sử thay cho kỳ.
+- Đọc issue/worklog theo trang, không còn các giới hạn tổng/ngày của bản trước; tối đa 3 công việc đồng thời. Tiến độ thật X/Y và %, badge xuyên màn hình/modal/fullscreen.
+- Tạm dừng/tiếp tục/thử lại phần lỗi theo cursor; snapshot bộ lọc cho mỗi tác vụ; đổi phạm vi hủy lượt cũ, chống kết quả cũ/phiên cũ ghi đè hoặc đăng xuất phiên mới.
+- Dọn trạng thái/badge khi đổi tài khoản, giữ dữ liệu trong RAM; cảnh báo rõ quyền xem/partial/unknown OT và dữ liệu thay đổi giữa các lượt.
+- Kiểm tra API, browser 4 viewport sáng/tối và hồi quy lịch/editor ảnh/sửa công việc; không thêm dependency/migration, chưa push/deploy.
+
 # V1.30.0 — Thống kê dự án
 
 - Thêm công cụ PC và mục Dự án trong taskbar mobile 4 cột; màn hình riêng cho dự án/tuần/tháng/ngày tùy chọn.

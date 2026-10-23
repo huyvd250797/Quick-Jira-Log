@@ -55,10 +55,10 @@ window.QuickJiraSearch=(()=>{
     }catch(e){if(token!==generation)return;$('jiraOptionsState').textContent=e.message;$('jiraOptionsRetryBtn').hidden=false;}
   });}
   async function open(){
-    if(!owner||busy||QuickJiraBusy.active)return;
+    if(!owner||QuickJiraBusy.active)return;
     source=document.activeElement;closeDesktopEditor();closeAllToolOverlays({restore:true});
     if(!dialog.open)dialog.showModal();$('jiraSearchFilters').open=matchMedia('(min-width:900px)').matches;
-    $('jiraSearchCloseBtn').focus({preventScroll:true});renderRecent();if(!loadedOptions)await loadOptions();
+    $('jiraSearchCloseBtn').focus({preventScroll:true});renderRecent();if(!loadedOptions&&!busy)await loadOptions();
   }
   function dateLabel(value){const d=new Date(value);return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'}).format(d);}
   function renderItems(){
@@ -193,7 +193,7 @@ window.QuickJiraSearch=(()=>{
   $('jiraDetailTabs').addEventListener('click',e=>{const button=e.target.closest('[data-jira-tab]');if(button)selectDetailTab(button.dataset.jiraTab);});
   $('jiraDetailTabs').addEventListener('keydown',e=>{const buttons=[...$('jiraDetailTabs').querySelectorAll('[role=tab]')],i=buttons.indexOf(document.activeElement),n=buttons.length;if(i<0)return;const index=e.key==='ArrowRight'?(i+1)%n:e.key==='ArrowLeft'?(i+n-1)%n:e.key==='Home'?0:e.key==='End'?n-1:-1;if(index<0)return;e.preventDefault();buttons[index].focus();selectDetailTab(buttons[index].dataset.jiraTab);});
   dialog.addEventListener('close',()=>{source?.focus({preventScroll:true});});
-  for(const d of [dialog,peek]){d.addEventListener('keydown',e=>e.stopPropagation());d.addEventListener('cancel',e=>{if(busy||QuickJiraBusy.active)e.preventDefault();});}
+  for(const d of [dialog,peek]){d.addEventListener('keydown',e=>e.stopPropagation());d.addEventListener('cancel',e=>{if(QuickJiraBusy.active)e.preventDefault();});}
   $('jiraSearchForm').onsubmit=e=>{e.preventDefault();void search();};$('jiraSearchMoreBtn').onclick=()=>search(true);$('jiraSearchRetryBtn').onclick=()=>lastRetry?.();
   $('jiraSearchModeBtn').onclick=()=>changeMode('search');$('jiraFilterModeBtn').onclick=()=>changeMode('filter');$('jiraSavedFindBtn').onclick=loadSavedFilters;$('jiraSavedRetryBtn').onclick=loadSavedFilters;
   $('jiraSavedForm').onsubmit=e=>{e.preventDefault();void search();};$('jiraSavedName').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();void loadSavedFilters();}};

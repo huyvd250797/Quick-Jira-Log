@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.30.0';
+const APP_VERSION = '1.31.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -83,6 +83,7 @@ const state = {
   dayAuditCache: new Map(),
   dayAuditRevision: 0,
   apiInflight: new Map(),
+  apiEpoch: 0,
   swUpdateRegistration: null,
   swReloading: false,
   confirmResolver: null,
@@ -738,6 +739,7 @@ function savePrefs() {
 }
 
 function setLoggedIn(user) {
+  state.apiEpoch += 1;
   loginInputRevision = 0;
   rememberedLoginLoadSeq += 1;
   closeDesktopEditor();
@@ -769,6 +771,11 @@ function setLoggedIn(user) {
 }
 
 function setLoggedOut() {
+  state.apiEpoch += 1;
+  window.QuickJiraBusy?.clearBackground();
+  state.issueLookupSeq += 1;
+  state.singleCapacitySeq += 1;
+  state.bulkCapacitySeq += 1;
   resetCalendarViewer();
   state.historyViewportSnapshot=null;
   clearCalendarDrafts();
@@ -875,12 +882,13 @@ async function installPwa() {
 }
 
 async function api(path, options = {}) {
-  const { requestId, onProgress, ...fetchOptions } = options;
+  const { requestId, onProgress, silentBusy = false, ...fetchOptions } = options;
+  const requestUser = state.user;
   const method = String(fetchOptions.method || 'GET').toUpperCase();
-  const dedupeKey = method === 'GET' ? `${method}:${path}` : '';
+  const dedupeKey = method === 'GET' && !fetchOptions.signal ? `${state.apiEpoch}:${requestUser?.username||'anonymous'}:${method}:${path}` : '';
   if (dedupeKey && state.apiInflight.has(dedupeKey)) return state.apiInflight.get(dedupeKey);
 
-  const releaseBusy = QuickJiraBusy.begin(QuickJiraBusy.titleFor(path,method));
+  const releaseBusy = silentBusy ? ()=>{} : QuickJiraBusy.begin(QuickJiraBusy.titleFor(path,method), { blocking: method !== 'GET' });
   const run = (async () => {
     const startedAt = performance.now();
     const response = await fetch(path, {
@@ -904,13 +912,17 @@ async function api(path, options = {}) {
     const decoded = await consumeApiResponse(response, onProgress);
     let data = decoded.data;
     const resultStatus = decoded.status;
+    if (requestUser && requestUser !== state.user) {
+      const error = new Error('Kết quả thuộc phiên đăng nhập trước đã được bỏ qua.');
+      error.code = 'STALE_SESSION'; throw error;
+    }
     data = data && typeof data === 'object' ? data : { ok: false, error: 'Server trả về dữ liệu không hợp lệ.' };
     data.clientElapsedMs = Math.round(performance.now() - startedAt);
     if (resultStatus === 401) {
       setLoggedOut();
       // A streamed response has already sent its headers; clear the expired cookie separately.
       if (response.headers.get('content-type')?.includes('application/x-ndjson')) {
-        void QuickJiraBusy.run('Đang cập nhật phiên Jira…',()=>fetch('/api?action=logout', { method: 'POST', credentials: 'same-origin' })).catch(() => {});
+        void QuickJiraBusy.run('Đang cập nhật phiên Jira…',()=>fetch('/api?action=logout', { method: 'POST', credentials: 'same-origin' }),{blocking:true}).catch(() => {});
       }
     }
     if (resultStatus >= 400 || !data?.ok) {
@@ -1104,6 +1116,7 @@ function renderFilterIssues() {
 
 async function loadFilterIssues({ quiet = false } = {}) {
   if (!state.user || state.filterLoading) return;
+  const filterUser = state.user;
   state.filterLoading = true;
   const btn = $('refreshFilterBtn');
   btn.disabled = true;
@@ -1112,17 +1125,20 @@ async function loadFilterIssues({ quiet = false } = {}) {
 
   try {
     const data = await api('/api?action=subtasks', { method: 'GET', cache: 'no-store' });
+    if (state.user !== filterUser) return;
     state.filterIssues = Array.isArray(data.issues) ? data.issues : [];
     state.filterLoaded = true;
     $('filterName').textContent = 'Tự động theo tài khoản hiện tại';
     renderFilterIssues();
     if (data.truncated) showToast(`Có ${data.total} Sub-task phù hợp, app đang hiển thị ${data.count} mục đầu.`);
   } catch (error) {
+    if (state.user !== filterUser) return;
     state.filterLoaded = false;
     state.filterIssues = [];
     $('filterCount').textContent = '0';
     setFilterUi('error', error.message);
   } finally {
+    if (state.user !== filterUser) return;
     state.filterLoading = false;
     btn.disabled = false;
     btn.classList.remove('spinning');

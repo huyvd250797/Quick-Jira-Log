@@ -19,3 +19,9 @@ html[data-theme=dark] #projectStatsDialog,html[data-theme=dark] .ps-person{backg
 
 html.project-stats-open,body.project-stats-open{overflow:hidden;overscroll-behavior:none}
 html[data-theme=dark] #projectStatsDialog input[type=date]{color-scheme:dark}
+#projectStatsDialog .ps-toolbar{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ps-job-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}.ps-job-actions button{min-height:42px}
+#projectStatsDialog [hidden]{display:none!important}
+#projectStatsDialog input[readonly],#projectStatsDialog input:disabled{opacity:.65}
+@media(max-width:600px){#projectStatsDialog .ps-toolbar{grid-template-columns:repeat(2,minmax(0,1fr));max-height:49dvh;overflow:auto;overscroll-behavior:contain;flex-shrink:0}.ps-job-actions button{flex:1;font-size:12px;padding:10px}}
+@media(max-height:500px) and (orientation:landscape){#projectStatsDialog .ps-toolbar{grid-template-columns:repeat(4,minmax(0,1fr));max-height:38dvh;overflow:auto;flex-shrink:0}.ps-job-actions{grid-column:auto}.ps-job-actions button{font-size:11px;padding:6px}}

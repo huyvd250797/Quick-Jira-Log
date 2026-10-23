@@ -89,6 +89,6 @@ window.QuickJiraActions=(()=>{
  $('jiraCommentsMoreBtn').onclick=()=>loadComments(true);$('jiraCommentsRetryBtn').onclick=()=>ctx?.retry?.();
  $('jiraUpdateCancelBtn').onclick=()=>confirmDialog.close();$('jiraUpdateConfirmBtn').onclick=submit;confirmDialog.addEventListener('close',()=>{pending=null;});
  $('jiraActionResolveBtn').onclick=()=>{if(!ctx)return;receipts.delete(ctx.key);message('Đã mở lại thao tác. Chỉ gửi yêu cầu mới sau khi đã kiểm tra kết quả trên Jira.');syncEnabled();};
- for(const d of [edit,confirmDialog]){d.addEventListener('keydown',e=>e.stopPropagation());d.addEventListener('cancel',e=>{if(busy||QuickJiraBusy.active)e.preventDefault();});}
+ for(const d of [edit,confirmDialog]){d.addEventListener('keydown',e=>e.stopPropagation());d.addEventListener('cancel',e=>{if(QuickJiraBusy.active)e.preventDefault();});}
  return {setIssue,clear,loadComments};
 })();

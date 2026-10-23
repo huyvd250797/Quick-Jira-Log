@@ -1,4 +1,22 @@
-# V1.30.0 — Kiểm tra thống kê dự án
+# V1.31.0 — Loading nền và phạm vi thống kê
+
+- `npm run test`: logic/API toàn app và project-stats API mới; kiểm tra session, tất cả/một dự án, ngày nhiều năm/toàn thời gian, cursor hơn 5.000/10.000, lọc ngày Việt Nam, tác giả, native OT/unknown, malformed page/403/401 và không ghi Jira.
+- `QJL_CHROMIUM_PATH=/path/to/chromium npm run test:loading`: Chromium bốn viewport 1440×900,390×844,320×683,844×390; frontend/router/session thật và Jira giả lập. Giữ chậm các API đọc để kiểm tra thao tác được và badge xuyên màn hình/modal/fullscreen PC; X/Y/%, pause/resume, retry không cộng trùng, dữ liệu cũ không ghi đè bộ lọc/tài khoản mới, cleanup RAM, CSP/escaping, layout light/dark. Kiểm tra năm2012, tháng2 nhuận2024, tuần19–25/10/2026, ngày tùy chọn nhiều năm và toàn thời gian. API ghi giả lập được giữ chậm để chứng minh vẫn bảo vệ lúc gửi.
+- `npm run test:ui`: bộ browser được cập nhật cho hợp đồng loading nền, gồm bài mới, calendar-experience, jira-editor-images, jira-parent-edit; cùng các scripts riêng vẫn có trong package.json. Các file loading-lock/loading-feedback/project-stats browser cũ chuyển thành entrypoint đến bài mới. Bài editor ảnh và parent-edit chờ cả số pending đọc, không dùng active như định nghĩa khóa ghi.
+- Kết quả thực tế: unit/API và các bài browser trên đạt; QA screenshots nội bộ được kiểm tra, không đưa vào source ZIP. Chưa kiểm chứng bằng Jira công ty/Safari iPhone thật, chưa push/deploy. Các bài browser lịch sử khác không nằm trong test:ui hiện tại chưa được chạy lại toàn bộ cho hợp đồng mới.
+
+## Đối chiếu sau deploy
+
+1. Mở lịch/lấy Subtask/check giờ Bulk chậm: app cho đóng màn hình, nhập và sang công cụ khác; badge vẫn cho biết việc đang tải. Chỉ dữ liệu/nút phụ thuộc tạm chưa sẵn sàng.
+2. Chạy thống kê trên một dự án có số liệu đã biết: lọc từng kỳ so với Jira cùng quyền và giờ Việt Nam; các log ngoài kỳ không được cộng. So sánh cả log năm cũ và tất cả dự án.
+3. Đóng thống kê trong khi chạy → lịch → Mở từ badge; tiến độ tiếp tục. Pause cho request đã gửi kết thúc trang; resume không nhân đôi. Có lỗi quyền/mạng phải tạm tính và retry phần lỗi, không ẩn lỗi thành0h.
+4. Đổi bộ lọc trong khi tải: giữ tác vụ cũ đến khi bấm Xem mới; phản hồi cũ không hiển thị như kết quả bộ lọc mới. Logout/đổi account xóa report và badge, late401 không làm thoát phiên mới.
+5. Lưu thực sự lên Jira vẫn có xác nhận, chống trùng và xử lý unknown; không gửi lại chỉ vì đã bỏ overlay tải đọc.
+6. Tác vụ chạy trong trang đang mở, không phải server job: reload/đóng trang/iOS treo trang có thể ngắt; không ghi thông tin đăng nhập/PII sang kho lưu mới.
+
+---
+
+## Kiểm tra lịch sử V1.30.0 (hợp đồng phân trang/loading đã được thay thế ở trên)
 
 - `npm run test`: toàn bộ logic/API hồi quy và tests mới (đã chạy đạt).
 - `npm run test:project-stats`: router/session, read-only search, đọc trang issue/worklog, ngày +0700 và UTC qua ngày, người ghi khác assignee, shared Subtask, nhiều log dedupe, giờ công việc cha, xác minh OT thật/unknown, sai đầu vào/401/403/405, lỗi/thiếu/lặp trang (đã chạy đạt).
