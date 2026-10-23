@@ -48,7 +48,10 @@ const log=(id,author='a',started='2026-10-22T08:00:00.000+0700')=>({id:String(id
  r=await request({op:'worklogs',key:'CAL-1',ot:'0'});assert.equal(pluginReads,before,'Raw hours return without waiting for WorklogPRO');assert(r.data.items.every(x=>!x.overtimeKnown));
  r=await request({op:'overtime',ids:'101,103'});assert.equal(r.status,200);assert.equal(r.data.items.length,2);assert(r.data.items[0].overtimeKnown&&r.data.items[0].overtime);assert(!r.data.items[1].overtime);
  assert.equal((await request({op:'overtime',ids:'101'},false)).status,401);
- for(const ids of ['', '101,101', 'abc', '0', Array.from({length:26},(_,i)=>String(i+1)).join(',')])assert.equal((await request({op:'overtime',ids})).status,400);
+ const batch=await request({op:'overtime',reader:'native',ids:Array.from({length:50},(_,i)=>String(i+1)).join(',')});assert.equal(batch.status,200);assert.equal(batch.data.items.length,50);
+ assert.equal((await request({op:'overtime',reader:'invalid',ids:'101'})).status,400);
+
+ for(const ids of ['', '101,101', 'abc', '0', Array.from({length:51},(_,i)=>String(i+1)).join(',')])assert.equal((await request({op:'overtime',ids})).status,400);
  assert.equal(queries[0].maxResults,100);
  mode='big';const large=await request({op:'worklogs',key:'CAL-1',ot:'0'});assert.equal(large.data.items.length,500);assert.equal(large.data.nextStartAt,500);
  const tail=await request({op:'worklogs',key:'CAL-1',ot:'0',startAt:500});assert.equal(tail.data.items.length,1);assert(!tail.data.hasMore);assert.equal(aggregate([...large.data.items,...tail.data.items]).seconds,501*1800);mode='';
@@ -68,5 +71,5 @@ const log=(id,author='a',started='2026-10-22T08:00:00.000+0700')=>({id:String(id
  mode='bad-page';assert.equal((await request()).status,502);mode='bad-worklog';assert.equal((await request({op:'worklogs',key:'CAL-1'})).status,502);mode='worklog-denied';assert.equal((await request({op:'worklogs',key:'CAL-1'})).status,403);
  mode='ot-denied';r=await request({op:'worklogs',key:'CAL-1'});assert(r.data.items.every(x=>!x.overtimeKnown));mode='denied';assert.equal((await request()).status,403);mode='empty';r=await request();assert.equal(r.data.issues.length,0);assert(!r.data.hasMore);
  mode='unauth';r=await request();assert.equal(r.status,401);assert(r.headers.get('set-cookie'));assert.equal(writes,0);
- console.log('Project stats V1.32.1: raw hours/OT batches, all/one projects, unlimited valid range/all-time, paged issues/worklogs beyond old caps, timezone/author/native OT, auth/validation/errors/no writes passed.');
+ console.log('Project stats V1.33.0: raw hours/OT batches, all/one projects, unlimited valid range/all-time, paged issues/worklogs beyond old caps, timezone/author/native OT, auth/validation/errors/no writes passed.');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=original;if(server)await new Promise(r=>server.close(r));});

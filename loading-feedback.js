@@ -10,36 +10,53 @@ window.QuickJiraBusy = (() => {
   tray.setAttribute('popover','manual');tray.setAttribute('aria-label','Tác vụ nền');
   document.body.append(tray);
   const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const completed=new Map();let promote=true,lastTaskMarkup='',pressed=null,suppressClick=0,point=null;
-  try{const p=JSON.parse(localStorage.getItem('qjl-task-position-v1'));if(p&&Number.isFinite(p.x)&&Number.isFinite(p.y))point={x:Math.max(0,Math.min(1,p.x)),y:Math.max(0,Math.min(1,p.y))};}catch{}
+  const completed=new Map();let promote=true,lastTaskMarkup='',pressed=null,suppressClick=0,point=null,docked=null;
+  try{const p=JSON.parse(localStorage.getItem('qjl-task-position-v2')||localStorage.getItem('qjl-task-position-v1'));if(p&&Number.isFinite(p.x)&&Number.isFinite(p.y)){point={x:Math.max(0,Math.min(1,p.x)),y:Math.max(0,Math.min(1,p.y))};if(['left','right'].includes(p.docked))docked=p.docked;}}catch{}
   function bounds(){const v=window.visualViewport;return {left:v?.offsetLeft||0,top:v?.offsetTop||0,width:v?.width||innerWidth,height:v?.height||innerHeight};}
-  function place(){if(!point||tray.hidden)return;const b=bounds(),r=tray.getBoundingClientRect(),w=Math.max(0,b.width-r.width-16),h=Math.max(0,b.height-r.height-16);
-   Object.assign(tray.style,{left:(b.left+8+point.x*w)+'px',top:(b.top+8+point.y*h)+'px',right:'auto',bottom:'auto'});
+  function bottomReserve(){return matchMedia('(max-width:899px)').matches&&!document.querySelector('dialog[open]')&&!document.fullscreenElement?88:0;}
+  function savePoint(){if(point)try{localStorage.setItem('qjl-task-position-v2',JSON.stringify({...point,docked}));localStorage.setItem('qjl-task-position-v1',JSON.stringify(point));}catch{}}
+  function place(){if(tray.hidden)return;point||={x:1,y:.9};const b=bounds(),r=tray.getBoundingClientRect(),w=Math.max(0,b.width-r.width-16),h=Math.max(0,b.height-r.height-16-bottomReserve());
+   const left=docked==='left'?b.left-5:docked==='right'?b.left+b.width-r.width+5:b.left+8+point.x*w;
+   Object.assign(tray.style,{left:left+'px',top:(b.top+8+point.y*h)+'px',right:'auto',bottom:'auto'});
   }
   function chosen(){return [...pending.values(),...completed.values()].find(x=>x.id==='project-report');}
+  function popoverOpen(){return typeof tray.showPopover==='function'&&tray.matches(':popover-open');}
   function background(){
     const current=chosen();tray.hidden=!current;
-    if(!current){if(tray.matches(':popover-open'))tray.hidePopover();tray.replaceChildren();lastTaskMarkup='';return;}
-    const percent=current.total===undefined?null:current.total===0?100:Math.min(100,Math.floor((current.done||0)/current.total*100));
-    const copy=percent===null?(current.detail||''):(current.done||0)+'/'+current.total+' · '+percent+'%';
-    const markup='<button type="button" class="background-task-pill" data-task-open aria-label="Mở thống kê dự án, có thể kéo để di chuyển"><span class="background-task-spinner '+escape(current.status||'')+'" aria-hidden="true"></span><span class="background-task-copy"><strong>'+escape(current.label)+'</strong><small>'+escape(copy)+'</small><span class="background-task-track" aria-hidden="true"><i style="width:'+(percent??24)+'%"></i></span></span></button>';
+    if(!current){if(popoverOpen())tray.hidePopover();tray.replaceChildren();lastTaskMarkup='';return;}
+    const overall=Number.isFinite(current.overallPercent);
+    const percent=overall?current.overallPercent:current.total===undefined?null:current.total===0?100:Math.min(100,Math.floor((current.done||0)/current.total*100));
+    const copy=percent===null?(current.detail||''):(current.done||0)+'/'+current.total+' · '+percent+'%'+(overall?' tổng thể':'');
+    tray.toggleAttribute('data-docked',!!docked);if(docked)tray.dataset.docked=docked;
+    const complete=current.status==='complete',error=current.status==='error';
+    const meter='<span class="background-dock-meter '+(complete?'complete':error?'error':'')+'" aria-hidden="true"><svg viewBox="0 0 56 56"><circle class="dock-track" cx="28" cy="28" r="23"/><circle class="dock-value" cx="28" cy="28" r="23" stroke-dasharray="'+((percent??0)*1.445)+' 144.5"/>'+(complete?'<path class="dock-check" d="m16 28 8 8 16-16"/>':'')+'</svg><b>'+(complete?'':error?'!':percent===null?'…':percent+'%')+'</b></span>';
+    const eta=!current.status&&current.eta?'<small class="background-task-eta">'+escape(current.eta)+'</small>':'';
+    const markup='<button type="button" class="background-task-pill" data-task-open aria-label="'+escape(current.label)+' · '+(percent??0)+'%. Bấm xem thống kê; kéo tự do, kéo sát mép để thu gọn."><span class="background-task-spinner '+escape(current.status||'')+'" aria-hidden="true"></span>'+meter+'<span class="background-task-copy"><strong>'+escape(current.label)+'</strong><small>'+escape(copy)+'</small>'+eta+'<span class="background-task-track" aria-hidden="true"><i style="width:'+(percent??24)+'%"></i></span></span></button>';
     if(!pressed&&markup!==lastTaskMarkup){tray.innerHTML=markup;lastTaskMarkup=markup;}
+    if(!pressed){
+     // An outside popover can remain inert to touch while a modal is open.
+     // Make the card a real descendant of the current modal before promotion.
+     const host=document.activeElement?.closest?.('dialog[open]:not(#dataLoadingFeedback)')||[...document.querySelectorAll('dialog[open]')].filter(x=>x!==hud).at(-1)||document.fullscreenElement||document.body;
+     if(tray.parentElement!==host){if(popoverOpen())tray.hidePopover();host.append(tray);promote=true;}
     if(typeof tray.showPopover==='function'){
-      if(promote&&tray.matches(':popover-open'))tray.hidePopover();if(!tray.matches(':popover-open'))tray.showPopover();
-    }else {const host=[...document.querySelectorAll('dialog[open]')].filter(x=>x!==hud).at(-1)||document.fullscreenElement||document.body;if(tray.parentElement!==host)host.append(tray);}
-    promote=false;place();
+      if(promote&&popoverOpen())tray.hidePopover();if(!popoverOpen())tray.showPopover();
+    }
+    promote=false;}place();
   }
-  tray.addEventListener('pointerdown',e=>{if(e.button>0||!e.target.closest('[data-task-open]'))return;const r=tray.getBoundingClientRect();pressed={id:e.pointerId,x:e.clientX,y:e.clientY,left:r.left,top:r.top,moved:false};try{tray.setPointerCapture(e.pointerId);}catch{}});
-  tray.addEventListener('pointermove',e=>{if(!pressed||e.pointerId!==pressed.id)return;const dx=e.clientX-pressed.x,dy=e.clientY-pressed.y;if(Math.hypot(dx,dy)>6)pressed.moved=true;if(!pressed.moved)return;tray.dataset.dragging='true';
-    e.preventDefault();const b=bounds(),r=tray.getBoundingClientRect(),w=Math.max(1,b.width-r.width-16),h=Math.max(1,b.height-r.height-16);
+  function activate(){const task=chosen();docked=null;tray.removeAttribute('data-docked');savePoint();if(task?.status==='complete'||task?.status==='error')for(const [key,value]of completed)if(value===task)completed.delete(key);task?.onOpen?.();schedule();}
+  tray.addEventListener('pointerdown',e=>{if(e.button>0||!e.target.closest('[data-task-open]'))return;const r=tray.getBoundingClientRect();pressed={id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,left:r.left,top:r.top,moved:false,dockStart:docked};try{tray.setPointerCapture(e.pointerId);}catch{}});
+  tray.addEventListener('pointermove',e=>{if(!pressed||e.pointerId!==pressed.id)return;let dx=e.clientX-pressed.x,dy=e.clientY-pressed.y;if(Math.hypot(dx,dy)>6)pressed.moved=true;if(!pressed.moved)return;tray.dataset.dragging='true';
+    if(docked&&((docked==='left'&&dx>24)||(docked==='right'&&dx< -24))){docked=null;tray.removeAttribute('data-docked');const r=tray.getBoundingClientRect();pressed.left=e.clientX-r.width/2;pressed.top=e.clientY-r.height/2;pressed.x=e.clientX;pressed.y=e.clientY;pressed.dockStart=null;dx=dy=0;}
+    e.preventDefault();const b=bounds(),r=tray.getBoundingClientRect(),w=Math.max(1,b.width-r.width-16),h=Math.max(1,b.height-r.height-16-bottomReserve());
     point={x:Math.max(0,Math.min(1,(pressed.left+dx-b.left-8)/w)),y:Math.max(0,Math.min(1,(pressed.top+dy-b.top-8)/h))};place();
   });
-  function endPointer(e){if(!pressed||pressed.id!==e.pointerId)return;const moved=pressed.moved;pressed=null;delete tray.dataset.dragging;suppressClick=Date.now()+600;try{tray.releasePointerCapture(e.pointerId);}catch{}
-   if(moved&&point)try{localStorage.setItem('qjl-task-position-v1',JSON.stringify(point));}catch{}
-   if(e.type==='pointerup'&&!moved)chosen()?.onOpen?.();schedule();
+  function endPointer(e){if(!pressed||pressed.id!==e.pointerId)return;const p=pressed,moved=p.moved;pressed=null;delete tray.dataset.dragging;suppressClick=Date.now()+600;try{tray.releasePointerCapture(e.pointerId);}catch{}
+   if(moved&&e.type==='pointerup'&&!docked&&Math.abs(e.clientX-p.startX)>30){const b=bounds();if(e.clientX<=b.left+32)docked='left';else if(e.clientX>=b.left+b.width-32)docked='right';}
+   if(moved)savePoint();
+   if(e.type==='pointerup'&&!moved)activate();schedule();
   }
   tray.addEventListener('pointerup',endPointer);tray.addEventListener('pointercancel',endPointer);
-  tray.addEventListener('click',e=>{if(e.target.closest('[data-task-open]')&&(e.detail===0||Date.now()>suppressClick))chosen()?.onOpen?.();});
+  tray.addEventListener('click',e=>{if(e.target.closest('[data-task-open]')&&(e.detail===0||Date.now()>suppressClick))activate();});
   tray.addEventListener('contextmenu',e=>e.preventDefault());
   window.addEventListener('resize',place);window.visualViewport?.addEventListener('resize',place);window.visualViewport?.addEventListener('scroll',place);
   const animated=new Set();
@@ -138,7 +155,7 @@ window.QuickJiraBusy = (() => {
   function schedule(){if(!queued){queued=true;queueMicrotask(sync);}}
   function begin(label='Đang xử lý dữ liệu…',options={}) {
     const token=Symbol(),task={label,token:crypto.randomUUID(),...options};pending.set(token,task);if(updating)schedule();else sync();let released=false;
-    const end=(result={})=>{if(released)return;released=true;pending.delete(token);if(options.retain&&!options.blocking){Object.assign(task,result,{status:result.error?'error':'complete'});completed.set(token,task);setTimeout(()=>{completed.delete(token);schedule();},12000);}schedule();};
+    const end=(result={})=>{if(released)return;released=true;pending.delete(token);if(options.retain&&!options.blocking){Object.assign(task,result,{status:result.error?'error':'complete'});completed.set(token,task);setTimeout(()=>{if(!docked){completed.delete(token);schedule();}},12000);}schedule();};
     end.update=changes=>{if(!released){Object.assign(task,changes);schedule();}};
     end.cancel=()=>{released=true;pending.delete(token);completed.delete(token);schedule();};
     return end;
@@ -154,5 +171,5 @@ window.QuickJiraBusy = (() => {
   for(const owner of owners)if(owner&&owner!==hud)observer.observe(owner,{attributes:true,attributeFilter:['class','hidden','aria-busy','open','disabled']});
   document.addEventListener('fullscreenchange',()=>{hud.dataset.promote='true';promote=true;schedule();});
   document.addEventListener('DOMContentLoaded',schedule);
-  return {begin,run,sync:schedule,titleFor,clearBackground(){for(const [k,v] of pending)if(!v.blocking)pending.delete(k);completed.clear();schedule();},get active(){return locked;},get count(){return pending.size;}};
+  return {begin,run,sync:schedule,titleFor,clearBackground(){for(const [k,v] of pending)if(!v.blocking)pending.delete(k);completed.clear();schedule();},get docked(){return !!docked;},get active(){return locked;},get count(){return pending.size;}};
 })();

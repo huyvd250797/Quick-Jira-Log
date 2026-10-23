@@ -60,6 +60,7 @@ window.QuickJiraProjectReport=(()=>{
    summarize(j);paint(j);if(m.view==='stats')await open();
    requestAnimationFrame(()=>{if(valid(j))d.querySelector('.ps-body').scrollTop=m.scroll||0;});
    if((m.status==='running'||repair)&&!j.paused)void execute(j);else if(j.paused){makeTask(j);paint(j);}
+   else if(j.finished&&QuickJiraBusy.docked){makeTask(j);const p=progress(j),partial=!!j.error||!!j.warnings.length||j.issues.some(t=>t.error);j.task({label:partial?'Thống kê cần xử lý':'Thống kê hoàn tất',error:partial,done:p.done,total:p.total===null?undefined:p.total,overallPercent:QuickJiraEta.overall(j.phase,p.done,p.total)});j.receiptHandle=j.task;j.task=null;}
   }catch(e){if(owner===user&&seq===token)$('psState').textContent='Chưa khôi phục được dữ liệu đã lưu. Có thể chạy thống kê mới.';}
  }
  function login(user){owner=String(user?.username||'');clear();$('projectStatsBtn').classList.toggle('hidden',!owner);const token=seq;restoring=restore(owner,token).finally(()=>{if(seq===token)restoring=null;});}
@@ -87,18 +88,22 @@ window.QuickJiraProjectReport=(()=>{
   if(j.running&&!j.paused&&j.lastPaint&&performance.now()-j.lastPaint<80){if(!j.paintTimer)j.paintTimer=setTimeout(()=>{j.paintTimer=0;paint(j);},80);return;}
   clearTimeout(j.paintTimer);j.paintTimer=0;j.lastPaint=performance.now();
   const p=progress(j),caption=(j.filter.project||'Tất cả dự án')+' · '+(j.filter.all==='1'?'Toàn thời gian':j.filter.from.split('-').reverse().join('/')+'–'+j.filter.to.split('-').reverse().join('/'))+(j.resumeNotice?' · '+j.resumeNotice:'');
+  j.eta||=QuickJiraEta.create();
+  const eta=QuickJiraEta.update(j.eta,{phase:j.phase,done:p.done,total:p.total,now:performance.now(),running:j.running,paused:j.paused});
+  const etaText=j.running&&!j.paused?QuickJiraEta.label(eta,j.phase):'';
   const errors=j.issues.filter(t=>t.error).map(t=>t.key+': '+t.error);
   const status=j.recovering?'Đang khôi phục tiến độ':j.running?(j.paused?'Đang tạm dừng…':p.label):j.paused?'Đã tạm dừng':j.error||errors.length||j.warnings.length?'Dữ liệu tạm tính — cần xử lý':'Đã tải xong dữ liệu được phép xem';
   if(matches(j)){
-   $('psState').innerHTML=`<div class="ps-progress-head"><span>${j.running?'<i class="ps-spinner" aria-hidden="true"></i>':''}<strong>${esc(status)}</strong></span><b>${p.done}/${p.total??'?'} · ${p.percent}%</b></div><div class="ps-progress-track" aria-hidden="true"><i style="width:${p.percent==='—'?15:p.percent}%"></i></div><small>${esc(caption)}</small>`;
+   $('psState').innerHTML=`<div class="ps-progress-head"><span>${j.running?'<i class="ps-spinner" aria-hidden="true"></i>':''}<strong>${esc(status)}</strong></span><b>${p.done}/${p.total??'?'} · ${p.percent}%</b></div><div class="ps-progress-track" aria-hidden="true"><i style="width:${p.percent==='—'?15:p.percent}%"></i></div><small>${esc(caption)}</small>${etaText?'<small class="ps-eta">'+esc(etaText)+'</small>':''}`;
    $('psContent').hidden=j.running&&!report;$('projectStatsDialog').classList.toggle('ps-is-loading',j.running&&!report);
-   const unknown=report?.people.reduce((n,p)=>n+p.unknown,0)||0;
+   let unknown=0;if(report)for(const item of j.items.values())if(!item.overtimeKnown)unknown+=item.seconds;
+   if(j.running&&j.phase==='overtime')for(const node of $('psPeople').querySelectorAll('.ps-meta>span:last-child'))if(node.textContent!=='Đang đối chiếu Overtime…')node.textContent='Đang đối chiếu Overtime…';
    const warnings=[...new Set([...j.warnings,...errors,j.error,j.storageWarning,unknown?fmt(unknown)+' chưa xác định Overtime; vẫn cộng vào tổng giờ.':''])].filter(Boolean);
    $('psWarning').hidden=!warnings.length;$('psWarning').textContent=warnings.join(' ');
   }else $('psState').textContent='Bộ lọc chưa áp dụng. Tác vụ nền vẫn dùng bộ lọc đã bấm Xem thống kê.';
   $('psPause').hidden=!j.running&&!j.paused;$('psPause').disabled=j.running&&j.paused;$('psPause').textContent=j.paused?'Tiếp tục':'Tạm dừng';
   $('psRetry').hidden=j.running||j.paused||(!j.error&&!errors.length);$('psLoad').disabled=false;
-  j.task?.update({label:(j.paused?'Đã tạm dừng · ':p.label+' · ')+(j.filter.project||'Tất cả dự án'),...(p.total===null?{detail:'Đang xác định tổng số công việc'}:{done:p.done,total:p.total}),status:j.paused?'paused':''});
+  j.task?.update({label:(j.paused?'Đã tạm dừng · ':p.label+' · ')+(j.filter.project||'Tất cả dự án'),...(p.total===null?{detail:'Đang xác định tổng số công việc'}:{done:p.done,total:p.total}),overallPercent:QuickJiraEta.overall(j.phase,p.done,p.total),eta:etaText,status:j.paused?'paused':''});
  }
  function makeTask(j){j.receiptHandle?.cancel();j.receiptHandle=null;j.task=QuickJiraBusy.begin('Đang thống kê · '+(j.filter.project||'Tất cả dự án'),{id:'project-report',retain:true,onOpen:open});}
  async function request(j,params){return api('/api?'+new URLSearchParams({action:'project-stats',...j.filter,...params}),{silentBusy:true,signal:j.controller.signal});}
@@ -136,15 +141,23 @@ window.QuickJiraProjectReport=(()=>{
     if(valid(j)&&!j.paused){summarize(j);j.phase='overtime';await checkpoint(j);paint(j);}
    }
    if(j.phase==='overtime'&&!j.paused){
-    const pending=[...j.items.keys()].filter(id=>!j.verified.has(id)),chunks=[];for(let i=0;i<pending.length;i+=25)chunks.push(pending.slice(i,i+25));let cursor=0;
-    const verify=async()=>{while(valid(j)&&!j.paused&&cursor<chunks.length){const ids=chunks[cursor++],d=await request(j,{op:'overtime',ids:ids.join(',')});if(!valid(j))return;
+    const pending=[...j.items.keys()].filter(id=>!j.verified.has(id)),chunks=[];
+    if(pending.length)chunks.push(pending.slice(0,1));
+    for(let i=1;i<pending.length;i+=50)chunks.push(pending.slice(i,i+50));let cursor=0;
+    const verify=async()=>{while(valid(j)&&!j.paused&&cursor<chunks.length){const ids=chunks[cursor++],d=await request(j,{op:'overtime',ids:ids.join(','),reader:j.otReader||'auto'});if(!valid(j))return;
+     if(d.reader==='native'||(d.reader==='direct'&&j.otReader!=='native'))j.otReader=d.reader;
      if(!Array.isArray(d.items)||d.items.length!==ids.length||new Set(d.items.map(x=>x.id)).size!==ids.length||d.items.some(x=>!ids.includes(x.id)))throw Error('Kết quả đối chiếu OT chưa khớp worklog.');
      for(const x of d.items){Object.assign(j.items.get(x.id),x);j.verified.add(x.id);}
      await checkpoint(j,{key:'ot|'+ids[0],kind:'ot',payload:d.items});if(valid(j))paint(j);
-    }};const verified=await Promise.allSettled([verify(),verify()]);for(const r of verified)if(r.status==='rejected'&&valid(j))j.error=r.reason.message;
+    }};
+    // First group negotiates the compatible reader once; then fill two lanes.
+    const first=chunks.length?chunks.splice(1):[];
+    const initial=await Promise.allSettled([verify()]);
+    for(const r of initial)if(r.status==='rejected'&&valid(j))j.error=r.reason.message;
+    if(valid(j)&&!j.paused&&!j.error){chunks.push(...first);const verified=await Promise.allSettled([verify(),verify()]);for(const r of verified)if(r.status==='rejected'&&valid(j))j.error=r.reason.message;}
    }
   }catch(e){if(valid(j))j.error=e.message;}
-  finally{if(valid(j)){j.running=false;j.finished=!j.paused;working=false;await checkpoint(j);summarize(j);paint(j);if(!j.paused){const p=progress(j),partial=!!j.error||!!j.warnings.length||j.issues.some(t=>t.error);j.task?.({label:partial?'Thống kê cần xử lý':'Thống kê hoàn tất',error:partial,done:p.done,total:p.total??0,detail:partial?'Có dữ liệu chưa đọc được':'Đã hoàn tất'});j.receiptHandle=j.task;j.task=null;}}}
+  finally{if(valid(j)){j.running=false;j.finished=!j.paused;working=false;await checkpoint(j);summarize(j);paint(j);if(!j.paused){const p=progress(j),partial=!!j.error||!!j.warnings.length||j.issues.some(t=>t.error);j.task?.({label:partial?'Thống kê cần xử lý':'Thống kê hoàn tất',error:partial,done:p.done,total:p.total===null?undefined:p.total,overallPercent:QuickJiraEta.overall(j.phase,p.done,p.total),detail:partial?'Có dữ liệu chưa đọc được':'Đã hoàn tất'});j.receiptHandle=j.task;j.task=null;}}}
  }
  async function load(){
   if(!owner||QuickJiraBusy.active)return;if(restoring)await restoring;const f=filter();
@@ -160,7 +173,8 @@ window.QuickJiraProjectReport=(()=>{
  $('psPerson').onchange=()=>{selected='';render();};$('psSort').onchange=render;$('psPeople').onclick=e=>{const b=e.target.closest('[data-person]');if(!b)return;selected=selected===b.dataset.person?'':b.dataset.person;render();if(selected)$('psDetail').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});};
  $('psClose').onclick=()=>{if(!QuickJiraBusy.active)d.close();};d.addEventListener('cancel',e=>{if(QuickJiraBusy.active)e.preventDefault();});d.addEventListener('keydown',e=>e.stopPropagation());d.addEventListener('close',()=>{document.documentElement.classList.remove('project-stats-open');document.body.classList.remove('project-stats-open');origin?.focus({preventScroll:true});});
  $('projectStatsBtn').onclick=open;$('mobileProjectStatsBtn').onclick=open;
- document.addEventListener('visibilitychange',()=>{if(document.hidden)void flush();});window.addEventListener('pagehide',()=>{void flush();});
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)void flush();else if(job?.running){job.eta=QuickJiraEta.create();paint(job);}});window.addEventListener('pagehide',()=>{void flush();});
  d.addEventListener('close',()=>{void flush();});
+ setInterval(()=>{if(job?.running&&!document.hidden)paint(job);},1000);
  if(typeof state!=='undefined'&&state.user)login(state.user);return {login,logout,open,flush,get restoring(){return !!restoring;},get running(){return !!job?.running;},get paused(){return !!job?.paused;}};
 })();

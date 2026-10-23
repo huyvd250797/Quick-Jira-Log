@@ -5,6 +5,7 @@ const {jiraFetch,JiraError}=require('../lib/jira');
 const {validDate}=require('../lib/ui-tools');
 const {parseJiraStartedAtWorkTimezone}=require('../lib/scheduler');
 const {enrichHistory}=require('../lib/worklogpro');
+const {readStatsOvertime}=require('../lib/stats-overtime');
 const {readLabel}=require('../lib/worklog-label');
 const keyPattern=/^[A-Z][A-Z0-9_]*-\d+$/;
 function filters(q){
@@ -60,8 +61,8 @@ module.exports=async(req,res)=>{
  if(req.method!=='GET')return methodNotAllowed(res,['GET']);const auth=getSession(req);if(!auth)return sendJson(res,401,{ok:false,error:'Vui lòng đăng nhập Jira.'});
  try{const f=filters(req.query||{});let data;
   if(f.op==='overtime'){
-   const ids=String(req.query.ids||'').split(',');if(!ids.length||ids.length>25||new Set(ids).size!==ids.length||ids.some(id=>!/^\d{1,20}$/.test(id)||Number(id)<=0))throw new JiraError('Danh sách worklog cần đối chiếu không hợp lệ.',400);
-   const items=ids.map(id=>({id}));await enrichHistory(items,auth);data={items};
+   const ids=String(req.query.ids||'').split(',');if(!ids.length||ids.length>50||new Set(ids).size!==ids.length||ids.some(id=>!/^\d{1,20}$/.test(id)||!Number.isSafeInteger(Number(id))||Number(id)<=0)||!['auto','direct','native'].includes(req.query.reader||'auto'))throw new JiraError('Danh sách worklog cần đối chiếu không hợp lệ.',400);
+   data=await readStatsOvertime(ids,auth,req.query.reader||'auto');
   }else data=f.op==='issues'?await issuePage(f,auth):await worklogPage(f,req.query,auth);
   return sendJson(res,200,{ok:true,...data,scope:'visible-issues'});}
  catch(e){if(e.status===401)res.setHeader('Set-Cookie',clearSessionCookie());return sendJson(res,e.status||500,{ok:false,error:e.status?e.message:'Không tải được thống kê dự án.'});}

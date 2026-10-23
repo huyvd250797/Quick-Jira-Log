@@ -1,3 +1,26 @@
+# Kiểm thử V1.33.0
+
+## Đã chạy đạt
+
+- Toàn bộ `npm test` hồi quy, gồm stats-overtime-tests và progress-eta-tests mới. API thêm biên50 ID và reader enum hợp lệ/không hợp lệ.
+- Direct: đúng ID/thuộc tính/boolean, metadata một lần/lô, concurrency <=10. Native: chỉ thăm dò một lần khi direct không hỗ trợ; hint native bỏ thăm dò, dữ liệu malformed fallback. Thuộc tính bị từ chối giữ unknown; 401 dừng lên lịch; chỉ GET đúng origin công ty.
+- Benchmark giả lập200 ID, 8ms/I/O: kết quả OT cũ/mới khớp; concurrency đỉnh12→20, lookup metadata8→5; một lượt khoảng175→105ms. Không phải benchmark Jira thật hoặc SLA.
+- ETA: ngưỡng mẫu/thời gian, reset khi đổi bước/tạm dừng, stalled/completed, định dạng và % tổng thể ở biên từng bước.
+- Chromium background-loading: 1440×900,390×844,320×683,844×390. CDP touch ở390px: kéo ngang/dọc trong modal; dock trái/phải; kéo vào mở rộng; tiến độ; check còn sau12,5 giây và reload. Fixture OT chậm xác nhận ETA ở modal và thẻ nền.
+- Hồi quy nền/navigation, body scroll lock, logo refresh không navigation/reset runID, quota/checkpoint holes, pause/resume/restore, stale/account/filter, write protection, CSP, light/dark/layout.
+- Chromium calendar-experience, jira-parent-edit, jira-editor-images: đạt bốn viewport.
+- Kiểm tra syntax, JSON, HTML ID/asset/PWA shell, source ZIP; ảnh QA nội bộ không đóng gói.
+
+## Giới hạn và kiểm chứng sau deploy
+
+Tất cả Jira trong kiểm thử là giả lập qua frontend/router/session thật. Chưa đo tốc độ Jira công ty hoặc chạy Safari/iPhone vật lý. Cần đối chiếu tổng giờ và OT cùng quyền, thử direct bị chặn/native fallback, rate limit, mạng chậm và khôi phục khi iOS giải phóng app. Hệ điều hành có thể tạm dừng JavaScript; thẻ dock không tạo dịch vụ chạy nền độc lập. Khôi phục phụ thuộc checkpoint đã lưu thành công và dữ liệu trình duyệt chưa bị xóa. ETA là ước tính theo bước, không bảo đảm chính xác.
+
+Chạy lại: Node24 `npm ci`, `npm test`; QA riêng cài Playwright/Chromium rồi `QJL_CHROMIUM_PATH=/path/to/chromium npm run test:ui`. Chưa push/deploy.
+
+---
+
+## Kết quả lịch sử
+
 # Kiểm thử V1.32.1
 
 ## Đã chạy đạt

@@ -1,0 +1,17 @@
+'use strict';
+const assert=require('node:assert/strict'),eta=require('../lib/progress-eta');
+const s=eta.create(),input={phase:'overtime',total:100,running:true};
+assert.equal(eta.update(s,{...input,done:0,now:0}),null);
+assert.equal(eta.update(s,{...input,done:10,now:1000}),null);
+assert.deepEqual(eta.update(s,{...input,done:20,now:2000}),{seconds:8});
+assert.equal(eta.label({seconds:8},'overtime'),'Còn khoảng 8 giây');
+assert.equal(eta.label({seconds:65},'worklogs'),'Bước này còn khoảng 2 phút');
+assert(eta.update(s,{...input,done:20,now:18001}).waiting);
+assert.equal(eta.update(s,{...input,done:20,now:19000,paused:true}),null);
+assert.equal(eta.update(s,{...input,done:20,now:20000}),null);
+assert.equal(eta.update(s,{...input,phase:'issues',done:3,now:21000}),null);
+assert.equal(eta.update(s,{...input,phase:'issues',done:100,now:22000}),null);
+assert.equal(eta.update(s,{...input,done:100,now:23000,running:false}),null);
+const overall=['issues','worklogs','overtime'].flatMap(phase=>[0,50,100].map(done=>eta.overall(phase,done,100)));
+assert.deepEqual(overall,[0,10,20,20,40,60,60,80,100]);assert.equal(eta.overall('issues',0,null),null);
+console.log('ETA: measured progress, minimum samples, phase/reset/pause/stall/complete and wording passed.');

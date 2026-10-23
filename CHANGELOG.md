@@ -1,3 +1,10 @@
+# V1.33.0
+
+- Tăng tốc đối chiếu OT bằng đọc trực tiếp có kiểm chứng, fallback native, lô50 và concurrency có giới hạn; giữ unknown/quyền/xác thực.
+- Kéo thẻ nền hai trục trong modal, thu sát mép, vòng tiến độ/check hoàn tất, khôi phục receipt đã dock.
+- ETA lấy mẫu thực tế theo giai đoạn; % tổng thể có trọng số, không reset khi chuyển bước.
+- Thêm unit/API/cảm ứng Chromium; giữ luồng ghi Jira và checkpoint. Không thêm runtime dependency/env.
+
 # V1.32.1 — Khóa cuộn & đọc worklog hiệu quả hơn
 
 - Khóa nền cố định, wheel/touch guard, giữ vị trí khi đóng thống kê; sửa xung đột timer unlock của lịch/tool overlay.
