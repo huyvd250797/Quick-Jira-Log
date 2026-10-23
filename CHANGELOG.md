@@ -1,3 +1,12 @@
+# V1.32.0 — Loading animation & khôi phục thống kê
+
+- Skeleton shimmer tại các vùng đọc, dashboard animation; chỉ thống kê dùng thẻ tiến độ nổi. Giữ bảo vệ khi ghi/xác thực.
+- Thẻ bấm trực tiếp, bỏ Mở/chevron, kéo di chuyển và nhớ vị trí trong viewport; tiến độ màn hình thống kê gọn, cách tính thu gọn.
+- Trang issue 100/worklog 500, 5 hàng đợi đọc; giờ làm trả trước, OT native đối chiếu riêng theo nhóm; giảm tần suất vẽ tiến độ.
+- Checkpoint trang + cursor atomic trong IndexedDB theo username/runID; khôi phục đọc tiếp sau reload, không cộng trùng; view/dashboard/lịch cá nhân chỉ đọc được phục hồi.
+- Chủ động cập nhật PWA sau lưu checkpoint; không tự reload khi controller đổi. Logout xóa cục bộ, phiên hết hạn giữ để đăng nhập cùng tài khoản.
+- Không cam kết thực thi khi iOS treo app; không tự gửi lại thao tác ghi. Chi tiết dữ liệu cục bộ/giới hạn trong README.
+
 # V1.31.0 — Loading nền & bộ lọc thống kê
 
 - Chuyển mọi API đọc sang trạng thái nền không khóa toàn app; có khay tác vụ, spinner/tên, danh sách tác vụ đồng thời; bảo vệ ghi Jira/xác thực được giữ lại.

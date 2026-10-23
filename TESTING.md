@@ -1,3 +1,34 @@
+# Kiểm thử V1.32.0
+
+## Đã chạy
+
+- npm test: toàn bộ logic/API hồi quy; test thống kê bổ sung raw worklog ot=0 không chờ WorklogPRO, nhóm OT native đúng ID, session/validation/giới hạn 25 ID/không ghi Jira. Các bài trước về phân trang/múi giờ/quyền/partial tiếp tục đạt.
+- Chromium qua frontend/router/session thật và Jira giả lập: 1440×900, 390×844, 320×683, 844×390. test:loading đạt skeleton cục bộ và không có thẻ đọc thông thường, chuyển màn hình trong lúc tải, tiến độ/tạm dừng/tiếp tục, toàn thời gian/năm/tháng/tuần/ngày/tất cả dự án, partial/retry, stale filter/account, CSP/light-dark/layout và khóa khi thực sự ghi.
+- Ở viewport 390: giữ một công việc chưa trả về, cho hai trang khác commit; reload app → khôi phục màn hình/bộ lọc/tác vụ, không fetch lại trang đã lưu, tổng chính xác 3h30m không trùng. Reload khi đã tạm dừng vẫn tạm dừng; tiếp tục đúng kết quả.
+- Kiểm tra IndexedDB thật trong Chromium: runID sai không ghi đè job hiện tại, tài khoản khác không đọc được checkpoint qua API lưu trữ của app; logout xóa checkpoint. Giả lập quota commit thất bại: vẫn tổng hợp đúng trong RAM và có cảnh báo không lưu được tiến độ.
+- Thẻ nền chỉ một nút toàn vùng; kéo không kích hoạt mở, bấm mở; vị trí được ghi và nằm trong viewport sau reload. Fullscreen PC vẫn thấy thẻ.
+- Hồi quy Chromium bốn viewport: calendar-experience (giữ vị trí/lỗi/partial save/retry/readback), jira-editor-images (upload/create-recovery/zoom), jira-parent-edit (quyền/editmeta/PUT/readback) đạt.
+- Kiểm tra cú pháp JS, version/package/manifest, tham chiếu asset/PWA và ZIP. QA screenshots nội bộ đã xem, không nằm trong source bàn giao.
+
+## Chạy lại
+
+Node 24.x: npm ci && npm test. Môi trường QA có Playwright và Chromium: đặt QJL_CHROMIUM_PATH rồi chạy npm run test:ui. Không thêm Playwright vào dependency runtime của app.
+
+## Cần đối chiếu sau deploy
+
+1. Safari/iPhone thật: skeleton lúc vào, chờ thống kê rồi chuyển app; mở lại sau vài phút. iOS có thể dừng thực thi, cần tiếp tục từ checkpoint khi app được chạy lại.
+2. Cố ý đóng/reload giữa các pha issue/worklog/OT, so tổng với lượt quét mới cùng quyền. Trang dở có thể đọc lại, trang đã commit không cộng trùng. Thử hết phiên và đăng nhập lại cùng account; logout chủ động phải xóa checkpoint.
+3. Quét nhiều năm/tất cả dự án với bộ số liệu thật. So tổng giờ/Subtask theo tác giả và kỳ +0700; xác minh OT/unknown. Không lấy phần trăm 100% thay cho kết luận đủ quyền.
+4. Thử mạng chậm/mất kết nối, quyền 403, dữ liệu Jira đổi trong lúc quét, kho thiết bị đầy; cảnh báo phải còn nhìn thấy, không tự biến thành 0h hoặc đầy đủ giả.
+5. Thẻ kéo ở mobile portrait/landscape và khi bàn phím hiện; chạm không kéo phải mở, kéo không mở.
+6. Bản cập nhật shell không tự reload giữa tác vụ. Bấm cập nhật mới tải lại; checkpoint ghi thành công mới có cơ sở khôi phục. Không tự phát lại các thao tác ghi Jira.
+
+Chưa dùng tài khoản Jira công ty, chưa đo tốc độ trên dữ liệu thật, chưa thử Safari/iPhone vật lý hoặc eviction/storage pressure thật; lỗi quota được mô phỏng. Chưa push/deploy.
+
+---
+
+## Lịch sử kiểm thử V1.31 và trước (mô tả RAM/reload cũ được thay thế bởi V1.32 ở trên)
+
 # V1.31.0 — Loading nền và phạm vi thống kê
 
 - `npm run test`: logic/API toàn app và project-stats API mới; kiểm tra session, tất cả/một dự án, ngày nhiều năm/toàn thời gian, cursor hơn 5.000/10.000, lọc ngày Việt Nam, tác giả, native OT/unknown, malformed page/403/401 và không ghi Jira.

@@ -19,6 +19,8 @@ html[data-theme=dark] #projectStatsDialog,html[data-theme=dark] .ps-person{backg
 
 html.project-stats-open,body.project-stats-open{overflow:hidden;overscroll-behavior:none}
 html[data-theme=dark] #projectStatsDialog input[type=date]{color-scheme:dark}
+.ps-progress-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.ps-progress-head>span{display:flex;align-items:center;gap:8px;min-width:0}.ps-progress-head strong{font-size:13px}.ps-progress-head b{font-size:12px;white-space:nowrap;color:var(--primary)}.ps-progress-track{height:5px;background:var(--primary-soft);border-radius:5px;overflow:hidden;margin:12px 0 8px}.ps-progress-track>i{display:block;height:100%;background:var(--primary);border-radius:5px;transition:width .2s ease}.ps-spinner{width:17px;height:17px;flex:none;border:2px solid var(--line);border-top-color:var(--primary);border-radius:50%;animation:qjl-data-spin .85s linear infinite}#psState:has(.ps-progress-head){padding:15px;border:1px solid var(--line);border-radius:14px;margin:16px 0;background:var(--bg)}#psState small{display:block;color:var(--muted);font-size:12px}.ps-note summary{cursor:pointer;font-weight:600}.ps-note p{margin-top:8px}
+@media(prefers-reduced-motion:reduce){.ps-spinner{animation:none}.ps-progress-track>i{transition:none}}
 #projectStatsDialog .ps-toolbar{grid-template-columns:repeat(3,minmax(0,1fr))}
 .ps-job-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}.ps-job-actions button{min-height:42px}
 #projectStatsDialog [hidden]{display:none!important}

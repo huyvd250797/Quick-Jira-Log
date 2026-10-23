@@ -1,41 +1,48 @@
-# Quick Jira Log V1.31.0 — Loading nền & bộ lọc thống kê
+# Quick Jira Log V1.32.0 — Loading animation & khôi phục thống kê
 
-## Sử dụng bản mới
+## Cách sử dụng bản mới
 
-- Các yêu cầu **đọc dữ liệu** (lịch, danh sách Subtask, kiểm tra giờ đã log, tổng hợp, tra cứu Jira và đọc các popup) hiển thị loading nền ở góc màn hình, không phủ tối/khóa toàn bộ app. Có thể đóng màn hình đang tải, cuộn, nhập dữ liệu, mở chức năng khác. Chỉ các thao tác phụ thuộc dữ liệu đang thiếu hoặc nút gửi cùng yêu cầu vẫn có thể tạm vô hiệu trong màn hình đó.
-- Ô tác vụ nền có spinner và tên việc đang chạy; bấm nút danh sách để xem các tác vụ đồng thời. Nút **Mở** của thống kê đưa về màn hình và tác vụ hiện tại. Khi xong giữ thông báo khoảng 12 giây. Badge hiển thị cả khi mở dialog/lịch fullscreen, bố trí tránh taskbar mobile; chỉ các nút của badge nhận tương tác khi thu gọn.
-- **Thao tác thực sự ghi Jira và đăng nhập/đăng xuất** vẫn được bảo vệ trong lúc gửi: lưu worklog, sửa/xóa, lưu lịch, upload/tạo/sửa Jira. Giữ xác nhận, chống gửi trùng và xử lý kết quả chưa xác định; không thay đổi quy tắc giờ, quyền Jira hoặc kiểm tra phía server trước ghi. Bản này không biến một yêu cầu ghi chưa xác định thành một lượt gửi lại tự động.
+- Dữ liệu đọc tải nền, không khóa toàn app. Dashboard giờ làm lúc mới vào dùng skeleton shimmer trên các ô số; lịch, Subtask, tra cứu và các vùng đọc dùng animation tại chỗ thay cho thông báo tải dạng chữ. Lỗi/quyền/dữ liệu thiếu vẫn hiển thị rõ. Khi cập nhật dashboard đã có dữ liệu cùng ngày, giữ các số cũ và chỉ animate trạng thái đối chiếu.
+- Thống kê có một thẻ nổi gọn: spinner, tên giai đoạn, phạm vi, **X/Y · Z%** và thanh tiến độ. **Bấm toàn bộ thẻ** để mở thống kê; đã bỏ nút Mở và mũi tên. **Kéo thẻ** để đổi vị trí, thả không mở màn hình. Vị trí được nhớ trên thiết bị và giữ trong viewport khi đổi kích thước/xoay màn hình. Thông báo hoàn tất giữ khoảng 12 giây.
+- Màn hình thống kê có tiến độ gọn, mô tả cách tính thu gọn. Có thể sang chức năng khác trong lúc đọc, tạm dừng, tiếp tục hoặc thử lại phần lỗi.
+- Xác thực và thao tác **ghi Jira** vẫn có spinner/bảo vệ lúc gửi, xác nhận, chống gửi trùng và xử lý kết quả chưa xác định. Không tự phát lại POST/PUT/DELETE sau khi mở lại app.
 
-## Thống kê dự án: bộ lọc được áp dụng thực tế
+## Bộ lọc và cách tính thống kê
 
-1. Mở **Dự án / Thống kê dự án**. Chọn **Tất cả dự án** hoặc **Một dự án** rồi nhập/chọn mã; mặc định tất cả dự án, tháng hiện tại. Việc mở màn hình không tự chạy lượt quét mọi dự án.
-2. Chọn kỳ **Toàn thời gian**, **Năm**, **Tháng**, **Tuần** hoặc **Tùy chọn ngày**. Năm có ô nhập năm; tuần/tháng có ngày mốc để chọn bất kỳ kỳ nào, không chỉ kỳ hiện tại. Khoảng ngày tính theo giờ Việt Nam và gồm cả hai ngày đầu/cuối.
-3. **Xem thống kê** bắt đầu tác vụ nền. App áp dụng khoảng ngày vào từng worklog.started, không lấy tổng timespent toàn bộ công việc để đại diện cho kỳ. Toàn thời gian bỏ lọc ngày. Không còn giới hạn 93 ngày, 5.000 issue hoặc 10.000 worklog/issue của bản trước; vẫn tuân theo dữ liệu/quyền/giới hạn phản hồi thực tế của Jira.
-4. Tiến độ gồm giai đoạn tìm danh sách công việc rồi đọc worklog. Khi đã biết tổng sẽ hiện **X/Y — Z%** theo giai đoạn, số công việc đã xử lý/tổng số được tìm thấy. Giai đoạn đọc bắt đầu lại từ 0 vì là công việc khác với tìm danh sách. Không chạy phần trăm giả theo đồng hồ. Công việc không có worklog trong kỳ vẫn cần đọc và được tính trong tiến độ xử lý. 100% là đã xử lý lượt quét, không đồng nghĩa có quyền xem mọi dữ liệu hoặc mọi lượt đọc đều thành công; trường hợp lỗi luôn ghi **Tạm tính/cần xử lý**.
-5. Đóng bằng X rồi sang lịch/tra cứu/chức năng khác: tác vụ vẫn chạy và badge vẫn hiện. Có **Tạm dừng / Tiếp tục**: các yêu cầu đã gửi kết thúc trang hiện tại rồi dừng; không mất cursor/kết quả đã đọc. **Thử lại phần lỗi** đọc tiếp từ trang chưa thành công, không cộng lại trang cũ. Cảnh báo dữ liệu thay đổi trong lúc quét cần Xem thống kê mới để đối chiếu, không âm thầm tuyên bố là đầy đủ.
-6. Có thể thay bộ lọc trong khi tải. Tác vụ đang chạy giữ bản chụp bộ lọc lúc bấm Xem, không đổi theo ô nhập đang chỉnh. Kết quả chỉ hiển thị khi khớp bộ lọc đã chạy. Bấm Xem thống kê với bộ lọc mới sẽ hủy tác vụ đọc cũ, bắt đầu tác vụ mới; phản hồi cũ không được ghi đè kết quả mới.
+Chọn tất cả/một dự án; toàn thời gian, năm, tháng, tuần hoặc khoảng ngày tùy chọn. Không tự quét toàn bộ khi vừa mở màn hình. Phạm vi lọc được chụp tại lúc bấm Xem thống kê; sửa bộ lọc chưa áp dụng không đổi tác vụ đang chạy. Bấm Xem với phạm vi mới hủy lượt đọc cũ.
 
-### Cách tính và độ chính xác
+Cộng giây theo **tác giả worklog**, không theo Assignee; đếm Subtask duy nhất từng người và toàn phạm vi. Giờ trên Story/Task/Bug được cộng nhưng không tăng số Subtask. Lọc worklog.started theo giờ Việt Nam, gồm hai ngày đầu/cuối; log qua nửa đêm tính theo ngày bắt đầu. Không dùng tổng timespent toàn lịch sử thay cho kỳ chọn.
 
-Giữ nguyên quy tắc V1.30: cộng giây theo tác giả worklog, không theo Assignee; đếm Subtask duy nhất theo người và riêng toàn dự án/tất cả dự án. Subtask dùng chung không cộng trùng ở KPI toàn phạm vi. Giờ trực tiếp trên Story/Task/Bug được cộng, không tăng số Subtask. OT chỉ xác định từ thuộc tính thật trên WorklogPRO; chưa đọc được ghi **Chưa rõ OT**, không tự suy ra giờ thường. Worklog qua nửa đêm được tính theo ngày bắt đầu, không tự chia sang hai ngày.
+OT chỉ xác định từ thuộc tính thật WorklogPRO. Tổng giờ có trước; phần OT đang/chưa đối chiếu được ghi **Chưa rõ OT**, không tự coi là giờ thường. Chỉ cộng dữ liệu tài khoản được quyền xem. Trang lỗi/lặp/không tiến lên hoặc tổng thay đổi được cảnh báo tạm tính; 100% lượt xử lý không có nghĩa mọi dữ liệu đều đầy đủ.
 
-Chỉ đọc issue/worklog tài khoản hiện tại được phép xem. Các dữ liệu Jira ẩn mà không trả lỗi không thể được app suy ra. Lượt đọc nhiều request không phải snapshot giao dịch; nếu tổng issue/worklog đổi hoặc gặp trang lặp/không tiến lên, app cảnh báo tạm tính. Kết quả thiếu hoặc lỗi không được hiểu là số liệu 0h của toàn công ty.
+## Tốc độ đọc
 
-### Kiến trúc, tốc độ và giới hạn thực tế
+- GET project-stats op=issues yêu cầu 100 issue/trang (trước 50); op=worklogs yêu cầu 500 worklog/trang (trước 100). Jira có thể trả trang nhỏ hơn; app tiếp tục theo số bản ghi thật.
+- Tối đa 5 công việc đọc worklog đồng thời (trước 3); dùng hàng đợi, hạn chế cập nhật tiến độ UI khoảng 80ms/lần để giảm dựng lại giao diện.
+- Đọc giờ làm với ot=0 không phải chờ WorklogPRO. Sau khi đọc giờ, hiển thị tổng và đối chiếu OT riêng qua op=overtime, tối đa 25 ID/request và 2 request đồng thời. Không bỏ qua native OT để đổi lấy tốc độ.
+- Không giới hạn tổng số trang, số năm hay ngày tùy chọn bằng mức trần tự đặt. Vẫn quét đủ các issue thấy được thay vì dựa chỉ mục worklogDate/Author có thể bỏ sót. Thời gian thực tế phụ thuộc Jira/quyền/số lượng dữ liệu; chưa có benchmark trên Jira công ty.
 
-- API thống kê chia hai loại GET `project-stats&op=issues` (50 issue/trang) và `project-stats&op=worklogs&key=...` (100 worklog/trang). `project` rỗng là tất cả dự án được phép xem; `all=1` là toàn thời gian, ngược lại dùng `from/to`. Cursor startAt có thể vượt các giới hạn tổng cũ. Không giới hạn tổng số trang bằng con số tự đặt; trang không tiến lên bị dừng và báo lỗi.
-- Đọc worklog tối đa 3 công việc đồng thời. Mỗi trang có timeout và bước đọc OT có deadline riêng, phù hợp API Vercel 60 giây; không giữ một request vô hạn. Bỏ một lượt quét lớn, đồng bộ chặn UI để chuyển thành nhiều lượt đọc có thể tạm dừng/thử lại. Không cam kết truy vấn nhiều năm nhanh như một tuần: lượng dữ liệu và tốc độ Jira vẫn quyết định thời gian.
-- Không dùng bộ lọc worklogDate/worklogAuthor của chỉ mục để khẳng định đủ issue, vì có thể bỏ sót worklog cũ. Do đó vẫn cần đọc mọi công việc trong phạm vi dự án, sau đó lọc từng worklog đúng kỳ. Phạm vi tất cả dự án/toàn thời gian có thể tốn nhiều lượt đọc; nên chọn kỳ/phạm vi cần dùng.
-- Tác vụ, cursor và dữ liệu chỉ trong RAM của trang đang mở, không lưu database/localStorage. Đóng một màn hình trong app không mất tác vụ; tải lại/đóng app, hệ điều hành treo trang trên mobile hoặc mất phiên có thể ngắt tác vụ. Đăng xuất/đổi tài khoản xóa dữ liệu và tác vụ cũ. GET dùng khóa phiên riêng và bỏ qua phản hồi tài khoản trước, kể cả lỗi 401 đến muộn.
-- Không thêm runtime dependency, database, migration, biến môi trường, cơ chế license hoặc cấu hình Jira mới. Giữ cấu hình Node24/Vercel và cách deploy GitHub như phần hướng dẫn kế thừa. Source đã kiểm tra cục bộ với Jira giả lập; chưa push/deploy và chưa đối chiếu Jira công ty/Safari iPhone thật.
+## Giữ tiến độ khi quay lại app
 
-### Kiểm tra và nâng cấp
+Sau từng trang issue/worklog và từng nhóm OT, **trang dữ liệu và cursor được ghi cùng một transaction IndexedDB** trên thiết bị. Khi đăng nhập cùng tài khoản/mở lại trang, app dựng lại dữ liệu đã đọc, khôi phục bộ lọc, màn hình thống kê và tiếp tục từ trang chưa lưu; worklog ID được chống cộng trùng. Báo cáo đã hoàn tất cũng được khôi phục kèm thời điểm lưu; bấm Xem thống kê để chạy một lượt mới.
 
-Chạy `npm run test` và `npm run test:project-stats`. QA browser: `QJL_CHROMIUM_PATH=/path/to/chromium npm run test:loading` (Playwright ở môi trường QA, không kèm source runtime). Lịch, editor ảnh và sửa công việc có các script hồi quy riêng trong package.json. Các bài loading cũ chuyển sang kiểm tra hợp đồng loading nền mới. Xem TESTING.md/RELEASE_V1.31.0.md để biết phần đã chạy.
+Lưu thêm ảnh chụp chỉ đọc của dashboard, danh sách Subtask đã tải, lịch của chính mình, tổng hợp và màn hình đang xem; hiển thị lại khi phù hợp rồi đối chiếu Jira. Không lưu bản nháp ghi Jira/lịch kéo thả để tự gửi lại. Không tự reload trang khi service worker nhận shell mới; chỉ cập nhật khi Boss bấm nút cập nhật, sau khi yêu cầu lưu checkpoint.
 
-Triển khai source mới theo cấu hình Vercel hiện có; PWA shell cache tăng V1.31.0. Không cần reset dữ liệu. Quay lại bằng cách deploy V1.30.0 nếu cần; tác vụ báo cáo không sửa Jira. Muốn tiếp tục nâng cấp, gửi ZIP mới nhất vừa bàn giao.
+**Giới hạn:** đây là tiếp tục trên thiết bị, không phải job server. iOS có thể treo JavaScript khi app ra nền; tác vụ chỉ chạy tiếp khi app được hoạt động lại. Checkpoint thống kê được giữ đến khi chạy lượt mới hoặc đăng xuất; ảnh chụp các màn hình khác chỉ dùng trong 24 giờ kể từ lần lưu; trình duyệt có thể thu hồi kho dữ liệu hoặc người dùng xóa dữ liệu website. Trang đang đọc dở chưa commit sẽ đọc lại. Không thể đảm bảo khôi phục khi thiết bị đã xóa kho lưu. Lỗi ghi checkpoint được báo để biết cần giữ app mở.
 
-**Phiên bản kế tiếp đề xuất: V1.32.0 — Phân tích Sub-task Type theo thành viên**, phân bổ giờ theo trường custom Sub-task Type thật của Jira và mở chi tiết nhóm. Chưa chốt/chưa xây dựng; đề xuất V1.31 cũ được dời vì Boss chọn loading nền và bộ lọc cho bản này.
+Dữ liệu worklog, tên nhân sự/mô tả và kết quả đã đọc được lưu cục bộ theo username để phục hồi; **không lưu thêm mật khẩu/token hay request ghi**. Đăng xuất chủ động xóa checkpoint/view tài khoản; hết phiên giữ checkpoint để tiếp tục sau khi đăng nhập lại cùng tài khoản. Hai cửa sổ dùng runID ngăn tác vụ cũ ghi đè tác vụ mới. Không dùng dữ liệu đã lưu của người khác cho tài khoản hiện tại. Lượt quét mới/đăng xuất sẽ dọn checkpoint tương ứng; không tự xóa một thống kê đang làm dở vì quá một ngày.
+
+Một lượt quét nhiều request, đặc biệt sau khi khôi phục, không phải snapshot giao dịch của Jira. Worklog có thể đã đổi trong khi app đóng; dữ liệu khôi phục được ghi rõ thời điểm, cảnh báo khi phát hiện tổng thay đổi. Muốn số liệu mới hoàn toàn cần chạy thống kê mới.
+
+## Cài đặt, kiểm thử và nâng cấp
+
+Giải nén Quick-Jira-Log_v1.32.0.zip, dùng thư mục Quick-Jira-Log-V1.32.0. Node **24.x**, npm ci, npm test. Giữ APP_SESSION_SECRET và cấu hình Vercel hiện có; không thêm package runtime, dịch vụ database, biến môi trường hay migration phía server. Thêm kho IndexedDB phía trình duyệt; không cần reset dữ liệu khi nâng cấp. Source chưa push/deploy.
+
+PWA shell/cache/version 1.32.0 gồm report-storage.js và resume-state.js. Cập nhật có chủ đích thay vì tự reload giữa tác vụ. Rollback deploy về 1.31.0 không sửa/xóa worklog Jira; bản cũ không biết tiếp tục checkpoint mới.
+
+Xem TESTING.md và RELEASE_V1.32.0.md cho kết quả thực tế. Cần đối chiếu Jira công ty và thử Safari/iPhone thật sau deploy.
+
+**Tiếp theo đề xuất: V1.33.0 — Phân tích Sub-task Type theo thành viên:** phân bổ giờ theo trường custom Sub-task Type thật trên Jira, mở chi tiết nhóm. Chưa xây dựng/chưa chốt; V1.32 được dùng cho yêu cầu trải nghiệm/khôi phục hiện tại.
 
 ---
 

@@ -10,22 +10,56 @@ window.QuickJiraBusy = (() => {
   tray.setAttribute('popover','manual');tray.setAttribute('aria-label','Tác vụ nền');
   document.body.append(tray);
   const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const completed=new Map();let expanded=false,promote=true,lastTaskMarkup='';
-  function background(){
-    const tasks=[...pending.values()].filter(x=>!x.blocking).concat([...completed.values()]);
-    tray.hidden=!tasks.length;if(!tasks.length){if(tray.matches(':popover-open'))tray.hidePopover();tray.replaceChildren();lastTaskMarkup='';return;}
-    const current=tasks.find(x=>x.id==='project-report')||tasks[0];
-    const copy=t=>t.total!==undefined?`${t.done||0}/${t.total} · ${t.total===0?100:Math.min(100,Math.floor((t.done||0)/Math.max(1,t.total)*100))}%`:t.detail||'Đang tải dữ liệu';
-    const row=t=>`<div class="background-task-row"><span class="background-task-spinner ${t.status||''}" aria-hidden="true"></span><div><strong>${escape(t.label)}</strong><small>${escape(copy(t))}</small></div>${t.onOpen?'<button type="button" data-task-open="'+escape(t.token)+'" aria-label="Mở tác vụ">Mở</button>':''}</div>`;
-    const markup=`<div class="background-task-summary">${row(current)}<button type="button" data-task-toggle aria-expanded="${expanded}" aria-label="Danh sách tác vụ">${tasks.length>1?tasks.length:'⌄'}</button></div>${expanded?'<div class="background-task-list">'+tasks.filter(t=>t!==current).map(row).join('')+'<p>Tiếp tục dùng app trong khi tải.</p></div>':''}`;
-    if(markup!==lastTaskMarkup){tray.innerHTML=markup;lastTaskMarkup=markup;}
-    if(typeof tray.showPopover==='function'){
-      if(promote&&tray.matches(':popover-open'))tray.hidePopover();
-      if(!tray.matches(':popover-open'))tray.showPopover();
-    }else {const host=[...document.querySelectorAll('dialog[open]')].filter(x=>x!==hud).at(-1)||document.fullscreenElement||document.body;if(tray.parentElement!==host)host.append(tray);}
-    promote=false;
+  const completed=new Map();let promote=true,lastTaskMarkup='',pressed=null,suppressClick=0,point=null;
+  try{const p=JSON.parse(localStorage.getItem('qjl-task-position-v1'));if(p&&Number.isFinite(p.x)&&Number.isFinite(p.y))point={x:Math.max(0,Math.min(1,p.x)),y:Math.max(0,Math.min(1,p.y))};}catch{}
+  function bounds(){const v=window.visualViewport;return {left:v?.offsetLeft||0,top:v?.offsetTop||0,width:v?.width||innerWidth,height:v?.height||innerHeight};}
+  function place(){if(!point||tray.hidden)return;const b=bounds(),r=tray.getBoundingClientRect(),w=Math.max(0,b.width-r.width-16),h=Math.max(0,b.height-r.height-16);
+   Object.assign(tray.style,{left:(b.left+8+point.x*w)+'px',top:(b.top+8+point.y*h)+'px',right:'auto',bottom:'auto'});
   }
-  tray.addEventListener('click',e=>{const b=e.target.closest('[data-task-open]');if(b){const t=[...pending.values(),...completed.values()].find(x=>x.token===b.dataset.taskOpen);t?.onOpen?.();}if(e.target.closest('[data-task-toggle]')){expanded=!expanded;schedule();}});
+  function chosen(){return [...pending.values(),...completed.values()].find(x=>x.id==='project-report');}
+  function background(){
+    const current=chosen();tray.hidden=!current;
+    if(!current){if(tray.matches(':popover-open'))tray.hidePopover();tray.replaceChildren();lastTaskMarkup='';return;}
+    const percent=current.total===undefined?null:current.total===0?100:Math.min(100,Math.floor((current.done||0)/current.total*100));
+    const copy=percent===null?(current.detail||''):(current.done||0)+'/'+current.total+' · '+percent+'%';
+    const markup='<button type="button" class="background-task-pill" data-task-open aria-label="Mở thống kê dự án, có thể kéo để di chuyển"><span class="background-task-spinner '+escape(current.status||'')+'" aria-hidden="true"></span><span class="background-task-copy"><strong>'+escape(current.label)+'</strong><small>'+escape(copy)+'</small><span class="background-task-track" aria-hidden="true"><i style="width:'+(percent??24)+'%"></i></span></span></button>';
+    if(!pressed&&markup!==lastTaskMarkup){tray.innerHTML=markup;lastTaskMarkup=markup;}
+    if(typeof tray.showPopover==='function'){
+      if(promote&&tray.matches(':popover-open'))tray.hidePopover();if(!tray.matches(':popover-open'))tray.showPopover();
+    }else {const host=[...document.querySelectorAll('dialog[open]')].filter(x=>x!==hud).at(-1)||document.fullscreenElement||document.body;if(tray.parentElement!==host)host.append(tray);}
+    promote=false;place();
+  }
+  tray.addEventListener('pointerdown',e=>{if(e.button>0||!e.target.closest('[data-task-open]'))return;const r=tray.getBoundingClientRect();pressed={id:e.pointerId,x:e.clientX,y:e.clientY,left:r.left,top:r.top,moved:false};try{tray.setPointerCapture(e.pointerId);}catch{}});
+  tray.addEventListener('pointermove',e=>{if(!pressed||e.pointerId!==pressed.id)return;const dx=e.clientX-pressed.x,dy=e.clientY-pressed.y;if(Math.hypot(dx,dy)>6)pressed.moved=true;if(!pressed.moved)return;
+    e.preventDefault();const b=bounds(),r=tray.getBoundingClientRect(),w=Math.max(1,b.width-r.width-16),h=Math.max(1,b.height-r.height-16);
+    point={x:Math.max(0,Math.min(1,(pressed.left+dx-b.left-8)/w)),y:Math.max(0,Math.min(1,(pressed.top+dy-b.top-8)/h))};place();
+  });
+  function endPointer(e){if(!pressed||pressed.id!==e.pointerId)return;const moved=pressed.moved;pressed=null;suppressClick=Date.now()+600;try{tray.releasePointerCapture(e.pointerId);}catch{}
+   if(moved&&point)try{localStorage.setItem('qjl-task-position-v1',JSON.stringify(point));}catch{}
+   if(e.type==='pointerup'&&!moved)chosen()?.onOpen?.();schedule();
+  }
+  tray.addEventListener('pointerup',endPointer);tray.addEventListener('pointercancel',endPointer);
+  tray.addEventListener('click',e=>{if(e.target.closest('[data-task-open]')&&(e.detail===0||Date.now()>suppressClick))chosen()?.onOpen?.();});
+  tray.addEventListener('contextmenu',e=>e.preventDefault());
+  window.addEventListener('resize',place);window.visualViewport?.addEventListener('resize',place);window.visualViewport?.addEventListener('scroll',place);
+  const animated=new Set();
+  const targets={
+   'subtasks':['filterLoading'],'worklog-history':['worklogHistoryState'],'calendar-history':['worklogHistoryState'],
+   'jira-search':['jiraSearchState'],'jira-filter-issues':['jiraSearchState'],'jira-search-options':['jiraOptionsState'],
+   'jira-issue':['jiraDetailNotice','jiraIssueDescription'],'jira-issue-subtasks':['jiraSubtasksState'],'jira-issue-worklogs':['jiraWorklogsState'],
+   'jira-update-options':['jiraEditState'],'jira-subtask-edit-options':['jiraSubtaskEditState'],'jira-parent-edit-options':['jiraSubtaskEditState'],
+   'jira-create-meta':['jiraCreateState'],'jira-create-types':['jiraCreateState'],'jira-create-projects':['jiraCreateState'],
+   'calendar-users':['calendarUserSearchState','jiraPersonState'],'jira-attachments':['jiraFilesState'],'issue-info':['issueLookupState'],
+   'jira-saved-filters':['jiraSavedState'],'jira-create-users':['jiraCreatePeopleState'],'jira-issue-comments':['jiraCommentsState'],
+   'summary':['summaryState']
+  };
+  function animations(){
+   const needed=new Set();
+   if(typeof state!=='undefined'&&state.summary?.loading&&byId('summaryState'))needed.add(byId('summaryState'));
+   for(const task of pending.values())if(!task.blocking)for(const id of targets[task.action]||[])if(byId(id))needed.add(byId(id));
+   for(const el of animated)if(!needed.has(el)){el.classList.remove('qjl-inline-loading');el.querySelector(':scope > .qjl-inline-skeleton')?.remove();animated.delete(el);}
+   for(const el of needed){if(!el.classList.contains('qjl-inline-loading')){el.classList.add('qjl-inline-loading');animated.add(el);}if(!el.querySelector(':scope > .qjl-inline-skeleton')){const skeleton=document.createElement('span');skeleton.className='qjl-inline-skeleton';skeleton.setAttribute('aria-hidden','true');skeleton.innerHTML='<i></i><i></i><i></i>';el.prepend(skeleton);}}
+  }
   const byId=id=>document.getElementById(id),shown=el=>!!el&&!el.closest('.hidden,[hidden]')&&!!el.getClientRects().length;
   const events=['pointerdown','pointermove','pointerup','mousedown','mouseup','click','dblclick','auxclick','contextmenu','touchstart','touchmove','touchend','wheel','keydown','keyup','beforeinput','input','change','submit','dragstart','drop'];
   let locked=false,queued=false,revealed=false,timer=0,source=null,updating=false;
@@ -75,7 +109,7 @@ window.QuickJiraBusy = (() => {
     queued=false;if(updating)return;
     updating=true;
     try {
-      background();
+      background();animations();
       const next=current();
       if(!next){
         clearTimeout(timer);timer=0;revealed=false;delete hud.dataset.visible;delete hud.dataset.shield;

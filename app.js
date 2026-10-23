@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.31.0';
+const APP_VERSION = '1.32.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -750,6 +750,7 @@ function setLoggedIn(user) {
   state.user = user;
   window.QuickJiraSearch?.login(user);
   window.QuickJiraProjectReport?.login(user);
+  void window.QuickJiraResume?.login(user);
   invalidateHistoryCache();
   invalidateDayAuditCache();
   document.body.classList.remove('single-log-open');
@@ -770,7 +771,7 @@ function setLoggedIn(user) {
   handleQuickLaunch();
 }
 
-function setLoggedOut() {
+function setLoggedOut({preserveResume=false}={}) {
   state.apiEpoch += 1;
   window.QuickJiraBusy?.clearBackground();
   state.issueLookupSeq += 1;
@@ -787,7 +788,8 @@ function setLoggedOut() {
   closeDesktopEditor();
   state.user = null;
   window.QuickJiraSearch?.logout();
-  window.QuickJiraProjectReport?.logout();
+  window.QuickJiraProjectReport?.logout({preserve:preserveResume});
+  window.QuickJiraResume?.logout({preserve:preserveResume});
   state.dashboardSeq += 1;
   state.dashboardDate = '';
   $('dashboardCard').classList.add('hidden');
@@ -888,7 +890,7 @@ async function api(path, options = {}) {
   const dedupeKey = method === 'GET' && !fetchOptions.signal ? `${state.apiEpoch}:${requestUser?.username||'anonymous'}:${method}:${path}` : '';
   if (dedupeKey && state.apiInflight.has(dedupeKey)) return state.apiInflight.get(dedupeKey);
 
-  const releaseBusy = silentBusy ? ()=>{} : QuickJiraBusy.begin(QuickJiraBusy.titleFor(path,method), { blocking: method !== 'GET' });
+  const releaseBusy = silentBusy ? ()=>{} : QuickJiraBusy.begin(QuickJiraBusy.titleFor(path,method), { blocking: method !== 'GET', action: new URL(path,location.href).searchParams.get('action') });
   const run = (async () => {
     const startedAt = performance.now();
     const response = await fetch(path, {
@@ -919,7 +921,7 @@ async function api(path, options = {}) {
     data = data && typeof data === 'object' ? data : { ok: false, error: 'Server trả về dữ liệu không hợp lệ.' };
     data.clientElapsedMs = Math.round(performance.now() - startedAt);
     if (resultStatus === 401) {
-      setLoggedOut();
+      setLoggedOut({preserveResume:true});
       // A streamed response has already sent its headers; clear the expired cookie separately.
       if (response.headers.get('content-type')?.includes('application/x-ndjson')) {
         void QuickJiraBusy.run('Đang cập nhật phiên Jira…',()=>fetch('/api?action=logout', { method: 'POST', credentials: 'same-origin' }),{blocking:true}).catch(() => {});
@@ -1615,6 +1617,7 @@ async function refreshDashboard({ force = false } = {}) {
   const date = vietnamToday();
   const range = QuickJiraUi.weekRange(date);
   $('dashboardCard').classList.remove('hidden');
+  $('dashboardCard').dataset.cached=String(state.dashboardDate===date&&state.dashboardUpdated>0);
   $('refreshDashboardBtn').disabled = true;
   $('dashboardState').textContent = 'Đang cập nhật giờ từ Jira…';
   $('dashboardCard').setAttribute('aria-busy', 'true');
@@ -1650,7 +1653,7 @@ async function refreshDashboard({ force = false } = {}) {
     $('dashboardWeekend').textContent = '';
     $('dashboardState').textContent = `Chưa tải được tổng giờ. ${error.message}`;
   } finally {
-    if (seq === state.dashboardSeq) { $('refreshDashboardBtn').disabled = false; $('dashboardCard').setAttribute('aria-busy', 'false'); }
+    if (seq === state.dashboardSeq) { $('refreshDashboardBtn').disabled = false; $('dashboardCard').setAttribute('aria-busy', 'false');window.QuickJiraResume?.schedule(); }
   }
 }
 
@@ -2506,7 +2509,7 @@ function updateSingleCapacity() {
   if (bar) bar.style.width = `${capacityReady ? Math.min(100, Math.max(0, projected / 480 * 100)) : 0}%`;
   const capacityCard = $('singleCapacityCard');
   const status = $('singleCapacityStatus');
-  if (capacityCard) capacityCard.classList.toggle('is-loading', state.singleCapacity.loading || !capacityReady);
+  if (capacityCard) capacityCard.classList.toggle('is-loading', state.singleCapacity.loading);
   if (capacityCard) capacityCard.classList.toggle('is-complete', capacityReady && projected === 480);
   if (capacityCard) capacityCard.classList.toggle('is-over', capacityReady && projected > 480);
   if (status) {
@@ -2694,7 +2697,7 @@ function updateBulkTotal() {
   if (bar) bar.style.width = `${capacityReady ? Math.min(100, Math.max(0, projected / 480 * 100)) : 0}%`;
   const capacityCard = $('bulkCapacityCard');
   const status = $('bulkCapacityStatus');
-  if (capacityCard) capacityCard.classList.toggle('is-loading', state.bulkCapacity.loading || !capacityReady);
+  if (capacityCard) capacityCard.classList.toggle('is-loading', state.bulkCapacity.loading);
   if (capacityCard) capacityCard.classList.toggle('is-complete', capacityReady && projected === 480);
   if (capacityCard) capacityCard.classList.toggle('is-over', capacityReady && projected > 480);
   if (status) {
@@ -3488,7 +3491,9 @@ function showAppUpdateBanner(registration) {
   if (banner) banner.classList.remove('hidden');
 }
 
-$('appUpdateBtn')?.addEventListener('click', () => {
+$('appUpdateBtn')?.addEventListener('click', async () => {
+  await Promise.allSettled([window.QuickJiraProjectReport?.flush(),window.QuickJiraResume?.flush()]);
+  state.swUpdateRequested=true;
   const waiting = state.swUpdateRegistration?.waiting;
   if (!waiting) return location.reload();
   waiting.postMessage({ type: 'SKIP_WAITING' });
@@ -3507,6 +3512,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
         });
       });
       navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if(!state.swUpdateRequested){showAppUpdateBanner(registration);return;}
         if (state.swReloading) return;
         state.swReloading = true;
         location.reload();
