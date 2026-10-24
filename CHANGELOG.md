@@ -1,3 +1,11 @@
+# V1.34.0 — Log tất cả theo ngày/tuần
+
+- Phân bổ giờ trống ngày/T2–T6; tự chia hoặc giữ thời lượng, một Subtask một ngày, tách qua giờ nghỉ và danh sách chưa xếp được.
+- Preview bằng lịch tuần, chỉ chỉnh block mới; tái dùng kéo/nhấn giữ/đổi chỗ/gom/tách/resize, kiểm tra scope/khung giờ/collision trước staging.
+- Xem lại từng dòng rồi ghi đúng exactPlan, preflight fresh và guard server từng Subtask; kết quả riêng từng dòng, thử lại phần lỗi xác định, khóa unknown và không gửi lại phần thành công.
+- Bảo vệ snapshot lịch/phiên/account, không lưu block ảo vào checkpoint, không phát lại lệnh ghi sau reload. Giữ luồng OT native riêng.
+- Runtime/env/database không đổi. Version/cache1.34.0; source đã xây dựng, chưa push/deploy.
+
 # V1.33.2
 
 - Giới hạn kéo đóng Log tất cả ở tay nắm; chặn cuộn nền/ngoài danh sách/biên bằng wheel và touch. Không khóa thao tác nhập liệu hay lệnh ghi xác nhận.

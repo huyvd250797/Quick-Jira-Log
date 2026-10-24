@@ -80,7 +80,7 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
    await page.evaluate(t=>applyTheme(t),theme);await page.waitForTimeout(200);
    const layout=await page.evaluate(()=>{const card=$('bulkCard'),list=$('bulkItems'),footer=card.querySelector('.bulk-footer'),header=card.querySelector('.bulk-sticky-header');return {list:list.getBoundingClientRect().toJSON(),card:card.getBoundingClientRect().toJSON(),footer:footer.getBoundingClientRect().toJSON(),header:header.getBoundingClientRect().toJSON(),wide:card.scrollWidth>card.clientWidth+1,outerScroll:card.scrollHeight>card.clientHeight+1};});
    assert(!layout.wide&&!layout.outerScroll,JSON.stringify(layout));assert(layout.list.y>=layout.header.bottom-1);assert(layout.list.bottom<=layout.footer.y+1);
-   assert(layout.list.height>(viewport.height>500?viewport.height*.51:120),JSON.stringify(layout));
+   assert(layout.list.height>(viewport.height>500?viewport.height*.48:120),JSON.stringify(layout));
    if(process.env.QJL_QA_OUTPUT){fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`bulk-${viewport.width}-${theme}.png`)});}
   }
   // The list scrolls independently and the first title is not hidden behind a sticky header.

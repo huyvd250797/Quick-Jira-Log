@@ -1,0 +1,47 @@
+.bulk-plan-options { display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+#bulkCard .bulk-plan-options label { margin:0; font-size:12px; }
+#bulkCard .bulk-plan-options select { min-height:36px; padding:5px 8px; font-size:13px; }
+#bulkCard .bulk-keep-time { display:flex; flex-direction:row; align-items:center; gap:6px; }
+#bulkCard .bulk-keep-time input { width:18px; height:18px; }
+#batchPreviewBar[hidden] {display:none;}
+#batchPreviewBar {grid-column:1/-1;flex:none;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px;border:1px solid var(--primary);border-radius:10px;background:var(--primary-soft);}
+#batchPreviewBar >div {min-width:0;}#batchPreviewBar >div:last-child {display:flex;gap:8px;flex:none;}
+#batchPreviewBar strong {font-size:13px;}#batchPreviewState {font-size:11px;line-height:1.4;max-height:55px;overflow:auto;margin:4px 0 0;}
+#batchPreviewBar button {font-size:12px;min-height:40px;padding:8px;}
+.batch-new-label {font-size:9px;font-style:normal;font-weight:500;border:1px dashed currentColor;padding:1px 3px;border-radius:3px;}
+#historyOverlay.batch-preview .week-worklog-block:not(.is-calendar-draft) {opacity:.65;}
+#historyOverlay.batch-preview .week-worklog-block.is-calendar-draft {outline:2px dashed var(--primary);outline-offset:-3px;}
+#historyOverlay.batch-preview .tool-modal-body {grid-template-rows:auto auto auto minmax(0,1fr);}
+#historyOverlay.batch-preview #batchPreviewBar {grid-row:1;}
+#historyOverlay.batch-preview #calendarControls {grid-row:2;}
+#historyOverlay.batch-preview #historySummary,#historyOverlay.batch-preview #calendarGestureHint {grid-row:3;}
+#historyOverlay.batch-preview #historyResults {grid-row:4;}
+#batchConfirmDialog {width:min(720px,calc(100vw - 24px));max-height:90dvh;margin:auto;border:1px solid var(--line);border-radius:16px;padding:18px;color:var(--text);background:var(--card);overflow:auto;}
+#batchConfirmDialog::backdrop {background:#0009;}
+#batchConfirmDialog h2 {font-size:18px;}#batchConfirmDialog p {font-size:13px;line-height:1.5;overflow-wrap:anywhere;}
+#batchConfirmRows {max-height:50dvh;overflow:auto;margin:12px 0;}#batchConfirmRows p {padding:10px 0;border-bottom:1px solid var(--line);}
+#batchConfirmDialog footer {display:flex;justify-content:flex-end;gap:10px;}#batchConfirmError {color:var(--danger);}
+@media(max-width:899px){#batchPreviewBar {flex-wrap:wrap;gap:6px;}#batchPreviewBar>div:last-child {width:100%;justify-content:flex-end;}#batchPreviewState {max-height:30px;}#historyOverlay.batch-preview .tool-modal-body {display:flex;} }
+#historyOverlay.is-calendar-view.batch-preview:not(.is-calendar-fullscreen) .tool-modal-body {grid-template-rows:auto auto auto minmax(0,1fr) !important;}
+#historyOverlay.batch-preview #calendarControls {grid-row:2 !important;}
+#historyOverlay.batch-preview #historySummary,#historyOverlay.batch-preview #calendarGestureHint {grid-row:3 !important;}
+#historyOverlay.batch-preview #historyResults {grid-row:4 !important;}
+#batchPreviewBar >div:first-child {flex:1 1 0;min-width:0;}
+#batchPreviewBar >div:last-child {max-width:100%;flex-wrap:wrap;}
+#batchPreviewBar button {max-width:100%;min-width:0;white-space:normal;}
+.batch-sr-only {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+#bulkCard .bulk-period-label {width:130px;flex:none;}
+#bulkCard #bulkPeriod {width:100%;font-size:12px;}
+#bulkCard .bulk-plan-options {gap:10px;flex-wrap:nowrap;}
+#bulkCard .bulk-keep-time {font-size:11px;white-space:nowrap;}
+body.desktop-editor-open #bulkCard .bulk-plan-options {grid-column:1;grid-row:2;margin:0 0 10px;}
+body.desktop-editor-open #bulkCard .bulk-header-controls {grid-row:3;}
+body.desktop-editor-open #bulkCard .bulk-capacity-card {grid-row:1/span 3;}
+@media(max-width:899px) and (max-height:500px){
+ #bulkCard.mobile-bottom-sheet .bulk-plan-options {grid-column:1;grid-row:2;margin:0;}
+ #bulkCard.mobile-bottom-sheet .bulk-header-controls {grid-row:3;}
+ #bulkCard.mobile-bottom-sheet .bulk-capacity-card {grid-row:1/span 3;}
+}
+#historyOverlay.batch-preview .settings-head >div:first-child {flex:1 1 0;min-width:0;}
+#historyOverlay.batch-preview #historyTitle {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+#historyOverlay.batch-preview .history-header-actions {flex-shrink:0;}

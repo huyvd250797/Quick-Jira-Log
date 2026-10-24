@@ -14,6 +14,7 @@ const {
 } = require('../lib/jira');
 const { parseTimeSpent, jiraStarted, displaySegments, windowsLabel, minutesInsideWindows, workWindowsFor } = require('../lib/scheduler');
 const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
+const batchPlan = require('../lib/batch-plan');
 const { planBulkItems } = require('../lib/bulk');
 const { normalizeRequestId, runIdempotent } = require('../lib/idempotency');
 const { settleMapWithConcurrency } = require('../lib/async');
@@ -86,7 +87,7 @@ async function performBulk(body, session, perf) {
   const items = normalizeItems(body.items);
   perf.report?.(5, 'Đang đọc thông tin các task');
   const mePromise = session.me ? Promise.resolve(session.me) : perf.step('myself', () => getMyself(session));
-  const issueDetailsPromise = perf.step('issueBatch', () => getIssuesByKeys(items.map(item => item.key), session));
+  const issueDetailsPromise = perf.step('issueBatch', () => getIssuesByKeys(items.map(item => item.key), session, body.exactPlan ? {extraFields:['issuetype']} : {}));
   const verifiedPromise = issueDetailsPromise.then(issueDetails => {
     const issueMap = new Map((issueDetails || []).map(issue => [String(issue?.key || '').toUpperCase(), issue]));
 
@@ -97,6 +98,7 @@ async function performBulk(body, session, perf) {
       if (actualProject !== item.project) {
         throw new JiraError(`Issue ${item.key} thuộc PROJECT ${actualProject || 'khác'}, không phải ${item.project}.`, 400);
       }
+      if (body.exactPlan && issue?.fields?.issuetype?.subtask !== true) throw new JiraError('Phân bổ lịch chỉ hỗ trợ Subtask.',400);
       const summary = String(issue?.fields?.summary || '');
       return { ...item, summary, description: item.description || summary };
     });
@@ -115,8 +117,14 @@ async function performBulk(body, session, perf) {
     throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường của batch này sẽ vượt 8h. Chọn Overtime cho các dòng cần log ngoài giờ.`, 409);
   }
   let planned;
-  try { planned = planBulkItems(verified, initialGuard.occupied, { date }).plans; }
-  catch (error) { throw planningError(error, error.bulkItem || verified[0], date); }
+  try {
+    if (body.exactPlan) {
+      batchPlan.validate(body.exactPlan,{[date]:initialGuard.occupied},[date]);
+      if (body.exactPlan.length !== verified.length || verified.some(item=>item.overtime || !body.exactPlan.some(p=>p.key===item.key&&p.segments.reduce((n,s)=>n+s.minutes,0)===item.minutes))) throw new JiraError('Phân bổ không khớp Subtask/thời lượng đã xác nhận.',400);
+      planned=body.exactPlan.map(p=>({...p,segments:p.segments.map(s=>({start:batchPlan.minute(s.start),end:batchPlan.minute(s.start)+s.minutes,minutes:s.minutes}))}));
+    } else planned = planBulkItems(verified, initialGuard.occupied, { date }).plans;
+  }
+  catch (error) { if(body.exactPlan && !(error instanceof JiraError)) throw new JiraError(error.message,409); throw planningError(error, error.bulkItem || verified[0], date); }
 
   const created = [];
   const attribute = verified.some(item => item.overtime) ? await worklogpro.getOvertimeAttribute(session) : null;
@@ -165,7 +173,7 @@ async function performBulk(body, session, perf) {
     ...(await transitionIssueToDone(item.key, session, issueMap.get(item.key)))
   })));
   const expiredSession = transitionResults.find(x => x.status === 'rejected' && x.reason instanceof JiraError && x.reason.status === 401);
-  if (expiredSession) throw expiredSession.reason;
+  if (expiredSession && !body.exactPlan) throw expiredSession.reason;
   const transitions = transitionResults.map((result, index) => result.status === 'fulfilled'
     ? result.value
     : { key: verified[index].key, ok: false, message: result.reason?.message || 'Chưa chuyển được sang Done.' });

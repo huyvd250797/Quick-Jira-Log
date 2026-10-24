@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.33.2';
+const APP_VERSION = '1.34.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -774,6 +774,7 @@ function savePrefs() {
 }
 
 function setLoggedIn(user) {
+  if (!user) window.QuickJiraBatch?.clearOnLogout();
   state.apiEpoch += 1;
   loginInputRevision = 0;
   rememberedLoginLoadSeq += 1;
@@ -1507,6 +1508,7 @@ function openHistory() {
 }
 
 function closeHistory() {
+  if (window.QuickJiraBatch?.active) return QuickJiraBatch.back();
   closeCalendarZoom(false);
   if (state.calendarMovePending) return;
   if (state.calendarDrafts.size) { openCalendarSave({ closeAfter: true }); return; }
@@ -1748,7 +1750,7 @@ function renderWeeklyCalendar(date) {
       const globalIndex = eventIndexes.get(event.item);
       const appearance = calendarAppearance(event.item);
       const label = `${calendarIsDraft(event.item) ? 'Chưa lưu · ' : ''}${event.item.calendarSplitRoot?(event.item.calendarSplitCount?'Nhóm '+event.item.calendarSplitCount+' phần · Kéo để gom lại · ':'Nhóm tách cần đối chiếu · '):''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
-      return `<button type="button" class="week-worklog-block${event.item.calendarSplitRoot&&!event.item.calendarSplitUncertain?' is-split-group':''}${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly||event.item.calendarSplitRoot?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
+      return `<button type="button" class="week-worklog-block${event.item.calendarSplitRoot&&!event.item.calendarSplitUncertain?' is-split-group':''}${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}${event.item.batchNew ? ' <em class="batch-new-label">'+escapeHtml(event.item.batchStatus || 'Chưa log')+'</em>' : ''}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly||event.item.calendarSplitRoot?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
     }).join('')}</div>`;
   }).join('');
   $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length};--week-minute-px:1px;--week-morning-start:${480 - from};--week-morning-end:${720 - from};--week-afternoon-start:${810 - from};--week-afternoon-end:${1050 - from}"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" data-minute-range="${height}" style="height:calc(${height} * var(--week-minute-px, 1px))"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
@@ -1909,6 +1911,7 @@ function syncCalendarControls() {
   $('calendarProjectColorsBtn').setAttribute('aria-label', state.projectColors ? 'Tắt màu theo dự án' : 'Bật màu theo dự án');
   $('calendarProjectColorsBtn').title = $('calendarProjectColorsBtn').getAttribute('aria-label');
   $('calendarHelp').textContent = weekly ? 'Bấm chỗ trống để log đúng giờ · Kéo block đổi giờ, kéo cạnh dưới đổi thời lượng; mobile nhấn giữ để chỉnh sửa · Chạm block để xem chi tiết.' : 'Số giờ trong ô là tổng worklog đã ghi. Chọn ngày để xem chi tiết.';
+  if(window.QuickJiraBatch?.active) ['calendarPrevBtn','calendarNextBtn','calendarTodayBtn','calendarDate','calendarMonthBtn','calendarWeekBtn','calendarViewerBtn','calendarRefreshBtn','historyListViewBtn'].forEach(id=>{if($(id))$(id).disabled=true;});
   return { date, weekly };
 }
 
@@ -2040,6 +2043,7 @@ function renderWorklogHistory() {
 }
 
 async function loadWorklogHistory({ quiet = false, force = false, preserveCorrection = false, calendarSaveReload = false } = {}) {
+  if(window.QuickJiraBatch?.active){renderWorklogHistory();return;}
   if (!state.user || (state.calendarMovePending && !calendarSaveReload)) return;
   if (!state.calendarMovePending) resetCalendarInteraction();
   const selectedDate = $('historyDate').value || todayLocal();
@@ -2728,6 +2732,8 @@ function updateBulkTotal() {
   const weekend = isWeekendDateClient(date);
 
   $('bulkLogWeekday').textContent = logWeekday(date);
+  $('bulkLogBtn').textContent = $('bulkPeriod')?.value === 'week' ? 'XEM LỊCH TUẦN' : 'LOG TẤT CẢ';
+  $('bulkCapacityCard').classList.toggle('hidden', $('bulkPeriod')?.value === 'week');
   $('bulkTotal').textContent = minutesLabel(total);
   if ($('bulkSelectionCount')) $('bulkSelectionCount').textContent = `${items.length}/${state.filterIssues.length} Sub-task`;
   if ($('bulkRegularDraft')) $('bulkRegularDraft').textContent = minutesLabel(regularDraft);
@@ -2759,13 +2765,13 @@ function updateBulkTotal() {
 
   const redistributeBtn = $('bulkRedistributeBtn');
   if (redistributeBtn) {
-    redistributeBtn.disabled = state.bulkSubmitInFlight || !items.length || (capacityReady && alreadyRegular >= 480);
+    redistributeBtn.disabled = state.bulkSubmitInFlight || !items.length || (capacityReady && alreadyRegular >= 480 && $('bulkPeriod')?.value !== 'week');
     if (!redistributeBtn.dataset.loading) {
       redistributeBtn.textContent = state.bulkAllocation.autoApplied ? 'Phân bổ lại' : 'Phân bổ giờ';
     }
   }
 
-  $('bulkLogBtn').disabled = state.bulkSubmitInFlight || !items.length || total <= 0 || items.some(item => parseTimeSpentClient(item.timeSpent) <= 0) || (capacityReady && projected > 480);
+  $('bulkLogBtn').disabled = state.bulkSubmitInFlight || !items.length || total <= 0 || items.some(item => parseTimeSpentClient(item.timeSpent) <= 0) || (capacityReady && projected > 480 && $('bulkPeriod')?.value !== 'week');
 }
 
 async function loadBulkCapacity({ force = false } = {}) {
@@ -2809,6 +2815,7 @@ async function loadBulkCapacity({ force = false } = {}) {
 }
 
 async function requestBulkSmartAllocation() {
+  if (!bulkDraftList().some(x=>x.overtime)) return window.QuickJiraBatch?.prepare();
   if (state.bulkSubmitInFlight || state.submitInFlight) return;
   const btn = $('bulkRedistributeBtn');
   const originalText = btn?.textContent || 'TỰ ĐỘNG PHÂN BỔ';
@@ -2954,6 +2961,7 @@ function renderBulkSuccess(data) {
 }
 
 async function submitBulkWorklog(event) {
+  if ($("bulkPeriod").value === "week" || !bulkDraftList().some(x=>x.overtime)) {event.preventDefault();return window.QuickJiraBatch?.prepare();}
   event.preventDefault();
   if (state.bulkSubmitInFlight) return;
   if (!validateDurationFields($('bulkForm'))) return;
@@ -3107,6 +3115,7 @@ $('date').addEventListener('change', () => {
   updateSingleCapacity();
   void loadSingleCapacity();
 });
+$('bulkPeriod').addEventListener('change',updateBulkTotal);
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = getSessionLogDate();
   setSessionLogDate($('bulkDate').value);

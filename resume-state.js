@@ -8,7 +8,7 @@ window.QuickJiraResume=(()=>{
   const route=$('projectStatsDialog')?.open?'stats':shown('historyOverlay')?'history':shown('plannerOverlay')?'summary':'home';
   const ids=['dashboardToday','dashboardWeek','dashboardTodayTarget','dashboardTodayRemaining','dashboardWeekRemaining','dashboardRange','dashboardWeekend','dashboardState'];
   return {route,filterIssues:state.filterLoaded?state.filterIssues:null,dashboard:state.dashboardUpdated?{date:state.dashboardDate,updated:state.dashboardUpdated,text:Object.fromEntries(ids.map(id=>[id,$(id).textContent])),todayBar:$('dashboardTodayBar').style.width,weekBar:$('dashboardWeekBar').style.width}:null,
-   history:state.historyLoaded&&!calendarReadOnly()?{items:state.historyItems,date:$('historyDate').value,view:state.historyView,mode:state.calendarMode,scope:state.historyScrollScope,scroll:$('historyResults').scrollTop,viewport:captureCalendarViewport()}:null,
+   history:state.historyLoaded&&!calendarReadOnly()&&!window.QuickJiraBatch?.active?{items:state.historyItems,date:$('historyDate').value,view:state.historyView,mode:state.calendarMode,scope:state.historyScrollScope,scroll:$('historyResults').scrollTop,viewport:captureCalendarViewport()}:null,
    summary:state.summary.loaded?{...state.summary,detail:null,loading:false}:null};
  }
  function flush(){clearTimeout(timer);timer=0;let data;try{data=capture();}catch{return queue;}const user=owner,token=generation;if(!data)return queue;queue=queue.catch(()=>{}).then(()=>{if(token===generation&&user===owner)return QuickJiraReportStorage.saveView(user,data);}).catch(()=>{});return queue;}

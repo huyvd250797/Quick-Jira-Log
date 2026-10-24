@@ -1,3 +1,25 @@
+# Kiểm thử V1.34.0
+
+## Đã chạy
+
+- `npm test`: toàn bộ unit/API hồi quy và hai bộ batch-plan mới.
+- batch-plan-tests: tuần T2–T6, ngày thật, tổng giờ/capacity, fixed duration, một Subtask một ngày, split qua trưa, thiếu chỗ, collision và ngày ngoài phạm vi.
+- batch-plan-api-tests: router/session thật với Jira giả lập; đúng giờ11:00/13:30 và mô tả, replay không tạo trùng, conflict mới không ghi, chặn sai ngày/ngoài giờ/sai tổng/không phải Subtask; hoàn tác phần đã tạo khi đoạn sau lỗi.
+- Chromium batch-calendar:1440×900,390×844,320×683,844×390; light/dark. Chưa xác nhận không có POST; tuần không xếp T7/CN; swap/resize và scope, PC kéo thật + CDP touch giữ/kéo trên390px; form xác nhận và partial403 retry không gửi lại dòng đã thành công. Chế độ ngày giữ giờ, abort mạng khóa unknown và chỉ gửi phần chưa gửi khi tiếp tục. Kiểm tra layout/console và thoát xóa nháp.
+- Hồi quy calendar-experience: bốn viewport, giữ vị trí tải lại, staged save/unknown readback/rollback/conflict. Lượt chạy đồng thời đầu tiên lệch focal date; chạy lại độc lập đạt cả bốn viewport, không sửa logic cuộn cũ.
+- Hồi quy compact form được cập nhật ngưỡng diện tích danh sách cho hàng chọn chế độ mới; bảo toàn OT/description, giờ ô lịch và chỉ xem.
+- Syntax/JSON/HTML ID/assets/PWA/version và ZIP được kiểm tra. Ảnh QA chỉ dùng nội bộ, không đóng gói.
+
+## Cần kiểm chứng sau deploy
+
+Jira trong kiểm thử là giả lập; chưa đo trên Jira công ty hoặc iPhone/Safari vật lý. Thử guard khi người dùng log song song trên Jira, quyền Create Worklog/transition, hết phiên, mạng gián đoạn; đối chiếu từng đoạn đã xác nhận với Jira. Thử fullscreen/zoom và bàn phím điện thoại. Ghi Jira không phải transaction toàn tuần: từng Subtask có kết quả riêng. Unknown cần kiểm tra Jira thủ công, không tự retry. Preview chưa lưu chỉ nằm trong RAM của phiên đang mở; đóng/reload sẽ bỏ nháp, không đảo ngược dữ liệu đã ghi.
+
+Chưa push/deploy. Không thêm package runtime/env/database.
+
+---
+
+## Kết quả lịch sử
+
 # Kiểm thử V1.33.2
 
 - `npm test`: unit/API hồi quy đạt, gồm OT/correction, calendar draft/swap/split/resize/zoom, thống kê và Jira editor.

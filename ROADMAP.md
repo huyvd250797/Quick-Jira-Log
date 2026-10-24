@@ -23,7 +23,8 @@ Boss chọn mở rộng sang thao tác Jira trên mobile; logwork tiếp tục l
 | V1.33.0 | Tăng tốc OT & tiến độ linh hoạt | Kéo hai trục trong thống kê, dock mép, %/check, ETA | Direct/native có kiểm chứng, lô50, hai lane, ETA theo mẫu | Unit/API và Chromium cảm ứng mock đạt; cần kiểm chứng Jira/iPhone thật | Đã xây dựng source; chưa deploy |
 | V1.33.1 | Tối ưu form log & ô lịch | Danh sách rộng hơn, OT cùng hàng, cuối tuần không mục tiêu ngày, lịch 7 ngày, feedback ô30 phút | UI/cell hit targets, khôi phục phiên tương thích; giữ API ghi | Unit/API, Chromium4 viewport light/dark và hồi quy đạt; cần xác nhận Jira/iPhone thật | Đã xây dựng source; chưa deploy |
 | V1.33.2 | Cố định khung & ngày log | Chặn kéo ngoài danh sách, thứ/ngày, nền cuối tuần, phản hồi ô ngoài giờ | Guard touch/wheel, xác định giờ chọn trước mở form; giữ backend | Unit/API, Chromium4 viewport light/dark đạt; cần kiểm chứng iPhone/Jira thật | Đã xây dựng source; chưa deploy |
-| V1.34.0 | Phân tích Sub-task Type theo thành viên | Phân bổ giờ theo loại Subtask và mở các công việc thuộc nhóm | Trường custom Sub-task Type thực tế, metadata, drilldown | Nhóm đúng trường Jira; giờ khớp báo cáo thành viên | Đề xuất, chưa xây dựng/chưa chốt |
+| V1.34.0 | Log tất cả ngày/tuần trên lịch | Tự chia/giữ giờ, một Subtask/ngày, preview chỉnh trực tiếp, xác nhận ghi và partial retry | Shared plan validator, exact segments, preflight/guard/idempotency, unknown lock; giữ OT legacy | Unit/API và Chromium PC/mobile với Jira giả lập; cần kiểm chứng Jira/iPhone thật | Đã xây dựng source; chưa deploy |
+| V1.35.0 | Phân tích Sub-task Type theo thành viên | Phân bổ giờ theo loại Subtask và mở các công việc thuộc nhóm | Trường custom Sub-task Type thực tế, metadata, drilldown | Nhóm đúng trường Jira; giờ khớp báo cáo thành viên | Đề xuất, chưa xây dựng/chưa chốt |
 
 V1.29 chuyển sang ảnh trong editor theo lựa chọn Boss; lịch sử thay đổi Jira vẫn là ý tưởng chưa xây dựng/chưa gán phiên bản mới.
 
