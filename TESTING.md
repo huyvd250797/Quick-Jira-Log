@@ -1,3 +1,18 @@
+# Kiểm thử V1.34.5
+
+- `npm test`: toàn bộ unit/API package đạt, gồm cơ chế swap lịch thật, multiple swap, split/resize, preview pending overlap và cấm nháp đè lịch đã log; không đổi API/allocator trong bản này.
+- `test:batch-ui`: batch-calendar/review/day-review/onboarding trên1440×900,390×844,320×683,844×390. Kiểm tra phân bổ ngày/tuần, kéo/resize, xác nhận, overlap/partial và lưu đúng ngày đích.
+- Hướng dẫn: theo ngày/tuần, auto/manual/ví dụ, quy tắc một Subtask/một ngày; tự mở, Done-only preference, account/reload/storage failure. Browser đo keyframes thu modal380ms về tọa độ icon i thật, giữ modal trong lúc bay, trả focus, reduced-motion đóng ngay.
+- Màu: pseudo overlay đen28% phủ toàn block đã log, pointer-events none, nền dự án/OT/màu chữ gốc không thay; draft mới không có veil. Light/dark và4 viewport, ảnh QA kiểm tra nội bộ (không đóng gói).
+- `test:compact`:4 viewport đạt; `test:update-live`: native Service Worker cài lần đầu, tự phát hiện bản mới, chặn reload trong mutation và click cập nhật HTML mới đạt.
+- Syntax toàn bộ JS/CJS, JSON/manifest, HTML IDs, phiên bản/cache/assets và ZIP kiểm tra trước bàn giao.
+
+Chưa có Jira công ty hoặc Safari/iPhone thật; chưa push/deploy. Không chạy toàn bộ browser lịch sử ngoài các suite nêu trên. Lựa chọn hướng dẫn vẫn theo tài khoản trên thiết bị. Preview trong RAM; không có transaction nguyên tuần hoặc tự retry khi chưa rõ kết quả.
+
+---
+
+## Kết quả phiên bản trước
+
 # Kiểm thử V1.34.4
 
 - `npm test`: toàn bộ unit/API package đạt. Validator/pure review chặn occupied và nhóm đã gửi; vẫn cho nội bộ nháp chồng giờ có chấp nhận.

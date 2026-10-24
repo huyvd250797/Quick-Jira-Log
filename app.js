@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.34.4';
+const APP_VERSION = '1.34.5';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -2628,17 +2628,42 @@ function resetBulkState({ animate = false } = {}) {
   else finish();
 }
 
-let bulkHelpOwner='';
+let bulkHelpOwner='',bulkHelpFlight=null;
 function bulkHelpAccountKey(user=state.user){const id=user?.username||user?.accountId||user?.key||user?.name;return id?'qjl:bulk-help:v1:'+encodeURIComponent(String(id).trim().toLowerCase()):'';}
 function bulkHelpHidden(){try{const key=bulkHelpAccountKey();return !!key&&localStorage.getItem(key)==='1';}catch{return false;}}
-function openBulkHelp(){
- bulkHelpOwner=bulkHelpAccountKey();$('bulkHelpHide').checked=bulkHelpHidden();
- if(!$('bulkAllocationHelpDialog').open)$('bulkAllocationHelpDialog').showModal();
+function resetBulkHelpMotion(){
+ const flight=bulkHelpFlight;bulkHelpFlight=null;
+ flight?.animation?.cancel();$('bulkAllocationHelpDialog').classList.remove('is-help-closing');
 }
-function finishBulkHelp(){
+function openBulkHelp(){
+ resetBulkHelpMotion();
+ bulkHelpOwner=bulkHelpAccountKey();$('bulkHelpHide').checked=bulkHelpHidden();
+ const dialog=$('bulkAllocationHelpDialog');
+ if(!dialog.open)dialog.showModal();
+ dialog.querySelector('.bulk-help-body').scrollTop=0;
+}
+async function finishBulkHelp(){
+ const dialog=$('bulkAllocationHelpDialog'),target=$('bulkAllocationHelpBtn');
+ if(!dialog.open||bulkHelpFlight)return;
  const key=bulkHelpAccountKey();
  if(key&&key===bulkHelpOwner)try{if($('bulkHelpHide').checked)localStorage.setItem(key,'1');else localStorage.removeItem(key);}catch{showToast('Chưa lưu được lựa chọn trên thiết bị này; hướng dẫn sẽ hiện lại lần sau.');}
- $('bulkAllocationHelpDialog').close();bulkHelpOwner='';
+ const flight={animation:null};bulkHelpFlight=flight;
+ const from=dialog.getBoundingClientRect(),to=target.getBoundingClientRect();
+ if(!reduceMotionEnabled()&&typeof dialog.animate==='function'){
+  const visible=to.width>0&&to.height>0&&to.top>=0&&to.bottom<=innerHeight&&to.left>=0&&to.right<=innerWidth;
+  const dx=visible?to.x+to.width/2-from.x-from.width/2:0,dy=visible?to.y+to.height/2-from.y-from.height/2:0;
+  const sx=visible?Math.min(1,to.width/from.width):.92,sy=visible?Math.min(1,to.height/from.height):.92;
+  dialog.classList.add('is-help-closing');
+  flight.animation=dialog.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx}px,${dy}px) scale(${sx},${sy})`,opacity:0}],{duration:380,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
+  try{await flight.animation.finished;}catch{}
+ }
+ // A close, logout or account switch cancels the flight; never refocus a stale form.
+ if(bulkHelpFlight!==flight)return;
+ resetBulkHelpMotion();dialog.close();bulkHelpOwner='';
+ if(key===bulkHelpAccountKey()&&!$('bulkCard').classList.contains('hidden')){
+  target.focus({preventScroll:true});
+  if(!reduceMotionEnabled())target.classList.add('is-help-returned');
+ }
 }
 function openBulkAll() {
   const issues = state.filterIssues;
@@ -3149,7 +3174,9 @@ $('bulkWeek').addEventListener('click',()=>{try{$('bulkWeek').showPicker?.();}ca
 $('bulkAllocationHelpBtn').addEventListener('click',openBulkHelp);
 $('bulkAllocationHelpDone').addEventListener('click',finishBulkHelp);
 $('bulkAllocationHelpClose').addEventListener('click',()=>{$('bulkAllocationHelpDialog').close();bulkHelpOwner='';});
-$('bulkAllocationHelpDialog').addEventListener('cancel',()=>{bulkHelpOwner='';});
+$('bulkAllocationHelpDialog').addEventListener('cancel',()=>{resetBulkHelpMotion();bulkHelpOwner='';});
+$('bulkAllocationHelpDialog').addEventListener('close',()=>{resetBulkHelpMotion();bulkHelpOwner='';});
+$('bulkAllocationHelpBtn').addEventListener('animationend',()=>{$('bulkAllocationHelpBtn').classList.remove('is-help-returned');});
 $('bulkWeek').addEventListener('change',()=>{if(!$('bulkWeek').value)$('bulkWeek').value=$('bulkDate').value||getSessionLogDate();syncBulkWeekOptions();updateBulkTotal();});
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = getSessionLogDate();

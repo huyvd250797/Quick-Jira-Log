@@ -1,3 +1,11 @@
+# V1.34.5
+
+- Lớp đen trong suốt28% phủ toàn block đã log ở preview, giữ hue/OT; không tác động lịch thật ngoài preview.
+- Viết lại hướng dẫn theo ngày/tuần, auto/manual, ví dụ và bước review/xác nhận; nhắc một Subtask/một ngày ở đầu.
+- Đã hiểu thu modal về i380ms, fade backdrop, trả focus; có giảm chuyển động, hủy khi đóng/đổi tài khoản và chống bấm lặp.
+- Giữ ghi nhớ hướng dẫn theo tài khoản/thiết bị; giữ nguyên allocator, swap lịch thật và guard nháp-vs-thật.
+- Version/cache/PWA1.34.5; cập nhật test UI màu/animation/hướng dẫn và hồi quy.
+
 # V1.34.4
 
 - Giữ palette gốc của lịch đã log, phủ nền nhẹ thay nền đen/xám; chữ rõ.

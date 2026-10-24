@@ -1,3 +1,10 @@
+# Bổ sung V1.34.5
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| V1.34.5 | Phân biệt lịch cũ và hướng dẫn dễ hiểu | Phủ tối block đã log28%, hướng dẫn ngày/tuần và thu modal về i | CSS overlay chỉ preview, Web Animations và reduced-motion; không đổi API/allocator | Kiểm tra PC/mobile, preference, animation/overlay và hồi quy batch | Đã xây dựng source; chưa deploy/Jira thật |
+| V1.35.0 | Phân tích Sub-task Type theo thành viên | Giờ/tỷ trọng/số Subtask và mở nhóm | Custom field thật theo bộ lọc | Đối chiếu Jira công ty | Đề xuất; chưa xây dựng |
+
 # Bổ sung V1.34.4
 
 | Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
