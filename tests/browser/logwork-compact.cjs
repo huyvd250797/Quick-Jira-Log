@@ -26,11 +26,43 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
   await page.goto('http://127.0.0.1:4251');await page.waitForFunction(()=>state.filterLoaded);
   await page.locator('#logAllBtn').click();await page.waitForFunction(()=>bulkCapacityReady());
   assert.equal(await page.locator('.bulk-item').count(),8);
+  // Outer gestures cannot move the editor; native scrolling remains in its list.
+  const geometry=()=>page.locator('#bulkCard').evaluate(el=>({y:el.getBoundingClientRect().y,transform:getComputedStyle(el).transform,scroll:el.scrollTop,page:scrollY}));
+  await page.waitForFunction(()=>!$('bulkCard').classList.contains('qjl-opening'));
+  const beforeOuter=await geometry();
+  const cap=await page.locator('#bulkCapacityCard').boundingBox();
+  await page.mouse.move(cap.x+cap.width/2,cap.y+10);await page.mouse.down();await page.mouse.move(cap.x+cap.width/2,cap.y+130,{steps:8});await page.mouse.up();
+  assert.deepEqual(await geometry(),beforeOuter,'header drag must not translate the sheet');
+  await page.mouse.move(cap.x+5,cap.y+5);await page.mouse.wheel(0,300);await page.waitForTimeout(70);assert.deepEqual(await geometry(),beforeOuter);
+  if(mobile){
+   const cdp=await context.newCDPSession(page);
+   const swipe=async(x,y,delta)=>{await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});for(let i=1;i<=6;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y+delta*i/6}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.waitForTimeout(120);};
+   await swipe(cap.x+cap.width/2,cap.y+8,90);assert.deepEqual(await geometry(),beforeOuter,'touch header must stay fixed');
+   const lr=await page.locator('#bulkItems').boundingBox();await swipe(lr.x+lr.width/2,lr.y+lr.height-15,-Math.min(120,lr.height-30));assert(await page.locator('#bulkItems').evaluate(el=>el.scrollTop>0),'touch list still scrolls');
+   assert.deepEqual(await geometry(),beforeOuter);
+   await page.locator('#bulkItems').evaluate(el=>{el.scrollTop=0;});await cdp.detach();
+  }
+
   await page.locator('#bulkDate').fill('2026-10-24');await page.locator('#bulkDate').dispatchEvent('change');await page.waitForFunction(()=>bulkCapacityReady());
   // Set fewer regular hours so the old "missing 6h" weekend case is exercised.
   await page.evaluate(()=>{for(const x of bulkDraftList().slice(2)){state.bulkSelectedKeys.delete(x.key);state.bulkDrafts.delete(x.key);}renderBulkItems();});
   assert.equal(await page.locator('#bulkCapacityStatus').innerText(),'');
+  assert(await page.locator('#bulkLogWeekday').isVisible());
+  assert.match(await page.locator('#bulkLogWeekday').innerText(),/Thứ Bảy/);
   assert(!(await page.locator('#bulkCapacityProjected').innerText()).includes('/ 8h'));
+  assert(!(await page.locator('#bulkCapacityCard .bulk-capacity-meter').isVisible()));
+  await page.locator('#bulkDate').fill('2026-10-23');await page.locator('#bulkDate').dispatchEvent('change');await page.waitForFunction(()=>bulkCapacityReady());
+  await page.waitForTimeout(250);
+  const meter=page.locator('#bulkCapacityCard .bulk-capacity-meter');assert(await meter.isVisible(),'weekday meter visible');
+  const color=()=>page.locator('#bulkCapacityBar').evaluate(el=>getComputedStyle(el).backgroundColor);
+  const expected=async token=>page.evaluate(token=>{const el=document.createElement('span');el.style.color='var('+token+')';$('bulkCapacityCard').append(el);const color=getComputedStyle(el).color;el.remove();return color;},token);
+  assert.equal(await color(),await expected('--primary'));
+  await page.locator('.bulk-item').first().locator('.bulk-time').fill('7h');await page.locator('.bulk-item').first().locator('.bulk-time').dispatchEvent('input');await page.waitForTimeout(250);
+  assert.equal(await color(),await expected('--ok'),'8h is green');
+  await page.locator('.bulk-item').first().locator('.bulk-time').fill('8h');await page.locator('.bulk-item').first().locator('.bulk-time').dispatchEvent('input');await page.waitForTimeout(250);
+  assert.equal(await color(),await expected('--danger'),'9h is red');assert(await page.locator('#bulkLogBtn').isDisabled());
+  await page.locator('.bulk-item').first().locator('.bulk-time').fill('1h');await page.locator('.bulk-item').first().locator('.bulk-time').dispatchEvent('input');await page.waitForTimeout(250);
+
   await page.locator('#bulkDate').fill('2026-10-23');await page.locator('#bulkDate').dispatchEvent('change');await page.waitForFunction(()=>bulkCapacityReady());
   assert.match(await page.locator('#bulkCapacityStatus').innerText(),/Còn thiếu 6h/);
   await page.locator('#bulkDate').fill('2026-10-25');await page.locator('#bulkDate').dispatchEvent('change');await page.waitForFunction(()=>bulkCapacityReady());
@@ -59,6 +91,11 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
   assert.equal(writes[0].body.items[0].overtime,true);assert.equal(writes[0].body.items[0].description,'Mô tả đã chỉnh');assert.equal(writes[0].body.items[0].timeSpent,'30m');assert.equal(writes[0].body.items[0].overtimeStart,'09:00');
   // Calendar always exposes weekends and exact cell times, including the bottom of each cell.
   await page.locator(mobile?'#mobileHistoryBtn':'#historyBtn').click();await page.waitForFunction(()=>state.historyLoaded&&!state.historyLoading);
+  const blocked=page.locator('[data-calendar-date="2026-10-24"] [data-calendar-slot="12:30"]');
+  await blocked.scrollIntoViewIfNeeded();await blocked.click();
+  assert(await blocked.evaluate(el=>el.classList.contains('is-invalid')));assert(!(await page.locator('#calendarLogDialog').isVisible()));
+  assert.match(await page.locator('#toast').innerText(),/Không thể log/);
+  assert.equal(await page.locator('.week-day-heading.is-weekend').count(),2);
   assert.equal(await page.locator('#calendarWeekendBtn').count(),0);assert.equal(await page.locator('.week-day-heading').count(),7);
   for(const start of ['08:00','08:30','09:00']){
    const cell=page.locator('[data-calendar-date="2026-10-24"] [data-calendar-slot="'+start+'"]');

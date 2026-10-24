@@ -1,3 +1,11 @@
+# V1.33.2
+
+- Giới hạn kéo đóng Log tất cả ở tay nắm; chặn cuộn nền/ngoài danh sách/biên bằng wheel và touch. Không khóa thao tác nhập liệu hay lệnh ghi xác nhận.
+- Thêm thứ cạnh ngày; nền cuối tuần riêng ở form/lịch tuần, không mục tiêu8h cho cuối tuần.
+- Bảo đảm thanh giờ thường ngày thường có ba màu dưới/đủ/vượt8h.
+- Chặn mở form từ ô ngoài hai vùng giờ làm, feedback đỏ + toast; giữ luồng OT/sửa worklog cũ.
+- Version/cache1.33.2; không đổi backend/dependency/env.
+
 # V1.33.1 — Log tất cả & tương tác ô lịch
 
 - Tối ưu không gian form Log tất cả: header/footer tách khỏi danh sách cuộn; OT cùng hàng thời lượng, bỏ giải thích OT từng dòng; footer một hàng và bố cục ngang/PC riêng.

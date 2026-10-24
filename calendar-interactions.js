@@ -660,6 +660,16 @@ async function openCalendarLog(date, start) {
   if(calendarReadOnly())return;
   if (!state.user || state.calendarMovePending || state.historyLoading || state.submitInFlight) return;
   if (!QuickJiraUi.validDate(date)) return;
+  const minute = QuickJiraUi.minuteOfDay(start);
+  if (!((minute >= 480 && minute < 720) || (minute >= 810 && minute < 1050))) {
+    const slot = $('weeklyCalendar').querySelector(`[data-calendar-date="${date}"] [data-calendar-slot="${start}"]`);
+    if (slot) {
+      clearTimeout(slot._invalidTimer);slot.classList.add('is-invalid');
+      slot._invalidTimer=setTimeout(()=>slot.classList.remove('is-invalid'),1200);
+    }
+    showToast('Không thể log tại giờ này. Chọn 08:00–12:00 hoặc 13:30–17:30.');
+    return;
+  }
   if (state.calendarDrafts.size) { openCalendarSave(); return; }
   resetCalendarInteraction();
   calendarFocusSource = document.activeElement;
@@ -668,7 +678,7 @@ async function openCalendarLog(date, start) {
     slot.classList.toggle('is-selected', slot.dataset.calendarSlot === start && slot.closest('.week-day-column').dataset.calendarDate === date);
   });
   $('calendarLogFeedback').classList.add('hidden');
-  $('calendarLogSelection').textContent = `${date.split('-').reverse().join('/')} · Bắt đầu ${start}`;
+  $('calendarLogSelection').textContent = `${logWeekday(date)} · ${date.split('-').reverse().join('/')} · Bắt đầu ${start}`;
   $('calendarTaskPicker').classList.remove('hidden');
   $('calendarTaskSearch').value = '';
   const dialog = $('calendarLogDialog');

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.33.1';
+const APP_VERSION = '1.33.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -254,6 +254,12 @@ function setSessionLogDate(value) {
   const date = validLocalDate(value) ? value : todayLocal();
   try { sessionStorage.setItem(STORAGE.sessionDate, date); } catch {}
   return date;
+}
+
+function logWeekday(date) {
+  if (!validLocalDate(date)) return '';
+  const day = new Date(`${date}T12:00:00Z`).getUTCDay();
+  return ['Chủ nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'][day];
 }
 
 function isWeekendDateClient(date) {
@@ -587,12 +593,42 @@ function settleMobileSheet(card, shouldClose, cardId) {
   }
 }
 
+// Keep native list scrolling, but stop viewport bounce and scroll chaining at its edges.
+function setupBulkScrollGuard(card) {
+  let touch = null;
+  const active = () => !card.classList.contains('hidden') && (document.body.classList.contains('mobile-editor-open') || document.body.dataset.desktopEditor === 'bulkCard');
+  const guard = (event, dx, dy) => {
+    if (!active() || event.target.closest?.('dialog[open], #logConfirmOverlay:not(.hidden), #backgroundTasks')) return;
+    const list = $('bulkItems');
+    let node = event.target instanceof Element ? event.target : null;
+    if (node && list.contains(node) && Math.abs(dy) >= Math.abs(dx)) {
+      while (node && list.contains(node)) {
+        const css = getComputedStyle(node);
+        if (/auto|scroll/.test(css.overflowY) && node.scrollHeight > node.clientHeight + 1 &&
+            ((dy > 0 && node.scrollTop < node.scrollHeight - node.clientHeight - 1) || (dy < 0 && node.scrollTop > 0))) return;
+        if (node === list) break;
+        node = node.parentElement;
+      }
+    }
+    if (event.cancelable) event.preventDefault();
+  };
+  document.addEventListener('wheel', e => guard(e, e.deltaX, e.deltaY), {capture:true,passive:false});
+  document.addEventListener('touchstart', e => {touch = e.touches.length === 1 ? {x:e.touches[0].clientX,y:e.touches[0].clientY} : null;}, {passive:true});
+  document.addEventListener('touchmove', e => {
+    if (!touch || e.touches.length !== 1) return;
+    const t=e.touches[0],dx=touch.x-t.clientX,dy=touch.y-t.clientY;
+    touch={x:t.clientX,y:t.clientY};guard(e,dx,dy);
+  }, {capture:true,passive:false});
+  document.addEventListener('touchend',()=>{touch=null;},{passive:true});
+}
+
 function setupBottomSheetDrag(cardId) {
   const card = $(cardId);
   const handle = card?.querySelector('.bottom-sheet-drag-handle');
   if (!card || !handle) return;
 
-  const targets = [handle, card.querySelector('.worklog-sticky-header, .bulk-sticky-header')].filter(Boolean);
+  const targets = (cardId === 'bulkCard' ? [handle] : [handle, card.querySelector('.worklog-sticky-header')]).filter(Boolean);
+  if (cardId === 'bulkCard') setupBulkScrollGuard(card);
   const listen = (type, listener) => targets.forEach(target => target.addEventListener(type, listener));
   let captureTarget = handle;
   listen('pointerdown', event => {
@@ -1701,14 +1737,14 @@ function renderWeeklyCalendar(date) {
   const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:calc(${index * 60} * var(--week-minute-px, 1px))">${timeText(from + index * 60)}</span>`).join('');
   const headers = days.map((day, index) => {
     const total = displayed.filter(item => item.date === day && item.overtime !== true && item.overtimeKnown !== false).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-    return `<button type="button" class="week-day-heading${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}${index < 5 && total >= 480 ? ' is-complete' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
+    return `<button type="button" class="week-day-heading${index >= 5 ? ' is-weekend' : ''}${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}${index < 5 && total >= 480 ? ' is-complete' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
   }).join('');
   const columns = days.map(day => {
     const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
     const slots = Array.from({ length: Math.ceil((to - from) / 30) }, (_, index) => from + index * 30)
       .filter(minute => !events.some(event => event.start < minute + 30 && event.end > minute))
       .map(minute => `<button type="button" class="calendar-time-slot" data-calendar-slot="${timeText(minute)}" style="top:calc(${minute - from} * var(--week-minute-px, 1px));height:calc(30 * var(--week-minute-px, 1px))" aria-label="Logwork ngày ${day.split('-').reverse().join('/')} lúc ${timeText(minute)}"${calendarReadOnly() ? ' disabled' : ''}><span>${timeText(minute)}</span></button>`).join('');
-    return `<div class="week-day-column" data-calendar-date="${day}" data-from-minute="${from}">${slots}${events.map(event => {
+    return `<div class="week-day-column${isWeekendDateClient(day) ? ' is-weekend' : ''}" data-calendar-date="${day}" data-from-minute="${from}">${slots}${events.map(event => {
       const globalIndex = eventIndexes.get(event.item);
       const appearance = calendarAppearance(event.item);
       const label = `${calendarIsDraft(event.item) ? 'Chưa lưu · ' : ''}${event.item.calendarSplitRoot?(event.item.calendarSplitCount?'Nhóm '+event.item.calendarSplitCount+' phần · Kéo để gom lại · ':'Nhóm tách cần đối chiếu · '):''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
@@ -2494,6 +2530,7 @@ function parseTimeSpentClient(value) {
 
 function updateSingleCapacity() {
   const date = $('date')?.value || '';
+  if ($('singleLogWeekday')) $('singleLogWeekday').textContent = logWeekday(date);
   const regularDraft = $('overtime')?.checked === true ? 0 : parseTimeSpentClient($('timeSpent')?.value || '');
   const overtimeDraft = $('overtime')?.checked === true ? parseTimeSpentClient($('timeSpent')?.value || '') : 0;
   const capacityReady = state.singleCapacity.date === date && !state.singleCapacity.loading && !state.singleCapacity.error;
@@ -2690,6 +2727,7 @@ function updateBulkTotal() {
   const projected = alreadyRegular + regularDraft;
   const weekend = isWeekendDateClient(date);
 
+  $('bulkLogWeekday').textContent = logWeekday(date);
   $('bulkTotal').textContent = minutesLabel(total);
   if ($('bulkSelectionCount')) $('bulkSelectionCount').textContent = `${items.length}/${state.filterIssues.length} Sub-task`;
   if ($('bulkRegularDraft')) $('bulkRegularDraft').textContent = minutesLabel(regularDraft);

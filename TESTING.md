@@ -1,3 +1,17 @@
+# Kiểm thử V1.33.2
+
+- `npm test`: unit/API hồi quy đạt, gồm OT/correction, calendar draft/swap/split/resize/zoom, thống kê và Jira editor.
+- Chromium `tests/browser/logwork-compact.cjs`:1440×900,390×844,320×683,844×390, light/dark. Kéo chuột ở header và wheel ngoài danh sách không dịch chuyển khung/trang. CDP touch trên mobile: vuốt header không di chuyển; vuốt danh sách vẫn cuộn nội bộ.
+- Kiểm tra màu dưới8h/đúng8h/trên8h và nút lưu bị chặn khi vượt giờ thường; cuối tuần không meter/mốc8h/nhắc thiếu; Thứ Bảy hiển thị đúng.
+- Ô ngoài giờ báo đỏ/toast, không mở form; lịch có hai cột cuối tuần riêng. Hồi quy ô08:00/08:30/09:00 và POST startTime08:30, lịch chỉ xem; dữ liệu OT/giờ OT/mô tả/preset gửi đúng.
+- Kiểm tra syntax/JSON/assets/PWA/version/ZIP. Ảnh QA nội bộ không đóng gói.
+
+Chưa thử Safari/iPhone vật lý/Jira công ty. Sau deploy cần thử vuốt ngoài/biên danh sách, bàn phím, date/time picker và kéo tay nắm đóng trên iPhone thật; đối chiếu dữ liệu ghi trên Jira. Chưa push/deploy. Không thay thuật toán/backend ghi Jira.
+
+---
+
+## Kết quả lịch sử
+
 # Kiểm thử V1.33.1
 
 ## Đã chạy đạt

@@ -18,9 +18,9 @@
 #bulkCard .bulk-capacity-status { grid-column:1/-1; font-size:11px; line-height:1.4; }
 #bulkCard .bulk-capacity-status:empty { display:none; }
 #bulkCard .bulk-capacity-ot { font-size:11px; }
-.bulk-capacity-card.is-weekend .bulk-capacity-meter { display:none; }
-.bulk-capacity-card.is-weekend:not(.is-over) { border-color:var(--line); background:var(--card); }
-.bulk-capacity-card.is-weekend:not(.is-over) .bulk-capacity-head strong { color:var(--text); }
+
+.bulk-capacity-card.is-weekend:not(.is-over):not(.is-complete) { border-color:var(--line); background:var(--card); }
+.bulk-capacity-card.is-weekend:not(.is-over):not(.is-complete) .bulk-capacity-head strong { color:var(--text); }
 #singleCapacityStatus:empty { display:none; }
 #bulkCard #bulkForm { display:flex; flex-direction:column; flex:1; min-height:0; gap:0; margin:0; }
 #bulkCard .bulk-items { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; align-content:start; align-items:start; gap:12px; padding:2px 2px 14px; }
@@ -115,3 +115,35 @@ body.desktop-editor-open #bulkCard .bulk-capacity-card { grid-column:2; grid-row
   #bulkCard.mobile-bottom-sheet .bulk-time-field { grid-template-areas:"label" "input"; gap:5px; }
 }
 #bulkCard .bulk-items, #bulkCard .bulk-ot-toggle { position:relative; }
+
+/* V1.33.2 — No viewport bounce; only the list scrolls. The handle still dismisses the sheet. */
+html:has(#bulkCard.mobile-bottom-sheet:not(.hidden)),
+html:has(body.desktop-editor-open[data-desktop-editor="bulkCard"]) { overflow:hidden !important; overscroll-behavior:none; }
+#bulkCard.mobile-bottom-sheet, #bulkCard .bulk-items { overscroll-behavior:none; }
+#bulkCard.mobile-bottom-sheet .bulk-sticky-header, #bulkCard .bulk-footer { touch-action:pan-y; }
+#bulkCard .bulk-capacity-meter { display:block; height:5px; }
+#bulkCard .bulk-capacity-meter > span { background:var(--primary); }
+#bulkCard .bulk-capacity-card.is-complete .bulk-capacity-meter > span { background:var(--ok); }
+#bulkCard .bulk-capacity-card.is-over .bulk-capacity-meter > span { background:var(--danger); }
+
+/* Weekend has a separate calm tone instead of an 8h target meter. */
+.bulk-capacity-card.is-weekend .bulk-capacity-meter { display:none !important; }
+#bulkCard .bulk-capacity-card.is-weekend, #singleCapacityCard.is-weekend { background:#f2effa; border-color:#d8cfea; }
+html[data-theme="dark"] #bulkCard .bulk-capacity-card.is-weekend,
+html[data-theme="dark"] #singleCapacityCard.is-weekend { background:#262238; border-color:#49405f; }
+.log-weekday { color:var(--primary); font-size:11px; font-weight:600; margin-left:6px; white-space:nowrap; }
+#bulkCard .bulk-header-date { width:195px; }
+#bulkCard.mobile-bottom-sheet .bulk-header-date { flex-basis:195px; width:195px; }
+#bulkCard .bulk-header-date > span { display:flex; align-items:center; justify-content:space-between; }
+#historyOverlay .week-day-heading.is-weekend { background-color:#f2effa; }
+#historyOverlay .week-day-column.is-weekend { background-color:#f8f6fc; }
+html[data-theme="dark"] #historyOverlay .week-day-heading.is-weekend { background-color:#29263b; }
+html[data-theme="dark"] #historyOverlay .week-day-column.is-weekend { background-color:#191c2c; }
+#historyOverlay .week-day-heading.is-weekend.is-selected { box-shadow:inset 0 0 0 2px var(--primary); }
+#historyOverlay .calendar-time-slot.is-invalid,
+#historyOverlay .calendar-time-slot.is-invalid:hover,
+#historyOverlay .calendar-time-slot.is-invalid:active { background:rgba(213,62,85,.22); box-shadow:inset 0 0 0 2px var(--danger); color:var(--danger); transition:none; }
+#historyOverlay .calendar-time-slot.is-invalid > span { opacity:1; }
+
+#historyOverlay .week-day-heading.is-weekend > i { display:none; }
+#bulkCard.mobile-bottom-sheet .bulk-header-date > span { display:flex; }
