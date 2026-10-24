@@ -1,3 +1,14 @@
+# V1.34.3
+
+- Khoảng tuần hiển thị trong ô chọn, chọn qua native calendar ngày.
+- Icon i và modal hướng dẫn phân bổ tự động/ngày/tuần/chỉnh lịch.
+- Nút Đang xử lý không lặp %, progress giữ %.
+- Sửa dấu ngang resize trên block khi nhấn giữ/edit mode.
+- Day allocation giữ một ngày ban đầu; preview load cả7 ngày và cho chuyển ngày trong tuần, lưu đúng target.date.
+- Worklog cũ có nhãn Đã log, nền disable, không sửa/xóa; vẫn giữ cảnh báo xếp trùng.
+- Đọc lịch sử song song với audit, bounded2 lanes; fresh guard ngày đích trước ghi, backend giữ nguyên.
+- Thêm browser test ngày20→21, readonly logs, inline week/help/handle và progress.
+
 # V1.34.2
 
 - Nút Xem trước logwork, trạng thái Đang xử lý và progress theo %.

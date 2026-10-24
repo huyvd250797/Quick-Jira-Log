@@ -116,3 +116,37 @@ body.desktop-editor-open #bulkCard .bulk-capacity-card {grid-row:1/span 3;}
 #historyOverlay.batch-preview .week-worklog-block.is-batch-overlap {outline-color:var(--danger);}
 #historyOverlay.batch-preview .week-worklog-block.is-calendar-draft .calendar-resize-handle {display:block;}
 @media(prefers-reduced-motion:reduce){#bulkPreviewMeter>span{transition:none;}}
+/* V1.34.3 — The selected week is the value shown inside the native date trigger. */
+#bulkCard .bulk-week-picker {position:relative;display:flex;align-items:center;width:100%;height:40px;min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);overflow:hidden;}
+#bulkCard .bulk-week-picker #bulkWeek {position:absolute;inset:0;z-index:2;width:100%;height:100%;min-height:100%;max-height:100%;opacity:0;cursor:pointer;font-size:16px;margin:0;}
+#bulkCard .bulk-week-picker #bulkWeekRange {display:block;flex:1;min-width:0;margin:0;padding:0 9px;font-size:14px;font-weight:500;line-height:38px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);pointer-events:none;}
+#bulkCard .bulk-week-picker svg {width:17px;height:17px;margin-right:10px;flex:none;fill:none;stroke:var(--muted);stroke-width:1.7;pointer-events:none;}
+#bulkCard .bulk-week-picker:focus-within {border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft);}
+#bulkCard .bulk-auto-group {display:flex;align-items:center;gap:5px;min-width:0;}
+#bulkCard .bulk-help-btn {display:grid;place-items:center;min-height:28px;min-width:28px;width:28px;height:28px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--primary);font-family:serif;font-style:normal;font-weight:700;font-size:15px;cursor:pointer;}
+#bulkCard .bulk-help-btn::before {content:'';position:absolute;width:17px;height:17px;border:1px solid currentColor;border-radius:50%;pointer-events:none;}
+#bulkAllocationHelpDialog {width:min(600px,calc(100vw - 24px));max-height:85dvh;margin:auto;padding:0;border:1px solid var(--line);border-radius:16px;background:var(--card);color:var(--text);overflow:hidden;}
+#bulkAllocationHelpDialog[open] {display:flex;flex-direction:column;}
+#bulkAllocationHelpDialog::backdrop {background:#0009;}
+#bulkAllocationHelpDialog header {display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);}
+#bulkAllocationHelpDialog h2 {font-size:17px;margin:0;}
+#bulkAllocationHelpDialog header button {width:34px;height:34px;min-width:34px;min-height:34px;flex:none;}
+#bulkAllocationHelpDialog .bulk-help-body {overflow:auto;overscroll-behavior:contain;padding:4px 16px 16px;min-height:0;}
+#bulkAllocationHelpDialog h3 {font-size:14px;margin:14px 0 6px;}
+#bulkAllocationHelpDialog p {font-size:13px;line-height:1.6;margin:0 0 8px;}
+#bulkAllocationHelpDialog footer {display:flex;justify-content:flex-end;padding:10px 16px;border-top:1px solid var(--line);}
+#bulkAllocationHelpDialog footer button {font-size:13px;min-height:40px;}
+/* Keep old Jira logs recognizable and readable, but clearly separate from editable drafts. */
+#historyOverlay.batch-preview .week-worklog-block.is-batch-existing {background:var(--bg)!important;border-color:var(--line)!important;border-left-color:var(--muted)!important;box-shadow:inset 0 0 0 999px #0000000a;opacity:.78;cursor:default;}
+html[data-theme="dark"] #historyOverlay.batch-preview .week-worklog-block.is-batch-existing {box-shadow:inset 0 0 0 999px #00000035;}
+#historyOverlay.batch-preview .week-worklog-block.is-batch-existing :is(strong,span,small) {color:var(--muted)!important;}
+.batch-existing-label {font-style:normal;font-size:9px;font-weight:500;opacity:.85;}
+/* The preview previously overrode grid with block, hiding the pseudo-element pill. */
+#historyOverlay.batch-preview .week-worklog-block.is-calendar-draft > .calendar-resize-handle {display:grid;place-items:center;}
+#historyOverlay .calendar-resize-handle::before {display:block;}
+#historyOverlay #weeklyCalendar.is-calendar-editing .week-worklog-block > .calendar-resize-handle::before {width:30px;height:4px;border-radius:99px;background:var(--primary);opacity:1;box-shadow:0 0 0 1px var(--card),0 1px 3px #0005;}
+@media(max-width:359px){#bulkCard .bulk-week-picker #bulkWeekRange {font-size:13px;}}
+#bulkCard .bulk-help-btn {position:relative;}
+#bulkCard .bulk-period-radios {gap:8px;}
+#bulkCard .bulk-plan-options {column-gap:8px;}
+#bulkCard .bulk-plan-options .bulk-auto-option {font-size:11px;}

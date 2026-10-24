@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.34.2</title>
+  <title>Quick Jira Log · V1.34.3</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -45,7 +45,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.34.2</div>
+      <div class="boot-version">V1.34.3</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -54,7 +54,7 @@
     <section class="brand">
       <button id="brandRefreshBtn" class="logo-refresh-btn" type="button" aria-label="Làm mới dữ liệu, giữ phiên hiện tại" title="Làm mới dữ liệu"><img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" /></button>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.34.2</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.34.3</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -159,10 +159,10 @@
       <button class="bottom-sheet-drag-handle" type="button" aria-label="Kéo xuống để đóng" title="Kéo xuống để đóng"><span></span></button>
       <div class="bulk-sticky-header">
         <div class="card-title bulk-title"><h2>Log tất cả</h2><span id="bulkSelectionCount" class="bulk-selection-count">0 Sub-task</span></div>
-        <div class="bulk-plan-options"><fieldset class="bulk-period-radios"><legend class="batch-sr-only">Phạm vi phân bổ</legend><label><input id="bulkPeriodDay" name="bulkPeriod" type="radio" value="day" checked />Theo ngày</label><label><input id="bulkPeriodWeek" name="bulkPeriod" type="radio" value="week" />Theo tuần</label></fieldset><label class="bulk-auto-option"><input id="bulkAutoAllocate" type="checkbox" checked />Phân bổ tự động</label></div>
+        <div class="bulk-plan-options"><fieldset class="bulk-period-radios"><legend class="batch-sr-only">Phạm vi phân bổ</legend><label><input id="bulkPeriodDay" name="bulkPeriod" type="radio" value="day" checked />Theo ngày</label><label><input id="bulkPeriodWeek" name="bulkPeriod" type="radio" value="week" />Theo tuần</label></fieldset><div class="bulk-auto-group"><label class="bulk-auto-option"><input id="bulkAutoAllocate" type="checkbox" checked />Phân bổ tự động</label><button id="bulkAllocationHelpBtn" class="bulk-help-btn" type="button" aria-label="Hướng dẫn phân bổ logwork" aria-haspopup="dialog" aria-controls="bulkAllocationHelpDialog">i</button></div></div>
         <div class="bulk-header-controls">
           <label id="bulkDayField" class="bulk-header-date"><span>Ngày logwork <strong id="bulkLogWeekday" class="log-weekday"></strong></span><input id="bulkDate" type="date" required /></label>
-          <label id="bulkWeekField" class="bulk-week-field" hidden><span>Tuần logwork</span><input id="bulkWeek" type="date" aria-label="Chọn một ngày trong tuần logwork" /><small id="bulkWeekRange"></small></label>
+          <label id="bulkWeekField" class="bulk-week-field" hidden><span>Tuần logwork</span><span class="bulk-week-picker"><input id="bulkWeek" type="date" aria-label="Chọn một ngày trong tuần logwork" aria-describedby="bulkWeekRange" /><span id="bulkWeekRange"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v4M17 3v4M4 10h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg></span></label>
         </div>
         <div id="bulkCapacityCard" class="bulk-capacity-card is-loading" aria-live="polite">
           <div class="bulk-capacity-head"><span>Giờ thường</span><strong id="bulkCapacityProjected">Đang kiểm tra...</strong></div>
@@ -453,7 +453,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.34.2 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.34.3 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -638,7 +638,8 @@
  <main class="ps-body"><div id="psState" role="status" aria-live="polite">Chọn dự án để xem thống kê.</div><p id="psWarning" class="ps-warning" hidden></p><section id="psContent" hidden><div id="psKpis" class="ps-kpis"></div><div class="ps-list-tools"><label>Thành viên<select id="psPerson"><option value="">Tất cả</option></select></label><label>Sắp xếp<select id="psSort"><option value="hours">Giờ đã log</option><option value="tasks">Subtask đã log</option><option value="name">Tên thành viên</option></select></label></div><div id="psPeople"></div><section id="psDetail" hidden aria-label="Chi tiết thành viên"></section></section><details class="ps-note"><summary>Cách tính dữ liệu</summary><p>Theo ngày làm việc · Giờ Việt Nam. Chỉ gồm dữ liệu tài khoản có quyền xem. Subtask được đếm riêng theo từng người ghi worklog, không theo Assignee; một Subtask chung có thể xuất hiện ở nhiều thành viên. Giờ trên Story/Task/Bug vẫn được cộng.</p></details></main>
  </dialog>
  <script src="/lib/project-stats.js" defer></script><script src="/lib/progress-eta.js" defer></script><script src="/stats-scroll-lock.js" defer></script><script src="/project-stats.js" defer></script><script src="/resume-state.js" defer></script><script src="/soft-refresh.js" defer></script>
-<dialog id="batchDraftDialog"><h2 id="batchDraftTitle">Lịch chưa log</h2><p id="batchDraftMeta"></p><footer><button id="batchDraftClose" type="button" class="secondary">Đóng</button><button id="batchDraftRemove" type="button" class="danger-btn">Bỏ khỏi lịch xem trước</button></footer></dialog>
+<dialog id="bulkAllocationHelpDialog" aria-labelledby="bulkAllocationHelpTitle"><header><h2 id="bulkAllocationHelpTitle">Phân bổ & xem trước logwork</h2><button id="bulkAllocationHelpClose" type="button" class="icon-btn" aria-label="Đóng hướng dẫn">×</button></header><div class="bulk-help-body"><h3>Phân bổ tự động</h3><p>Bật: app tự chia giờ trống cho các Subtask; không cần nhập TimeSpent. App ưu tiên các ngày còn nhiều chỗ, nên giờ không nhất thiết chia đều giữa mọi Subtask.</p><p>Tắt: nhập TimeSpent từng Subtask. App giữ nguyên thời lượng và tìm chỗ trống phù hợp; mục không đủ chỗ được báo rõ.</p><h3>Log theo ngày</h3><p>Chọn ngày để phân bổ ban đầu. Lịch xem trước hiển thị cả tuần, gồm các worklog đã log tối màu. Có thể kéo Subtask sang ngày khác trong tuần, kể cả T7/CN. Khi xác nhận, app ghi đúng ngày và giờ ở vị trí sau cùng.</p><h3>Log theo tuần</h3><p>Bấm ô Tuần logwork, chọn một ngày bất kỳ. Ô sẽ hiển thị khoảng tuần chứa ngày đó. App chỉ phân bổ và cho chỉnh lịch nháp trong T2–T6, từ 08:00–12:00 và 13:30–17:30.</p><h3>Chỉnh lịch trước khi ghi</h3><p>PC kéo block hoặc cạnh dưới. Mobile nhấn giữ để bật chỉnh sửa; dấu ngang ở cạnh dưới là tay nắm tăng/giảm giờ. Một Subtask chỉ nằm trong một ngày, có thể tách qua giờ nghỉ trưa.</p><p>App đổi chỗ khi vừa vị trí; nếu không thay thế được, cảnh báo trước khi cho xếp trùng. Bấm block nháp để bỏ khỏi lượt log. Worklog đã có chỉ xem và không bị sửa/xóa.</p><p><strong>Xem trước chưa ghi Jira.</strong> Xem lại lịch, bấm icon lưu/Xác nhận log, rồi xác nhận cuối mới ghi. Dòng chưa rõ kết quả cần kiểm tra Jira trước khi thử lại. Phân bổ lịch dùng giờ thường; Overtime giữ luồng hiện có.</p></div><footer><button id="bulkAllocationHelpDone" type="button" class="primary">Đã hiểu</button></footer></dialog>
+  <dialog id="batchDraftDialog"><h2 id="batchDraftTitle">Lịch chưa log</h2><p id="batchDraftMeta"></p><footer><button id="batchDraftClose" type="button" class="secondary">Đóng</button><button id="batchDraftRemove" type="button" class="danger-btn">Bỏ khỏi lịch xem trước</button></footer></dialog>
   <dialog id="batchConfirmDialog"><header><h2>Xác nhận lịch sắp log</h2><p>Chỉ ghi các Subtask chưa gửi. Mỗi Subtask nằm trong một ngày.</p></header><div id="batchConfirmRows"></div><p id="batchConfirmError" role="status"></p><footer><button id="batchConfirmClose" type="button" class="secondary">Quay lại chỉnh</button><button id="batchConfirmSave" type="button" class="primary">Xác nhận log</button></footer></dialog>
 </body>
 </html>

@@ -1,3 +1,18 @@
+# Kiểm thử V1.34.3
+
+- `npm test`: toàn bộ unit/API package, exact-plan, resize/swap/overlap/guard/OT hồi quy đạt.
+- Batch-calendar và batch-review:1440×900,390×844,320×683,844×390; auto/manual, scope tuần, split8h swap, resize, bỏ draft, overlap có xác nhận, partial/unknown và native cảm ứng/chuột.
+- Batch-day-review mới, cả4 viewport: range26/10–01/11 nằm trong khung chọn; modal hướng dẫn; nút Đang xử lý không có %, progress có %; initial allocation chỉ20/10; lịch cũ cả7 ngày hiện dim/không handle và không đổi; kéo nháp20→21, xác nhận gửi cả body.date và exactPlan.date=21; audit ngày21 chạy lại trước ghi. PC kéo chuột thật qua cột ngày; mobile390 có touch giữ thật để hiện tay nắm. Kiểm tra pseudo-element dấu ngang có display/chiều rộng/chiều cao rõ, không chỉ tồn tại node.
+- Compact hồi quy4 viewport: cố định nền/list riêng, weekday/weekend progress, OT/mô tả, ô lịch và quyền chỉ xem.
+- Native SW browser: phát hiện/cập nhật bản mới khi app mở, không reload lúc đang ghi, cài đầu không báo nhầm.
+- Syntax/JSON/HTML ID/asset/SW/version/ZIP được kiểm tra. Ảnh QA chỉ nội bộ.
+
+Không chạy lại toàn bộ các bài browser lịch sử ngoài những suite trên. Chưa có Jira công ty/Safari/iPhone vật lý; chưa push/deploy hoặc đo mạng thật. Preview chỉ trong RAM; phạm vi kéo ngày là tuần đang xem, không điều hướng qua tuần khác trong preview. Không có transaction cả tuần hoặc tự retry unknown.
+
+---
+
+## Kết quả các phiên bản trước
+
 # Kiểm thử V1.34.2
 
 - `npm test`: toàn bộ unit/API hồi quy theo package, gồm batch-plan, batch-review và exact-plan API.

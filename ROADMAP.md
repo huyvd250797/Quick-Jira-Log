@@ -1,3 +1,10 @@
+# Bổ sung V1.34.3
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật / dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| V1.34.3 | Hoàn thiện preview theo ngày/tuần | Tuần trong ô chọn, modal hướng dẫn, resize pill rõ, chuyển ngày trong week preview, lịch đã log disable | Tách allocation/review/allowed dates, audit7 ngày + history song song, ghi exact target.date | API và Chromium4 viewport, chuột/cảm ứng, test20→21 và hồi quy | Đã xây dựng source; chưa deploy/Jira thật |
+| V1.35.0 | Phân tích Sub-task Type theo thành viên | Giờ/tỷ trọng/số Subtask và drilldown worklog | Custom field thật + bộ lọc kỳ/dự án | Đối chiếu Jira công ty | Đề xuất; chưa xây dựng |
+
 # Bổ sung V1.34.2
 
 | Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
