@@ -1,3 +1,10 @@
+# Bổ sung V1.34.7
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| V1.34.7 | Progress preview hoạt động và màu lịch cũ vừa tối | Tiến độ tăng theo xử lý, veil45% | NDJSON read-only và callback bước đọc; giữ fresh guard | Unit/API stream + UI4 viewport và PWA đạt | Đã xây dựng source; chưa deploy/Jira thật |
+| V1.35.0 | Phân tích Sub-task Type theo thành viên | Giờ/tỷ trọng/số Subtask và mở nhóm | Custom field Jira theo bộ lọc | Đối chiếu Jira công ty | Đề xuất; chưa xây dựng |
+
 # Bổ sung V1.34.6
 
 | Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |

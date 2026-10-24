@@ -1,3 +1,16 @@
+# Kiểm thử V1.34.7
+
+- `npm test`: toàn bộ package unit/API hồi quy đạt. Range audit test bổ sung kiểm tra NDJSON chunk đầu chứa progress trước khi worklog đọc xong, nhiều mức % đơn điệu,100% sau thành công và403 không100%; giữ7→1 shared read, fresh request/guard/tác giả/ngày/quyền.
+- `test:batch-ui`: allocation/review/day-review/onboarding4 viewport1440×900,390×844,320×683,844×390. Client nhận progress stream fixture, ghi nhận ít nhất7 mức % tăng tới100%, guard lịch cũ/màu45% ở light/dark và hồi quy kéo/resize/lưu/partial/hướng dẫn.
+- `test:update-live`: native Chromium Service Worker phát hiện/update/guard mutation đạt.
+- Syntax/JSON/HTML IDs/assets/version/ZIP kiểm tra trước bàn giao. Ảnh QA nội bộ.
+
+Chưa thử mạng Jira/hosting công ty hoặc Safari/iPhone thật; chưa push/deploy. % theo khối lượng xử lý, không phải dự báo thời gian. Proxy đệm response có thể làm chậm nhận tiến độ; không chạy toàn bộ browser lịch sử ngoài các suite trên.
+
+---
+
+## Phiên bản trước
+
 # Kiểm thử V1.34.6
 
 - `npm test`: toàn bộ package unit/API hồi quy, bao gồm swap lịch thật và chặn nháp đè lịch cũ. Thêm `range-audit-tests.js`: router/session,7 ngày cùng issue chỉ1 GET worklog, lọc đúng ngày/tác giả, request tiếp theo và day-audit force đọc mới,401/403 và ngày/giới hạn/duplicate đầu vào.

@@ -12,6 +12,9 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:320
   if(a==='day-audit'&&u.searchParams.has('dates'))data={ok:true,days:u.searchParams.get('dates').split(',').map(date=>({date,occupied:old.filter(x=>x.date===date).map(x=>({start:x.start,end:x.end}))}))};
   if(a==='worklog-history')data={ok:true,items:old};
   if(a==='bulk-worklog'){posts.push(req.postDataJSON());data={ok:true,transitions:[]};}
+  if(a==='day-audit'&&u.searchParams.has('dates')){
+   return route.fulfill({contentType:'application/x-ndjson',body:[...[5,20,40,60,80,95,100].map(percent=>({type:'progress',percent,phase:'Đang đối chiếu giờ trống'})),{type:'result',status:200,data}].map(JSON.stringify).join('\n')+'\n'});
+  }
   await route.fulfill({contentType:'application/json',body:JSON.stringify(data)});
  });
  const login=async()=>{await page.goto('http://127.0.0.1:4258');await page.waitForFunction(()=>state.filterLoaded);};
@@ -40,7 +43,8 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:320
  await enter();await page.locator('#bulkAllocationHelpBtn').click();
  const opening=await page.evaluate(()=>({opening:bulkHelpFlight?.opening,frames:bulkHelpFlight?.animation?.effect.getKeyframes()}));assert(opening.opening);assert.equal(Number(opening.frames[0].opacity),0);assert.equal(Number(opening.frames.at(-1).opacity),1);await page.waitForFunction(()=>!bulkHelpFlight);
  if(process.env.QJL_QA_OUTPUT){fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`help-${viewport.width}.png`)});}await page.locator('#bulkAllocationHelpClose').click();
- await page.locator('#bulkAutoAllocate').uncheck();await page.locator('#bulkDate').fill('2026-10-20');await page.locator('#bulkDate').dispatchEvent('change');await page.locator('.bulk-time').fill('1h');await page.locator('#bulkLogBtn').click();await page.waitForFunction(()=>QuickJiraBatch.active&&!QuickJiraBatch.running);
+ await page.locator('#bulkAutoAllocate').uncheck();await page.locator('#bulkDate').fill('2026-10-20');await page.locator('#bulkDate').dispatchEvent('change');await page.locator('.bulk-time').fill('1h');await page.evaluate(()=>{window.auditPercents=[];const original=Element.prototype.setAttribute;Element.prototype.setAttribute=function(name,value){if(this.id==='bulkPreviewMeter'&&name==='aria-valuenow')window.auditPercents.push(Number(value));return original.call(this,name,value);};});await page.locator('#bulkLogBtn').click();await page.waitForFunction(()=>QuickJiraBatch.active&&!QuickJiraBatch.running);
+ const percents=await page.evaluate(()=>window.auditPercents);assert(new Set(percents).size>=7,JSON.stringify(percents));assert(percents.every((n,i)=>!i||n>=percents[i-1]),JSON.stringify(percents));assert.equal(percents.at(-1),100);
  // No overlap or replacement of existing logs, including resize across one.
  const before=await page.evaluate(()=>JSON.stringify([...state.calendarDrafts.values()].map(d=>d.target))),count=confirms;
  await page.evaluate(()=>stageCalendarMove(calendarPreviewItems().find(x=>x.batchNew),{date:'2026-10-20',start:'08:00'}));assert.equal(await page.evaluate(()=>JSON.stringify([...state.calendarDrafts.values()].map(d=>d.target))),before);assert.equal(confirms,count);assert.match(await page.locator('#toast').innerText(),/đã log/);
@@ -49,7 +53,7 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:320
  for(const theme of ['light','dark']){
   await page.evaluate(t=>{applyTheme(t);state.projectColors=true;renderWorklogHistory();},theme);await page.waitForTimeout(120);
   const colors=await page.evaluate(()=>{const block=key=>[...$('weeklyCalendar').querySelectorAll('[data-week-event]')].find(el=>calendarRenderedItems[Number(el.dataset.weekEvent)].key===key),old=block('EPU-9'),fresh=block('EPU-1'),ot=block('EPU-10'),a=getComputedStyle(old),b=getComputedStyle(fresh);return {old:a.backgroundColor,fresh:b.backgroundColor,veil:getComputedStyle(old,'::after').backgroundColor,veilHit:getComputedStyle(old,'::after').pointerEvents,veilInset:getComputedStyle(old,'::after').inset,newVeil:getComputedStyle(fresh,'::after').backgroundColor,opacity:a.opacity,oldText:getComputedStyle(old.querySelector('strong')).color,newText:getComputedStyle(fresh.querySelector('strong')).color,ot:getComputedStyle(ot).backgroundColor};});
-  assert.equal(colors.old,colors.fresh,'same project retains the same underlying palette');assert.equal(colors.oldText,colors.newText,'text is not dimmed');assert.equal(colors.veil,'rgba(0, 0, 0, 0.55)');assert.equal(colors.veilHit,'none');assert.equal(colors.veilInset,'0px');assert.notEqual(colors.newVeil,colors.veil);assert.equal(colors.opacity,'1');assert.notEqual(colors.ot,colors.old,'OT palette remains distinct');
+  assert.equal(colors.old,colors.fresh,'same project retains the same underlying palette');assert.equal(colors.oldText,colors.newText,'text is not dimmed');assert.equal(colors.veil,'rgba(0, 0, 0, 0.45)');assert.equal(colors.veilHit,'none');assert.equal(colors.veilInset,'0px');assert.notEqual(colors.newVeil,colors.veil);assert.equal(colors.opacity,'1');assert.notEqual(colors.ot,colors.old,'OT palette remains distinct');
   await page.locator('.week-worklog-block.is-calendar-draft').filter({hasText:'EPU-1'}).scrollIntoViewIfNeeded();if(process.env.QJL_QA_OUTPUT)await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`palette-${viewport.width}-${theme}.png`)});
  }
  // Even after an old worklog appears during review, preflight blocks before POST.

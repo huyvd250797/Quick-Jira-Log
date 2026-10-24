@@ -1,3 +1,11 @@
+# V1.34.7
+
+- Stream tiến độ range day-audit theo discovery/issue/ngày; JSON compatibility giữ.
+- Preview progress tăng đơn điệu theo server, hoàn tất100% sau render; gián đoạn/lỗi không mở preview thiếu dữ liệu.
+- Lỗi403 streamed không báo100%;401 xử lý khi headers đã gửi.
+- Lớp phủ lịch đã log preview45%.
+- Thêm test stream phát progress trước kết quả, nhiều mức %, lỗi không giả thành công; UI thu thập % tăng và test màu45%.
+
 # V1.34.6
 
 - Icon i mở modal bằng hiệu ứng bay ra; X thu về i như Đã hiểu, không ghi checkbox khi X.

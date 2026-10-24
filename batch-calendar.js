@@ -85,17 +85,18 @@ window.QuickJiraBatch=(()=>{
   $('bulkPreviewMeter').firstElementChild.style.width=percent+'%';$('bulkLogBtn').textContent='Đang xử lý…';
  }
  async function readOccupied(dates,owner,onProgress=()=>{}){
-  const occupied={};let cursor=0,done=0;
+  const occupied={};let cursor=0,done=0,reported=0;
+  const report=(n,label)=>{if(state.user===owner&&n>reported){reported=n;onProgress(n,label);}};
   if(dates.length>1){
    let data;
-   try{data=await api('/api?action=day-audit&dates='+dates.join(',')+'&force=1');}catch(e){if(![400,404,405].includes(e.status))throw e;}
+   try{data=await api('/api?action=day-audit&dates='+dates.join(',')+'&force=1',{onProgress:event=>{const percent=Math.max(0,Math.min(100,Number(event.percent)||0));report(dates.length*percent/100,event.phase);}});}catch(e){if(e.code==='RESULT_UNKNOWN')e.message='Kết nối đối chiếu bị gián đoạn. Chưa hoàn tất kiểm tra giờ trống; vui lòng thử lại.';if(![400,404,405].includes(e.status))throw e;}
    if(state.user!==owner)throw Error('Tài khoản đã thay đổi.');
    if(data?.days){
     if(!Array.isArray(data.days)||data.days.length!==dates.length||new Set(data.days.map(x=>x.date)).size!==dates.length||data.days.some(x=>!dates.includes(x.date)||!Array.isArray(x.occupied)))throw Error('Chưa đọc được đầy đủ giờ đã log.');
-    data.days.forEach(x=>{occupied[x.date]=x.occupied;onProgress(++done);});return occupied;
+    data.days.forEach(x=>{occupied[x.date]=x.occupied;report(++done);});return occupied;
    }
   }
-  await Promise.all(Array.from({length:Math.min(2,dates.length)},async()=>{while(cursor<dates.length){const d=dates[cursor++],data=await api(`/api?action=day-audit&date=${d}&force=1`);if(state.user!==owner)throw Error('Tài khoản đã thay đổi.');if(!Array.isArray(data.occupied))throw Error('Chưa đọc được đầy đủ giờ đã log.');occupied[d]=data.occupied;onProgress(++done);}}));return occupied;
+  await Promise.all(Array.from({length:Math.min(2,dates.length)},async()=>{while(cursor<dates.length){const d=dates[cursor++],data=await api(`/api?action=day-audit&date=${d}&force=1`);if(state.user!==owner)throw Error('Tài khoản đã thay đổi.');if(!Array.isArray(data.occupied))throw Error('Chưa đọc được đầy đủ giờ đã log.');occupied[d]=data.occupied;report(++done);}}));return occupied;
  }
  async function prepare(){
   if(busy()||state.bulkSubmitInFlight)return;
@@ -116,7 +117,7 @@ window.QuickJiraBatch=(()=>{
   try{
    if(bulkAutoMode()) items.forEach(x=>{x.overtime=false;});
    const historyPromise=api(`/api?action=worklog-history&date=${reviewDates[0]}&endDate=${reviewDates.at(-1)}&force=1`).then(data=>({data}),error=>({error}));
-   const occupied=await readOccupied(reviewDates,owner,done=>{task.update({label:'Đối chiếu giờ trống',done,total:reviewDates.length});prepProgress(done,reviewDates.length+2,'Đối chiếu '+done+'/'+reviewDates.length+' ngày');});
+   const occupied=await readOccupied(reviewDates,owner,(done,label)=>{task.update({label:'Đối chiếu giờ trống',done:Math.floor(done),total:reviewDates.length});prepProgress(done,reviewDates.length+2,label||'Đối chiếu '+Math.floor(done)+'/'+reviewDates.length+' ngày');});
    prepProgress(reviewDates.length,reviewDates.length+2,'Đang tạo lịch nháp');
    const result=P.allocate(items,allocationDates,occupied,!bulkAutoMode());
    if(!result.plans.length)throw Error('Không phân bổ được Subtask nào. '+result.unplaced.map(x=>x.key+': '+x.reason).join('; '));
