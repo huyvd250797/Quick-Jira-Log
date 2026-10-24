@@ -1,3 +1,11 @@
+# V1.33.1 — Log tất cả & tương tác ô lịch
+
+- Tối ưu không gian form Log tất cả: header/footer tách khỏi danh sách cuộn; OT cùng hàng thời lượng, bỏ giải thích OT từng dòng; footer một hàng và bố cục ngang/PC riêng.
+- Form đơn/hàng loạt không hiển thị thiếu8h/mục tiêu ngày vào T7/CN. Giữ validation và quy tắc ghi hiện có.
+- Lịch luôn hiển thị đủ 7 ngày, bỏ toggle; phục hồi phiên cũ không ẩn cuối tuần.
+- Ô trống 30 phút có press/focus/selection feedback và ngày/giờ chính xác, không làm tròn click sang ô sau. Giữ snap kéo thả và lịch chỉ xem.
+- Thêm kiểm thử UI luồng gửi, responsive, trạng thái cuối tuần, read-only; version/PWA1.33.1. Không đổi backend/dependency/env.
+
 # V1.33.0
 
 - Tăng tốc đối chiếu OT bằng đọc trực tiếp có kiểm chứng, fallback native, lô50 và concurrency có giới hạn; giữ unknown/quyền/xác thực.

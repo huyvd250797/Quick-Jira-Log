@@ -498,12 +498,13 @@ function calendarBlockClick(event, item) {
   openCorrection(item);
 }
 function calendarMinuteLabel(value) { return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(Math.round(value % 60)).padStart(2, '0')}`; }
-function calendarPointTarget(x, y, grabMinutes = 0) {
+function calendarPointTarget(x, y, grabMinutes = 0, snap = 'nearest') {
   const column = document.elementFromPoint(x, y)?.closest('.week-day-column');
   if (!column || !column.closest('#weeklyCalendar')) return null;
   const rect = column.getBoundingClientRect(), body = column.parentElement;
   const scale = rect.height / Number(body.dataset.minuteRange);
-  const minute = Math.round((Number(column.dataset.fromMinute) + (y - rect.top) / scale - grabMinutes) / 30) * 30;
+  const round = snap === 'floor' ? Math.floor : Math.round;
+  const minute = round((Number(column.dataset.fromMinute) + (y - rect.top) / scale - grabMinutes) / 30) * 30;
   if (minute < 0 || minute >= 1440) return null;
   return { date: column.dataset.calendarDate, minute, start: calendarMinuteLabel(minute) };
 }
@@ -663,6 +664,9 @@ async function openCalendarLog(date, start) {
   resetCalendarInteraction();
   calendarFocusSource = document.activeElement;
   state.calendarLogContext = { date, start };
+  $('weeklyCalendar').querySelectorAll('[data-calendar-slot]').forEach(slot => {
+    slot.classList.toggle('is-selected', slot.dataset.calendarSlot === start && slot.closest('.week-day-column').dataset.calendarDate === date);
+  });
   $('calendarLogFeedback').classList.add('hidden');
   $('calendarLogSelection').textContent = `${date.split('-').reverse().join('/')} · Bắt đầu ${start}`;
   $('calendarTaskPicker').classList.remove('hidden');
@@ -716,6 +720,7 @@ function closeCalendarLog({ force = false } = {}) {
   if (!hadContext) return;
   closeLogConfirmation(false);
   state.calendarLogContext = null;
+  $('weeklyCalendar').querySelectorAll('.calendar-time-slot.is-selected').forEach(slot => slot.classList.remove('is-selected'));
   $('worklogCard').classList.add('hidden');
   calendarLogHome.append($('worklogCard'));
   calendarConfirmHome.append($('logConfirmOverlay'));
@@ -792,7 +797,9 @@ function setupCalendarInteractions() {
     const block=event.target.closest('[data-week-event]');
     if(block){calendarBlockClick(event,calendarRenderedItems[Number(block.dataset.weekEvent)]);return;}
     if(state.calendarMovePending||state.historyLoading||performance.now()<calendarIgnoreClickUntil)return;
-    const target = calendarPointTarget(event.clientX, event.clientY);
+    if (calendarReadOnly()) return;
+    const slot = event.target.closest('[data-calendar-slot]');
+    const target = slot ? {date:slot.closest('.week-day-column').dataset.calendarDate,start:slot.dataset.calendarSlot} : calendarPointTarget(event.clientX, event.clientY, 0, 'floor');
     if (target) void openCalendarLog(target.date, target.start);
   });
   document.addEventListener('keydown', event => {

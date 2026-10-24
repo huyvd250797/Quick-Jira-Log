@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.33.0';
+const APP_VERSION = '1.33.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -43,7 +43,6 @@ const state = {
   historyLoading: false,
   historyView: 'calendar',
   calendarMode: 'week',
-  calendarWeekends: false,
   projectColors: readStorage(STORAGE.projectColors, false) === true,
   projectPalette: {},
   previousProjectPalette: readStorage(STORAGE.projectPaletteHistory, {}) || {},
@@ -1683,7 +1682,7 @@ function scheduleWeekFit() {
 
 function renderWeeklyCalendar(date) {
   const week = QuickJiraUi.weekRange(date);
-  const days = state.calendarWeekends ? week.days : week.days.slice(0, 5);
+  const days = week.days;
   const displayed = calendarRenderedItems = calendarPreviewItems();
   const eventIndexes = new Map(displayed.map((item,index)=>[item,index]));
   const items = displayed.filter(item => days.includes(item.date) && Number(item.minutes) > 0);
@@ -1706,7 +1705,10 @@ function renderWeeklyCalendar(date) {
   }).join('');
   const columns = days.map(day => {
     const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
-    return `<div class="week-day-column" data-calendar-date="${day}" data-from-minute="${from}">${events.map(event => {
+    const slots = Array.from({ length: Math.ceil((to - from) / 30) }, (_, index) => from + index * 30)
+      .filter(minute => !events.some(event => event.start < minute + 30 && event.end > minute))
+      .map(minute => `<button type="button" class="calendar-time-slot" data-calendar-slot="${timeText(minute)}" style="top:calc(${minute - from} * var(--week-minute-px, 1px));height:calc(30 * var(--week-minute-px, 1px))" aria-label="Logwork ngày ${day.split('-').reverse().join('/')} lúc ${timeText(minute)}"${calendarReadOnly() ? ' disabled' : ''}><span>${timeText(minute)}</span></button>`).join('');
+    return `<div class="week-day-column" data-calendar-date="${day}" data-from-minute="${from}">${slots}${events.map(event => {
       const globalIndex = eventIndexes.get(event.item);
       const appearance = calendarAppearance(event.item);
       const label = `${calendarIsDraft(event.item) ? 'Chưa lưu · ' : ''}${event.item.calendarSplitRoot?(event.item.calendarSplitCount?'Nhóm '+event.item.calendarSplitCount+' phần · Kéo để gom lại · ':'Nhóm tách cần đối chiếu · '):''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
@@ -1854,7 +1856,7 @@ function syncCalendarControls() {
   $('calendarDayHeading').classList.toggle('hidden', weekly);
   $('calendarAgenda').classList.toggle('hidden', weekly);
   const week = QuickJiraUi.weekRange(date);
-  $('calendarMonthLabel').textContent = weekly ? `${week.start.split('-').reverse().join('/')} – ${(state.calendarWeekends ? week.end : week.workEnd).split('-').reverse().join('/')}` : historyDayLabel(date, true);
+  $('calendarMonthLabel').textContent = weekly ? `${week.start.split('-').reverse().join('/')} – ${week.end.split('-').reverse().join('/')}` : historyDayLabel(date, true);
   $('calendarPrevBtn').setAttribute('aria-label', weekly ? 'Tuần trước' : 'Tháng trước');
   $('calendarNextBtn').setAttribute('aria-label', weekly ? 'Tuần sau' : 'Tháng sau');
   $('calendarPrevBtn').title = weekly ? 'Tuần trước' : 'Tháng trước';
@@ -1867,13 +1869,9 @@ function syncCalendarControls() {
   $('monthlyCalendar').classList.toggle('hidden', weekly);
   $('calendarWeekSummary').classList.toggle('hidden', !weekly);
   if (weekly && (state.historyLoading || !state.historyLoaded || state.historyError)) $('calendarWeekSummary').innerHTML = '<strong>— <small>/ 40h</small></strong><span>Chưa xác định tổng giờ</span>';
-  $('calendarWeekendBtn').classList.toggle('hidden', !weekly);
   $('calendarProjectColorsBtn').setAttribute('aria-pressed', String(state.projectColors));
   $('calendarProjectColorsBtn').setAttribute('aria-label', state.projectColors ? 'Tắt màu theo dự án' : 'Bật màu theo dự án');
   $('calendarProjectColorsBtn').title = $('calendarProjectColorsBtn').getAttribute('aria-label');
-  $('calendarWeekendBtn').setAttribute('aria-pressed', String(state.calendarWeekends));
-  $('calendarWeekendBtn').textContent = 'T7/CN';
-  $('calendarWeekendBtn').setAttribute('aria-label', state.calendarWeekends ? 'Ẩn thứ 7 và chủ nhật' : 'Hiện thứ 7 và chủ nhật');
   $('calendarHelp').textContent = weekly ? 'Bấm chỗ trống để log đúng giờ · Kéo block đổi giờ, kéo cạnh dưới đổi thời lượng; mobile nhấn giữ để chỉnh sửa · Chạm block để xem chi tiết.' : 'Số giờ trong ô là tổng worklog đã ghi. Chọn ngày để xem chi tiết.';
   return { date, weekly };
 }
@@ -1976,9 +1974,9 @@ function renderWorklogHistory() {
     return;
   }
   const total = state.historyItems.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-  const visibleWeekDays = calendar && state.calendarMode === 'week' ? QuickJiraUi.weekRange($('historyDate').value || vietnamToday()).days.slice(0, state.calendarWeekends ? 7 : 5) : [];
+  const visibleWeekDays = calendar && state.calendarMode === 'week' ? QuickJiraUi.weekRange($('historyDate').value || vietnamToday()).days : [];
   $('historySummary').textContent = calendar && state.calendarMode === 'week'
-    ? `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.filter(item => visibleWeekDays.includes(item.date)).length} worklog · ${state.calendarWeekends ? 'T2–CN' : 'T2–T6'} · Giờ Việt Nam`
+    ? `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.filter(item => visibleWeekDays.includes(item.date)).length} worklog · T2–CN · Giờ Việt Nam`
     : `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.length} worklog · ${calendar ? QuickJiraCalendar.displayDuration(total) : formatHistoryTimeSpent(total)}${calendar ? ' trong tháng' : ' trong ngày'} · Giờ Việt Nam`;
   if (calendar) {
     wrap.innerHTML = '';
@@ -2501,22 +2499,25 @@ function updateSingleCapacity() {
   const capacityReady = state.singleCapacity.date === date && !state.singleCapacity.loading && !state.singleCapacity.error;
   const alreadyRegular = capacityReady ? Number(state.singleCapacity.regularLoggedMinutes || 0) : 0;
   const projected = alreadyRegular + regularDraft;
+  const weekend = isWeekendDateClient(date);
 
   if ($('singleRegularDraft')) $('singleRegularDraft').textContent = minutesLabel(regularDraft);
   if ($('singleAlreadyLogged')) $('singleAlreadyLogged').textContent = capacityReady ? minutesLabel(alreadyRegular) : (state.singleCapacity.loading ? '...' : '—');
-  if ($('singleCapacityProjected')) $('singleCapacityProjected').textContent = capacityReady ? `${minutesLabel(projected)} / 8h` : 'Đang kiểm tra...';
+  if ($('singleCapacityProjected')) $('singleCapacityProjected').textContent = capacityReady ? `${minutesLabel(projected)}${weekend ? '' : ' / 8h'}` : 'Đang kiểm tra...';
 
   const bar = $('singleCapacityBar');
   if (bar) bar.style.width = `${capacityReady ? Math.min(100, Math.max(0, projected / 480 * 100)) : 0}%`;
   const capacityCard = $('singleCapacityCard');
   const status = $('singleCapacityStatus');
+  capacityCard?.classList.toggle('is-weekend', weekend);
   if (capacityCard) capacityCard.classList.toggle('is-loading', state.singleCapacity.loading);
-  if (capacityCard) capacityCard.classList.toggle('is-complete', capacityReady && projected === 480);
+  if (capacityCard) capacityCard.classList.toggle('is-complete', capacityReady && !weekend && projected === 480);
   if (capacityCard) capacityCard.classList.toggle('is-over', capacityReady && projected > 480);
   if (status) {
     if (state.singleCapacity.loading) status.textContent = 'Đang đọc số giờ đã log trên Jira...';
     else if (state.singleCapacity.error) status.textContent = 'Chưa đọc được giờ đã log; hệ thống vẫn kiểm tra lại khi bấm Log.';
     else if (!capacityReady) status.textContent = 'Chưa có dữ liệu giờ đã log.';
+    else if (weekend && projected <= 480) status.textContent = '';
     else if (projected < 480) status.textContent = `Còn thiếu ${minutesLabel(480 - projected)} để đủ 8h.`;
     else if (projected === 480) status.textContent = 'Đã đủ 8h giờ làm việc.';
     else status.textContent = `Vượt ${minutesLabel(projected - 480)} so với 8h. Hãy giảm thời lượng hoặc dùng Tự động phân bổ.`;
@@ -2687,31 +2688,34 @@ function updateBulkTotal() {
   const capacityReady = state.bulkCapacity.date === date && !state.bulkCapacity.loading && !state.bulkCapacity.error;
   const alreadyRegular = capacityReady ? Number(state.bulkCapacity.regularLoggedMinutes || 0) : 0;
   const projected = alreadyRegular + regularDraft;
+  const weekend = isWeekendDateClient(date);
 
   $('bulkTotal').textContent = minutesLabel(total);
   if ($('bulkSelectionCount')) $('bulkSelectionCount').textContent = `${items.length}/${state.filterIssues.length} Sub-task`;
   if ($('bulkRegularDraft')) $('bulkRegularDraft').textContent = minutesLabel(regularDraft);
   if ($('bulkAlreadyLogged')) $('bulkAlreadyLogged').textContent = capacityReady ? minutesLabel(alreadyRegular) : (state.bulkCapacity.loading ? '...' : '—');
-  if ($('bulkCapacityProjected')) $('bulkCapacityProjected').textContent = capacityReady ? `${minutesLabel(projected)} / 8h` : 'Đang kiểm tra...';
+  if ($('bulkCapacityProjected')) $('bulkCapacityProjected').textContent = capacityReady ? `${minutesLabel(projected)}${weekend ? '' : ' / 8h'}` : 'Đang kiểm tra...';
 
   const bar = $('bulkCapacityBar');
   if (bar) bar.style.width = `${capacityReady ? Math.min(100, Math.max(0, projected / 480 * 100)) : 0}%`;
   const capacityCard = $('bulkCapacityCard');
   const status = $('bulkCapacityStatus');
+  capacityCard?.classList.toggle('is-weekend', weekend);
   if (capacityCard) capacityCard.classList.toggle('is-loading', state.bulkCapacity.loading);
-  if (capacityCard) capacityCard.classList.toggle('is-complete', capacityReady && projected === 480);
+  if (capacityCard) capacityCard.classList.toggle('is-complete', capacityReady && !weekend && projected === 480);
   if (capacityCard) capacityCard.classList.toggle('is-over', capacityReady && projected > 480);
   if (status) {
     if (state.bulkCapacity.loading) status.textContent = 'Đang đọc số giờ đã log trên Jira...';
     else if (state.bulkCapacity.error) status.textContent = 'Chưa đọc được giờ đã log; hệ thống vẫn kiểm tra lại khi bấm Log.';
     else if (!capacityReady) status.textContent = 'Chưa có dữ liệu giờ đã log.';
+    else if (weekend && projected <= 480) status.textContent = '';
     else if (projected < 480) status.textContent = `Còn thiếu ${minutesLabel(480 - projected)} để đủ 8h.`;
     else if (projected === 480) status.textContent = 'Đã đủ 8h giờ làm việc.';
     else status.textContent = `Vượt ${minutesLabel(projected - 480)} so với 8h. Hãy giảm thời lượng hoặc dùng Tự động phân bổ.`;
   }
   const overtimeEl = $('bulkOvertimeDraft');
   if (overtimeEl) {
-    overtimeEl.textContent = overtimeDraft > 0 ? `OT đang nhập: ${minutesLabel(overtimeDraft)} (không tính vào mốc 8h).` : '';
+    overtimeEl.textContent = overtimeDraft > 0 ? `OT ${minutesLabel(overtimeDraft)}` : '';
     overtimeEl.classList.toggle('hidden', overtimeDraft <= 0);
   }
 
@@ -2719,7 +2723,7 @@ function updateBulkTotal() {
   if (redistributeBtn) {
     redistributeBtn.disabled = state.bulkSubmitInFlight || !items.length || (capacityReady && alreadyRegular >= 480);
     if (!redistributeBtn.dataset.loading) {
-      redistributeBtn.textContent = state.bulkAllocation.autoApplied ? 'PHÂN BỔ LẠI' : 'TỰ ĐỘNG PHÂN BỔ';
+      redistributeBtn.textContent = state.bulkAllocation.autoApplied ? 'Phân bổ lại' : 'Phân bổ giờ';
     }
   }
 
@@ -2814,23 +2818,22 @@ function renderBulkItems() {
         <div class="bulk-item-title">
           <strong>${index + 1}. ${escapeHtml(item.key)}${item.autoAllocated ? '<span class="auto-time-badge">AUTO</span>' : ''}</strong>
           <span>${escapeHtml(item.summary || 'Chưa có tên công việc')}</span>
-          <small>${escapeHtml(item.project)}</small>
-        </div>
+          </div>
         <button class="bulk-remove-btn" type="button" aria-label="Bỏ ${escapeHtml(item.key)} khỏi danh sách log" title="Bỏ Sub-task này">×</button>
       </div>
       <div class="bulk-item-fields">
         <label class="bulk-time-field">
           <span>Thời lượng</span>
           <input class="bulk-time" value="${escapeHtml(item.timeSpent || '')}" placeholder="VD: 1h" inputmode="text" required />
-          <span class="bulk-preset-row" aria-label="Thời lượng nhanh">
-            ${['30m', '1h', '2h', '3h', '4h'].map(value => `<button class="bulk-preset-btn${String(item.timeSpent || '') === value ? ' active' : ''}" type="button" data-time="${value}">${value}</button>`).join('')}
-          </span>
         </label>
-        <label class="overtime-toggle bulk-ot-toggle">
-          <input class="bulk-overtime" type="checkbox" ${item.overtime ? 'checked' : ''} />
+        <label class="overtime-toggle bulk-ot-toggle" title="Overtime">
+          <input class="bulk-overtime" aria-label="Overtime ${escapeHtml(item.key)}" type="checkbox" ${item.overtime ? 'checked' : ''} />
           <span class="overtime-control" aria-hidden="true"></span>
-          <span class="overtime-copy"><strong>Overtime</strong><small>${overtimeWindowLabel($('bulkDate')?.value || todayLocal())} · đồng bộ OT trên Jira</small></span>
+          <span class="overtime-copy"><strong>OT</strong></span>
         </label>
+        <div class="bulk-preset-row" role="group" aria-label="Thời lượng nhanh ${escapeHtml(item.key)}">
+          ${['30m', '1h', '2h', '3h', '4h'].map(value => `<button class="bulk-preset-btn${String(item.timeSpent || '') === value ? ' active' : ''}" type="button" data-time="${value}">${value}</button>`).join('')}
+        </div>
         <label class="bulk-ot-start-field${item.overtime ? '' : ' hidden'}">Xếp từ giờ (tùy chọn)
           <input class="bulk-ot-start" type="time" value="${escapeHtml(item.overtimeStart || '')}" />
         </label>
@@ -3163,7 +3166,6 @@ $('historyListViewBtn').addEventListener('click', () => setHistoryView('list'));
 $('historyCalendarViewBtn').addEventListener('click', () => setHistoryView('calendar'));
 $('calendarWeekBtn').addEventListener('click', () => setCalendarMode('week'));
 $('calendarMonthBtn').addEventListener('click', () => setCalendarMode('month'));
-$('calendarWeekendBtn').addEventListener('click', () => { state.calendarWeekends = !state.calendarWeekends; renderWorklogHistory(); });
 $('refreshDashboardBtn').addEventListener('click', () => refreshDashboard({ force: true }));
 setInterval(() => { if (state.user && !document.hidden && vietnamToday() !== state.dashboardDate) void refreshDashboard({ force: true }); }, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && state.user && (vietnamToday() !== state.dashboardDate || Date.now() - state.dashboardUpdated > 60000)) void refreshDashboard({ force: true }); });

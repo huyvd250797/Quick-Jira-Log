@@ -1,3 +1,27 @@
+# Quick Jira Log V1.33.1 — Log tất cả gọn hơn & chọn ô lịch chính xác
+
+## Thay đổi của bản này
+
+- Thiết kế lại Log tất cả trên PC/mobile: tiêu đề và số Subtask gọn; ngày và Phân bổ giờ cùng hàng; khối giờ thường rút gọn. Header/footer cố định trong khung, chỉ danh sách cuộn, không còn tiêu đề Subtask bị header đè lên. PC hai cột, điện thoại một cột; màn hình ngang dùng header hai phần.
+- Mỗi dòng Subtask có OT cạnh ô thời lượng, bỏ mô tả giải thích OT lặp lại; giữ preset 30m/1h/2h/3h/4h, nút tăng/giảm, giờ OT tùy chọn và phần sửa mô tả có thể mở. Giữ khoảng cách giữa thẻ và vùng bấm. Footer gộp Tổng, Hủy và Log tất cả trên một hàng.
+- Khi ngày log là T7/CN, form đơn và Log tất cả không nhắc còn thiếu giờ để đủ 8h, không hiển thị mục tiêu /8h hoặc thanh tiến độ mục tiêu ngày. Vẫn hiển thị giờ đã log/đang nhập, lỗi tải và cảnh báo vượt giới hạn hiện có. Không thay quy tắc ghi/giới hạn backend hoặc cách phân bổ giờ khi chủ động bấm nút.
+- Lịch tuần luôn hiển thị T2–CN; bỏ nút bật/tắt T7/CN. Cấu hình cũ của phiên phục hồi không ẩn cuối tuần trở lại. Mục tiêu tuần 40h vẫn theo T2–T6, giờ cuối tuần được theo dõi riêng như trước.
+- Ô trống 30 phút có phản hồi sáng/viền khi nhấn và giữ chọn trong lúc mở form. Bấm bất kỳ vị trí nào trong ô 08:00–08:30 lấy giờ bắt đầu 08:00; ô tiếp theo lấy 08:30. Form và request logwork dùng đúng ngày/giờ đã chọn. Kéo thả vẫn snap gần nhất như cũ; lịch người khác chỉ xem, ô trống không mở form ghi.
+
+## Cài đặt, cập nhật và phạm vi
+
+Giải nén **Quick-Jira-Log_v1.33.1.zip**, mở **Quick-Jira-Log-V1.33.1**. Node24.x: `npm ci`, `npm test`. Chạy kiểm thử giao diện mới (môi trường QA riêng có Playwright/Chromium): `QJL_CHROMIUM_PATH=/path/to/chromium npm run test:compact`.
+
+Giữ nguyên cấu hình Vercel/APP_SESSION_SECRET và dữ liệu trình duyệt. Không thêm dependency runtime, biến môi trường, database hoặc migration. PWA shell/version 1.33.1, bổ sung logwork-compact.css. Có thể thay source và deploy theo hướng dẫn bên dưới; không cần xóa dữ liệu website. Chưa push/deploy.
+
+Đã kiểm thử unit/API, giao diện Chromium PC 1440px/mobile 390px/320px/ngang 844px ở light/dark, luồng gửi form đơn/hàng loạt, OT, mô tả, ngày/giờ ô lịch, chỉ xem người khác, cuộn riêng và hồi quy lịch/sửa/xóa/lưu nháp. Chưa kiểm chứng trực tiếp Jira công ty hoặc Safari/iPhone vật lý. Xem TESTING.md và RELEASE_V1.33.1.md.
+
+**Kế tiếp đề xuất: V1.34.0 — Phân tích Sub-task Type theo thành viên:** phân bổ giờ theo trường thật trên Jira và mở các công việc trong từng nhóm. Chưa chốt/chưa triển khai.
+
+---
+
+## Tài liệu nền V1.33.0 (thay đổi V1.33.1 ở trên được ưu tiên)
+
 # Quick Jira Log V1.33.0 — Đối chiếu Overtime & thẻ tiến độ linh hoạt
 
 ## Thay đổi chính
@@ -243,7 +267,7 @@ Version, manifest và cache shell cập nhật 1.28.0. Sau deploy tải lại PW
 ## Kiểm thử và giới hạn
 
 - `npm test`: bộ logic/API kế thừa, Subtask và `tests/jira-parent-edit-tests.js` mới: cả Story/Task/Bug với ID khác nhau, whitelist, quyền, readonly, stale/schema/type conflict, parent, Estimate/remaining, replay/lost response/readback, CSRF/hết phiên và nội dung quá giới hạn.
-- `npm run test:parent-edit-ui`: Chromium PC1440×900, mobile390×844/320×683, ngang844×390. Frontend chạy qua router/session thật, mock Jira tại fetch; đọc/sửa/xem lại/giữ draft/xác nhận/đối chiếu, danh sách cập nhật, xung đột, mất phản hồi, khóa quyền và dark/light. Các viewport lần lượt thử Story, Task, Bug, Story.
+- `npm run test:parent-edit-ui`: Chromium PC 1440×900, mobile 390×844/320×683, ngang 844×390. Frontend chạy qua router/session thật, mock Jira tại fetch; đọc/sửa/xem lại/giữ draft/xác nhận/đối chiếu, danh sách cập nhật, xung đột, mất phản hồi, khóa quyền và dark/light. Các viewport lần lượt thử Story, Task, Bug, Story.
 - `npm run test:subtask-edit-ui` và `npm run test:update-ui`: hồi quy sửa Subtask và các thao tác cập nhật nhanh cũ.
 - Chưa truy cập Jira công ty, Safari/iPhone vật lý, Redis thật hoặc deploy. Sau triển khai cần thử một Story/Task/Bug có quyền, kiểm tra dữ liệu thật, validator/edit screen/time tracking của công ty và hồi quy lịch/logwork/OT.
 
@@ -288,7 +312,7 @@ Version, manifest và cache shell PWA đã đổi 1.27.0. Sau triển khai tải
 ## Kiểm thử và giới hạn xác minh
 
 - `npm test`: toàn bộ logic/API kế thừa và bộ mới `tests/jira-subtask-edit-tests.js`.
-- `npm run test:subtask-edit-ui`: Chromium PC1440×900, mobile390×844/320×683, ngang844×390; chạy frontend → router/session thật → mock Jira editmeta/PUT → đọc lại, không mock kết quả thành công ngay ở frontend.
+- `npm run test:subtask-edit-ui`: Chromium PC 1440×900, mobile 390×844/320×683, ngang 844×390; chạy frontend → router/session thật → mock Jira editmeta/PUT → đọc lại, không mock kết quả thành công ngay ở frontend.
 - Hồi quy `npm run test:editor-ui`, `npm run test:update-ui`: editor/tạo công việc/Subtask và cập nhật trạng thái/người nhận/ưu tiên/bình luận theo luồng cũ.
 - Chưa thao tác Jira công ty, Safari/iPhone vật lý hoặc triển khai thật. Sau deploy cần thử một Subtask có quyền sửa, kiểm tra bốn trường trên Jira; trường bị khóa, validator công ty, legacy time tracking, custom type và chỉnh sửa đồng thời.
 
@@ -355,7 +379,7 @@ API mới: GET `/api?action=jira-create-subtask-context&key=CAL-1` (option `type
 
 ## Kiểm thử và giới hạn
 
-Đã kiểm thử logic/API và Chromium PC1440×900, mobile390×844/320×683, ngang844×390 với Jira giả lập. Test mới chạy xuyên trình duyệt → router/session thật của app → metadata/POST Jira giả lập → readback, không chỉ giả lập kết quả thành công ở frontend. Có các ca thiếu subtask, isLast, tạo con của Story/Task/Bug, từ chối quyền/tải lại không ghi, ảnh HTML/wiki/thumbnail, không tải tracker ngoài, cuộn/fade và màu. Chưa thao tác Jira công ty, Safari/iPhone thật, Redis thật hoặc deploy; cần đối chiếu sau cập nhật. Chi tiết trong TESTING.md.
+Đã kiểm thử logic/API và Chromium PC 1440×900, mobile 390×844/320×683, ngang 844×390 với Jira giả lập. Test mới chạy xuyên trình duyệt → router/session thật của app → metadata/POST Jira giả lập → readback, không chỉ giả lập kết quả thành công ở frontend. Có các ca thiếu subtask, isLast, tạo con của Story/Task/Bug, từ chối quyền/tải lại không ghi, ảnh HTML/wiki/thumbnail, không tải tracker ngoài, cuộn/fade và màu. Chưa thao tác Jira công ty, Safari/iPhone thật, Redis thật hoặc deploy; cần đối chiếu sau cập nhật. Chi tiết trong TESTING.md.
 
 ## Tiếp theo — đề xuất chưa xây dựng
 

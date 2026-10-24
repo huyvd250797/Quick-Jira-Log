@@ -1,3 +1,25 @@
+# Kiểm thử V1.33.1
+
+## Đã chạy đạt
+
+- `npm test`: toàn bộ unit/API hồi quy, gồm native OT/correction, phân bổ, calendar/draft/swap/split/resize/zoom, thống kê, ETA và Jira issue/editor. Backend không thay đổi trong bản này.
+- `tests/browser/logwork-compact.cjs`: Chromium 1440×900,390×844,320×683,844×390; light/dark. Header/list/footer không chồng, form không tràn ngang hoặc cuộn ngoài; vùng danh sách hơn51% viewport ở màn hình dọc; OT cạnh thời lượng, preset/giờ OT/mô tả và payload log tất cả giữ đúng.
+- T7(24/10/2026) và CN(25/10/2026) không có nhắc thiếu giờ/mốc /8h; đổi về ngày thường khôi phục nhắc thiếu 6h. Kiểm tra form đơn vào cuối tuần.
+- Ô lịch08:00/08:30/09:00 được bấm sát đáy để xác minh không chọn nhầm ô sau. PC phản hồi lúc nhấn; mobile dùng touchscreen.tap. Sau chọn Subtask, form đúng ngày/giờ; POST startTime08:30. Đóng xóa selection. Lịch người khác vô hiệu hóa ô ghi.
+- `tests/browser/workflow.cjs`: PC/iPhone mô phỏng, dashboard/tuần/tháng, sửa/xóa, streaming log, kết nối gián đoạn, log tất cả; đã cập nhật kỳ vọng7 ngày/nút cuối tuần bị bỏ.
+- `tests/browser/calendar-experience.cjs`:4 viewport; giữ vị trí tải lại, dữ liệu giữ nguyên tái dùng DOM, lưu nhóm lỗi một phần/thử lại rõ ràng, unknown readback, rollback, conflict và bố cục review.
+- Kiểm tra syntax/JSON/HTML ID, asset và PWA shell/version, mở ZIP. Ảnh QA nội bộ đã kiểm tra, không đóng gói.
+
+## Giới hạn
+
+Jira trong kiểm thử là giả lập; chưa chạy với Jira công ty/Safari trên iPhone vật lý. Sau deploy cần kiểm tra native date/time picker, bàn phím và safe area trên iPhone, kéo đóng sheet, cuộn khi có nhiều Subtask, ô lịch ở các mức zoom/fullscreen, và đối chiếu giờ thực trên Jira. Các lệnh QA UI cần Playwright/Chromium riêng, không phải dependency runtime.
+
+Bản này không thay quy tắc ghi OT, điều kiện giờ làm/8h, API backend hoặc checkpoint báo cáo. Không push/deploy.
+
+---
+
+## Kết quả lịch sử
+
 # Kiểm thử V1.33.0
 
 ## Đã chạy đạt
@@ -152,7 +174,7 @@ Chưa dùng tài khoản Jira công ty, chưa đo tốc độ trên dữ liệu 
 - `test:detail-ui` và `test:update-ui`: hồi quy phần chi tiết/cập nhật nhanh. JS/CJS syntax, HTML ID/asset, cache shell và ZIP CRC kiểm tra trước bàn giao.
 - Ảnh QA nội bộ không đóng trong ZIP. Không có thao tác Jira công ty, Safari/iPhone vật lý, Redis thật, GitHub hoặc deploy. Các kết quả trên không khẳng định cấu hình/validator công ty đã được kiểm chứng.
 
-Checklist sau deploy: version1.25.1, tạo một subtask thử trong Story/Task/Bug và xem parent/6 trường trên Jira; quyền/create screen/subtask scheme thực tế; ảnh và thumbnail riêng tư, hết phiên và ảnh lớn không có thumbnail; status Jira custom category, iPhone cuộn/dừng/nhấn nút/xoay ngang; lịch/logwork/OT không đổi.
+Checklist sau deploy: version 1.25.1, tạo một subtask thử trong Story/Task/Bug và xem parent/6 trường trên Jira; quyền/create screen/subtask scheme thực tế; ảnh và thumbnail riêng tư, hết phiên và ảnh lớn không có thumbnail; status Jira custom category, iPhone cuộn/dừng/nhấn nút/xoay ngang; lịch/logwork/OT không đổi.
 
 ---
 
@@ -161,7 +183,7 @@ Checklist sau deploy: version1.25.1, tạo một subtask thử trong Story/Task/
 - `npm test`: bộ logic/API kế thừa, filter/create/quick-update/logwork; bổ sung tệp, Estimate và đổi Reporter theo quyền.
 - `tests/jira-attachment-tests.js`: metadata chỉ trả dữ liệu cần thiết, issue/quyền/phiên, giới hạn và chuyển hướng, binary/headers, CSRF, payload, multipart, đọc lại ID/tên/size, replay và mất phản hồi không retry. Estimate encode/validation. Jira được giả lập qua fetch, router/session thật chạy HTTP local.
 - `tests/jira-create-tests.js`: bổ sung timetracking originalEstimate và readback seconds, Modify Reporter/candidate; giữ required/default/allowedValues/parent/schema/idempotency cũ.
-- `tests/browser/jira-attachments.cjs`: Chromium PC 1440×900, mobile390×844/320×683, ngang844×390: màu Jira RGB, bảng và loại HTML nguy hiểm; preview/download thật qua browser; chọn file/tải/unknown lock; Subtask chỉ loại con/khóa cha/dự án/giữ cha khi đổi loại; Reporter mặc định/đổi, Assign to me, Estimate và payload tạo.
+- `tests/browser/jira-attachments.cjs`: Chromium PC 1440×900, mobile 390×844/320×683, ngang 844×390: màu Jira RGB, bảng và loại HTML nguy hiểm; preview/download thật qua browser; chọn file/tải/unknown lock; Subtask chỉ loại con/khóa cha/dự án/giữ cha khi đổi loại; Reporter mặc định/đổi, Assign to me, Estimate và payload tạo.
 - `test:workspace-ui`: hồi quy filter và form tạo trên bốn viewport; kết quả filter thu gọn và vẫn giữ scroll/25+1/revision. Ảnh QA được xem, không đóng vào ZIP.
 - `test:search-ui`, `test:detail-ui`, `test:update-ui`: hồi quy giao diện các phần bị ảnh hưởng. Syntax, ID/asset/cache và ZIP được kiểm tra trước đóng gói.
 - Không có Jira công ty, Safari/iPhone vật lý, Redis production, GitHub/Vercel hoặc thao tác Jira thật. Browser và dữ liệu kiểm thử không nằm trong runtime dependencies.
