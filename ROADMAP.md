@@ -1,3 +1,10 @@
+# Bổ sung V1.34.1
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật và dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| V1.34.1 | Gọn luồng phân bổ và cập nhật PWA | Radio, combobox tuần, auto/manual TimeSpent, preview rộng, đóng quay lại | Giữ allocator/API; khôi phục editor; kiểm tra SW mỗi60s/foreground, kích hoạt khi bấm | Test API/PC/mobile/native SW; cần đối chiếu Jira/iPhone thật | Đã xây dựng source; chưa deploy |
+| V1.35.0 | Phân tích Sub-task Type theo thành viên | Giờ, tỷ trọng, số Subtask và mở nhóm worklog | Trường custom thật trên Jira, dữ liệu theo kỳ/bộ lọc | Đối chiếu tổng với worklog Jira | Đề xuất; chưa xây dựng |
+
 # Quick Jira Log — Roadmap hiện hành
 
 Boss chọn mở rộng sang thao tác Jira trên mobile; logwork tiếp tục là chức năng chính. Các ý tưởng roadmap trao đổi trước đây chưa được chọn không nằm trong phạm vi triển khai hiện tại.

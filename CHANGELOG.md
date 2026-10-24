@@ -1,3 +1,12 @@
+# V1.34.1
+
+- Radio Theo ngày/Theo tuần; chọn tuần qua khoảng từ ngày–đến ngày.
+- Checkbox Phân bổ tự động, ẩn TimeSpent khi bật; nhập tay giữ thời lượng khi tắt. Đổi label TimeSpent.
+- Một nút phân bổ ở chân form; lịch xem trước gọn, giữ zoom/fullscreen và xác nhận ghi.
+- Đóng preview quay lại editor, giữ dữ liệu/cuộn; loại dòng đã gửi/không rõ kết quả khỏi lần mới.
+- Kiểm tra bản mới khi app đang mở/foreground, kích hoạt và reload ngay sau bấm cập nhật; bảo vệ lượt ghi/bản nháp.
+- Giữ API và cơ chế OT hiện có. Không thay đổi database hay dependency runtime.
+
 # V1.34.0 — Log tất cả theo ngày/tuần
 
 - Phân bổ giờ trống ngày/T2–T6; tự chia hoặc giữ thời lượng, một Subtask một ngày, tách qua giờ nghỉ và danh sách chưa xếp được.

@@ -45,3 +45,59 @@ body.desktop-editor-open #bulkCard .bulk-capacity-card {grid-row:1/span 3;}
 #historyOverlay.batch-preview .settings-head >div:first-child {flex:1 1 0;min-width:0;}
 #historyOverlay.batch-preview #historyTitle {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 #historyOverlay.batch-preview .history-header-actions {flex-shrink:0;}
+/* V1.34.1 — compact allocation controls and preview workspace. */
+#bulkCard .bulk-period-radios {display:flex;gap:12px;border:0;padding:0;margin:0;min-width:0;}
+#bulkCard .bulk-period-radios label,#bulkCard .bulk-auto-option {display:flex;flex-direction:row;align-items:center;gap:5px;white-space:nowrap;cursor:pointer;font-size:12px;}
+#bulkCard .bulk-plan-options {flex-wrap:wrap;justify-content:space-between;gap:8px 12px;}
+#bulkCard .bulk-plan-options input {width:17px;height:17px;min-height:17px;margin:0;accent-color:var(--primary);}
+#bulkCard .bulk-header-controls {width:100%;}
+#bulkCard .bulk-header-date,#bulkCard .bulk-week-field {width:100%;max-width:360px;flex:1 1 auto;min-width:0;font-size:11px;gap:4px;margin:0;}
+#bulkCard .bulk-week-field select {width:100%;height:40px;min-height:40px;font-size:14px;padding:7px 10px;}
+#bulkCard [hidden] {display:none !important;}
+#bulkCard.is-auto-mode .bulk-time-field,#bulkCard.is-auto-mode .bulk-ot-toggle,#bulkCard.is-auto-mode .bulk-preset-row,#bulkCard.is-auto-mode .bulk-ot-start-field {display:none !important;}
+#bulkCard.is-auto-mode #bulkCapacityCard,#bulkCard.is-auto-mode .bulk-summary {display:none !important;}
+#bulkCard.is-auto-mode .bulk-footer {grid-template-columns:minmax(0,1fr);}
+#bulkCard.is-auto-mode .bulk-actions {grid-template-columns:minmax(0,.6fr) minmax(0,1.4fr);}
+#bulkCard .bulk-actions button {text-transform:none;}
+#bulkCard .bulk-actions .primary {font-size:12px;}
+#bulkCard.is-auto-mode .bulk-description-details {border:0;padding-top:0;}
+#bulkCard.is-auto-mode .bulk-item {gap:6px;}
+#bulkCard.is-auto-mode .bulk-sticky-header {grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+#historyOverlay.batch-preview #batchPreviewBar {padding:5px 9px;gap:8px;border:0;border-radius:8px;flex-wrap:nowrap;min-height:38px;}
+#historyOverlay.batch-preview #batchPreviewBar>div:last-child {width:auto;max-width:none;flex-wrap:nowrap;}
+#historyOverlay.batch-preview #batchPreviewTitle {display:block;white-space:nowrap;font-size:11px;overflow:hidden;text-overflow:ellipsis;}
+#historyOverlay.batch-preview #batchPreviewState {display:block;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:14px;margin:2px 0 0;}
+#historyOverlay.batch-preview #batchPreviewState:empty {display:none;}
+#historyOverlay.batch-preview #batchPreviewBack {display:none;}
+#historyOverlay.batch-preview #batchPreviewSave {min-height:32px;padding:5px 9px;font-size:11px;white-space:nowrap;}
+#historyOverlay.batch-preview #calendarControls .calendar-navigation,
+#historyOverlay.batch-preview #calendarControls .calendar-period-heading,
+#historyOverlay.batch-preview .calendar-mode-switch,
+#historyOverlay.batch-preview #calendarViewerControls,
+#historyOverlay.batch-preview #historyControls,
+#historyOverlay.batch-preview #calendarRefreshBtn,
+#historyOverlay.batch-preview #historySummary,
+#historyOverlay.batch-preview #calendarGestureHint,
+#historyOverlay.batch-preview #calendarInteractionState {display:none !important;}
+#historyOverlay.batch-preview #calendarControls {display:flex !important;padding:0;gap:0;min-height:0;}
+#historyOverlay.batch-preview .calendar-mode-toolbar {width:100%;min-height:0;margin:0;padding:0;gap:8px;flex-wrap:nowrap;}
+#historyOverlay.batch-preview #calendarWeekSummary {margin-left:auto;}
+#historyOverlay.batch-preview .tool-modal-body {gap:5px;}
+#historyOverlay.is-calendar-view.batch-preview:not(.is-calendar-fullscreen) .tool-modal-body,
+#historyOverlay.is-calendar-view.batch-preview.is-calendar-fullscreen .tool-modal-body {grid-template-rows:auto auto minmax(0,1fr) !important;}
+#historyOverlay.batch-preview #historyResults {grid-row:3 !important;}
+#historyOverlay.batch-preview .settings-head {padding-right:14px;}
+@media(min-width:900px){
+ #historyOverlay.batch-preview #batchPreviewBar {grid-column:1;grid-row:1;}
+ #historyOverlay.batch-preview #calendarControls {grid-column:2;grid-row:1 !important;}
+ #historyOverlay.is-calendar-view.batch-preview:not(.is-calendar-fullscreen) .tool-modal-body {grid-template-rows:auto minmax(0,1fr) !important;}
+ #historyOverlay.batch-preview #historyResults {grid-row:2 !important;}
+}
+/* A single flex column prevents inherited calendar grid areas from overlapping. */
+#historyOverlay.is-calendar-view.batch-preview .tool-modal-body {display:flex !important;flex-direction:column !important;min-height:0;}
+#historyOverlay.is-calendar-view.batch-preview #batchPreviewBar,
+#historyOverlay.is-calendar-view.batch-preview #calendarControls {position:static;flex:0 0 auto;min-width:0;width:100%;}
+#historyOverlay.is-calendar-view.batch-preview #historyResults {flex:1 1 0;min-height:0;width:100%;}
+#bulkCard #bulkWeek {appearance:auto;-webkit-appearance:auto;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;height:40px;min-height:40px;max-height:40px;padding:0 9px;line-height:normal;font-size:16px;font-weight:500;letter-spacing:normal;}
+/* Legacy global select padding is !important; reserve the full text line. */
+#bulkCard #bulkWeek {padding:0 9px !important;}

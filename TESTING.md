@@ -1,3 +1,19 @@
+# Kiểm thử V1.34.1
+
+Đã chạy với Node24 và Chromium/Playwright, Jira giả lập:
+
+- `npm test`: toàn bộ unit/API của package đạt, gồm allocator/exact-plan/OT native và hồi quy.
+- `npm run test:batch-ui`: 1440×900,390×844,320×683,844×390; radio/tuần từ–đến, text combobox không bị cắt, auto ẩn TimeSpent, nhập tay giữ 2h/30m khi bật/tắt auto; đóng preview quay lại cùng form/dữ liệu; preview dưới62px, không chồng nút; zoom/fullscreen, kéo PC/cảm ứng, swap/resize, confirm và partial retry/unknown không gửi lại thành công.
+- `npm run test:compact`: bốn viewport, light/dark; cố định bên ngoài/danh sách cuộn riêng, progress weekday/weekend, mô tả và OT native giữ nguyên, bấm ô lịch đúng giờ và vùng không hợp lệ.
+- `npm run test:update-live`: service worker thực trên localhost, không mock vòng đời worker. Cài đầu không báo nhầm bản mới; server thay phiên bản khi app vẫn mở → focus phát hiện worker chờ → banner; chặn khi đang ghi; bấm cập nhật kích hoạt/reload và đọc HTML phiên bản mới. Không cần đóng tab/app.
+- Syntax JS/CJS, JSON/manifest, version, ID HTML và các asset trong SW; ZIP được kiểm tra trước bàn giao.
+
+Không chạy lại tất cả các bài browser lịch sử ngoài các suite nêu trên. Không kiểm chứng Jira công ty/Safari/iPhone thật; không có deployment. Chưa đo thời gian tải bản cập nhật trên mạng thực. Browser/PWA có thể bị hệ điều hành tạm dừng khi app ẩn; cơ chế kiểm tra tiếp khi foreground. Bản nháp chưa ghi không tồn tại sau reload; có xác nhận trước cập nhật nếu có bản nháp.
+
+---
+
+## Kết quả các phiên bản trước
+
 # Kiểm thử V1.34.0
 
 ## Đã chạy

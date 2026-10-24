@@ -24,7 +24,7 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
   });
   backend.mode='success';
   await page.goto('http://127.0.0.1:4251');await page.waitForFunction(()=>state.filterLoaded);
-  await page.locator('#logAllBtn').click();await page.waitForFunction(()=>bulkCapacityReady());
+  await page.locator('#logAllBtn').click();await page.locator('#bulkAutoAllocate').uncheck();await page.waitForFunction(()=>bulkCapacityReady());
   assert.equal(await page.locator('.bulk-item').count(),8);
   // Outer gestures cannot move the editor; native scrolling remains in its list.
   const geometry=()=>page.locator('#bulkCard').evaluate(el=>({y:el.getBoundingClientRect().y,transform:getComputedStyle(el).transform,scroll:el.scrollTop,page:scrollY}));
@@ -60,7 +60,7 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
   await page.locator('.bulk-item').first().locator('.bulk-time').fill('7h');await page.locator('.bulk-item').first().locator('.bulk-time').dispatchEvent('input');await page.waitForTimeout(250);
   assert.equal(await color(),await expected('--ok'),'8h is green');
   await page.locator('.bulk-item').first().locator('.bulk-time').fill('8h');await page.locator('.bulk-item').first().locator('.bulk-time').dispatchEvent('input');await page.waitForTimeout(250);
-  assert.equal(await color(),await expected('--danger'),'9h is red');assert(await page.locator('#bulkLogBtn').isDisabled());
+  assert.equal(await color(),await expected('--danger'),'9h is red');assert(!(await page.locator('#bulkLogBtn').isDisabled()),'allocation can report an unplaced oversized item');
   await page.locator('.bulk-item').first().locator('.bulk-time').fill('1h');await page.locator('.bulk-item').first().locator('.bulk-time').dispatchEvent('input');await page.waitForTimeout(250);
 
   await page.locator('#bulkDate').fill('2026-10-23');await page.locator('#bulkDate').dispatchEvent('change');await page.waitForFunction(()=>bulkCapacityReady());

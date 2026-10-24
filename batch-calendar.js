@@ -8,8 +8,9 @@ window.QuickJiraBatch=(()=>{
   for(const x of rows){let p=by.get(x.key);if(!p){p={key:x.key,project:x.project,description:x.description,summary:x.summary,date:x.date,segments:[]};by.set(x.key,p);}if(p.date!==x.date)throw Error('Một Subtask không được nằm ở hai ngày khác nhau.');p.segments.push({start:x.start,minutes:QuickJiraDrafts.seconds(x)/60});}
   return [...by.values()].map(p=>({...p,minutes:p.segments.reduce((n,s)=>n+s.minutes,0),segments:p.segments.sort((a,b)=>a.start.localeCompare(b.start))}));
  }
- function update(){if(!job)return;const rows=plans();$('historySummary').textContent=`${rows.length} Subtask nháp · Giờ đã log được khóa`;job.unused=Math.max(0,job.dates.reduce((n,d)=>n+P.free(job.occupied[d]).reduce((n,s)=>n+s.end-s.start,0),0)-rows.reduce((n,p)=>n+p.minutes,0));const pending=rows.filter(p=>!job.status[p.key]);$('batchPreviewTitle').textContent=`Xem trước · ${job.mode==='week'?'T2–T6':'Theo ngày'} · ${pending.length} Subtask chưa log`;
-  $('batchPreviewState').textContent=[job.unplaced.length?`${job.unplaced.length} chưa phân bổ: ${job.unplaced.map(x=>x.key+' — '+x.reason).join('; ')}`:'',job.unused?`${minutesLabel(job.unused)} chưa dùng trong phạm vi`:'' ,'Mỗi Subtask chỉ trong một ngày · Kéo block để chỉnh, chỉ ghi sau xác nhận.'].filter(Boolean).join(' · ');
+ function update(){if(!job)return;const rows=plans();$('historySummary').textContent=`${rows.length} Subtask nháp · Giờ đã log được khóa`;job.unused=Math.max(0,job.dates.reduce((n,d)=>n+P.free(job.occupied[d]).reduce((n,s)=>n+s.end-s.start,0),0)-rows.reduce((n,p)=>n+p.minutes,0));const pending=rows.filter(p=>!job.status[p.key]);$('batchPreviewTitle').textContent=`${pending.length} Subtask chưa log${job.unplaced.length?' · '+job.unplaced.length+' chưa xếp':''}`;
+  $('batchPreviewState').textContent=[job.unplaced.length?`${job.unplaced.length} chưa phân bổ: ${job.unplaced.map(x=>x.key+' — '+x.reason).join('; ')}`:'',`${job.dates[0].slice(8,10)}/${job.dates[0].slice(5,7)}${job.mode==='week'?'–'+job.dates.at(-1).slice(8,10)+'/'+job.dates.at(-1).slice(5,7):''}${job.unused?' · Trống '+minutesLabel(job.unused):''}`].filter(Boolean).join(' · ');
+  $('batchPreviewSave').textContent='Xác nhận log';
   $('batchPreviewSave').disabled=job.running||!pending.length;$('batchConfirmSave').disabled=job.running||!pending.length;
   $('batchPreviewBack').disabled=job.running;$('batchPreviewBack').textContent='Đóng';$('batchPreviewBack').title='Đóng lịch xem trước';
   $('batchConfirmRows').replaceChildren(...rows.map(p=>{const el=document.createElement('p');el.textContent=`${p.key} · ${logWeekday(p.date)} ${p.date} · ${p.segments.map(s=>s.start+'–'+P.time(P.minute(s.start)+s.minutes)).join(', ')} · ${minutesLabel(p.minutes)} · ${job.status[p.key]||job.errors?.[p.key]||'Chưa log'}${job.notes?.[p.key] ? ' · '+job.notes[p.key] : ''}`;const link=document.createElement('a');link.href='https://task.ascvn.com.vn/browse/'+encodeURIComponent(p.key);link.textContent=' Mở Jira ↗';link.target='_blank';link.rel='noopener noreferrer';el.append(link);return el;}));
@@ -35,15 +36,16 @@ window.QuickJiraBatch=(()=>{
   if(state.calendarDrafts.size)return showToast('Lưu hoặc bỏ các chỉnh sửa lịch hiện tại trước khi phân bổ.');
   const items=bulkDraftList().map(x=>({...x,minutes:parseTimeSpentClient(x.timeSpent)}));
   if(!items.length)return showToast('Chọn ít nhất một Subtask.');
-  if(items.some(x=>x.overtime))return showToast('Phân bổ lịch chỉ dùng giờ thường. Bỏ chọn OT; log OT bằng luồng hiện tại.');
-  const mode=$('bulkPeriod').value,date=$('bulkDate').value,owner=state.user;let dates;try{dates=P.days(date,mode);}catch(e){return showToast(e.message);}
-  preparing=true;$('bulkRedistributeBtn').disabled=true;$('bulkLogBtn').disabled=true;
+  if(!bulkAutoMode() && items.some(x=>x.overtime))return showToast('Phân bổ lịch chỉ dùng giờ thường. Bỏ chọn OT; log OT bằng luồng hiện tại.');
+  const mode=bulkPeriodMode(),date=bulkAllocationDate(),owner=state.user;let dates;try{dates=P.days(date,mode);}catch(e){return showToast(e.message);}
+  preparing=true;$('bulkLogBtn').disabled=true;
   const task=QuickJiraBusy.begin('Đang đối chiếu giờ trống',{blocking:false});
   try{
+   if(bulkAutoMode()) items.forEach(x=>{x.overtime=false;});
    const occupied=await readOccupied(dates,owner,done=>task.update({label:'Đối chiếu giờ trống',done,total:dates.length}));
-   const result=P.allocate(items,dates,occupied,$('bulkKeepDurations').checked);
+   const result=P.allocate(items,dates,occupied,!bulkAutoMode());
    if(!result.plans.length)throw Error('Không phân bổ được Subtask nào. '+result.unplaced.map(x=>x.key+': '+x.reason).join('; '));
-   const snapshot={items:state.historyItems,date:$('historyDate').value,loaded:state.historyLoaded,view:state.historyView,mode:state.calendarMode,title:$('historyTitle').textContent,error:state.historyError,notice:state.historyNotice};
+   const snapshot={bulkScroll:$('bulkItems').scrollTop,items:state.historyItems,date:$('historyDate').value,loaded:state.historyLoaded,view:state.historyView,mode:state.calendarMode,title:$('historyTitle').textContent,error:state.historyError,notice:state.historyNotice};
    // Occupied ranges come from the authoritative day-audit, including index-delay fallback.
    let existing=dates.flatMap(d=>occupied[d].map((s,i)=>({id:`occupied-${d}-${i}`,key:'ĐÃ LOG',project:'',date:d,start:s.start,end:s.end,minutes:P.minute(s.end)-P.minute(s.start),summary:'Giờ đã log trên Jira · Chỉ xem',description:'Giờ đã log trên Jira',calendarReadOnly:true,overtime:false,overtimeKnown:true})));
    try {
@@ -97,11 +99,22 @@ window.QuickJiraBatch=(()=>{
   finally{current.running=false;state.calendarMovePending=false;$('batchConfirmSave').disabled=false;renderWorklogHistory();update();void refreshDashboard({force:true});}
  }
  function back(){if(!job||job.running)return;if(!window.confirm('Rời lịch xem trước? Bản nháp chưa log sẽ được bỏ; các worklog đã ghi được giữ nguyên.'))return;
-  resetCalendarInteraction();$('batchConfirmDialog').close();const s=job.snapshot;job=null;state.calendarDrafts.clear();state.historyItems=s.items;state.historyLoaded=s.loaded;state.historyView=s.view;state.calendarMode=s.mode;state.historyError=s.error;state.historyNotice=s.notice;$('historyDate').value=s.date;$('historyTitle').textContent=s.title;
-  lockedControls.forEach(id=>{const el=$(id);if(el){el.disabled=el.dataset.batchDisabled==='true';delete el.dataset.batchDisabled;}});
-  $('historyOverlay').classList.remove('batch-preview');$('batchPreviewBar').hidden=true;closeOverlay('historyOverlay');void exitCalendarFullscreen();
-  // Never reuse the old source list after a partial/successful creation.
-  resetBulkState({animate:false});void loadFilterIssues({quiet:true});
+  const current=job,s=job.snapshot;current.running=true;
+  resetCalendarInteraction();$('batchConfirmDialog').close();void exitCalendarFullscreen();
+  const overlay=$('historyOverlay');overlay.setAttribute('aria-hidden','true');
+  hideAnimated(overlay,()=>{
+   job=null;state.calendarDrafts.clear();state.historyItems=s.items;state.historyLoaded=s.loaded;state.historyView=s.view;state.calendarMode=s.mode;state.historyError=s.error;state.historyNotice=s.notice;$('historyDate').value=s.date;$('historyTitle').textContent=s.title;
+   lockedControls.forEach(id=>{const el=$(id);if(el){el.disabled=el.dataset.batchDisabled==='true';delete el.dataset.batchDisabled;}});
+   overlay.classList.remove('batch-preview');$('batchPreviewBar').hidden=true;unlockOverlayBody();
+   // Return to the same editor only after the overlay has finished closing.
+   // Never offer successful/uncertain writes in a new allocation.
+   for(const [key,status] of Object.entries(current.status)) if(status){state.bulkSelectedKeys.delete(key);state.bulkDrafts.delete(key);}
+   const sent=new Set(Object.keys(current.status));state.filterIssues=state.filterIssues.filter(x=>!sent.has(x.key));renderFilterIssues();
+   state.bulkCapacitySeq++;state.bulkCapacity={date:'',regularLoggedMinutes:0,loading:false,error:''};
+   renderBulkItems();showAnimated($('bulkCard'));openMobileEditor('bulkCard');openDesktopEditor('bulkCard');
+   requestAnimationFrame(()=>{$('bulkItems').scrollTop=s.bulkScroll;});
+   if(bulkPeriodMode()==='day') void loadBulkCapacity({force:true});
+  });
  }
  $('batchPreviewSave').addEventListener('click',review);$('batchPreviewBack').addEventListener('click',back);$('batchConfirmSave').addEventListener('click',save);
  $('batchConfirmClose').addEventListener('click',()=>{if(!job?.running)$('batchConfirmDialog').close();});$('batchConfirmDialog').addEventListener('cancel',e=>{if(job?.running)e.preventDefault();});

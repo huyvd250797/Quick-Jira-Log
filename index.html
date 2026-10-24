@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.34.0</title>
+  <title>Quick Jira Log · V1.34.1</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -45,7 +45,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.34.0</div>
+      <div class="boot-version">V1.34.1</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -54,7 +54,7 @@
     <section class="brand">
       <button id="brandRefreshBtn" class="logo-refresh-btn" type="button" aria-label="Làm mới dữ liệu, giữ phiên hiện tại" title="Làm mới dữ liệu"><img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" /></button>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.34.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.34.1</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -159,10 +159,10 @@
       <button class="bottom-sheet-drag-handle" type="button" aria-label="Kéo xuống để đóng" title="Kéo xuống để đóng"><span></span></button>
       <div class="bulk-sticky-header">
         <div class="card-title bulk-title"><h2>Log tất cả</h2><span id="bulkSelectionCount" class="bulk-selection-count">0 Sub-task</span></div>
-        <div class="bulk-plan-options"><label class="bulk-period-label"><span class="batch-sr-only">Phân bổ</span><select id="bulkPeriod"><option value="day">Theo ngày</option><option value="week">Theo tuần</option></select></label><label class="bulk-keep-time"><input id="bulkKeepDurations" type="checkbox" />Giữ giờ đã nhập</label></div>
+        <div class="bulk-plan-options"><fieldset class="bulk-period-radios"><legend class="batch-sr-only">Phạm vi phân bổ</legend><label><input id="bulkPeriodDay" name="bulkPeriod" type="radio" value="day" checked />Theo ngày</label><label><input id="bulkPeriodWeek" name="bulkPeriod" type="radio" value="week" />Theo tuần</label></fieldset><label class="bulk-auto-option"><input id="bulkAutoAllocate" type="checkbox" checked />Phân bổ tự động</label></div>
         <div class="bulk-header-controls">
-          <label class="bulk-header-date"><span>Ngày logwork <strong id="bulkLogWeekday" class="log-weekday"></strong></span><input id="bulkDate" type="date" required /></label>
-          <button id="bulkRedistributeBtn" type="button" class="text-btn bulk-redistribute-btn" title="Tự động phân bổ giờ thường đến 8h">Phân bổ giờ</button>
+          <label id="bulkDayField" class="bulk-header-date"><span>Ngày logwork <strong id="bulkLogWeekday" class="log-weekday"></strong></span><input id="bulkDate" type="date" required /></label>
+          <label id="bulkWeekField" class="bulk-week-field" hidden><span>Tuần logwork</span><select id="bulkWeek" aria-label="Tuần logwork"></select></label>
         </div>
         <div id="bulkCapacityCard" class="bulk-capacity-card is-loading" aria-live="polite">
           <div class="bulk-capacity-head"><span>Giờ thường</span><strong id="bulkCapacityProjected">Đang kiểm tra...</strong></div>
@@ -179,7 +179,7 @@
         </div>
         <div class="bulk-actions">
           <button id="cancelBulkBtn" type="button" class="secondary">HỦY</button>
-          <button id="bulkLogBtn" type="submit" class="primary">LOG TẤT CẢ</button>
+          <button id="bulkLogBtn" type="submit" class="primary">Phân bổ giờ tự động</button>
         </div>
         </div>
       </form>
@@ -453,7 +453,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.34.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.34.1 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>

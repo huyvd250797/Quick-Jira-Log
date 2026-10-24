@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.34.0';
+const APP_VERSION = '1.34.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -2656,6 +2656,7 @@ function openBulkAll() {
   };
   const date = setSessionLogDate($('date').value || getSessionLogDate());
   $('bulkDate').value = date;
+  syncBulkWeekOptions();
   $('worklogCard').classList.add('hidden');
   document.body.classList.remove('single-log-open');
   $('resultCard').classList.add('hidden');
@@ -2720,6 +2721,31 @@ function applyBulkSmartAllocation({ force = false } = {}) {
   return true;
 }
 
+function bulkPeriodMode() { return document.querySelector('input[name="bulkPeriod"]:checked')?.value || 'day'; }
+function bulkAutoMode() { return $('bulkAutoAllocate')?.checked === true; }
+function bulkAllocationDate() { return bulkPeriodMode() === 'week' ? $('bulkWeek').value : $('bulkDate').value; }
+function syncBulkWeekOptions() {
+  const date = $('bulkDate').value || getSessionLogDate();
+  const selected = QuickJiraBatchPlan.days(date, 'week')[0];
+  const stamp = new Date(selected + 'T12:00:00Z');
+  const fmt = value => value.slice(8,10)+'/'+value.slice(5,7)+'/'+value.slice(0,4);
+  const options = [];
+  for(let offset=-104;offset<=104;offset++) {
+    const start = new Date(stamp); start.setUTCDate(start.getUTCDate()+offset*7);
+    const end = new Date(start); end.setUTCDate(end.getUTCDate()+6);
+    const a=start.toISOString().slice(0,10),b=end.toISOString().slice(0,10);
+    options.push(new Option(fmt(a)+' – '+fmt(b),a,false,a===selected));
+  }
+  $('bulkWeek').replaceChildren(...options);
+}
+function syncBulkAllocationControls() {
+  const week = bulkPeriodMode() === 'week', auto = bulkAutoMode();
+  $('bulkDayField').hidden = week; $('bulkDate').disabled = week;
+  $('bulkWeekField').hidden = !week;
+  if(week && !$('bulkWeek').options.length) syncBulkWeekOptions();
+  $('bulkCard').classList.toggle('is-auto-mode',auto);
+  document.querySelectorAll('#bulkItems .bulk-time').forEach(el=>{el.disabled=auto;el.required=!auto;});
+}
 function updateBulkTotal() {
   const items = bulkDraftList();
   const total = items.reduce((sum, item) => sum + parseTimeSpentClient(item.timeSpent), 0);
@@ -2732,8 +2758,9 @@ function updateBulkTotal() {
   const weekend = isWeekendDateClient(date);
 
   $('bulkLogWeekday').textContent = logWeekday(date);
-  $('bulkLogBtn').textContent = $('bulkPeriod')?.value === 'week' ? 'XEM LỊCH TUẦN' : 'LOG TẤT CẢ';
-  $('bulkCapacityCard').classList.toggle('hidden', $('bulkPeriod')?.value === 'week');
+  syncBulkAllocationControls();
+  $('bulkLogBtn').textContent = bulkAutoMode() ? 'Phân bổ giờ tự động' : 'Phân bổ giờ';
+  $('bulkCapacityCard').classList.toggle('hidden', bulkPeriodMode() === 'week');
   $('bulkTotal').textContent = minutesLabel(total);
   if ($('bulkSelectionCount')) $('bulkSelectionCount').textContent = `${items.length}/${state.filterIssues.length} Sub-task`;
   if ($('bulkRegularDraft')) $('bulkRegularDraft').textContent = minutesLabel(regularDraft);
@@ -2763,15 +2790,8 @@ function updateBulkTotal() {
     overtimeEl.classList.toggle('hidden', overtimeDraft <= 0);
   }
 
-  const redistributeBtn = $('bulkRedistributeBtn');
-  if (redistributeBtn) {
-    redistributeBtn.disabled = state.bulkSubmitInFlight || !items.length || (capacityReady && alreadyRegular >= 480 && $('bulkPeriod')?.value !== 'week');
-    if (!redistributeBtn.dataset.loading) {
-      redistributeBtn.textContent = state.bulkAllocation.autoApplied ? 'Phân bổ lại' : 'Phân bổ giờ';
-    }
-  }
+  $('bulkLogBtn').disabled = state.bulkSubmitInFlight || window.QuickJiraBatch?.running || !items.length || (!bulkAutoMode() && items.some(item => parseTimeSpentClient(item.timeSpent) <= 0));
 
-  $('bulkLogBtn').disabled = state.bulkSubmitInFlight || !items.length || total <= 0 || items.some(item => parseTimeSpentClient(item.timeSpent) <= 0) || (capacityReady && projected > 480 && $('bulkPeriod')?.value !== 'week');
 }
 
 async function loadBulkCapacity({ force = false } = {}) {
@@ -2868,7 +2888,7 @@ function renderBulkItems() {
       </div>
       <div class="bulk-item-fields">
         <label class="bulk-time-field">
-          <span>Thời lượng</span>
+          <span>TimeSpent</span>
           <input class="bulk-time" value="${escapeHtml(item.timeSpent || '')}" placeholder="VD: 1h" inputmode="text" required />
         </label>
         <label class="overtime-toggle bulk-ot-toggle" title="Overtime">
@@ -2961,7 +2981,7 @@ function renderBulkSuccess(data) {
 }
 
 async function submitBulkWorklog(event) {
-  if ($("bulkPeriod").value === "week" || !bulkDraftList().some(x=>x.overtime)) {event.preventDefault();return window.QuickJiraBatch?.prepare();}
+  if (bulkAutoMode() || bulkPeriodMode() === "week" || !bulkDraftList().some(x=>x.overtime)) {event.preventDefault();return window.QuickJiraBatch?.prepare();}
   event.preventDefault();
   if (state.bulkSubmitInFlight) return;
   if (!validateDurationFields($('bulkForm'))) return;
@@ -3115,17 +3135,20 @@ $('date').addEventListener('change', () => {
   updateSingleCapacity();
   void loadSingleCapacity();
 });
-$('bulkPeriod').addEventListener('change',updateBulkTotal);
+document.querySelectorAll('input[name="bulkPeriod"]').forEach(el=>el.addEventListener('change',()=>{syncBulkWeekOptions();updateBulkTotal();}));
+$('bulkAutoAllocate').addEventListener('change',updateBulkTotal);
+$('bulkWeek').addEventListener('change',()=>{updateBulkTotal();});
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = getSessionLogDate();
   setSessionLogDate($('bulkDate').value);
+  syncBulkWeekOptions();
   state.bulkAllocation = {
     autoApplied: false,
     userEdited: false,
     remainingMinutes: 0,
     message: 'Mặc định 1h cho mỗi Sub-task. Bấm “TỰ ĐỘNG PHÂN BỔ” nếu muốn app chia phần giờ còn thiếu đến 8h.'
   };
-  bulkDraftList().forEach(item => { if (item.overtime !== true) { item.timeSpent = '1h'; item.autoAllocated = false; } });
+  // Keep entered TimeSpent when changing dates or switching back from preview.
   renderBulkItems();
   setTimeout(() => { void loadBulkCapacity(); }, 0);
 });
@@ -3541,32 +3564,58 @@ function showAppUpdateBanner(registration) {
   if (banner) banner.classList.remove('hidden');
 }
 
+function appUpdateWriting() {
+  return state.submitInFlight || state.bulkSubmitInFlight || state.calendarMovePending || window.QuickJiraBatch?.running;
+}
 $('appUpdateBtn')?.addEventListener('click', async () => {
-  await Promise.allSettled([window.QuickJiraProjectReport?.flush(),window.QuickJiraResume?.flush()]);
-  state.swUpdateRequested=true;
-  const waiting = state.swUpdateRegistration?.waiting;
-  if (!waiting) return location.reload();
-  waiting.postMessage({ type: 'SKIP_WAITING' });
+  if(appUpdateWriting()) return showToast('Đợi lượt xử lý hiện tại hoàn tất rồi cập nhật.');
+  if((state.calendarDrafts.size || !$('bulkCard').classList.contains('hidden') || !$('worklogCard').classList.contains('hidden')) && !confirm('Cập nhật sẽ tải lại giao diện. Bản nháp logwork chưa ghi sẽ không được giữ. Cập nhật ngay?')) return;
+  const button=$('appUpdateBtn');button.disabled=true;button.textContent='Đang cập nhật…';
+  try {
+    await Promise.allSettled([window.QuickJiraProjectReport?.flush(),window.QuickJiraResume?.flush()]);
+    state.swUpdateRequested=true;
+    const waiting=state.swUpdateRegistration?.waiting;
+    if(!waiting) return location.reload();
+    waiting.postMessage({ type: 'SKIP_WAITING' });
+    // Keep the old app usable if installation/activation fails; never force reload
+    // while the old controller is still serving the page.
+    setTimeout(()=>{if(!state.swReloading){state.swUpdateRequested=false;button.disabled=false;button.textContent='Thử cập nhật lại';showToast('Chưa kích hoạt được bản mới. Kiểm tra kết nối và thử lại.');}},12000);
+  } catch {state.swUpdateRequested=false;button.disabled=false;button.textContent='Thử cập nhật lại';}
 });
 $('dismissAppUpdateBtn')?.addEventListener('click', () => $('appUpdateBanner')?.classList.add('hidden'));
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   window.addEventListener('load', async () => {
     try {
+      const hadController=!!navigator.serviceWorker.controller;
       const registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+      state.swUpdateRegistration=registration;
+      const observeInstalling=()=>{
+        const installing=registration.installing;if(!installing)return;
+        const installed=()=>{if(installing.state==='installed' && navigator.serviceWorker.controller)showAppUpdateBanner(registration);};
+        installing.addEventListener('statechange',installed);installed();
+      };
+      registration.addEventListener('updatefound',observeInstalling);observeInstalling();
       if (registration.waiting) showAppUpdateBanner(registration);
-      registration.addEventListener('updatefound', () => {
-        const installing = registration.installing;
-        installing?.addEventListener('statechange', () => {
-          if (installing.state === 'installed' && navigator.serviceWorker.controller) showAppUpdateBanner(registration);
-        });
-      });
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if(!state.swUpdateRequested){showAppUpdateBanner(registration);return;}
+        if(!state.swUpdateRequested){if(hadController)showAppUpdateBanner(registration);return;}
         if (state.swReloading) return;
         state.swReloading = true;
         location.reload();
       });
+      let checking=false,lastChecked=0;
+      const check=async()=>{
+        if(document.visibilityState==='hidden'||!navigator.onLine||checking)return;
+        if(registration.waiting){showAppUpdateBanner(registration);return;}
+        if(Date.now()-lastChecked<15000)return;
+        checking=true;lastChecked=Date.now();
+        try{await registration.update();if(registration.waiting)showAppUpdateBanner(registration);}catch{}finally{checking=false;}
+      };
+      // Check while app remains open, and immediately after returning to foreground.
+      setInterval(check,60000);
+      document.addEventListener('visibilitychange',check);
+      window.addEventListener('focus',check);window.addEventListener('pageshow',check);window.addEventListener('online',check);
+      void check();
     } catch {}
   });
 }
