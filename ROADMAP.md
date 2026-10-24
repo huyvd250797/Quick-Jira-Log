@@ -1,3 +1,10 @@
+# Bổ sung V1.34.6
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| V1.34.6 | Hướng dẫn trực quan và đối chiếu ít truy vấn hơn | Modal bay ra/thu về i cả X, nhãn đầy đủ, veil55%, audit nhiều ngày | Request-scoped shared reads,3 ngày song song; fresh trước ghi | Unit/API/range freshness + UI PC/mobile/PWA đạt | Đã xây dựng source; chưa deploy/Jira thật |
+| V1.35.0 | Phân tích Sub-task Type theo thành viên | Giờ/tỷ trọng/số Subtask và mở nhóm | Custom field Jira theo bộ lọc | Đối chiếu Jira công ty | Đề xuất; chưa xây dựng |
+
 # Bổ sung V1.34.5
 
 | Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |

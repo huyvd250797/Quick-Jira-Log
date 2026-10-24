@@ -7,6 +7,8 @@ const { displaySegments, availableSlots, minutesInsideWindows, workWindowsFor } 
 const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { dayAuditKey, cacheGet, cacheSet } = require('../lib/app-cache');
 const { createPerf } = require('../lib/perf');
+const { validDate } = require('../lib/ui-tools');
+const { mapWithConcurrency } = require('../lib/async');
 
 const DAY_AUDIT_CACHE_MS = 15 * 1000;
 
@@ -22,6 +24,17 @@ module.exports = async function handler(req, res) {
   const perf = createPerf();
   try {
     const url = new URL(req.url, 'http://localhost');
+    if(url.searchParams.has('dates')){
+      const dates=url.searchParams.get('dates').split(',');
+      if(!dates.length||dates.length>7||new Set(dates).size!==dates.length||dates.some(d=>!validDate(d)))return sendJson(res,400,{ok:false,error:'Khoảng đối chiếu không hợp lệ (tối đa 7 ngày).'});
+      const me=session.me||await getMyself(session),sharedReads=new Map();
+      // Request-scoped snapshot only. Never reused for a later save or another account.
+      const days=await mapWithConcurrency(dates,3,async date=>{
+        const guard=await loadOccupiedRangesStable(date,[],me,session,{sharedReads});
+        return {date,occupied:displaySegments(guard.occupied.map(r=>({...r,minutes:r.end-r.start}))),checkedIssues:guard.issueKeys.length,checkedWorklogs:guard.checkedWorklogs};
+      });
+      return sendJson(res,200,{ok:true,days});
+    }
     const date = String(url.searchParams.get('date') || '').trim();
     const key = String(url.searchParams.get('key') || '').trim().toUpperCase();
     const force = url.searchParams.get('force') === '1';

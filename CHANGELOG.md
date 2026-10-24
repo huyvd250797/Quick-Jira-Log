@@ -1,3 +1,11 @@
+# V1.34.6
+
+- Icon i mở modal bằng hiệu ứng bay ra; X thu về i như Đã hiểu, không ghi checkbox khi X.
+- Bỏ câu nhắc một Subtask/một ngày trong help; dùng nhãn Bật/Tắt Phân bổ tự động đầy đủ.
+- Veil lịch đã log trong preview tăng55%; lịch thật thông thường không đổi.
+- Multi-day audit tối đa7 ngày, shared read trong một request; không cache snapshot sang lần lưu, giữ fail-closed và stabilization fresh.
+- Kiểm thử mới range audit7→1 GET worklog/issue, auth/validation/freshness/permission; cập nhật UI animation và màu/PWA.
+
 # V1.34.5
 
 - Lớp đen trong suốt28% phủ toàn block đã log ở preview, giữ hue/OT; không tác động lịch thật ngoài preview.

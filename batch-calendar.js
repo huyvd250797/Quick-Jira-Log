@@ -86,6 +86,15 @@ window.QuickJiraBatch=(()=>{
  }
  async function readOccupied(dates,owner,onProgress=()=>{}){
   const occupied={};let cursor=0,done=0;
+  if(dates.length>1){
+   let data;
+   try{data=await api('/api?action=day-audit&dates='+dates.join(',')+'&force=1');}catch(e){if(![400,404,405].includes(e.status))throw e;}
+   if(state.user!==owner)throw Error('Tài khoản đã thay đổi.');
+   if(data?.days){
+    if(!Array.isArray(data.days)||data.days.length!==dates.length||new Set(data.days.map(x=>x.date)).size!==dates.length||data.days.some(x=>!dates.includes(x.date)||!Array.isArray(x.occupied)))throw Error('Chưa đọc được đầy đủ giờ đã log.');
+    data.days.forEach(x=>{occupied[x.date]=x.occupied;onProgress(++done);});return occupied;
+   }
+  }
   await Promise.all(Array.from({length:Math.min(2,dates.length)},async()=>{while(cursor<dates.length){const d=dates[cursor++],data=await api(`/api?action=day-audit&date=${d}&force=1`);if(state.user!==owner)throw Error('Tài khoản đã thay đổi.');if(!Array.isArray(data.occupied))throw Error('Chưa đọc được đầy đủ giờ đã log.');occupied[d]=data.occupied;onProgress(++done);}}));return occupied;
  }
  async function prepare(){

@@ -139,7 +139,7 @@ body.desktop-editor-open #bulkCard .bulk-capacity-card {grid-row:1/span 3;}
 /* Keep the original hue, with a translucent veil over the complete saved block.
    Scope to bulk preview: the normal, editable calendar remains unchanged. */
 #historyOverlay.batch-preview .week-worklog-block.is-batch-existing {opacity:1;box-shadow:none;cursor:default;}
-#historyOverlay.batch-preview .week-worklog-block.is-batch-existing::after {content:'';position:absolute;inset:0;width:auto;height:auto;border-radius:inherit;background:rgb(0 0 0 / 28%);box-shadow:none;z-index:5;pointer-events:none;}
+#historyOverlay.batch-preview .week-worklog-block.is-batch-existing::after {content:'';position:absolute;inset:0;width:auto;height:auto;border-radius:inherit;background:rgb(0 0 0 / 55%);box-shadow:none;z-index:5;pointer-events:none;}
 .batch-existing-label {font-style:normal;font-size:9px;font-weight:500;opacity:.85;}
 /* The preview previously overrode grid with block, hiding the pseudo-element pill. */
 #historyOverlay.batch-preview .week-worklog-block.is-calendar-draft > .calendar-resize-handle {display:grid;place-items:center;}

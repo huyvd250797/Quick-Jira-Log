@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.34.5';
+const APP_VERSION = '1.34.6';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -2635,34 +2635,40 @@ function resetBulkHelpMotion(){
  const flight=bulkHelpFlight;bulkHelpFlight=null;
  flight?.animation?.cancel();$('bulkAllocationHelpDialog').classList.remove('is-help-closing');
 }
-function openBulkHelp(){
+function bulkHelpFrames(dialog,target){
+ const from=dialog.getBoundingClientRect(),to=target.getBoundingClientRect();
+ const visible=to.width>0&&to.height>0&&to.top>=0&&to.bottom<=innerHeight&&to.left>=0&&to.right<=innerWidth;
+ const dx=visible?to.x+to.width/2-from.x-from.width/2:0,dy=visible?to.y+to.height/2-from.y-from.height/2:0;
+ return [{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx}px,${dy}px) scale(${visible?Math.min(1,to.width/from.width):.92},${visible?Math.min(1,to.height/from.height):.92})`,opacity:0}];
+}
+async function openBulkHelp(event){
  resetBulkHelpMotion();
  bulkHelpOwner=bulkHelpAccountKey();$('bulkHelpHide').checked=bulkHelpHidden();
- const dialog=$('bulkAllocationHelpDialog');
+ const dialog=$('bulkAllocationHelpDialog');$('bulkAllocationHelpBtn').classList.remove('is-help-returned');
  if(!dialog.open)dialog.showModal();
  dialog.querySelector('.bulk-help-body').scrollTop=0;
+ if(event?.currentTarget!==$('bulkAllocationHelpBtn')||reduceMotionEnabled()||typeof dialog.animate!=='function')return;
+ const flight={animation:null,opening:true};bulkHelpFlight=flight;
+ flight.animation=dialog.animate(bulkHelpFrames(dialog,$('bulkAllocationHelpBtn')).reverse(),{duration:380,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'});
+ try{await flight.animation.finished;}catch{}
+ if(bulkHelpFlight===flight)resetBulkHelpMotion();
 }
-async function finishBulkHelp(){
+async function finishBulkHelp(event,remember=true){
  const dialog=$('bulkAllocationHelpDialog'),target=$('bulkAllocationHelpBtn');
- if(!dialog.open||bulkHelpFlight)return;
+ if(!dialog.open||bulkHelpFlight&&!bulkHelpFlight.opening)return;
+ if(bulkHelpFlight?.opening)resetBulkHelpMotion();
  const key=bulkHelpAccountKey();
- if(key&&key===bulkHelpOwner)try{if($('bulkHelpHide').checked)localStorage.setItem(key,'1');else localStorage.removeItem(key);}catch{showToast('Chưa lưu được lựa chọn trên thiết bị này; hướng dẫn sẽ hiện lại lần sau.');}
+ if(remember&&key&&key===bulkHelpOwner)try{if($('bulkHelpHide').checked)localStorage.setItem(key,'1');else localStorage.removeItem(key);}catch{showToast('Chưa lưu được lựa chọn trên thiết bị này; hướng dẫn sẽ hiện lại lần sau.');}
  const flight={animation:null};bulkHelpFlight=flight;
- const from=dialog.getBoundingClientRect(),to=target.getBoundingClientRect();
  if(!reduceMotionEnabled()&&typeof dialog.animate==='function'){
-  const visible=to.width>0&&to.height>0&&to.top>=0&&to.bottom<=innerHeight&&to.left>=0&&to.right<=innerWidth;
-  const dx=visible?to.x+to.width/2-from.x-from.width/2:0,dy=visible?to.y+to.height/2-from.y-from.height/2:0;
-  const sx=visible?Math.min(1,to.width/from.width):.92,sy=visible?Math.min(1,to.height/from.height):.92;
   dialog.classList.add('is-help-closing');
-  flight.animation=dialog.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${dx}px,${dy}px) scale(${sx},${sy})`,opacity:0}],{duration:380,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
+  flight.animation=dialog.animate(bulkHelpFrames(dialog,target),{duration:380,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});
   try{await flight.animation.finished;}catch{}
  }
- // A close, logout or account switch cancels the flight; never refocus a stale form.
  if(bulkHelpFlight!==flight)return;
  resetBulkHelpMotion();dialog.close();bulkHelpOwner='';
  if(key===bulkHelpAccountKey()&&!$('bulkCard').classList.contains('hidden')){
-  target.focus({preventScroll:true});
-  if(!reduceMotionEnabled())target.classList.add('is-help-returned');
+  target.focus({preventScroll:true});if(!reduceMotionEnabled())target.classList.add('is-help-returned');
  }
 }
 function openBulkAll() {
@@ -3173,7 +3179,7 @@ $('bulkAutoAllocate').addEventListener('change',updateBulkTotal);
 $('bulkWeek').addEventListener('click',()=>{try{$('bulkWeek').showPicker?.();}catch{}});
 $('bulkAllocationHelpBtn').addEventListener('click',openBulkHelp);
 $('bulkAllocationHelpDone').addEventListener('click',finishBulkHelp);
-$('bulkAllocationHelpClose').addEventListener('click',()=>{$('bulkAllocationHelpDialog').close();bulkHelpOwner='';});
+$('bulkAllocationHelpClose').addEventListener('click',event=>{void finishBulkHelp(event,false);});
 $('bulkAllocationHelpDialog').addEventListener('cancel',()=>{resetBulkHelpMotion();bulkHelpOwner='';});
 $('bulkAllocationHelpDialog').addEventListener('close',()=>{resetBulkHelpMotion();bulkHelpOwner='';});
 $('bulkAllocationHelpBtn').addEventListener('animationend',()=>{$('bulkAllocationHelpBtn').classList.remove('is-help-returned');});

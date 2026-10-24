@@ -1,3 +1,16 @@
+# Kiểm thử V1.34.6
+
+- `npm test`: toàn bộ package unit/API hồi quy, bao gồm swap lịch thật và chặn nháp đè lịch cũ. Thêm `range-audit-tests.js`: router/session,7 ngày cùng issue chỉ1 GET worklog, lọc đúng ngày/tác giả, request tiếp theo và day-audit force đọc mới,401/403 và ngày/giới hạn/duplicate đầu vào.
+- `test:batch-ui`:4 suite allocation/review/day-review/onboarding ở1440×900,390×844,320×683,844×390; auto/manual, split/resize/swap, overlap/partial/fresh conflict, POST đúng ngày. Onboarding dùng API range fixture; kiểm tra modal bay từ i, X thu về nhưng không ghi checkbox, Done thu về/ghi theo tài khoản, reduced-motion, storage failure, lớp đen55% chỉ block cũ ở light/dark.
+- `test:update-live`: Service Worker thực trong Chromium, cài đầu không báo nhầm, phát hiện foreground và click update, không reload giữa mutation.
+- Syntax JS/CJS, JSON/manifest, HTML IDs/assets/version và ZIP kiểm tra trước bàn giao. Screenshot QA chỉ nội bộ.
+
+Chưa đo thời gian Jira/mạng thực, chưa có Safari/iPhone vật lý, chưa push/deploy. Giảm7→1 là số đọc worklog của fixture chung issue, không phải cam kết app nhanh gấp7. Không chạy toàn bộ browser lịch sử ngoài các suite trên.
+
+---
+
+## Phiên bản trước
+
 # Kiểm thử V1.34.5
 
 - `npm test`: toàn bộ unit/API package đạt, gồm cơ chế swap lịch thật, multiple swap, split/resize, preview pending overlap và cấm nháp đè lịch đã log; không đổi API/allocator trong bản này.
