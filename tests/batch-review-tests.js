@@ -10,10 +10,11 @@ x=R.resize([make('EPU-1',days[0],'08:00',60)],'EPU-1',1050,opts);assert.equal(x.
 x=R.resize([a],'EPU-1',660,opts);assert.equal(x.plans[0].minutes,180);assert.equal(x.plans[0].segments.length,1);
 x=R.resize([a],'EPU-1',750,opts);assert.equal(x.plans[0].minutes,240,'lunch cannot become logged time');
 x=R.move([e,b],e.key,{date:days[1],start:'14:30'},opts);assert.equal(x.problem,'');assert(x.requiresOverlap);assert.equal(x.plans.length,1);assert.equal(x.plans[0].segments[0].start,'14:30');assert(x.plans[0].allowOverlap);assert.equal(b.date,days[1],'partner untouched');
-x=R.move([e],e.key,{date:days[1],start:'08:00'},{...opts,occupied:{[days[1]]:[{start:'08:00',end:'12:00'}]}});assert(x.requiresOverlap);assert.deepEqual(x.swaps,[]);
-x=R.move([a,b],a.key,{date:days[1],start:'08:00'},{...opts,locked:[b.key]});assert(x.requiresOverlap);assert.equal(x.plans.length,1,'sent group remains unchanged');
+x=R.move([e],e.key,{date:days[1],start:'08:00'},{...opts,occupied:{[days[1]]:[{start:'08:00',end:'12:00'}]}});assert(x.problem.includes('đã log'));assert(!x.requiresOverlap);
+x=R.move([a,b],a.key,{date:days[1],start:'08:00'},{...opts,locked:[b.key]});assert(x.problem.includes('đã log'));assert.equal(x.plans.length,0,'sent group cannot be overlapped');
 x=R.move([a],a.key,{date:'2026-10-24',start:'08:00'},opts);assert(x.problem);
 x=R.resize([a],a.key,1080,opts);assert(x.problem);
 assert.throws(()=>P.validate([{...a,allowOverlap:'true'}]));
 assert.throws(()=>P.validate([{key:'EPU-1',date:days[0],allowOverlap:true,segments:[{start:'08:00',minutes:60},{start:'08:30',minutes:60}]}]),'one Subtask cannot overlap itself');
-console.log('Batch review: atomic split 8h swap, multi-partner swap, full-day resize/lunch exclusion, shortening, explicit overlap of immutable partners, scope and strict approvals passed.');
+assert.equal(R.saveGroups([a,{...a,key:'EPU-2',allowOverlap:true},make('EPU-3',days[1],'08:00',60)]).length,2);
+console.log('Batch review: atomic split 8h swap, multi-partner swap, full-day resize/lunch exclusion, shortening, pending overlap and rejected immutable partners, scope and strict approvals passed.');

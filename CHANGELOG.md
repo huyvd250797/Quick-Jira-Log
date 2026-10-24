@@ -1,3 +1,12 @@
+# V1.34.4
+
+- Giữ palette gốc của lịch đã log, phủ nền nhẹ thay nền đen/xám; chữ rõ.
+- Chỉ cho swap/overlap giữa nháp chưa ghi; cấm chạm giờ đã log ở UI và API.
+- Gom các nháp chồng giờ vào cùng request/rollback scope, giữ replay/partial/unknown theo nhóm.
+- Hướng dẫn5 bước + ví dụ tuần, tự mở khi vào Log tất cả.
+- Checkbox Không hiện lại theo tài khoản trên thiết bị; chỉ commit sau Đã hiểu, X/Escape không commit; i mở lại được.
+- Thêm kiểm thử account switch/reload/storage failure, màu light/dark/OT và guard fresh Jira.
+
 # V1.34.3
 
 - Khoảng tuần hiển thị trong ô chọn, chọn qua native calendar ngày.

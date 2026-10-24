@@ -12,7 +12,7 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:320
   if(a==='bulk-worklog'){posts.push(req.postDataJSON());data={ok:true,transitions:[]};}
   await route.fulfill({contentType:'application/json',body:JSON.stringify(data)});
  });
- await page.goto('http://127.0.0.1:4256');await page.waitForFunction(()=>state.filterLoaded);await page.locator('#logAllBtn').click();await page.locator('#bulkPeriodWeek').check();await page.locator('#bulkWeek').fill('2026-10-21');await page.locator('#bulkWeek').dispatchEvent('change');
+ await page.addInitScript(()=>localStorage.setItem('qjl:bulk-help:v1:boss','1'));await page.goto('http://127.0.0.1:4256');await page.waitForFunction(()=>state.filterLoaded);await page.locator('#logAllBtn').click();await page.locator('#bulkPeriodWeek').check();await page.locator('#bulkWeek').fill('2026-10-21');await page.locator('#bulkWeek').dispatchEvent('change');
  assert.equal(await page.locator('#bulkWeekRange').innerText(),'19/10/2026 – 25/10/2026');assert.equal(await page.locator('#bulkLogBtn').innerText(),'Xem trước logwork');
  await page.locator('#bulkLogBtn').click();await page.waitForFunction(()=>QuickJiraBatch.running);
  assert(await page.locator('#bulkLogBtn').isDisabled());assert.match(await page.locator('#bulkLogBtn').innerText(),/Đang xử lý/);assert(await page.locator('#bulkPreviewProgress').isVisible());
@@ -55,6 +55,6 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:320
  assert.equal(await page.evaluate(()=>QuickJiraBatch.job.unused),1920,'overlapping hour does not consume the same free space twice');await page.locator('.week-worklog-block').filter({hasText:'EPU-1'}).first().scrollIntoViewIfNeeded();
  for(const theme of ['light','dark']){await page.evaluate(t=>applyTheme(t),theme);await page.waitForTimeout(100);assert(!(await page.locator('.history-tool-sheet').evaluate(el=>el.scrollWidth>el.clientWidth+1)));if(process.env.QJL_QA_OUTPUT){fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`review-${viewport.width}-${theme}.png`)});}}
  await page.locator('#batchPreviewSave').click();assert.match(await page.locator('#batchConfirmError').innerText(),/xếp trùng/);await page.locator('#batchConfirmSave').click();await page.waitForFunction(()=>!QuickJiraBatch.job.running);
- assert.equal(posts.length,2);assert(posts.every(p=>p.items[0].key!=='EPU-3'));assert(posts.every(p=>p.confirmOverlaps&&p.exactPlan[0].allowOverlap),'both pending sides acknowledge the overlap so write order cannot reject the second row');
+ assert.equal(posts.length,1,'overlapping pending group is written together');assert.equal(posts[0].items.length,2);assert(posts[0].items.every(p=>p.key!=='EPU-3'));assert(posts.every(p=>p.confirmOverlaps&&p.exactPlan[0].allowOverlap),'both pending sides acknowledge the overlap so write order cannot reject the second row');
  assert.deepEqual(errors,[]);console.log('Preview edits: calendar week, button/progress, split8h swap, whole-day resize, removal, reject/accept overlap and exact confirmed writes passed',viewport);await context.close();
 }await browser.close();await new Promise(r=>server.close(r));})().catch(e=>{console.error(e);server.close();process.exit(1);});

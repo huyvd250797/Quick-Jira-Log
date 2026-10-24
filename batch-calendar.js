@@ -149,17 +149,23 @@ window.QuickJiraBatch=(()=>{
    // Preflight the complete chosen scope before the first mutation, then the server checks every exact write again.
    const occupied=await readOccupied([...new Set(pending.map(p=>p.date))],current.owner);
    P.validate(pending,occupied,job.dates);
-   for(const p of pending){
+   // Pending blocks which overlap are created in one request/rollback scope.
+   // The server can therefore reject every occupied range without exempting old Jira logs.
+   for(const group of R.saveGroups(pending)){
     if(state.user!==current.owner)throw Error('Phiên đăng nhập đã thay đổi.');
-    const requestId=current.requestIds[p.key]||=createRequestId('batch-plan');
-    const body={date:p.date,requestId,items:[{key:p.key,project:p.project,timeSpent:p.minutes+'m',description:p.description||p.summary,overtime:false}],confirmOverlaps:p.allowOverlap===true,exactPlan:[{key:p.key,date:p.date,segments:p.segments,allowOverlap:p.allowOverlap===true}]};
-    current.status[p.key]='Đang gửi';freeze(p.key);update();
-    try{const result=await api('/api?action=bulk-worklog',{method:'POST',requestId,body:JSON.stringify(body)});const warnings=(result.transitions||[]).filter(x=>x.ok===false).map(x=>x.message||'Chưa chuyển được trạng thái Jira');if(warnings.length)(current.notes||={})[p.key]=warnings.join('; ');current.status[p.key]='Đã log';freeze(p.key);}
-    catch(e){
-     // A lost response/rollback failure must never be resent automatically, even after the idempotency TTL.
-     if([400,403,404,409,422].includes(e.status)&&!e.details?.resultUnknown){delete current.status[p.key];(current.errors||={})[p.key]='Lỗi, chưa log';}else current.status[p.key]='Cần kiểm tra Jira';freeze(p.key);current.error=`${p.key}: ${e.message}. ${current.status[p.key] ? 'Dòng này đã khóa để tránh gửi trùng.' : 'Có thể chỉnh hoặc xác nhận thử lại dòng này.'} Các dòng chưa gửi được giữ lại.`;break;
+    const groupKey=group.map(p=>p.key).sort().join('|'),date=group[0].date;
+    const requestId=current.requestIds[groupKey]||=createRequestId('batch-plan');
+    const body={date,requestId,items:group.map(p=>({key:p.key,project:p.project,timeSpent:p.minutes+'m',description:p.description||p.summary,overtime:false})),confirmOverlaps:group.some(p=>p.allowOverlap===true),exactPlan:group.map(p=>({key:p.key,date:p.date,segments:p.segments,allowOverlap:p.allowOverlap===true}))};
+    group.forEach(p=>{current.status[p.key]='Đang gửi';freeze(p.key);});update();
+    try{
+     const result=await api('/api?action=bulk-worklog',{method:'POST',requestId,body:JSON.stringify(body)});
+     for(const p of group){const warnings=(result.transitions||[]).filter(x=>x.key===p.key&&x.ok===false).map(x=>x.message||'Chưa chuyển được trạng thái Jira');if(warnings.length)(current.notes||={})[p.key]=warnings.join('; ');current.status[p.key]='Đã log';freeze(p.key);}
+    }catch(e){
+     const known=[400,403,404,409,422].includes(e.status)&&!e.details?.resultUnknown;
+     for(const p of group){if(known){delete current.status[p.key];(current.errors||={})[p.key]='Lỗi, chưa log';}else current.status[p.key]='Cần kiểm tra Jira';freeze(p.key);}
+     current.error=`${group.map(p=>p.key).join(', ')}: ${e.message}. ${known?'Nhóm chưa log, có thể chỉnh hoặc xác nhận lại.':'Cả nhóm đã khóa để tránh gửi trùng; kiểm tra Jira trước.'} Các nhóm chưa gửi được giữ lại.`;break;
     }
-    invalidateHistoryCache();invalidateDayAuditCache(p.date);update();
+    invalidateHistoryCache();invalidateDayAuditCache(date);update();
    }
    if(!current.error)showToast(Object.values(current.status).some(x=>x!=='Đã log')?'Đã log phần chưa gửi; vẫn có dòng cần kiểm tra Jira.':'Đã log thành công toàn bộ lịch xem trước.');
   }catch(e){current.error=e.message;}

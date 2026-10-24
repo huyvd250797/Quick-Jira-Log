@@ -24,14 +24,15 @@ global.fetch=async(url,o={})=>{const u=new URL(String(url)),method=o.method||'GE
  writes=0;fail=false;logs=[{id:'existing',author:me,started:'2026-10-19T08:00:00.000+0700',timeSpentSeconds:14400},{id:'existing2',author:me,started:'2026-10-19T13:30:00.000+0700',timeSpentSeconds:14400}];
  const overlapping={...body,items:[{...body.items[0],timeSpent:'60m'}],exactPlan:[{key:'EPU-1',date:body.date,segments:[{start:'09:00',minutes:60}],allowOverlap:true}]};
  r=await post(overlapping);assert.notEqual(r.status,200);assert.equal(writes,0,'no overlap without explicit confirmation');
- r=await post({...overlapping,confirmOverlaps:true,requestId:'explicit-overlap-001'});assert.equal(r.status,200,JSON.stringify(r));assert.equal(writes,1,'accepted overlap may exceed day total, but only exact-plan branch');
- r=await post({...overlapping,confirmOverlaps:true,requestId:'explicit-overlap-001'});assert.equal(r.status,200);assert.equal(writes,1,'confirmed overlap still idempotent');
- r=await post({...overlapping,exactPlan:undefined,confirmOverlaps:true});assert.equal(r.status,409);assert.equal(writes,1,'legacy guard is unchanged');
- r=await post({...overlapping,confirmOverlaps:true,exactPlan:[{...overlapping.exactPlan[0],segments:[{start:'12:00',minutes:60}]}]});assert.equal(r.status,409);assert.equal(writes,1,'acceptance never permits lunch');
+ r=await post({...overlapping,confirmOverlaps:true,requestId:'explicit-overlap-001'});assert.equal(r.status,409);assert.equal(writes,0,'even explicit acceptance cannot overlap existing Jira worklogs');
+ r=await post({...overlapping,exactPlan:undefined,confirmOverlaps:true});assert.equal(r.status,409);assert.equal(writes,0,'legacy guard unchanged');
  logs=[];writes=0;
- const a={...overlapping,confirmOverlaps:true};r=await post(a);assert.equal(r.status,200);
- const b={date:body.date,confirmOverlaps:true,items:[{key:'EPU-2',project:'EPU',timeSpent:'8h',description:'Full day partner'}],exactPlan:[{key:'EPU-2',date:body.date,segments:[{start:'08:00',minutes:240},{start:'13:30',minutes:240}],allowOverlap:true}]};
- r=await post(b);assert.equal(r.status,200,JSON.stringify(r));assert.equal(writes,3,'both overlapping subtasks write successfully in either order, including split8h');
- console.log('Exact plan API: real session/router, exact times and descriptions, replay, fresh overlap, same-day, windows, totals, subtype, rollback, explicit overlap/8h-pair writes and legacy isolation passed.');
+ const grouped={date:body.date,requestId:'pending-overlap-group-01',confirmOverlaps:true,items:[{key:'EPU-1',project:'EPU',timeSpent:'1h',description:'Draft A'},{key:'EPU-2',project:'EPU',timeSpent:'8h',description:'Draft B'}],exactPlan:[{key:'EPU-1',date:body.date,segments:[{start:'09:00',minutes:60}],allowOverlap:true},{key:'EPU-2',date:body.date,segments:[{start:'08:00',minutes:240},{start:'13:30',minutes:240}],allowOverlap:true}]};
+ r=await post(grouped);assert.equal(r.status,200,JSON.stringify(r));assert.equal(writes,3,'pending drafts may overlap inside one atomic group');
+ r=await post(grouped);assert.equal(r.status,200);assert.equal(writes,3,'whole group replay is idempotent');
+ r=await post({...grouped,requestId:'new-group-old-slots-01'});assert.equal(r.status,409);assert.equal(writes,3,'later groups cannot overlap worklogs already created');
+ logs=[];writes=0;fail=true;r=await post({...grouped,requestId:'rollback-overlap-group-01'});assert.notEqual(r.status,200);assert.equal(logs.length,0,'failed overlap group rolls back all created segments');fail=false;
+ r=await post({...overlapping,confirmOverlaps:true,exactPlan:[{...overlapping.exactPlan[0],segments:[{start:'12:00',minutes:60}]}]});assert.equal(r.status,409);
+ console.log('Exact plan API: real session/router, exact times and descriptions, replay, fresh overlap, same-day, windows, totals, subtype, rollback, pending-only overlap groups/strict existing guard and legacy isolation passed.');
  }finally{await new Promise(r=>server.close(r));global.fetch=original;}
 })().catch(e=>{console.error(e);process.exit(1);});

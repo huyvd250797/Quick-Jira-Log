@@ -459,6 +459,7 @@ async function saveCalendarDrafts() {
 
 
 function calendarFeedback(message, error = false) {
+  if(error&&message&&window.QuickJiraBatch?.active)showToast(message);
   const box = $('calendarInteractionState');
   box.textContent = message;
   box.classList.toggle('is-error', error);

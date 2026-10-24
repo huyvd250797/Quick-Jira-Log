@@ -23,7 +23,7 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
    await route.fulfill({contentType:'application/json',body:JSON.stringify(data)});
   });
   backend.mode='success';
-  await page.goto('http://127.0.0.1:4251');await page.waitForFunction(()=>state.filterLoaded);
+  await page.addInitScript(()=>localStorage.setItem('qjl:bulk-help:v1:boss','1'));await page.goto('http://127.0.0.1:4251');await page.waitForFunction(()=>state.filterLoaded);
   await page.locator('#logAllBtn').click();await page.locator('#bulkAutoAllocate').uncheck();await page.waitForFunction(()=>bulkCapacityReady());
   assert.equal(await page.locator('.bulk-item').count(),8);
   // Outer gestures cannot move the editor; native scrolling remains in its list.

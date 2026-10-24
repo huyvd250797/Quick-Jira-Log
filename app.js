@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.34.3';
+const APP_VERSION = '1.34.4';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -774,6 +774,7 @@ function savePrefs() {
 }
 
 function setLoggedIn(user) {
+  if(bulkHelpOwner&&bulkHelpOwner!==bulkHelpAccountKey(user)){$('bulkAllocationHelpDialog').close();bulkHelpOwner='';}
   if (!user) window.QuickJiraBatch?.clearOnLogout();
   state.apiEpoch += 1;
   loginInputRevision = 0;
@@ -822,6 +823,7 @@ function setLoggedOut({preserveResume=false}={}) {
   setCaptchaPanel(false);
   setLoginError('');
   closeDesktopEditor();
+  $('bulkAllocationHelpDialog').close();bulkHelpOwner='';
   state.user = null;
   window.QuickJiraSearch?.logout();
   window.QuickJiraProjectReport?.logout({preserve:preserveResume});
@@ -1750,7 +1752,7 @@ function renderWeeklyCalendar(date) {
       const globalIndex = eventIndexes.get(event.item);
       const appearance = calendarAppearance(event.item);
       const label = `${calendarIsDraft(event.item) ? 'Chưa lưu · ' : ''}${event.item.calendarSplitRoot?(event.item.calendarSplitCount?'Nhóm '+event.item.calendarSplitCount+' phần · Kéo để gom lại · ':'Nhóm tách cần đối chiếu · '):''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
-      return `<button type="button" class="week-worklog-block${event.item.calendarSplitRoot&&!event.item.calendarSplitUncertain?' is-split-group':''}${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${event.item.batchOverlap?' is-batch-overlap':''}${event.item.calendarReadOnly&&!event.item.batchNew?' is-batch-existing':''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}${event.item.batchNew ? ' <em class="batch-new-label">'+escapeHtml(event.item.batchStatus || (event.item.batchOverlap?'Chưa log · Trùng':'Chưa log'))+'</em>' : event.item.calendarReadOnly?' <em class="batch-existing-label">Đã log</em>':''}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly||(event.item.calendarSplitRoot&&!event.item.batchNew)?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
+      return `<button type="button" class="week-worklog-block${event.item.calendarSplitRoot&&!event.item.calendarSplitUncertain?' is-split-group':''}${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${event.item.batchOverlap?' is-batch-overlap':''}${event.item.calendarReadOnly?' is-batch-existing':''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}${event.item.batchNew ? ' <em class="batch-new-label">'+escapeHtml(event.item.batchStatus || (event.item.batchOverlap?'Chưa log · Trùng':'Chưa log'))+'</em>' : event.item.calendarReadOnly?' <em class="batch-existing-label">Đã log</em>':''}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly||(event.item.calendarSplitRoot&&!event.item.batchNew)?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
     }).join('')}</div>`;
   }).join('');
   $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length};--week-minute-px:1px;--week-morning-start:${480 - from};--week-morning-end:${720 - from};--week-afternoon-start:${810 - from};--week-afternoon-end:${1050 - from}"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" data-minute-range="${height}" style="height:calc(${height} * var(--week-minute-px, 1px))"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
@@ -2626,6 +2628,18 @@ function resetBulkState({ animate = false } = {}) {
   else finish();
 }
 
+let bulkHelpOwner='';
+function bulkHelpAccountKey(user=state.user){const id=user?.username||user?.accountId||user?.key||user?.name;return id?'qjl:bulk-help:v1:'+encodeURIComponent(String(id).trim().toLowerCase()):'';}
+function bulkHelpHidden(){try{const key=bulkHelpAccountKey();return !!key&&localStorage.getItem(key)==='1';}catch{return false;}}
+function openBulkHelp(){
+ bulkHelpOwner=bulkHelpAccountKey();$('bulkHelpHide').checked=bulkHelpHidden();
+ if(!$('bulkAllocationHelpDialog').open)$('bulkAllocationHelpDialog').showModal();
+}
+function finishBulkHelp(){
+ const key=bulkHelpAccountKey();
+ if(key&&key===bulkHelpOwner)try{if($('bulkHelpHide').checked)localStorage.setItem(key,'1');else localStorage.removeItem(key);}catch{showToast('Chưa lưu được lựa chọn trên thiết bị này; hướng dẫn sẽ hiện lại lần sau.');}
+ $('bulkAllocationHelpDialog').close();bulkHelpOwner='';
+}
 function openBulkAll() {
   const issues = state.filterIssues;
   if (!issues.length) {
@@ -2667,6 +2681,7 @@ function openBulkAll() {
   if (!openedAsSheet && !openedAsDesktopModal) $('bulkCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   // Hiển thị Bulk ngay với mặc định 1h/Sub-task; day-audit chạy nền và không chặn thao tác.
   setTimeout(() => { void loadBulkCapacity(); }, 0);
+  if(!bulkHelpHidden())openBulkHelp();
 }
 function bulkDraftList() {
   return [...state.bulkSelectedKeys].map(key => state.bulkDrafts.get(key)).filter(Boolean);
@@ -3131,8 +3146,10 @@ $('date').addEventListener('change', () => {
 document.querySelectorAll('input[name="bulkPeriod"]').forEach(el=>el.addEventListener('change',()=>{syncBulkWeekOptions();updateBulkTotal();}));
 $('bulkAutoAllocate').addEventListener('change',updateBulkTotal);
 $('bulkWeek').addEventListener('click',()=>{try{$('bulkWeek').showPicker?.();}catch{}});
-$('bulkAllocationHelpBtn').addEventListener('click',()=>{if(!$('bulkAllocationHelpDialog').open)$('bulkAllocationHelpDialog').showModal();});
-['bulkAllocationHelpClose','bulkAllocationHelpDone'].forEach(id=>$(id).addEventListener('click',()=>$('bulkAllocationHelpDialog').close()));
+$('bulkAllocationHelpBtn').addEventListener('click',openBulkHelp);
+$('bulkAllocationHelpDone').addEventListener('click',finishBulkHelp);
+$('bulkAllocationHelpClose').addEventListener('click',()=>{$('bulkAllocationHelpDialog').close();bulkHelpOwner='';});
+$('bulkAllocationHelpDialog').addEventListener('cancel',()=>{bulkHelpOwner='';});
 $('bulkWeek').addEventListener('change',()=>{if(!$('bulkWeek').value)$('bulkWeek').value=$('bulkDate').value||getSessionLogDate();syncBulkWeekOptions();updateBulkTotal();});
 $('bulkDate').addEventListener('change', () => {
   if (!$('bulkDate').value) $('bulkDate').value = getSessionLogDate();

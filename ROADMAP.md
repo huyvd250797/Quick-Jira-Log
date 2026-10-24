@@ -1,3 +1,10 @@
+# Bổ sung V1.34.4
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| V1.34.4 | Bảo vệ lịch cũ và hướng dẫn rõ | Palette gốc trầm hơn, cấm xếp đè lịch cũ, guide mặc định và ghi nhớ tài khoản | occupied strict, gom nhóm draft overlap, Done-only preference local theo ID | Unit/API + Chromium4 viewport, account/reload/storage guard, hồi quy | Đã xây dựng source; chưa deploy/Jira thật |
+| V1.35.0 | Phân tích Sub-task Type theo thành viên | Giờ/tỷ trọng/số Subtask và mở nhóm | Custom field thật theo bộ lọc | Đối chiếu Jira công ty | Đề xuất; chưa xây dựng |
+
 # Bổ sung V1.34.3
 
 | Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật / dữ liệu | Điều kiện hoàn thành | Trạng thái |

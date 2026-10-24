@@ -1,3 +1,18 @@
+# Kiểm thử V1.34.4
+
+- `npm test`: toàn bộ unit/API package đạt. Validator/pure review chặn occupied và nhóm đã gửi; vẫn cho nội bộ nháp chồng giờ có chấp nhận.
+- API/router/session thật + Jira giả lập: cờ overlap không ghi đè worklog có trước; nhóm2 Subtask (1h và split8h) chồng nhau trong cùng request ghi đúng, replay không tạo trùng; nhóm sau không đặt vào giờ nhóm đã ghi. Lỗi tạo hoàn tác các đoạn vừa tạo của cả nhóm; guard legacy/type/ngày/giờ/quyền giữ.
+- Browser batch-calendar/review/day-review4 viewport1440×900,390×844,320×683,844×390: ngày/tuần/inline picker, resize nhóm/split8h swap, pending overlap save thành một request, unknown/partial; ngày20→21 đúng POST; tay nắm và chuột/cảm ứng.
+- Browser onboarding4 viewport light/dark: tự mở, Done không tick vẫn hiện lại, tick+X không lưu, tick+Done mới lưu, reload/đổi tài khoản cùng tên hiển thị vẫn phân biệt; i mở lại. Mô phỏng lỗi Storage trên390px và thông báo đúng. Checkbox/Done ở footer modal.
+- Màu: project/default/OT giữ nền và màu chữ như palette gốc, opacity1 và inset tint nhẹ; ảnh QA được xem nội bộ. Di chuyển/resize vào lịch cũ không đổi draft hoặc mở confirm; worklog mới xuất hiện lúc lưu bị preflight chặn trước POST.
+- Compact và nativeSW update hồi quy đạt4 viewport/luồng cập nhật đã có. Syntax/JSON/HTML IDs/assets/version/ZIP kiểm tra trước bàn giao.
+
+Không có Jira công ty/Safari/iPhone thật; chưa push/deploy, chưa đo mạng thực. Không chạy toàn bộ browser lịch sử ngoài các suite trên. Lựa chọn hướng dẫn chỉ theo tài khoản trên trình duyệt/thiết bị; bản nháp preview vẫn trong RAM. Ghi theo nhóm có hoàn tác best-effort, không phải transaction nguyên tuần; unknown cần kiểm tra Jira.
+
+---
+
+## Kết quả các phiên bản trước
+
 # Kiểm thử V1.34.3
 
 - `npm test`: toàn bộ unit/API package, exact-plan, resize/swap/overlap/guard/OT hồi quy đạt.
