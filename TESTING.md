@@ -1,3 +1,20 @@
+# Kiểm thử V1.34.2
+
+- `npm test`: toàn bộ unit/API hồi quy theo package, gồm batch-plan, batch-review và exact-plan API.
+- Pure review planner: swap hai nhóm split8h, nhiều partner1h30+30m vào nguồn2h, resize08:00→17:30 thành8h bỏ trưa, giảm nhóm; giữ nguyên partner khi overlap; scope/locked/boolean approval/self-overlap.
+- API/router/session thật + Jira giả lập: không chấp nhận overlap thì không ghi, đồng ý + exactPlan ghi được hai Subtask chồng nhau dù một nhóm8h; idempotency; không dùng cờ để vượt guard legacy/log trưa; giữ quyền/type/tổng/rollback.
+- `test:batch-ui`: lịch preview ngày/tuần, chọn ngày trong tuần, auto/manual giữ TimeSpent, progress thật qua request chậm, không ghi trước xác nhận; staged swap/resize, partial403 và unknown.
+- Browser batch-review:1440×900,390×844,320×683,844×390, light/dark. Đổi cả nhóm8h sáng/chiều, tay nắm resize có trên block tách; kéo cạnh bằng chuột thật và CDP touch giữ/kéo trên390px; resize cả ngày; bỏ group không gọi ghi/xóa Jira; từ chối xếp trùng không đổi draft, đồng ý đánh dấu cả hai nhóm, xác nhận ghi đúng flags và không ghi mục đã bỏ. Giờ trống không bị trừ hai lần ở vùng overlap.
+- Browser compact: bốn viewport, nền cố định/cuộn list riêng, weekday/weekend progress, OT/mô tả và cell giờ vẫn đúng.
+- Native SW update browser: phát hiện khi app mở, chặn ghi dở, kích hoạt/reload sau bấm cập nhật; cài đầu không báo nhầm.
+- Kiểm tra syntax/JSON/ID/assets/SW/version và ZIP. Ảnh QA chỉ nội bộ.
+
+Không có Jira công ty hoặc Safari/iPhone vật lý trong môi trường kiểm thử. Chưa push/deploy, chưa đo mạng thực. Không chạy lại toàn bộ các bài browser lịch sử ngoài những suite nêu trên. Bản nháp chưa log chỉ trong RAM phiên; không có transaction toàn tuần hoặc tự retry unknown.
+
+---
+
+## Kết quả các phiên bản trước
+
 # Kiểm thử V1.34.1
 
 Đã chạy với Node24 và Chromium/Playwright, Jira giả lập:

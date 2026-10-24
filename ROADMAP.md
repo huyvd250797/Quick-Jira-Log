@@ -1,3 +1,10 @@
+# Bổ sung V1.34.2
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| V1.34.2 | Chỉnh lịch xem trước linh hoạt | Calendar chọn tuần, button/progress, resize nhóm, bỏ draft, swap8h, xếp trùng có xác nhận | Pure batch review planner; exactPlan chấp nhận overlap riêng; không sửa worklog cũ | Unit/API, PC/mobile4 viewport, pointer chuột/cảm ứng, regression OT/PWA | Đã xây dựng source; chưa deploy/Jira thật |
+| V1.35.0 | Phân tích Sub-task Type theo thành viên | Giờ/tỷ trọng/số Subtask, mở nhóm worklog | Custom field thật theo kỳ/bộ lọc | Đối chiếu Jira công ty | Đề xuất; chưa xây dựng |
+
 # Bổ sung V1.34.1
 
 | Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật và dữ liệu | Điều kiện hoàn thành | Trạng thái |

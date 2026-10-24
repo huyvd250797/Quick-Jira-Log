@@ -1,31 +1,88 @@
 'use strict';
 window.QuickJiraBatch=(()=>{
- const P=QuickJiraBatchPlan;let job=null,preparing=false;
+ const P=QuickJiraBatchPlan,R=QuickJiraBatchReview;let job=null,preparing=false,draftKey='';
  const lockedControls=['calendarPrevBtn','calendarNextBtn','calendarTodayBtn','calendarDate','calendarMonthBtn','calendarWeekBtn','calendarViewerBtn','calendarRefreshBtn','historyListViewBtn'];
  const busy=()=>preparing||job?.running;
  function plans(){
   const rows=calendarPreviewItems().filter(x=>x.batchNew),by=new Map();
-  for(const x of rows){let p=by.get(x.key);if(!p){p={key:x.key,project:x.project,description:x.description,summary:x.summary,date:x.date,segments:[]};by.set(x.key,p);}if(p.date!==x.date)throw Error('Một Subtask không được nằm ở hai ngày khác nhau.');p.segments.push({start:x.start,minutes:QuickJiraDrafts.seconds(x)/60});}
+  for(const x of rows){let p=by.get(x.key);if(!p){p={key:x.key,allowOverlap:job?.approved?.[x.key]===true,project:x.project,description:x.description,summary:x.summary,date:x.date,segments:[]};by.set(x.key,p);}if(p.date!==x.date)throw Error('Một Subtask không được nằm ở hai ngày khác nhau.');p.segments.push({start:x.start,minutes:QuickJiraDrafts.seconds(x)/60});}
   return [...by.values()].map(p=>({...p,minutes:p.segments.reduce((n,s)=>n+s.minutes,0),segments:p.segments.sort((a,b)=>a.start.localeCompare(b.start))}));
  }
- function update(){if(!job)return;const rows=plans();$('historySummary').textContent=`${rows.length} Subtask nháp · Giờ đã log được khóa`;job.unused=Math.max(0,job.dates.reduce((n,d)=>n+P.free(job.occupied[d]).reduce((n,s)=>n+s.end-s.start,0),0)-rows.reduce((n,p)=>n+p.minutes,0));const pending=rows.filter(p=>!job.status[p.key]);$('batchPreviewTitle').textContent=`${pending.length} Subtask chưa log${job.unplaced.length?' · '+job.unplaced.length+' chưa xếp':''}`;
+ function update(){if(!job)return;const rows=plans();$('historySummary').textContent=`${rows.length} Subtask nháp · Giờ đã log được khóa`;job.unused=job.dates.reduce((n,date)=>n+P.free([...(job.occupied[date]||[]),...rows.filter(p=>p.date===date).flatMap(p=>p.segments.map(s=>({start:s.start,end:P.time(P.minute(s.start)+s.minutes)})))]).reduce((n,s)=>n+s.end-s.start,0),0);const pending=rows.filter(p=>!job.status[p.key]);$('batchPreviewTitle').textContent=`${pending.length} Subtask chưa log${job.unplaced.length?' · '+job.unplaced.length+' chưa xếp':''}`;
   $('batchPreviewState').textContent=[job.unplaced.length?`${job.unplaced.length} chưa phân bổ: ${job.unplaced.map(x=>x.key+' — '+x.reason).join('; ')}`:'',`${job.dates[0].slice(8,10)}/${job.dates[0].slice(5,7)}${job.mode==='week'?'–'+job.dates.at(-1).slice(8,10)+'/'+job.dates.at(-1).slice(5,7):''}${job.unused?' · Trống '+minutesLabel(job.unused):''}`].filter(Boolean).join(' · ');
   $('batchPreviewSave').textContent='Xác nhận log';
   $('batchPreviewSave').disabled=job.running||!pending.length;$('batchConfirmSave').disabled=job.running||!pending.length;
   $('batchPreviewBack').disabled=job.running;$('batchPreviewBack').textContent='Đóng';$('batchPreviewBack').title='Đóng lịch xem trước';
-  $('batchConfirmRows').replaceChildren(...rows.map(p=>{const el=document.createElement('p');el.textContent=`${p.key} · ${logWeekday(p.date)} ${p.date} · ${p.segments.map(s=>s.start+'–'+P.time(P.minute(s.start)+s.minutes)).join(', ')} · ${minutesLabel(p.minutes)} · ${job.status[p.key]||job.errors?.[p.key]||'Chưa log'}${job.notes?.[p.key] ? ' · '+job.notes[p.key] : ''}`;const link=document.createElement('a');link.href='https://task.ascvn.com.vn/browse/'+encodeURIComponent(p.key);link.textContent=' Mở Jira ↗';link.target='_blank';link.rel='noopener noreferrer';el.append(link);return el;}));
-  $('batchConfirmError').textContent=[job.error,job.unplaced.length?`${job.unplaced.length} Subtask chưa phân bổ sẽ KHÔNG được log: ${job.unplaced.map(x=>x.key).join(', ')}`:''].filter(Boolean).join(' · ');
+  $('batchConfirmRows').replaceChildren(...rows.map(p=>{const el=document.createElement('p');el.textContent=`${p.key} · ${logWeekday(p.date)} ${p.date} · ${p.segments.map(s=>s.start+'–'+P.time(P.minute(s.start)+s.minutes)).join(', ')} · ${minutesLabel(p.minutes)} · ${job.status[p.key]||job.errors?.[p.key]||'Chưa log'}${p.allowOverlap?' · ⚠ Xếp trùng đã xác nhận':''}${job.notes?.[p.key] ? ' · '+job.notes[p.key] : ''}`;const link=document.createElement('a');link.href='https://task.ascvn.com.vn/browse/'+encodeURIComponent(p.key);link.textContent=' Mở Jira ↗';link.target='_blank';link.rel='noopener noreferrer';el.append(link);return el;}));
+  $('batchConfirmError').textContent=[job.error,job.removed?.length?'Đã bỏ khỏi lịch: '+job.removed.join(', '):'',rows.some(x=>x.allowOverlap)?'⚠ Có lịch xếp trùng đã chấp nhận; khi xác nhận sẽ ghi đúng vị trí này.':'',job.unplaced.length?`${job.unplaced.length} Subtask chưa phân bổ sẽ KHÔNG được log: ${job.unplaced.map(x=>x.key).join(', ')}`:''].filter(Boolean).join(' · ');
  }
- function validateDrop(item,drop){if(!job||drop.problem)return drop;
-  try{
-   const changed=drop.changes||[];
-   if(changed.some(x=>!x.batchNew||job.status[x.key]))throw Error('Worklog đã có/đã gửi được khóa trong màn hình xem trước.');
-   const changes=new Map(changed.map(x=>[QuickJiraDrafts.key(x),x])),own=new Set((item.calendarDragParts||[item]).map(QuickJiraDrafts.key));own.add(QuickJiraDrafts.key(item));
-   let rows=calendarPreviewItems().filter(x=>!own.has(QuickJiraDrafts.key(x))&&!changes.has(QuickJiraDrafts.key(x)));
-   rows.push(...changed);const grouped=new Map();
-   for(const x of rows.filter(x=>x.batchNew)){let p=grouped.get(x.key);if(!p){p={key:x.key,date:x.date,segments:[]};grouped.set(x.key,p);}if(p.date!==x.date)throw Error('Phải chuyển toàn bộ các phần của Subtask sang cùng ngày.');p.segments.push({start:x.start,minutes:QuickJiraDrafts.seconds(x)/60});}
-   P.validate([...grouped.values()],job.occupied,job.dates);
-  }catch(e){return {...drop,problem:e.message};}return drop;
+ function syncOverlapMarks(accepted=[]){
+  for(const hit of accepted)for(const key of [hit.key,hit.with])if(state.historyItems.some(x=>x.batchNew&&x.key===key)&&!job.status[key])job.approved[key]=true;
+  const hits=R.collisions(plans(),job.occupied),active=new Set(hits.flatMap(x=>[x.key,x.with]));
+  for(const original of state.historyItems.filter(x=>x.batchNew)){
+   if(!active.has(original.key))job.approved[original.key]=false;
+   original.batchOverlap=job.approved[original.key]===true;
+  }
+ }
+ function reviewOptions(){return {occupied:job.occupied,allowed:job.dates,locked:Object.keys(job.status)};}
+ function enrich(proposal){
+  const roots=new Map(state.historyItems.filter(x=>x.batchNew).map(x=>[x.key,x]));
+  const changes=(proposal.plans||[]).flatMap(p=>{
+   const original=roots.get(p.key);if(!original)return [];
+   const target={date:p.date,start:p.segments[0].start,targetSeconds:p.minutes*60};
+   if(p.segments.length>1)target.segments=p.segments.map(s=>({date:p.date,start:s.start,targetSeconds:s.minutes*60}));
+   return QuickJiraDrafts.parts({original,target});
+  });
+  const swaps=calendarPreviewItems().filter(x=>(proposal.swaps||[]).includes(x.key));
+  return {...proposal,batchPlans:proposal.plans,segments:proposal.plans?.[0]?.segments.length>1?proposal.plans[0].segments:null,changes,swaps,swap:swaps[0]||null,inputSignature:JSON.stringify(plans())};
+ }
+ function proposeMove(item,target,hovered){if(!job)return {problem:'Chưa có lịch xem trước.',changes:[]};return enrich(R.move(plans(),item.key,target,{...reviewOptions(),hovered:hovered?.key}));}
+ function proposeResize(item,end){if(!job)return {problem:'Chưa có lịch xem trước.',changes:[]};return enrich(R.resize(plans(),item.key,end,reviewOptions()));}
+ function validateDrop(item,proposal){return proposal;}
+ function stage(item,target,proposal){
+  if(!job||busy()||job.status[item.key])return;
+  let drop=proposal?.batchPlans?proposal:target?proposeMove(item,target):proposeResize(item,P.minute(proposal?.changes?.[0]?.end||''));
+  if(drop.problem)return calendarFeedback(drop.problem,true);
+  if(drop.inputSignature!==JSON.stringify(plans()))return calendarFeedback('Bản nháp đã đổi. Kéo lại để xem vị trí mới.',true);
+  if(drop.requiresOverlap){
+   returnCalendarHoverPreview();
+   const labels=[...new Set(drop.collisions.map(x=>x.key+' ↔ '+x.with))].join(', ');
+   if(!window.confirm('Không đủ chỗ để thay thế. Vị trí sẽ xếp trùng: '+labels+'. Các lịch khác được giữ nguyên. Vẫn xếp vào vị trí này ở bản xem trước?'))return;
+  }
+  if(drop.swaps.length)updateCalendarHoverPreview(null,drop);
+  for(const p of drop.batchPlans){
+   const original=state.historyItems.find(x=>x.batchNew&&x.key===p.key);if(!original||job.status[p.key])continue;
+   const target={date:p.date,start:p.segments[0].start,targetSeconds:p.minutes*60};
+   if(p.segments.length>1)target.segments=p.segments.map(s=>({date:p.date,start:s.start,targetSeconds:s.minutes*60}));
+   job.approved[p.key]=p.allowOverlap===true;
+   original.batchOverlap=p.allowOverlap===true;
+   state.calendarDrafts.set(QuickJiraDrafts.key(original),{original,target,status:'pending'});
+  }
+  syncOverlapMarks(drop.requiresOverlap?drop.collisions:[]);
+  calendarKeepHoverOnRender=!!drop.swap;
+  try{renderCalendarDrafts();}finally{calendarKeepHoverOnRender=false;}
+  if(drop.swap)finishCalendarHoverDrop();else returnCalendarHoverPreview();
+  calendarFeedback(drop.requiresOverlap?'Đã xếp trùng ở bản xem trước · Chưa ghi Jira.':drop.swap?'Đã đổi chỗ nhóm lịch · Chưa ghi Jira.':'Đã chỉnh lịch xem trước · Chưa ghi Jira.');
+ }
+ function openDraft(item){
+  if(!job||busy()||!item.batchNew||job.status[item.key])return;
+  const p=plans().find(x=>x.key===item.key);if(!p)return;draftKey=item.key;
+  $('batchDraftTitle').textContent=p.key;
+  $('batchDraftMeta').textContent=p.date+' · '+minutesLabel(p.minutes)+' · '+p.segments.map(s=>s.start+'–'+P.time(P.minute(s.start)+s.minutes)).join(', ');
+  $('batchDraftDialog').showModal();
+ }
+ function removeDraft(){
+  if(!job||busy()||job.status[draftKey])return;
+  state.historyItems=state.historyItems.filter(x=>!x.batchNew||x.key!==draftKey);
+  for(const [id,d] of state.calendarDrafts)if(d.original.key===draftKey)state.calendarDrafts.delete(id);
+  job.removed.push(draftKey);delete job.approved[draftKey];$('batchDraftDialog').close();
+  syncOverlapMarks();resetCalendarInteraction();renderCalendarDrafts();showToast('Đã bỏ '+draftKey+' khỏi lịch xem trước.');
+ }
+ function prepProgress(done,total,label){
+  const percent=Math.max(0,Math.min(100,Math.round(done/total*100)));
+  $('bulkPreviewProgress').hidden=false;$('bulkPreviewPhase').textContent=label;
+  $('bulkPreviewPercent').textContent=percent+'%';$('bulkPreviewMeter').setAttribute('aria-valuenow',percent);
+  $('bulkPreviewMeter').firstElementChild.style.width=percent+'%';$('bulkLogBtn').textContent='Đang xử lý… '+percent+'%';
  }
  async function readOccupied(dates,owner,onProgress=()=>{}){
   const occupied={};let cursor=0,done=0;
@@ -39,10 +96,13 @@ window.QuickJiraBatch=(()=>{
   if(!bulkAutoMode() && items.some(x=>x.overtime))return showToast('Phân bổ lịch chỉ dùng giờ thường. Bỏ chọn OT; log OT bằng luồng hiện tại.');
   const mode=bulkPeriodMode(),date=bulkAllocationDate(),owner=state.user;let dates;try{dates=P.days(date,mode);}catch(e){return showToast(e.message);}
   preparing=true;$('bulkLogBtn').disabled=true;
+  const controls=[...$('bulkCard').querySelectorAll('input,select,button,textarea')].map(el=>[el,el.disabled]);controls.forEach(([el])=>el.disabled=true);
+  prepProgress(0,dates.length+2,'Đối chiếu giờ trống');
   const task=QuickJiraBusy.begin('Đang đối chiếu giờ trống',{blocking:false});
   try{
    if(bulkAutoMode()) items.forEach(x=>{x.overtime=false;});
-   const occupied=await readOccupied(dates,owner,done=>task.update({label:'Đối chiếu giờ trống',done,total:dates.length}));
+   const occupied=await readOccupied(dates,owner,done=>{task.update({label:'Đối chiếu giờ trống',done,total:dates.length});prepProgress(done,dates.length+2,'Đối chiếu '+done+'/'+dates.length+' ngày');});
+   prepProgress(dates.length,dates.length+2,'Đang tạo lịch nháp');
    const result=P.allocate(items,dates,occupied,!bulkAutoMode());
    if(!result.plans.length)throw Error('Không phân bổ được Subtask nào. '+result.unplaced.map(x=>x.key+': '+x.reason).join('; '));
    const snapshot={bulkScroll:$('bulkItems').scrollTop,items:state.historyItems,date:$('historyDate').value,loaded:state.historyLoaded,view:state.historyView,mode:state.calendarMode,title:$('historyTitle').textContent,error:state.historyError,notice:state.historyNotice};
@@ -60,7 +120,8 @@ window.QuickJiraBatch=(()=>{
      }existing=[...real,...gaps];
     }
    }catch(e){if(e.status===401||state.user!==owner)throw e;}
-   job={mode,dates,occupied,snapshot,owner,unplaced:result.unplaced,unused:result.unused,status:{},requestIds:{},running:false,error:''};
+   prepProgress(dates.length+1,dates.length+2,'Đang mở lịch xem trước');
+   job={approved:{},removed:[],mode,dates,occupied,snapshot,owner,unplaced:result.unplaced,unused:result.unused,status:{},requestIds:{},running:false,error:''};
    state.calendarDrafts.clear();
    state.historyItems=[...existing,...result.plans.map((p,i)=>{const original={...p,id:`new-${i}`,start:p.segments[0].start,end:P.time(P.minute(p.segments[0].start)+p.minutes),timeSpentSeconds:p.minutes*60,batchNew:true,overtime:false,overtimeKnown:true};delete original.segments;
     const target={date:p.date,start:original.start,targetSeconds:p.minutes*60,...(p.segments.length>1?{segments:p.segments.map(s=>({date:p.date,start:s.start,targetSeconds:s.minutes*60}))}:{})};
@@ -69,8 +130,8 @@ window.QuickJiraBatch=(()=>{
    resetCalendarViewer();state.historyView='calendar';state.calendarMode='week';state.historyLoaded=true;state.historyError='';state.historyNotice='';$('historyDate').value=dates[0];
    $('historyTitle').textContent='Lịch sắp log';$('historyOverlay').classList.add('batch-preview');$('batchPreviewBar').hidden=false;
    renderWorklogHistory();lockedControls.forEach(id=>{const el=$(id);if(el){el.dataset.batchDisabled=String(el.disabled);el.disabled=true;}});
-   openOverlay('historyOverlay','closeHistoryBtn');update();
-  }catch(e){showToast(e.message);}finally{preparing=false;task();updateBulkTotal();}
+   openOverlay('historyOverlay','closeHistoryBtn');update();prepProgress(dates.length+2,dates.length+2,'Đã tạo lịch xem trước');
+  }catch(e){showToast(e.message);}finally{preparing=false;controls.forEach(([el,disabled])=>{el.disabled=disabled;});$('bulkPreviewProgress').hidden=true;task();updateBulkTotal();}
  }
  function review(){if(!job||job.running)return;try{P.validate(plans(),job.occupied,job.dates);job.error='';}catch(e){job.error=e.message;}update();$('batchConfirmDialog').showModal();}
  function freeze(key){for(const x of state.historyItems)if(x.key===key){x.calendarReadOnly=!!job.status[key];x.batchStatus=job.status[key];}for(const d of state.calendarDrafts.values())if(d.original.key===key){d.original.calendarReadOnly=!!job.status[key];d.original.batchStatus=job.status[key];}}
@@ -85,7 +146,7 @@ window.QuickJiraBatch=(()=>{
    for(const p of pending){
     if(state.user!==current.owner)throw Error('Phiên đăng nhập đã thay đổi.');
     const requestId=current.requestIds[p.key]||=createRequestId('batch-plan');
-    const body={date:p.date,requestId,items:[{key:p.key,project:p.project,timeSpent:p.minutes+'m',description:p.description||p.summary,overtime:false}],exactPlan:[{key:p.key,date:p.date,segments:p.segments}]};
+    const body={date:p.date,requestId,items:[{key:p.key,project:p.project,timeSpent:p.minutes+'m',description:p.description||p.summary,overtime:false}],confirmOverlaps:p.allowOverlap===true,exactPlan:[{key:p.key,date:p.date,segments:p.segments,allowOverlap:p.allowOverlap===true}]};
     current.status[p.key]='Đang gửi';freeze(p.key);update();
     try{const result=await api('/api?action=bulk-worklog',{method:'POST',requestId,body:JSON.stringify(body)});const warnings=(result.transitions||[]).filter(x=>x.ok===false).map(x=>x.message||'Chưa chuyển được trạng thái Jira');if(warnings.length)(current.notes||={})[p.key]=warnings.join('; ');current.status[p.key]='Đã log';freeze(p.key);}
     catch(e){
@@ -100,7 +161,7 @@ window.QuickJiraBatch=(()=>{
  }
  function back(){if(!job||job.running)return;if(!window.confirm('Rời lịch xem trước? Bản nháp chưa log sẽ được bỏ; các worklog đã ghi được giữ nguyên.'))return;
   const current=job,s=job.snapshot;current.running=true;
-  resetCalendarInteraction();$('batchConfirmDialog').close();void exitCalendarFullscreen();
+  resetCalendarInteraction();$('batchConfirmDialog').close();$('batchDraftDialog').close();void exitCalendarFullscreen();
   const overlay=$('historyOverlay');overlay.setAttribute('aria-hidden','true');
   hideAnimated(overlay,()=>{
    job=null;state.calendarDrafts.clear();state.historyItems=s.items;state.historyLoaded=s.loaded;state.historyView=s.view;state.calendarMode=s.mode;state.historyError=s.error;state.historyNotice=s.notice;$('historyDate').value=s.date;$('historyTitle').textContent=s.title;
@@ -118,5 +179,6 @@ window.QuickJiraBatch=(()=>{
  }
  $('batchPreviewSave').addEventListener('click',review);$('batchPreviewBack').addEventListener('click',back);$('batchConfirmSave').addEventListener('click',save);
  $('batchConfirmClose').addEventListener('click',()=>{if(!job?.running)$('batchConfirmDialog').close();});$('batchConfirmDialog').addEventListener('cancel',e=>{if(job?.running)e.preventDefault();});
- return {prepare,review,back,save,update,validateDrop,clearOnLogout(){if(job){$('historyTitle').textContent=job.snapshot.title;lockedControls.forEach(id=>{const el=$(id);if(el){el.disabled=el.dataset.batchDisabled==='true';delete el.dataset.batchDisabled;}});job.running=false;job=null;state.calendarDrafts.clear();$('historyOverlay').classList.remove('batch-preview');$('batchPreviewBar').hidden=true;$('batchConfirmDialog').close();}},get canSave(){return !!job&&!job.running&&plans().some(p=>!job.status[p.key]);},get active(){return !!job;},get running(){return busy();},get job(){return job;}};
+ $('batchDraftClose').addEventListener('click',()=>$('batchDraftDialog').close());$('batchDraftRemove').addEventListener('click',removeDraft);
+ return {prepare,review,back,save,update,validateDrop,proposeMove,proposeResize,stage,openDraft,removeDraft,clearOnLogout(){if(job){$('batchDraftDialog').close();$('historyTitle').textContent=job.snapshot.title;lockedControls.forEach(id=>{const el=$(id);if(el){el.disabled=el.dataset.batchDisabled==='true';delete el.dataset.batchDisabled;}});job.running=false;job=null;state.calendarDrafts.clear();$('historyOverlay').classList.remove('batch-preview');$('batchPreviewBar').hidden=true;$('batchConfirmDialog').close();}},get canSave(){return !!job&&!job.running&&plans().some(p=>!job.status[p.key]);},get active(){return !!job;},get running(){return busy();},get job(){return job;}};
 })();

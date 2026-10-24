@@ -85,6 +85,7 @@ async function performBulk(body, session, perf) {
   if (!validDate(date)) throw new JiraError('Ngày Bulk Logwork không hợp lệ.', 400);
 
   const items = normalizeItems(body.items);
+  if(body.exactPlan!==undefined&&!Array.isArray(body.exactPlan))throw new JiraError('Danh sách lịch xem trước không hợp lệ.',400);
   perf.report?.(5, 'Đang đọc thông tin các task');
   const mePromise = session.me ? Promise.resolve(session.me) : perf.step('myself', () => getMyself(session));
   const issueDetailsPromise = perf.step('issueBatch', () => getIssuesByKeys(items.map(item => item.key), session, body.exactPlan ? {extraFields:['issuetype']} : {}));
@@ -113,12 +114,14 @@ async function performBulk(body, session, perf) {
   perf.report?.(25, 'Đã kiểm tra giờ trống; đang phân lịch');
   const alreadyRegular = minutesInsideWindows(initialGuard.occupied, workWindowsFor(date, false));
   const requestedRegular = verified.filter(item => !item.overtime).reduce((sum, item) => sum + item.minutes, 0);
-  if (alreadyRegular + requestedRegular > MAX_REGULAR_MINUTES) {
+  const overlapConfirmed=Array.isArray(body.exactPlan)&&body.confirmOverlaps===true&&body.exactPlan.some(p=>p.allowOverlap===true);
+  if (alreadyRegular + requestedRegular > MAX_REGULAR_MINUTES && !overlapConfirmed) {
     throw new JiraError(`Ngày ${date} đã có ${fmtMinutes(alreadyRegular)} trong giờ thường. Tổng worklog thường của batch này sẽ vượt 8h. Chọn Overtime cho các dòng cần log ngoài giờ.`, 409);
   }
   let planned;
   try {
     if (body.exactPlan) {
+      if(body.exactPlan.some(p=>p.allowOverlap===true)&&body.confirmOverlaps!==true)throw new JiraError('Phải xác nhận cảnh báo xếp trùng trước khi ghi lịch.',400);
       batchPlan.validate(body.exactPlan,{[date]:initialGuard.occupied},[date]);
       if (body.exactPlan.length !== verified.length || verified.some(item=>item.overtime || !body.exactPlan.some(p=>p.key===item.key&&p.segments.reduce((n,s)=>n+s.minutes,0)===item.minutes))) throw new JiraError('Phân bổ không khớp Subtask/thời lượng đã xác nhận.',400);
       planned=body.exactPlan.map(p=>({...p,segments:p.segments.map(s=>({start:batchPlan.minute(s.start),end:batchPlan.minute(s.start)+s.minutes,minutes:s.minutes}))}));

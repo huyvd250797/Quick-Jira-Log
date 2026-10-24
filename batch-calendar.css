@@ -101,3 +101,18 @@ body.desktop-editor-open #bulkCard .bulk-capacity-card {grid-row:1/span 3;}
 #bulkCard #bulkWeek {appearance:auto;-webkit-appearance:auto;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;height:40px;min-height:40px;max-height:40px;padding:0 9px;line-height:normal;font-size:16px;font-weight:500;letter-spacing:normal;}
 /* Legacy global select padding is !important; reserve the full text line. */
 #bulkCard #bulkWeek {padding:0 9px !important;}
+/* V1.34.2: choose any day in the target week using the native calendar. */
+#bulkCard #bulkWeek {font-family:inherit;font-size:16px;font-weight:500;line-height:normal;appearance:auto;-webkit-appearance:auto;width:100%;height:38px;min-height:38px;max-height:38px;padding:5px 9px !important;background:var(--bg);color:var(--text);border:1px solid var(--line);}
+#bulkCard #bulkWeekRange {font-size:11px;color:var(--primary);white-space:nowrap;line-height:1.3;}
+#bulkCard #bulkPreviewProgress {grid-column:1/-1;width:100%;padding:0 0 4px;}
+.batch-prep-meta {display:flex;justify-content:space-between;gap:10px;font-size:11px;margin-bottom:5px;color:var(--muted);}
+#bulkPreviewMeter {height:4px;border-radius:99px;overflow:hidden;background:var(--line);}
+#bulkPreviewMeter>span {display:block;height:100%;width:0;background:var(--primary);transition:width 180ms ease;}
+#batchDraftDialog {width:min(440px,calc(100vw - 24px));max-height:85dvh;margin:auto;border:1px solid var(--line);border-radius:16px;padding:18px;color:var(--text);background:var(--card);}
+#batchDraftDialog::backdrop {background:#0009;}
+#batchDraftDialog h2 {font-size:18px;}#batchDraftDialog p {margin:12px 0;font-size:13px;line-height:1.5;overflow-wrap:anywhere;}
+#batchDraftDialog footer {display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;}#batchDraftDialog button {font-size:12px;min-height:40px;}
+#historyOverlay.batch-preview .calendar-drop-highlight.is-overlap {border-color:var(--danger);background:color-mix(in srgb,var(--danger) 16%,transparent);}
+#historyOverlay.batch-preview .week-worklog-block.is-batch-overlap {outline-color:var(--danger);}
+#historyOverlay.batch-preview .week-worklog-block.is-calendar-draft .calendar-resize-handle {display:block;}
+@media(prefers-reduced-motion:reduce){#bulkPreviewMeter>span{transition:none;}}

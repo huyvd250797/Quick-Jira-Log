@@ -1,3 +1,14 @@
+# V1.34.2
+
+- Nút Xem trước logwork, trạng thái Đang xử lý và progress theo %.
+- Chọn tuần qua calendar ngày, app tự xác định và hiển thị khoảng tuần.
+- Resize theo nhóm split, kéo cả ngày tự bỏ giờ nghỉ, thu ngắn có thể gom lại.
+- Bỏ Subtask khỏi lượt review, không xóa issue/Jira thật.
+- Đổi chỗ nhóm nhiều block và hai nhóm 8h đã tách sáng/chiều.
+- Xếp trùng chỉ sau cảnh báo; ghi exact-plan có chấp nhận rõ, giữ guard legacy và quyền Jira.
+- Giờ trống tính theo union khi có chồng thời gian; tổng worklog vẫn cộng từng dòng.
+- Bổ sung pure review planner và tests API/browser; không thêm runtime dependency.
+
 # V1.34.1
 
 - Radio Theo ngày/Theo tuần; chọn tuần qua khoảng từ ngày–đến ngày.
