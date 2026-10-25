@@ -1,26 +1,14 @@
 'use strict';
 window.QuickJiraTree=(()=>{
  const $=id=>document.getElementById(id),body=$('jiraTreeBody'),dialog=$('jiraEpicDialog');
- let revision=0,root=null,epicPage=null,epic=null,timer=null,focus=null,savedOverflow='';const icons=new Map();
+ let revision=0,root=null,epicPage=null,epic=null,timer=null,focus=null,savedOverflow='';
  const owner=()=>String(state.user?.username||'').toLowerCase();
  function button(label,fn,cls='secondary'){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.onclick=fn;return b;}
  function message(text){const p=document.createElement('p');p.className='wt-message';p.setAttribute('role','status');p.textContent=text;return p;}
- function reset(){revision++;clearTimeout(timer);if(dialog.open)dialog.close();root=epicPage=epic=null;icons.clear();body.replaceChildren();$('jiraEpicList').replaceChildren();$('jiraEpicKey').textContent='';$('jiraEpicTitle').textContent='';$('jiraEpicQuery').value='';$('jiraTreeForm').reset();$('jiraTreeFind').disabled=false;$('jiraTreeFind').textContent='Tìm';}
+ function reset(){revision++;clearTimeout(timer);if(dialog.open)dialog.close();root=epicPage=epic=null;body.replaceChildren();$('jiraEpicList').replaceChildren();$('jiraEpicKey').textContent='';$('jiraEpicTitle').textContent='';$('jiraEpicQuery').value='';$('jiraTreeForm').reset();$('jiraTreeFind').disabled=false;$('jiraTreeFind').textContent='Tìm';}
  function page(container,params){return {container,params,items:[],next:0,busy:false};}
  function current(p,token,account){return revision===token&&owner()===account&&(p===root||p===epicPage);}
- function typeIcon(item){
-  const img=document.createElement('img');img.className='wt-type-icon';img.width=20;img.height=20;img.alt=item.issueType.name;img.title=item.issueType.name;
-  const name=item.issueType.name.toLowerCase(),kind=item.issueType.subtask?'subtask':/epic/.test(name)?'epic':/bug/.test(name)?'bug':/story/.test(name)?'story':'task';
-  const paths={epic:'M13 2 5 13h6l-1 9 9-13h-6z',story:'M6 4h12v17l-6-4-6 4z',bug:'M8 8h8v9a4 4 0 0 1-8 0z M9 4h6v4 M4 10h4m8 0h4M4 15h4m8 0h4',task:'m6 12 4 4 8-9',subtask:'M5 5h10v10H5z M10 15v4h9V10h-4'};
-  const colors={epic:'#8f68cf',story:'#63a546',bug:'#df5145',task:'#388bdb',subtask:'#388bdb'};
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="${colors[kind]}"/><path d="${paths[kind]}" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>`;
-  const fallback='data:image/svg+xml;base64,'+btoa(svg);img.src=fallback;
-  const id=item.issueType.id;if(/^\d+$/.test(id||'')){
-   if(!icons.has(id))icons.set(id,api('/api?'+new URLSearchParams({action:'jira-type-icon',type:id})).then(d=>/^data:image\/(?:svg\+xml|png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(d.icon||'')?d.icon:'').catch(()=>''));
-   const account=owner(),token=revision;icons.get(id).then(src=>{if(src&&owner()===account&&token===revision)img.src=src;});
-  }
-  img.onerror=()=>{img.onerror=null;img.src=fallback;};return img;
- }
+ function typeIcon(item){const img=QuickJiraIssueIcons.create(item);img.classList.add('wt-type-icon');return img;}
  async function load(p,append=false){
   if(p.busy)return;p.busy=true;const token=revision,account=owner(),loading=message('');loading.classList.add('wt-loading');loading.setAttribute('aria-label','Đang tải danh sách');p.container.append(loading);p.container.setAttribute('aria-busy','true');
   if(p===root){$('jiraTreeFind').disabled=true;$('jiraTreeFind').textContent='Đang tải…';}

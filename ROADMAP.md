@@ -1,3 +1,6 @@
+# V1.35.2 — Đã xây dựng
+Đồng nhất icon loại công việc ở các danh sách Jira/logwork/thống kê. Xem RELEASE_V1.35.2.md. Đề xuất kế tiếp V1.36.0 — Truy cập nhanh, chưa xây dựng.
+
 # V1.35.1 — Đã xây dựng
 Thay nhánh xổ bằng danh sách Epic trong popup/bottom sheet, tìm chứa từ không dấu theo mã/tên qua phân trang, icon loại Jira và toolbar gọn. Xem RELEASE_V1.35.1.md. Kế tiếp đề xuất V1.36.0 — Truy cập nhanh; chưa xây dựng.
 

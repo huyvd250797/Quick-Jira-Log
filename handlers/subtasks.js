@@ -19,6 +19,8 @@ module.exports = async function handler(req, res) {
       summary: issue?.fields?.summary || '',
       project: issue?.fields?.project?.key || '',
       status: issue?.fields?.status?.name || '',
+      issueTypeId: String(issue?.fields?.issuetype?.id || ''),
+      isSubtask: typeof issue?.fields?.issuetype?.subtask === 'boolean' ? issue.fields.issuetype.subtask : null,
       issueType: issue?.fields?.issuetype?.name || '',
       priority: issue?.fields?.priority?.name || '',
       timeSpentSeconds: Number(issue?.fields?.timespent || 0),

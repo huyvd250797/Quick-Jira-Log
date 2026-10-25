@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.35.1';
+const APP_VERSION = '1.35.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1132,7 +1132,7 @@ function renderFilterIssues() {
     return `
       <button class="issue-row${String($('key')?.value || '').toUpperCase() === String(issue.key || '').toUpperCase() ? ' is-selected' : ''}" type="button" data-key="${escapeHtml(issue.key)}" data-project="${escapeHtml(issue.project)}" data-summary="${escapeHtml(issue.summary || '')}">
         <div class="issue-main">
-          <div class="issue-key-line"><strong>${escapeHtml(issue.key)}</strong>${issue.status ? `<span class="status-pill">${escapeHtml(issue.status)}</span>` : ''}</div>
+          <div class="issue-key-line"><strong>${window.QuickJiraIssueIcons?.html(issue)||''}${escapeHtml(issue.key)}</strong>${issue.status ? `<span class="status-pill">${escapeHtml(issue.status)}</span>` : ''}</div>
           <div class="issue-summary">${escapeHtml(issue.summary || 'Chưa có tên công việc')}</div>
           <div class="issue-meta">${escapeHtml([issue.project, issue.issueType, issue.priority].filter(Boolean).join(' · '))}</div>
         </div>
@@ -1465,7 +1465,7 @@ function renderSummaryDetail(data) {
   if (!detail) return;
   $('summaryDetailTitle').textContent = `${detail.kind === 'project' ? 'Dự án' : 'Sub-task Type'} · ${detail.name}`;
   $('summaryDetailMeta').textContent = `${items.length} worklog · ${summaryDuration(items.reduce((sum, item) => sum + Number(item.timeSpentSeconds ?? item.minutes * 60), 0))}${state.summary.project ? ` · ${state.summary.project}` : ''}`;
-  $('summaryDetailList').innerHTML = items.length ? items.map((item, index) => `<button type="button" class="summary-worklog" data-summary-log="${index}"><span class="summary-log-date">${escapeHtml(summaryDateLabel(item.date))}<small>${escapeHtml(item.start)}–${escapeHtml(item.end)}</small></span><span class="summary-log-copy"><strong>${escapeHtml(item.key)}</strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="summary-log-hours"><strong>${escapeHtml(summaryDuration(Number(item.timeSpentSeconds ?? item.minutes * 60)))}</strong>${QuickJiraSummary.classification(item) === 'overtime' ? '<small class="summary-ot-badge">OT</small>' : QuickJiraSummary.classification(item) === 'unknown' ? '<small>Chưa rõ OT</small>' : ''}</span><span aria-hidden="true">›</span></button>`).join('') : '<p class="summary-empty">Không có worklog phù hợp bộ lọc.</p>';
+  $('summaryDetailList').innerHTML = items.length ? items.map((item, index) => `<button type="button" class="summary-worklog" data-summary-log="${index}"><span class="summary-log-date">${escapeHtml(summaryDateLabel(item.date))}<small>${escapeHtml(item.start)}–${escapeHtml(item.end)}</small></span><span class="summary-log-copy"><strong>${window.QuickJiraIssueIcons?.html(item)||''}${escapeHtml(item.key)}</strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="summary-log-hours"><strong>${escapeHtml(summaryDuration(Number(item.timeSpentSeconds ?? item.minutes * 60)))}</strong>${QuickJiraSummary.classification(item) === 'overtime' ? '<small class="summary-ot-badge">OT</small>' : QuickJiraSummary.classification(item) === 'unknown' ? '<small>Chưa rõ OT</small>' : ''}</span><span aria-hidden="true">›</span></button>`).join('') : '<p class="summary-empty">Không có worklog phù hợp bộ lọc.</p>';
   $('summaryDetailList').querySelectorAll('[data-summary-log]').forEach(button => button.addEventListener('click', () => openCorrection(items[Number(button.dataset.summaryLog)])));
 }
 
@@ -1958,7 +1958,7 @@ function renderCalendarAgenda(date) {
   const items = state.historyItems.filter(item => item.date === date).sort((a, b) => a.start.localeCompare(b.start) || a.key.localeCompare(b.key));
   const minutes = items.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
   $('calendarDayHeading').innerHTML = `<strong>${escapeHtml(historyDayLabel(date))}</strong><span>${items.length} worklog · ${escapeHtml(formatHistoryTimeSpent(minutes))}</span>`;
-  $('calendarAgenda').innerHTML = items.length ? items.map((item, index) => { const appearance = calendarAppearance(item); return `<button class="calendar-event${appearance.classes}" style="${appearance.style}" type="button" data-event-index="${index}" title="Xem và sửa ${escapeHtml(item.key)}${appearance.ot ? ' · OT' : ''}">${appearance.badge}<span class="calendar-event-time">${escapeHtml(item.start)}<small>${escapeHtml(item.end)}</small></span><span class="calendar-event-copy"><strong>${escapeHtml(item.key)} <em>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</em></strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="calendar-event-arrow" aria-hidden="true">›</span></button>`; }).join('') : '<p class="calendar-empty">Chưa có worklog trong ngày này.</p>';
+  $('calendarAgenda').innerHTML = items.length ? items.map((item, index) => { const appearance = calendarAppearance(item); return `<button class="calendar-event${appearance.classes}" style="${appearance.style}" type="button" data-event-index="${index}" title="Xem và sửa ${escapeHtml(item.key)}${appearance.ot ? ' · OT' : ''}">${appearance.badge}<span class="calendar-event-time">${escapeHtml(item.start)}<small>${escapeHtml(item.end)}</small></span><span class="calendar-event-copy"><strong>${window.QuickJiraIssueIcons?.html(item)||''}${escapeHtml(item.key)} <em>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</em></strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="calendar-event-arrow" aria-hidden="true">›</span></button>`; }).join('') : '<p class="calendar-empty">Chưa có worklog trong ngày này.</p>';
   $('calendarAgenda').querySelectorAll('[data-event-index]').forEach(button => button.addEventListener('click', () => openCorrection(items[Number(button.dataset.eventIndex)])));
 }
 
@@ -2028,7 +2028,7 @@ function renderWorklogHistory() {
     <div class="worklog-history-item" data-worklog-id="${escapeHtml(item.id)}" data-key="${escapeHtml(item.key)}">
       <div class="worklog-history-main">
         <div class="worklog-history-time"><strong>${escapeHtml(item.start)}–${escapeHtml(item.end)}</strong><span>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</span></div>
-        <div class="worklog-history-key"><strong>${escapeHtml(item.key)}</strong><small>${escapeHtml(item.summary || '')}</small></div>
+        <div class="worklog-history-key"><strong>${window.QuickJiraIssueIcons?.html(item)||''}${escapeHtml(item.key)}</strong><small>${escapeHtml(item.summary || '')}</small></div>
         ${item.description && item.description !== item.summary ? `<div class="worklog-history-desc">${escapeHtml(item.description)}</div>` : ''}
       </div>
       <div class="worklog-history-actions">
@@ -2920,7 +2920,7 @@ function renderBulkItems() {
     <div class="bulk-item${item.autoAllocated ? ' is-auto-allocated' : ''}" data-key="${escapeHtml(item.key)}">
       <div class="bulk-item-head">
         <div class="bulk-item-title">
-          <strong>${index + 1}. ${escapeHtml(item.key)}${item.autoAllocated ? '<span class="auto-time-badge">AUTO</span>' : ''}</strong>
+          <strong>${window.QuickJiraIssueIcons?.html(state.filterIssues.find(i=>i.key===item.key)||{isSubtask:true})||''}${index + 1}. ${escapeHtml(item.key)}${item.autoAllocated ? '<span class="auto-time-badge">AUTO</span>' : ''}</strong>
           <span>${escapeHtml(item.summary || 'Chưa có tên công việc')}</span>
           </div>
         <button class="bulk-remove-btn" type="button" aria-label="Bỏ ${escapeHtml(item.key)} khỏi danh sách log" title="Bỏ Sub-task này">×</button>

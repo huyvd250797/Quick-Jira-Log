@@ -32,7 +32,7 @@ async function issuePage(f,auth){
   if(Array.isArray(embedded?.worklogs)&&embedded.startAt===0&&Number.isSafeInteger(embedded.total)&&embedded.total>=0&&embedded.worklogs.length===embedded.total&&!(embedded.total===0&&Number(i.fields.timespent)>0)){
    try{const page=normalizeWorklogs(embedded,{...f,startAt:0},i.key),bytes=Buffer.byteLength(JSON.stringify(page));if(bytes<=budget){worklogs=page;budget-=bytes;}}catch{}
   }
-  seen.add(i.key);return {key:i.key,project,summary:String(i.fields.summary||''),isSubtask:i.fields.issuetype.subtask,...(worklogs?{worklogs}:{} )};
+  seen.add(i.key);return {key:i.key,project,summary:String(i.fields.summary||''),isSubtask:i.fields.issuetype.subtask,issueType:String(i.fields.issuetype.name||''),issueTypeId:String(i.fields.issuetype.id||''),...(worklogs?{worklogs}:{} )};
  });
  return {issues,total:d.total,nextStartAt:f.startAt+issues.length,hasMore:f.startAt+issues.length<d.total};
 }

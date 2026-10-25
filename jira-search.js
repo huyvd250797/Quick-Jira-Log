@@ -13,7 +13,7 @@ window.QuickJiraSearch=(()=>{
   function writeRecent(){try{localStorage.setItem(storeKey(),JSON.stringify(recent));return true;}catch{return false;}}
   function renderRecent(){
     $('jiraRecentSection').hidden=!recent.length;
-    $('jiraRecentList').innerHTML=recent.map(key=>`<button type="button" class="jira-recent-chip" data-jira-open="${esc(key)}">${esc(key)}</button>`).join('');
+    $('jiraRecentList').innerHTML=recent.map(key=>`<button type="button" class="jira-recent-chip" data-jira-open="${esc(key)}">${window.QuickJiraIssueIcons?.html(items.find(i=>i.key===key)||{key})||''}${esc(key)}</button>`).join('');
   }
   function clearView(){
     window.QuickJiraCreate?.reset();
@@ -26,12 +26,12 @@ window.QuickJiraSearch=(()=>{
     $('jiraSearchCount').textContent='Tìm công việc trên Jira';$('jiraSearchScope').textContent='';$('jiraOptionsState').textContent='';$('jiraOptionsRetryBtn').hidden=true;
     $('jiraSearchState').textContent='Nhập từ khóa hoặc chọn bộ lọc rồi bấm Tìm kiếm.';$('jiraSearchState').classList.remove('is-error');countFilters();
   }
-  function login(user){
+  function login(user){window.QuickJiraIssueIcons?.login(user);
     generation++;owner=String(user?.username||'').toLowerCase();busy=false;clearView();recent=[];
     if(owner)try{const raw=JSON.parse(localStorage.getItem(storeKey())||'[]');if(Array.isArray(raw))recent=[...new Set(raw.filter(x=>typeof x==='string'&&keyPattern.test(x)))].slice(0,10);}catch{}
     $('jiraSearchBtn').classList.toggle('hidden',!owner);renderRecent();
   }
-  function logout(){generation++;owner='';busy=false;if(peek.open)peek.close();if(dialog.open)dialog.close();clearView();recent=[];renderRecent();$('jiraSearchBtn').classList.add('hidden');$('jiraIssuePeekInfo').replaceChildren();$('jiraIssuePeekTitle').textContent='';$('jiraIssuePeekKey').textContent='';$('jiraIssueOpenLink').removeAttribute('href');}
+  function logout(){window.QuickJiraIssueIcons?.reset();generation++;owner='';busy=false;if(peek.open)peek.close();if(dialog.open)dialog.close();clearView();recent=[];renderRecent();$('jiraSearchBtn').classList.add('hidden');$('jiraIssuePeekInfo').replaceChildren();$('jiraIssuePeekTitle').textContent='';$('jiraIssuePeekKey').textContent='';$('jiraIssueOpenLink').removeAttribute('href');}
   async function run(label,work){
     if(busy||!owner)return;busy=true;const token=generation,release=QuickJiraBusy.begin(label);
     try{return await work(token);}finally{if(token===generation)busy=false;release();}
@@ -62,7 +62,7 @@ window.QuickJiraSearch=(()=>{
   }
   function dateLabel(value){const d=new Date(value);return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'}).format(d);}
   function renderItems(){
-    $('jiraSearchResults').innerHTML=items.map(item=>`<button class="jira-issue-card" type="button" data-jira-open="${esc(item.key)}"><div class="jira-card-top"><strong class="jira-issue-key">${esc(item.key)}</strong><span class="jira-status jira-status-${esc(item.status.category)}">${esc(item.status.name||'Chưa rõ trạng thái')}</span></div><span class="jira-card-title">${esc(item.summary)}</span><span class="jira-card-meta"><span>${esc(item.issueType.name)} · ${esc(item.project.key)}</span><span>${esc(item.assignee?.displayName||item.assignee?.username||'Chưa được giao')}</span></span><span class="jira-card-foot"><span>${item.parent?'↳ '+esc(item.parent):esc(item.priority)}</span><span>Cập nhật ${esc(dateLabel(item.updated)||'—')}</span></span></button>`).join('');
+    $('jiraSearchResults').innerHTML=items.map(item=>`<button class="jira-issue-card" type="button" data-jira-open="${esc(item.key)}"><div class="jira-card-top"><strong class="jira-issue-key">${window.QuickJiraIssueIcons?.html(item)||''}${esc(item.key)}</strong><span class="jira-status jira-status-${esc(item.status.category)}">${esc(item.status.name||'Chưa rõ trạng thái')}</span></div><span class="jira-card-title">${esc(item.summary)}</span><span class="jira-card-meta"><span>${esc(item.issueType.name)} · ${esc(item.project.key)}</span><span>${esc(item.assignee?.displayName||item.assignee?.username||'Chưa được giao')}</span></span><span class="jira-card-foot"><span>${item.parent?'↳ '+esc(item.parent):esc(item.priority)}</span><span>Cập nhật ${esc(dateLabel(item.updated)||'—')}</span></span></button>`).join('');
     $('jiraSearchMoreBtn').hidden=!more;
   }
   function query(){
@@ -115,7 +115,7 @@ window.QuickJiraSearch=(()=>{
   }
   function emptyPart(){return {items:[],next:0,total:null,loaded:false,more:false,limited:false,error:''};}
   function renderDetail(){
-    const item=detailContext.issue;
+    const item=detailContext.issue;window.QuickJiraIssueIcons?.create(item);
     $('jiraDetailCreateSubBtn').hidden=item.issueType.subtask;
     window.QuickJiraActions?.setIssue(item);window.QuickJiraAttachments?.setIssue(item);window.QuickJiraSubtaskEdit?.setIssue(item);
     $('jiraIssuePeekKey').textContent=item.key;$('jiraIssuePeekTitle').textContent=item.summary;$('jiraIssuePeekTitle').title=item.summary;
@@ -149,7 +149,7 @@ window.QuickJiraSearch=(()=>{
   function secondsLabel(seconds){if(seconds===null)return 'Chưa rõ thời lượng';const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=seconds%60;return [h?`${h}h`:'',m?`${m}m`:'',s?`${s}s`:''].filter(Boolean).join(' ')||'0s';}
   function renderPart(name){
     const part=detailContext.parts[name],isSub=name==='subtasks',stateBox=$(isSub?'jiraSubtasksState':'jiraWorklogsState');
-    if(isSub){$('jiraSubtaskList').innerHTML=part.items.map(item=>`<button type="button" class="jira-subtask" data-jira-child="${esc(item.key)}"><span class="jira-card-top"><span class="jira-issue-key">${esc(item.key)}</span><span class="jira-status jira-status-${esc(item.status.category)}">${esc(item.status.name)}</span></span><strong>${esc(item.summary)}</strong><span class="jira-card-meta">${esc(item.assignee?.displayName||item.assignee?.username||'Chưa được giao')}</span></button>`).join('');}
+    if(isSub){$('jiraSubtaskList').innerHTML=part.items.map(item=>`<button type="button" class="jira-subtask" data-jira-child="${esc(item.key)}"><span class="jira-card-top"><span class="jira-issue-key">${window.QuickJiraIssueIcons?.html(item)||''}${esc(item.key)}</span><span class="jira-status jira-status-${esc(item.status.category)}">${esc(item.status.name)}</span></span><strong>${esc(item.summary)}</strong><span class="jira-card-meta">${esc(item.assignee?.displayName||item.assignee?.username||'Chưa được giao')}</span></button>`).join('');}
     else{$('jiraWorklogList').innerHTML=part.items.map(w=>`<article class="jira-worklog"><div class="jira-worklog-head"><span>${esc(dateLabel(w.started)||'Chưa rõ ngày giờ')}</span><strong>${esc(secondsLabel(w.timeSpentSeconds))}</strong></div><p class="jira-worklog-author">${esc(w.author.displayName||w.author.username||'Chưa rõ người log')}</p><div class="jira-content">${w.comment.text?QuickJiraContent.render(w.comment.text):'<p class="jira-search-note">Không có mô tả.</p>'}</div>${w.comment.truncated?'<p class="jira-search-note">Nội dung dài đã được rút gọn. Mở Jira để xem đầy đủ.</p>':''}</article>`).join('');}
     const sum=part.items.reduce((n,w)=>n+(w.timeSpentSeconds||0),0);
     stateBox.textContent=part.error||(!part.items.length?'Chưa có '+(isSub?'subtask':'worklog')+' được trả về.':`${part.items.length} / ${part.total} ${isSub?'subtask':'worklog'}${isSub?'':` · Giờ đã tải: ${secondsLabel(sum)}${part.items.some(w=>w.timeSpentSeconds===null)?' (còn thời lượng chưa rõ)':''}`}`);

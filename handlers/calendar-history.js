@@ -25,7 +25,7 @@ module.exports=async(req,res)=>{
     if(!discovery.ok){discovery=await safeKeys(()=>searchIssuesWithWorklogDate(date,session,endDate));sourceDetails.fallback=true;}
     if(!discovery.ok)throw new JiraError('Không có quyền hoặc chưa đọc được lịch người dùng đã chọn trên Jira.',discovery.status===403?403:502);
     const keys=[...new Set(discovery.keys)].slice(0,500),truncated=discovery.keys.length>500||!!discovery.truncated,skipped=[];
-    const metadataPromise=getIssuesByKeys(keys,session).then(issues=>({issues})).catch(error=>{if(error.status===401)return {issues:[],fatal:error};return {issues:[],partial:true};});
+    const metadataPromise=getIssuesByKeys(keys,session,{extraFields:['issuetype']}).then(issues=>({issues})).catch(error=>{if(error.status===401)return {issues:[],fatal:error};return {issues:[],partial:true};});
     const results=await mapWithConcurrency(keys,12,async key=>{
       try{return {key,worklogs:await getIssueWorklogs(key,session)};}
       catch(error){if(error.status===401)throw error;skipped.push({key,status:error.status||0});return {key,worklogs:[]};}
@@ -40,7 +40,7 @@ module.exports=async(req,res)=>{
       if(!parsed||parsed.date<date||parsed.date>endDate||!Number.isFinite(seconds)||seconds<=0)continue;
       const id=String(worklog.id||''),identity=key+'|'+id;if(!id||seen.has(identity))continue;seen.add(identity);
       const fields=issueMap.get(key)?.fields||{},label=readLabel(worklog.comment),minutes=Math.ceil(seconds/60);
-      items.push({id,key,project:String(fields.project?.key||key.split('-')[0]||''),summary:String(fields.summary||''),status:String(fields.status?.name||''),date:parsed.date,start:minuteToHHMM(parsed.minute),end:minuteToHHMM(parsed.minute+minutes),minutes,timeSpentSeconds:seconds,started:String(worklog.started||''),description:label.description,legacyOvertime:label.overtime,overtime:false,overtimeKnown:false,overtimeSource:'',calendarReadOnly:true});
+      items.push({id,key,project:String(fields.project?.key||key.split('-')[0]||''),summary:String(fields.summary||''),issueType:String(fields.issuetype?.name||''),issueTypeId:String(fields.issuetype?.id||''),isSubtask:typeof fields.issuetype?.subtask==='boolean'?fields.issuetype.subtask:null,status:String(fields.status?.name||''),date:parsed.date,start:minuteToHHMM(parsed.minute),end:minuteToHHMM(parsed.minute+minutes),minutes,timeSpentSeconds:seconds,started:String(worklog.started||''),description:label.description,legacyOvertime:label.overtime,overtime:false,overtimeKnown:false,overtimeSource:'',calendarReadOnly:true});
     }
     const overtime=await enrichHistory(items,session);if(overtime.unavailable)sourceDetails.overtimeUnavailable=overtime.unavailable;
     items.sort((a,b)=>b.date.localeCompare(a.date)||b.start.localeCompare(a.start)||a.key.localeCompare(b.key));

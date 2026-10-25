@@ -32,7 +32,7 @@ window.QuickJiraProjectReport=(()=>{
  function addIssue(j,t){
   if(j.keys.has(t.key))return;
   const {worklogs,...info}=t,row={...info,offset:0,total:null,ids:new Set(),done:false,error:'',inflight:false};
-  if(worklogs){row.offset=worklogs.nextStartAt;row.total=worklogs.total;row.done=!worklogs.hasMore;for(const id of worklogs.ids)row.ids.add(id);for(const x of worklogs.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask});}
+  if(worklogs){row.offset=worklogs.nextStartAt;row.total=worklogs.total;row.done=!worklogs.hasMore;for(const id of worklogs.ids)row.ids.add(id);for(const x of worklogs.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask,issueType:t.issueType,issueTypeId:t.issueTypeId});}
   j.keys.add(t.key);j.issues.push(row);
  }
  async function restore(user,token){
@@ -47,7 +47,7 @@ window.QuickJiraProjectReport=(()=>{
    const byKey=new Map(j.issues.map(t=>[t.key,t]));
    for(const p of saved.pages.filter(p=>p.kind==='logs').sort((a,b)=>a.offset-b.offset)){
     const t=byKey.get(p.issue);if(!t||t.done||p.offset!==t.offset)continue;for(const id of p.payload.ids)t.ids.add(id);
-    for(const x of p.payload.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask});
+    for(const x of p.payload.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask,issueType:t.issueType,issueTypeId:t.issueTypeId});
     t.total=p.payload.total;t.offset=p.payload.nextStartAt;t.done=!p.payload.hasMore;
    }
    for(const p of saved.pages.filter(p=>p.kind==='ot'))for(const x of p.payload){const item=j.items.get(x.id);if(item){Object.assign(item,x);j.verified.add(x.id);}}
@@ -75,7 +75,7 @@ window.QuickJiraProjectReport=(()=>{
   detail();
  }
  function detail(){const p=report?.people.find(p=>p.id===selected);$('psDetail').hidden=!p;if(!p)return;
-  $('psDetail').innerHTML=`<div class="ps-detail-head"><h3>${esc(p.name)}</h3><button id="psDetailClose" class="text-btn" type="button">Thu gọn</button></div>`+p.issues.map(t=>`<details class="ps-task"><summary><span><strong>${esc(t.key)}</strong> · ${t.isSubtask?'Subtask':'Công việc khác'}<small>${esc(t.summary)}</small></span><b>${fmt(t.seconds)}</b></summary>${t.logs.sort((a,b)=>a.start.localeCompare(b.start)).map(w=>`<div class="ps-log"><div><strong>${esc(w.date.split('-').reverse().join('/'))} · ${esc(new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(w.start)))}</strong><span>${esc(w.description||'Không có mô tả')}</span></div><b>${fmt(w.seconds)}<small>${w.overtimeKnown?(w.overtime?'OT':'Thường'):'Chưa rõ OT'}</small></b></div>`).join('')}</details>`).join('');
+  $('psDetail').innerHTML=`<div class="ps-detail-head"><h3>${esc(p.name)}</h3><button id="psDetailClose" class="text-btn" type="button">Thu gọn</button></div>`+p.issues.map(t=>`<details class="ps-task"><summary><span><strong>${window.QuickJiraIssueIcons?.html(t)||''}${esc(t.key)}</strong> · ${t.isSubtask?'Subtask':'Công việc khác'}<small>${esc(t.summary)}</small></span><b>${fmt(t.seconds)}</b></summary>${t.logs.sort((a,b)=>a.start.localeCompare(b.start)).map(w=>`<div class="ps-log"><div><strong>${esc(w.date.split('-').reverse().join('/'))} · ${esc(new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(w.start)))}</strong><span>${esc(w.description||'Không có mô tả')}</span></div><b>${fmt(w.seconds)}<small>${w.overtimeKnown?(w.overtime?'OT':'Thường'):'Chưa rõ OT'}</small></b></div>`).join('')}</details>`).join('');
   $('psDetailClose').onclick=()=>{selected='';render();};
  }
  function progress(j){
@@ -118,7 +118,7 @@ window.QuickJiraProjectReport=(()=>{
    if(d.key!==t.key||!Array.isArray(d.ids)||d.ids.some(id=>t.ids.has(id))||(d.hasMore&&d.nextStartAt<=t.offset))throw Error('Trang worklog bị lặp hoặc không tiến lên.');
    if(t.total!==null&&t.total!==d.total)j.warnings.push(t.key+': worklog thay đổi trong lúc tải; cần đối chiếu lại.');
    t.total=d.total;for(const id of d.ids)t.ids.add(id);
-   for(const x of d.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask});
+   for(const x of d.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask,issueType:t.issueType,issueTypeId:t.issueTypeId});
    t.offset=d.nextStartAt;t.done=!d.hasMore;await checkpoint(j,{key:'logs|'+t.key+'|'+pageOffset,kind:'logs',issue:t.key,offset:pageOffset,payload:d});if(valid(j))paint(j);
   }
  }
