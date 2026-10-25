@@ -1,0 +1,50 @@
+/* Scoped Working Tree; existing search, calendar and editors retain their layout. */
+#jiraTreePane { min-height:0; flex:1; display:flex; flex-direction:column; overflow:hidden; }
+#jiraTreePane[hidden] { display:none; }
+.wt-toolbar { display:flex; align-items:end; gap:10px; padding:12px 16px; flex-wrap:wrap; border-bottom:1px solid var(--line); }
+.wt-toolbar label { display:flex; flex-direction:column; gap:5px; font-size:12px; min-width:0; flex:1; }
+.wt-toolbar .wt-query { flex:2; }
+.wt-toolbar input,.wt-toolbar select { width:100%; min-width:0; box-sizing:border-box; }
+.wt-toolbar button { margin:0; }
+.wt-scope { color:var(--muted); font-size:12px; padding:8px 16px; }
+.wt-body { overflow:auto; overscroll-behavior:contain; padding:0 12px 20px; flex:1; min-height:0; }
+.wt-node { border-bottom:1px solid var(--line); }
+.wt-row { display:flex; align-items:center; gap:8px; padding:10px 0; }
+.wt-row button { margin:0; }
+.wt-toggle,.wt-add { flex:none; width:36px; min-height:38px; padding:4px; border:1px solid var(--line); background:var(--card); color:var(--primary); border-radius:9px; font-size:23px; }
+.wt-open { flex:1; min-width:0; text-align:left; display:flex; flex-direction:column; gap:5px; border:0; padding:3px; background:transparent; color:var(--text); }
+.wt-open strong { color:var(--primary); font-size:13px; }
+.wt-open span { font-size:14px; overflow-wrap:anywhere; }
+.wt-open small,.wt-path { color:var(--muted); font-size:12px; }
+.wt-path { padding:0 0 8px 44px; }
+.wt-path button { margin:0; padding:2px 4px; }
+.wt-children { margin-left:16px; padding-left:10px; border-left:2px solid var(--line); }
+.wt-children[hidden] { display:none; }
+.wt-message { padding:12px; color:var(--muted); font-size:14px; }
+.wt-message button { margin-left:10px; }
+.wt-more { display:block; margin:10px auto; }
+.wt-loading { height:64px; border-radius:10px; background:linear-gradient(100deg,var(--line) 20%,var(--card) 45%,var(--line) 70%); background-size:240% 100%; animation:wt-shimmer 1.3s ease-in-out infinite; }
+.wt-highlight { background:color-mix(in srgb,var(--primary) 15%,transparent); }
+@keyframes wt-shimmer { to { background-position:-180% 0; } }
+@media(min-width:1000px){ body:has(#jiraSearchDialog.jira-tree-mode[open]) #jiraIssuePeekDialog { width:min(56vw,850px); margin-right:24px; } }
+@media(max-width:600px){
+ .jira-tree-mode .jira-workspace-toolbar { flex-wrap:wrap; }
+ #jiraSearchDialog .jira-source-switch { min-width:0; }
+ #jiraSearchDialog .jira-source-switch button { padding:9px 10px; font-size:12px; white-space:nowrap; }
+ .wt-toolbar { gap:8px; padding:10px; }
+ .wt-toolbar label { flex:1 1 35%; }
+ .wt-toolbar .wt-query { flex:1 1 55%; }
+ .wt-toolbar input,.wt-toolbar select { font-size:16px; }
+ .wt-children { margin-left:5px; padding-left:6px; }
+ .wt-row { gap:5px; flex-wrap:wrap; }
+ .wt-row .jira-status { margin-left:42px; font-size:11px; }
+ .wt-row .wt-add { margin-left:auto; }
+ .wt-open { flex-basis:calc(100% - 50px); }
+}
+@media(prefers-reduced-motion:reduce){ .wt-loading { animation:none; } }
+@media(max-width:600px){
+ #jiraSearchDialog .jira-workspace-toolbar { display:flex; flex-wrap:wrap; gap:8px; }
+ #jiraSearchDialog .jira-source-switch { display:flex; flex:1 1 100%; width:100%; }
+ #jiraSearchDialog .jira-source-switch button { flex:1; min-width:0; }
+ #jiraSearchDialog #jiraCreateBtn { min-width:0; width:auto; margin-left:auto; padding:8px 12px; font-size:12px; }
+}

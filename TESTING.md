@@ -1,3 +1,6 @@
+# Kiểm tra V1.35.0
+Xem RELEASE_V1.35.0.md. Chạy npm test, npm run test:tree-ui và các browser suite Jira/search/create/filters, batch-review, live-update. QA cần Playwright và Chromium riêng; không đưa browser/runtime QA vào source ZIP.
+
 # Kiểm thử V1.34.7
 
 - `npm test`: toàn bộ package unit/API hồi quy đạt. Range audit test bổ sung kiểm tra NDJSON chunk đầu chứa progress trước khi worklog đọc xong, nhiều mức % đơn điệu,100% sau thành công và403 không100%; giữ7→1 shared read, fresh request/guard/tác giả/ngày/quyền.

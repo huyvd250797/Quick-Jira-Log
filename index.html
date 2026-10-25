@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.34.7</title>
+  <title>Quick Jira Log · V1.35.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="/calendar-experience.css" />
   <link rel="stylesheet" href="/calendar-desktop.css" />
   <link rel="stylesheet" href="/jira-search.css" />
+  <link rel="stylesheet" href="/jira-working-tree.css" />
   <link rel="stylesheet" href="/jira-detail.css" />
   <link rel="stylesheet" href="/jira-editor.css">
   <link rel="stylesheet" href="/jira-subtask-edit.css">
@@ -45,7 +46,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.34.7</div>
+      <div class="boot-version">V1.35.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -54,7 +55,7 @@
     <section class="brand">
       <button id="brandRefreshBtn" class="logo-refresh-btn" type="button" aria-label="Làm mới dữ liệu, giữ phiên hiện tại" title="Làm mới dữ liệu"><img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" /></button>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.34.7</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.35.0</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -453,7 +454,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.34.7 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.35.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -541,12 +542,23 @@
   <script src="/jira-create.js" defer></script>
   <script src="/jira-subtask-edit.js" defer></script>
   <script src="/jira-search.js" defer></script>
+  <script src="/jira-working-tree.js" defer></script>
   <script src="/jira-attachments.js" defer></script>
   <script src="/jira-image-viewer.js" defer></script>
   <script src="/jira-detail-reading.js" defer></script>
   <dialog id="jiraSearchDialog" aria-labelledby="jiraSearchTitle">
     <header class="jira-search-head"><div><h2 id="jiraSearchTitle">Công việc Jira</h2></div><button id="jiraSearchCloseBtn" class="icon-btn" type="button" aria-label="Đóng tra cứu">×</button></header>
-    <div class="jira-workspace-toolbar"><div class="jira-source-switch" role="group" aria-label="Nguồn công việc"><button id="jiraSearchModeBtn" type="button" aria-pressed="true">Tìm kiếm</button><button id="jiraFilterModeBtn" type="button" aria-pressed="false">Filter Jira</button></div><button id="jiraCreateBtn" class="primary" type="button"><span aria-hidden="true">+</span> Tạo công việc</button></div>
+    <div class="jira-workspace-toolbar"><div class="jira-source-switch" role="group" aria-label="Nguồn công việc"><button id="jiraSearchModeBtn" type="button" aria-pressed="true">Tìm kiếm</button><button id="jiraFilterModeBtn" type="button" aria-pressed="false">Filter Jira</button><button id="jiraTreeModeBtn" type="button" aria-pressed="false">Working Tree</button></div><button id="jiraCreateBtn" class="primary" type="button"><span aria-hidden="true">+</span> Tạo công việc</button></div>
+    <section id="jiraTreePane" hidden aria-label="Working Tree">
+      <form id="jiraTreeForm" class="wt-toolbar">
+        <label>Dự án<input id="jiraTreeProject" list="jiraProjectOptions" maxlength="100" placeholder="Mã dự án" autocomplete="off" required></label>
+        <label class="wt-query">Tìm công việc<input id="jiraTreeQuery" type="search" maxlength="160" placeholder="Mã hoặc nội dung…" autocomplete="off"></label>
+        <label>Phạm vi<select id="jiraTreeKind"><option value="epics">Epic</option><option value="search">Story / Task / Bug</option></select></label>
+        <button id="jiraTreeFind" class="primary" type="submit">Tìm</button>
+      </form>
+      <div class="wt-scope">Dự án → Epic → Story / Task / Bug → Subtask · Theo quan hệ Jira</div>
+      <div id="jiraTreeBody" class="wt-body"><p>Chọn dự án để duyệt Epic.</p></div>
+    </section>
     <form id="jiraSavedForm" class="jira-search-form" hidden><div class="jira-saved-select"><label for="jiraSavedSelect" class="sr-only">Filter đã lưu</label><select id="jiraSavedSelect"><option value="">Chọn filter</option></select><button id="jiraFilterExpandBtn" class="secondary" type="button" aria-expanded="true" aria-label="Tìm hoặc đổi filter" title="Tìm filter"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button></div><div id="jiraFilterTools"><div class="jira-saved-find"><label for="jiraSavedName" class="sr-only">Tên filter trên Jira</label><input id="jiraSavedName" type="search" maxlength="100" placeholder="Tìm filter theo tên" autocomplete="off"><button id="jiraSavedFindBtn" class="secondary" type="button">Tìm</button></div><button id="jiraFilterReloadBtn" type="button" class="text-btn">Tải lại kết quả</button><details class="jira-filter-id"><summary>Dùng ID filter</summary><label for="jiraSavedId">ID filter<input id="jiraSavedId" type="text" inputmode="numeric" maxlength="20" placeholder="Ví dụ 12345" autocomplete="off"></label><button type="submit" class="secondary">Áp dụng ID</button></details><p id="jiraSavedState" class="jira-search-note" role="status"></p><button id="jiraSavedRetryBtn" class="text-btn" type="button" hidden>Tải lại filter</button></div></form>
     <form id="jiraSearchForm" class="jira-search-form">
       <div class="jira-query-row"><label for="jiraQuery" class="sr-only">Mã hoặc nội dung công việc</label><input id="jiraQuery" type="search" maxlength="160" minlength="2" placeholder="Mã hoặc nội dung · ví dụ EPU01-2840" autocomplete="off" enterkeyhint="search" /><button class="primary" type="submit">Tìm kiếm</button></div>

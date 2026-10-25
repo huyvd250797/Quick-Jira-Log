@@ -1,12 +1,12 @@
 {
   "name": "quick-jira-log",
-  "version": "1.34.7",
+  "version": "1.35.0",
   "private": true,
   "engines": {
     "node": "24.x"
   },
   "scripts": {
-    "test": "node tests/run-tests.js && node tests/auth-tests.js && node tests/history-tests.js && node tests/hardening-tests.js && node tests/ui-tools-tests.js && node tests/week-progress-tests.js && node tests/calendar-style-tests.js && node tests/correction-overtime-tests.js && node tests/creation-ot-tests.js && node tests/native-form-tests.js && node tests/summary-tests.js && node tests/subtask-type-tests.js && node tests/calendar-edit-tests.js && node tests/calendar-drafts-tests.js && node tests/calendar-swap-tests.js && node tests/swap-motion-tests.js && node tests/calendar-viewer-tests.js && node tests/calendar-refinement-tests.js && node tests/performance-tests.js && node tests/read-scope-tests.js && node tests/calendar-resize-tests.js && node tests/calendar-zoom-tests.js && node tests/calendar-experience-tests.js && node tests/calendar-fit-tests.js && node tests/calendar-split-tests.js && node tests/calendar-split-integration-tests.js && node tests/calendar-regroup-tests.js && node tests/jira-search-tests.js && node tests/jira-detail-tests.js && node tests/jira-update-tests.js && node tests/jira-action-ui-tests.js && node tests/jira-create-tests.js && node tests/jira-create-ui-tests.js && node tests/jira-filter-tests.js && node tests/jira-attachment-tests.js && node tests/jira-editor-tests.js && node tests/jira-subtask-edit-tests.js && node tests/jira-parent-edit-tests.js && node tests/jira-editor-image-tests.js && node tests/project-stats-tests.js && node tests/stats-overtime-tests.js && node tests/progress-eta-tests.js && node tests/batch-plan-tests.js && node tests/batch-plan-api-tests.js && node tests/batch-review-tests.js && node tests/range-audit-tests.js",
+    "test": "node tests/run-tests.js && node tests/auth-tests.js && node tests/history-tests.js && node tests/hardening-tests.js && node tests/ui-tools-tests.js && node tests/week-progress-tests.js && node tests/calendar-style-tests.js && node tests/correction-overtime-tests.js && node tests/creation-ot-tests.js && node tests/native-form-tests.js && node tests/summary-tests.js && node tests/subtask-type-tests.js && node tests/calendar-edit-tests.js && node tests/calendar-drafts-tests.js && node tests/calendar-swap-tests.js && node tests/swap-motion-tests.js && node tests/calendar-viewer-tests.js && node tests/calendar-refinement-tests.js && node tests/performance-tests.js && node tests/read-scope-tests.js && node tests/calendar-resize-tests.js && node tests/calendar-zoom-tests.js && node tests/calendar-experience-tests.js && node tests/calendar-fit-tests.js && node tests/calendar-split-tests.js && node tests/calendar-split-integration-tests.js && node tests/calendar-regroup-tests.js && node tests/jira-search-tests.js && node tests/jira-detail-tests.js && node tests/jira-update-tests.js && node tests/jira-action-ui-tests.js && node tests/jira-create-tests.js && node tests/jira-create-ui-tests.js && node tests/jira-filter-tests.js && node tests/jira-attachment-tests.js && node tests/jira-editor-tests.js && node tests/jira-subtask-edit-tests.js && node tests/jira-parent-edit-tests.js && node tests/jira-editor-image-tests.js && node tests/project-stats-tests.js && node tests/stats-overtime-tests.js && node tests/progress-eta-tests.js && node tests/batch-plan-tests.js && node tests/batch-plan-api-tests.js && node tests/batch-review-tests.js && node tests/range-audit-tests.js && node tests/working-tree-tests.js",
     "test:ui": "node tests/browser/background-loading.cjs && node tests/browser/calendar-experience.cjs && node tests/browser/jira-editor-images.cjs && node tests/browser/jira-parent-edit.cjs && node tests/browser/logwork-compact.cjs && node tests/browser/batch-calendar.cjs && node tests/browser/batch-review.cjs && node tests/browser/batch-day-review.cjs && node tests/browser/batch-onboarding.cjs && node tests/browser/live-update.cjs",
     "test:branding": "node tests/browser/branding.cjs",
     "test:performance": "node tests/performance-tests.js",
@@ -49,6 +49,8 @@
     "test:update-live": "node tests/browser/live-update.cjs",
     "test:batch-review-ui": "node tests/browser/batch-review.cjs",
     "test:day-review-ui": "node tests/browser/batch-day-review.cjs",
-    "test:batch-help-ui": "node tests/browser/batch-onboarding.cjs"
+    "test:batch-help-ui": "node tests/browser/batch-onboarding.cjs",
+    "test:tree": "node tests/working-tree-tests.js",
+    "test:tree-ui": "node tests/browser/working-tree.cjs"
   }
 }

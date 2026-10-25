@@ -1,3 +1,14 @@
+# Cập nhật roadmap — 25/10/2026
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật & dữ liệu | Điều kiện hoàn thành | Phụ thuộc |
+| --- | --- | --- | --- | --- | --- |
+| V1.35.0 | Working Tree — đã xây dựng, QA mô phỏng | Duyệt Epic, tìm Story, tạo Subtask đúng cha | Jira Epic Link/parent, tải từng nhánh; không DB mới | API và browser QA; cần xác minh Epic thực tế sau deploy | V1.34.7 |
+| V1.36.0 | Truy cập nhanh — đề xuất, chưa xây dựng | Ghim Epic/Story, nhớ nhánh, lọc trạng thái/người phụ trách | Lưu tùy chọn theo tài khoản và truy vấn Jira | Boss chọn phạm vi trước xây dựng | V1.35.0 |
+
+Kế hoạch V1.35.0 Củng cố bảo mật API trước đây đã hủy theo yêu cầu Boss, không nằm trong bản Working Tree này. Các mục lịch sử bên dưới giữ để tham khảo.
+
+---
+
 # Bổ sung V1.34.7
 
 | Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |

@@ -1,3 +1,10 @@
+# V1.35.0 — Working Tree (25/10/2026)
+- Thêm duyệt dự án/Epic/Story/Task/Bug/Subtask, tìm kiếm và phân trang theo nhánh.
+- Tạo Subtask đúng công việc cha bằng form hiện có; tải lại nhánh đã mở sau tạo xác nhận.
+- Giữ cây khi xem chi tiết, bảo vệ trạng thái tài khoản, thử lại lỗi tại nhánh, responsive PC/mobile.
+- API đọc cây dùng Epic Link/parent Jira; không mô phỏng cây thủ công BigPicture.
+- Xem RELEASE_V1.35.0.md cho giới hạn xác minh và hướng dẫn.
+
 # V1.34.7
 
 - Stream tiến độ range day-audit theo discovery/issue/ngày; JSON compatibility giữ.

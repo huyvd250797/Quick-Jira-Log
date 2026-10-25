@@ -125,7 +125,7 @@ window.QuickJiraCreate=(()=>{
    confirmation.showModal();$('jiraCreateCancelBtn').focus({preventScroll:true});
   }catch(e){errorInfo(e.message);}
  }
- function receipt(result){ctx.receipt=result;$('jiraCreateContent').hidden=true;$('jiraCreateReceipt').hidden=false;$('jiraCreateReceiptText').textContent=result.message;$('jiraCreateFooter').hidden=true;
+ function receipt(result){if(result.outcome==='confirmed')window.QuickJiraTree?.created(ctx?.parent?.key||ctx?.presetParent?.key);ctx.receipt=result;$('jiraCreateContent').hidden=true;$('jiraCreateReceipt').hidden=false;$('jiraCreateReceiptText').textContent=result.message;$('jiraCreateFooter').hidden=true;
   const valid=/^[A-Z][A-Z0-9_]*-\d+$/.test(result.key||'');$('jiraCreateOpenBtn').hidden=!valid;$('jiraCreateReceiptLink').hidden=!valid;if(valid)$('jiraCreateReceiptLink').href='https://task.ascvn.com.vn/browse/'+encodeURIComponent(result.key);
   $('jiraCreateCheckedBtn').hidden=result.outcome==='confirmed';$('jiraCreateAnotherBtn').hidden=result.outcome!=='confirmed';const incomplete=ctx.imageJob&&!ctx.imageJob.done;$('jiraCreateImagesRetryBtn').hidden=!incomplete;$('jiraCreateImagesCheckBtn').hidden=!(incomplete&&(ctx.imageJob.finalizeUnknown||ctx.imageJob.batch.some(i=>i.status==='unknown')));info('');
  }
