@@ -1,62 +1,60 @@
 'use strict';
 window.QuickJiraTree=(()=>{
- const $=id=>document.getElementById(id),body=$('jiraTreeBody');
- let revision=0,root=null,activeProject='';const nodes=new Map();
+ const $=id=>document.getElementById(id),body=$('jiraTreeBody'),dialog=$('jiraEpicDialog');
+ let revision=0,root=null,epicPage=null,epic=null,timer=null,focus=null,savedOverflow='';const icons=new Map();
  const owner=()=>String(state.user?.username||'').toLowerCase();
  function button(label,fn,cls='secondary'){const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.onclick=fn;return b;}
- function reset(){revision++;root=null;nodes.clear();activeProject='';body.replaceChildren();$('jiraTreeProject').value='';$('jiraTreeQuery').value='';$('jiraTreeKind').value='epics';$('jiraTreeFind').disabled=false;$('jiraTreeFind').textContent='Tìm';}
- function stateBox(text){const p=document.createElement('p');p.className='wt-message';p.setAttribute('role','status');p.textContent=text;return p;}
- function createPage(container,params){return {container,params,items:[],next:0,more:false,busy:false};}
- async function load(page,append=false){
-  if(page.busy)return;page.busy=true;const token=revision,account=owner();
-  page.container.setAttribute('aria-busy','true');const loading=stateBox('');loading.classList.add('wt-loading');loading.setAttribute('aria-label','Đang tải nhánh');page.container.append(loading);
-  if(page===root){$('jiraTreeFind').disabled=true;$('jiraTreeFind').textContent='Đang tải…';}
+ function message(text){const p=document.createElement('p');p.className='wt-message';p.setAttribute('role','status');p.textContent=text;return p;}
+ function reset(){revision++;clearTimeout(timer);if(dialog.open)dialog.close();root=epicPage=epic=null;icons.clear();body.replaceChildren();$('jiraEpicList').replaceChildren();$('jiraEpicKey').textContent='';$('jiraEpicTitle').textContent='';$('jiraEpicQuery').value='';$('jiraTreeForm').reset();$('jiraTreeFind').disabled=false;$('jiraTreeFind').textContent='Tìm';}
+ function page(container,params){return {container,params,items:[],next:0,busy:false};}
+ function current(p,token,account){return revision===token&&owner()===account&&(p===root||p===epicPage);}
+ function typeIcon(item){
+  const img=document.createElement('img');img.className='wt-type-icon';img.width=20;img.height=20;img.alt=item.issueType.name;img.title=item.issueType.name;
+  const name=item.issueType.name.toLowerCase(),kind=item.issueType.subtask?'subtask':/epic/.test(name)?'epic':/bug/.test(name)?'bug':/story/.test(name)?'story':'task';
+  const paths={epic:'M13 2 5 13h6l-1 9 9-13h-6z',story:'M6 4h12v17l-6-4-6 4z',bug:'M8 8h8v9a4 4 0 0 1-8 0z M9 4h6v4 M4 10h4m8 0h4M4 15h4m8 0h4',task:'m6 12 4 4 8-9',subtask:'M5 5h10v10H5z M10 15v4h9V10h-4'};
+  const colors={epic:'#8f68cf',story:'#63a546',bug:'#df5145',task:'#388bdb',subtask:'#388bdb'};
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" rx="4" fill="${colors[kind]}"/><path d="${paths[kind]}" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>`;
+  const fallback='data:image/svg+xml;base64,'+btoa(svg);img.src=fallback;
+  const id=item.issueType.id;if(/^\d+$/.test(id||'')){
+   if(!icons.has(id))icons.set(id,api('/api?'+new URLSearchParams({action:'jira-type-icon',type:id})).then(d=>/^data:image\/(?:svg\+xml|png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(d.icon||'')?d.icon:'').catch(()=>''));
+   const account=owner(),token=revision;icons.get(id).then(src=>{if(src&&owner()===account&&token===revision)img.src=src;});
+  }
+  img.onerror=()=>{img.onerror=null;img.src=fallback;};return img;
+ }
+ async function load(p,append=false){
+  if(p.busy)return;p.busy=true;const token=revision,account=owner(),loading=message('');loading.classList.add('wt-loading');loading.setAttribute('aria-label','Đang tải danh sách');p.container.append(loading);p.container.setAttribute('aria-busy','true');
+  if(p===root){$('jiraTreeFind').disabled=true;$('jiraTreeFind').textContent='Đang tải…';}
   try{
-   const data=await api('/api?'+new URLSearchParams({action:'jira-working-tree',...page.params,startAt:String(append?page.next:0)}));
-   if(token!==revision||account!==owner())return;
-   page.items=append?[...new Map([...page.items,...data.issues].map(x=>[x.key,x])).values()]:data.issues;page.next=data.nextStartAt;page.more=data.hasMore;
-   // Append only new rows so expanded child branches and scroll position survive paging.
-   for(const el of page.container.querySelectorAll(':scope > .wt-message,:scope > .wt-more'))el.remove();
-   if(!append)page.container.replaceChildren();
-   const already=new Set([...page.container.children].map(x=>x.dataset.key));
-   for(const item of page.items)if(!already.has(item.key))page.container.append(row(item,page.params.kind));
-   if(!page.items.length)page.container.append(stateBox('Không có công việc phù hợp hoặc tài khoản chưa thấy công việc trong nhánh này.'));
-   if(page.more){const b=button(`Tải thêm (${page.items.length}/${data.total})`,()=>load(page,true));b.classList.add('wt-more');page.container.append(b);}
-  }catch(e){if(token!==revision||account!==owner())return;loading.remove();const error=stateBox(e.message);error.append(button('Thử lại',()=>{error.remove();void load(page,append);}));page.container.append(error);}
-  finally{loading.remove();page.busy=false;page.container.removeAttribute('aria-busy');if(token===revision&&page===root){$('jiraTreeFind').disabled=false;$('jiraTreeFind').textContent='Tìm';}}
+   const d=await api('/api?'+new URLSearchParams({action:'jira-working-tree',...p.params,startAt:String(append?p.next:0)}));if(!current(p,token,account))return;
+   p.items=append?[...new Map([...p.items,...d.issues].map(i=>[i.key,i])).values()]:d.issues;p.next=d.nextStartAt;
+   if(!append)p.container.replaceChildren();else p.container.querySelectorAll(':scope > .wt-more,:scope > .wt-message').forEach(n=>n.remove());
+   const keys=new Set([...p.container.children].map(n=>n.dataset.key));for(const i of p.items)if(!keys.has(i.key))p.container.append(row(i,p.params.kind==='epics',p.params.project));
+   if(!p.items.length)p.container.append(message(d.hasMore?'Chưa thấy kết quả trong phần đã đọc. Bấm Tìm tiếp để đọc phần còn lại.':'Không có công việc phù hợp.'));
+   if(d.hasMore){const more=button(d.filtered?'Tìm tiếp trong danh sách':`Tải thêm (${p.items.length}/${d.total})`,()=>load(p,true));more.classList.add('wt-more');p.container.append(more);}
+  }catch(e){if(current(p,token,account)){loading.remove();const error=message(e.message);error.append(button('Thử lại',()=>{error.remove();void load(p,append);}));p.container.append(error);}}
+  finally{loading.remove();p.busy=false;p.container.removeAttribute('aria-busy');if(current(p,token,account)&&p===root){$('jiraTreeFind').disabled=false;$('jiraTreeFind').textContent='Tìm';}}
  }
- function row(item,kind){
-  const wrap=document.createElement('article');wrap.className='wt-node';wrap.dataset.key=item.key;
-  const line=document.createElement('div');line.className='wt-row';
-  const expandable=!item.issueType.subtask;let child=null;
-  const toggle=button('›',()=>{
-   if(!child){child=document.createElement('div');child.className='wt-children';wrap.append(child);const page=createPage(child,{project:activeProject,kind:kind==='epics'?'children':'subtasks',key:item.key});nodes.set(item.key,page);void load(page);}
-   else child.hidden=!child.hidden;
-   toggle.textContent=child.hidden?'›':'⌄';toggle.setAttribute('aria-expanded',String(!child.hidden));
-  },'wt-toggle');toggle.setAttribute('aria-label','Mở nhánh '+item.key);toggle.setAttribute('aria-expanded','false');if(!expandable){toggle.disabled=true;toggle.textContent='·';}line.append(toggle);
-  const open=button('',()=>window.QuickJiraSearch?.openIssue(item.key),'wt-open');const key=document.createElement('strong');key.textContent=item.key;const title=document.createElement('span');title.textContent=item.summary;
-  const meta=document.createElement('small');meta.textContent=[item.issueType.name,item.assignee?.displayName||'Chưa được giao'].join(' · ');open.append(key,title,meta);line.append(open);
-  const status=document.createElement('span');status.className='jira-status jira-status-'+(['new','indeterminate','done'].includes(item.status.category)?item.status.category:'new');status.textContent=item.status.name;line.append(status);
-  if(expandable&&kind!=='epics'){const add=button('+',()=>window.QuickJiraCreate?.open({parent:item}),'wt-add');add.title='Tạo Subtask trong '+item.key;add.setAttribute('aria-label',add.title);line.append(add);}
-  wrap.append(line);
-  if(kind==='search'){const path=document.createElement('div');path.className='wt-path';path.textContent=activeProject+' → ';if(item.epic){path.append(button(item.epic,()=>reveal(item),'text-btn'));}else path.append('Chưa gắn Epic');wrap.append(path);}
-  return wrap;
+ function row(item,isEpic,project){
+  const article=document.createElement('article');article.className='wt-node';article.dataset.key=item.key;
+  const main=button('',()=>isEpic?openEpic(item,project):window.QuickJiraSearch?.openIssue(item.key),'wt-open');main.append(typeIcon(item));
+  const content=document.createElement('span');content.className='wt-content';const key=document.createElement('strong');key.textContent=item.key;const title=document.createElement('span');title.className='wt-title';title.textContent=item.summary;
+  const meta=document.createElement('small');meta.textContent=item.assignee?.displayName||'Chưa được giao';content.append(key,title,meta);main.append(content);article.append(main);
+  const foot=document.createElement('div');foot.className='wt-foot';const status=document.createElement('span');status.className='jira-status jira-status-'+(['new','indeterminate','done'].includes(item.status.category)?item.status.category:'new');status.textContent=item.status.name;foot.append(status);
+  if(isEpic){const arrow=document.createElement('span');arrow.textContent='›';arrow.setAttribute('aria-hidden','true');foot.append(arrow);}
+  else if(!item.issueType.subtask){const add=button('+',()=>window.QuickJiraCreate?.open({parent:item}),'wt-add');add.title='Tạo Subtask trong '+item.key;add.setAttribute('aria-label',add.title);foot.append(add);}
+  article.append(foot);return article;
  }
- async function reveal(item){
-  $('jiraTreeProject').value=item.epic.slice(0,item.epic.lastIndexOf('-'));$('jiraTreeKind').value='epics';$('jiraTreeQuery').value=item.epic;await search();
-  const node=body.querySelector(`[data-key="${CSS.escape(item.epic)}"]`);if(!node)return;
-  node.querySelector('.wt-toggle').click();const page=nodes.get(item.epic);if(!page)return;
-  // The child list is paginated; locate an exact Story without fetching the entire Epic.
-  page.params.q=item.key;while(page.busy)await new Promise(r=>setTimeout(r,30));if(!node.isConnected)return;await load(page);
-  const target=node.querySelector(`[data-key="${CSS.escape(item.key)}"]`);target?.classList.add('wt-highlight');target?.scrollIntoView({block:'nearest',behavior:'smooth'});if(target){const all=button('Xem tất cả trong Epic',()=>{delete page.params.q;page.container.replaceChildren();void load(page);});all.classList.add('wt-more');page.container.append(all);}
+ function openEpic(item,project){epic=item;focus=document.activeElement;$('jiraEpicKey').textContent=item.key;$('jiraEpicTitle').textContent=item.summary;$('jiraEpicQuery').value='';
+  if(!dialog.open){savedOverflow=document.documentElement.style.overflow;document.documentElement.style.overflow='hidden';dialog.showModal();}$('jiraEpicClose').focus({preventScroll:true});epicPage=page($('jiraEpicList'),{project,kind:'children',key:item.key});$('jiraEpicList').replaceChildren();void load(epicPage);
  }
- async function search(){
-  if(!$('jiraTreeForm').reportValidity())return;
-  revision++;activeProject=$('jiraTreeProject').value.trim().toUpperCase();nodes.clear();body.replaceChildren();
-  root=createPage(body,{project:activeProject,kind:$('jiraTreeKind').value,q:$('jiraTreeQuery').value.trim()});await load(root);
- }
- function created(parent){const page=nodes.get(parent);if(page){page.items=[];void load(page);}}
- $('jiraTreeForm').onsubmit=e=>{e.preventDefault();void search();};
- $('jiraTreeProject').onchange=()=>{revision++;root=null;nodes.clear();body.replaceChildren(stateBox('Bấm Tìm để tải Epic của dự án đã chọn.'));$('jiraTreeFind').disabled=false;$('jiraTreeFind').textContent='Tìm';};
- return {reset,created,activate(){if(!root&&!body.children.length)body.append(stateBox('Chọn dự án để duyệt Epic.'));}};
+ function searchEpic(){if(!epic)return;const params={...epicPage.params,q:$('jiraEpicQuery').value.trim()};epicPage=page($('jiraEpicList'),params);$('jiraEpicList').replaceChildren();void load(epicPage);}
+ function search(){if(!$('jiraTreeForm').reportValidity())return;revision++;if(dialog.open)dialog.close();root=page(body,{project:$('jiraTreeProject').value.trim().toUpperCase(),kind:$('jiraTreeKind').value,q:$('jiraTreeQuery').value.trim()});body.replaceChildren();void load(root);}
+ $('jiraTreeForm').onsubmit=e=>{e.preventDefault();clearTimeout(timer);search();};
+ $('jiraTreeProject').onchange=()=>{revision++;root=null;body.replaceChildren(message('Bấm Tìm để tải danh sách của dự án đã chọn.'));$('jiraTreeFind').disabled=false;$('jiraTreeFind').textContent='Tìm';};
+ $('jiraEpicForm').onsubmit=e=>{e.preventDefault();clearTimeout(timer);searchEpic();};$('jiraEpicQuery').oninput=()=>{clearTimeout(timer);timer=setTimeout(searchEpic,350);};
+ $('jiraEpicClose').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{clearTimeout(timer);epicPage=epic=null;document.documentElement.style.overflow=savedOverflow;focus?.isConnected&&focus.focus({preventScroll:true});});
+ dialog.addEventListener('keydown',e=>e.stopPropagation());
+ // Native dialog prevents background clicks; prevent wheel/touch scroll chaining as well.
+ for(const type of ['wheel','touchmove'])dialog.addEventListener(type,e=>{if(!e.target.closest('#jiraEpicList')&&e.cancelable)e.preventDefault();},{passive:false});
+ return {reset,created(){/* Child rows do not contain expanded subtask lists; opening details reads fresh. */},activate(){if(!root&&!body.children.length)body.append(message('Chọn dự án để duyệt Epic.'));}};
 })();

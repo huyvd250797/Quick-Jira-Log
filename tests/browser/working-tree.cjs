@@ -17,17 +17,18 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright'),{ser
  });
  await page.goto('http://127.0.0.1:4255');await page.waitForFunction(()=>!QuickJiraBusy.active&&QuickJiraBusy.count===0&&!document.body.classList.contains('booting'));
  await page.locator(viewport.width<900?'#mobileJiraSearchBtn':'#jiraSearchBtn').click();await page.waitForFunction(()=>!QuickJiraBusy.active&&QuickJiraBusy.count===0);
- await page.locator('#jiraTreeModeBtn').click();await page.locator('#jiraTreeProject').fill('EPU01');await page.locator('#jiraTreeFind').click();await page.waitForSelector('.wt-node');assert.equal(await page.locator('.wt-node').count(),1);assert.equal(await page.locator('.wt-node script').count(),0);
- await page.locator('.wt-toggle').first().click();await page.waitForSelector('.wt-children .wt-node');await page.locator('#jiraTreeBody > .wt-more').click();await page.waitForFunction(()=>document.querySelectorAll('#jiraTreeBody > .wt-node').length===2);assert.equal(await page.locator('.wt-children .wt-node').count(),1,'Expanded branches survive pagination');
- await page.locator('.wt-children .wt-open').click();await page.waitForFunction(()=>document.getElementById('jiraIssuePeekDialog').open);assert.equal(await page.locator('#jiraIssuePeekKey').textContent(),'EPU01-2');await page.locator('#jiraIssuePeekCloseBtn').click();await page.waitForTimeout(400);
- assert.equal(await page.locator('.wt-children .wt-node').count(),1);
- await page.locator('.wt-add').first().click();await page.waitForFunction(()=>document.getElementById('jiraCreateDialog').open&&!QuickJiraBusy.active&&QuickJiraBusy.count===0);assert.equal(contextParent,'EPU01-2');await page.locator('#jiraCreateCloseBtn').click();await page.waitForTimeout(400);
- await page.locator('#jiraTreeKind').selectOption('search');await page.locator('#jiraTreeQuery').fill('Story');await page.locator('#jiraTreeFind').click();await page.waitForSelector('.wt-path');assert((await page.locator('.wt-path').textContent()).includes('EPU01-1'));
- await page.locator('.wt-path button').click();await page.waitForSelector('.wt-highlight');assert.equal(await page.locator('.wt-highlight').getAttribute('data-key'),'EPU01-2');
- const geometry=await page.locator('#jiraSearchDialog').evaluate(d=>({overflow:d.scrollWidth>d.clientWidth+1,body:document.body.scrollWidth>innerWidth}));assert(!geometry.overflow&&!geometry.body,JSON.stringify(geometry));
- await page.screenshot({path:`/tmp/working-tree-${viewport.width}.png`});
+ await page.locator('#jiraTreeModeBtn').click();await page.locator('#jiraTreeProject').fill('EPU01');await page.locator('#jiraTreeFind').click();await page.waitForSelector('.wt-node');assert.equal(await page.locator('.wt-toggle').count(),0);assert.equal(await page.locator('.wt-node script').count(),0);
+ const toolbar=await page.evaluate(()=>{const a=document.getElementById('jiraCreateBtn').getBoundingClientRect(),b=document.querySelector('.jira-source-switch').getBoundingClientRect();return {same:Math.abs(a.top-b.top)<6,fits:a.right<=innerWidth};});assert(toolbar.same&&toolbar.fits);
+ await page.locator('#jiraTreeBody .wt-open').first().click();await page.waitForSelector('#jiraEpicList .wt-node');assert(await page.locator('#jiraEpicDialog').evaluate(e=>e.open));assert.equal(await page.locator('#jiraEpicDialog input:focus').count(),0);
+ assert.equal(await page.locator('#jiraEpicList .wt-type-icon').count(),1);
+ await page.locator('#jiraEpicQuery').fill('EPU01-');await page.waitForTimeout(500);await page.waitForSelector('#jiraEpicList .wt-node');
+ await page.locator('#jiraEpicList .wt-open').click();await page.waitForFunction(()=>document.getElementById('jiraIssuePeekDialog').open);assert.equal(await page.locator('#jiraIssuePeekKey').textContent(),'EPU01-2');await page.locator('#jiraIssuePeekCloseBtn').click();await page.waitForTimeout(400);
+ await page.locator('#jiraEpicList .wt-add').click();await page.waitForFunction(()=>document.getElementById('jiraCreateDialog').open&&!QuickJiraBusy.active&&QuickJiraBusy.count===0);assert.equal(contextParent,'EPU01-2');await page.locator('#jiraCreateCloseBtn').click();await page.waitForTimeout(400);
+ const geometry=await page.locator('#jiraEpicDialog').evaluate(d=>({overflow:d.scrollWidth>d.clientWidth+1,right:d.getBoundingClientRect().right,bottom:d.getBoundingClientRect().bottom}));assert(!geometry.overflow&&geometry.right<=viewport.width+1&&geometry.bottom<=viewport.height+1,JSON.stringify(geometry));
+ await page.screenshot({path:`/tmp/wt1351-${viewport.width}.png`});
+ await page.locator('#jiraEpicClose').click();await page.waitForTimeout(250);assert.equal(await page.locator('#jiraTreeBody .wt-node').count(),1);
  denied=true;await page.locator('#jiraTreeFind').click();await page.waitForFunction(()=>document.getElementById('jiraTreeBody').textContent.includes('Không có quyền'));denied=false;await page.locator('#jiraTreeBody button').click();await page.waitForSelector('.wt-node');
- await page.evaluate(()=>{QuickJiraSearch.logout();QuickJiraSearch.login({username:'other'});});assert.equal(await page.locator('.wt-node').count(),0);
+ await page.evaluate(()=>{QuickJiraSearch.logout();QuickJiraSearch.login({username:'other'});});assert.equal(await page.locator('.wt-node').count(),0);assert.equal(await page.locator('#jiraEpicDialog').evaluate(d=>d.open),false);
  assert.deepEqual(errors,[]);await ctx.close();console.log('Working Tree browser passed',viewport);
  }}finally{await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});

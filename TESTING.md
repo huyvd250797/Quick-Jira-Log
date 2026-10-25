@@ -1,3 +1,6 @@
+# V1.35.1
+48 bộ test API/nghiệp vụ và QA trình duyệt: xem RELEASE_V1.35.1.md.
+
 # Kiểm tra V1.35.0
 Xem RELEASE_V1.35.0.md. Chạy npm test, npm run test:tree-ui và các browser suite Jira/search/create/filters, batch-review, live-update. QA cần Playwright và Chromium riêng; không đưa browser/runtime QA vào source ZIP.
 

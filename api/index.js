@@ -8,6 +8,7 @@ const handlers = Object.freeze({
   'status': require('../handlers/status'),
   'subtasks': require('../handlers/subtasks'),
   'issue-info': require('../handlers/issue-info'),
+  'jira-type-icon': require('../handlers/jira-working-tree'),
   'jira-working-tree': require('../handlers/jira-working-tree'),
   'jira-search': require('../handlers/jira-search'),
   'jira-saved-filters': require('../handlers/jira-filters'),

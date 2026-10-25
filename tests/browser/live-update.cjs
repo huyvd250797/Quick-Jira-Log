@@ -6,7 +6,7 @@ const server=http.createServer((req,res)=>{
  const u=new URL(req.url,'http://localhost');
  if(u.pathname==='/api'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({ok:true,authenticated:false}));return;}
  let f=path.join(root,u.pathname==='/'?'index.html':u.pathname);if(!f.startsWith(root+path.sep)){res.writeHead(403);res.end();return;}
- try{let data=fs.readFileSync(f);if(u.pathname==='/sw.js')data=Buffer.from(data.toString().replace('v1.35.0-shell','v1.35.0-fixture-'+release));if(f.endsWith('index.html')&&release===2)data=Buffer.from(data.toString().replaceAll('V1.35.0','V1.34.8'));
+ try{let data=fs.readFileSync(f);if(u.pathname==='/sw.js')data=Buffer.from(data.toString().replace('v1.35.1-shell','v1.35.1-fixture-'+release));if(f.endsWith('index.html')&&release===2)data=Buffer.from(data.toString().replaceAll('V1.35.1','V1.34.8'));
  res.writeHead(200,{'Content-Type':types[path.extname(f)]||'application/octet-stream','Cache-Control':'no-store'});res.end(data);
  }catch{res.writeHead(404);res.end();}
 });
@@ -15,7 +15,7 @@ const server=http.createServer((req,res)=>{
  release=2;await page.evaluate(()=>{const now=Date.now();Date.now=()=>now+16000;window.dispatchEvent(new Event('focus'));});
  await page.waitForFunction(()=>state.swUpdateRegistration?.waiting&& !document.getElementById('appUpdateBanner').classList.contains('hidden'));
  // A real native worker installs while the original app stays open.
- assert.match(await page.title(),/V1.35.0/);await page.evaluate(()=>{state.bulkSubmitInFlight=true;});await page.locator('#appUpdateBtn').click();assert.match(await page.title(),/V1.35.0/);assert(await page.evaluate(()=>!state.swUpdateRequested));
+ assert.match(await page.title(),/V1.35.1/);await page.evaluate(()=>{state.bulkSubmitInFlight=true;});await page.locator('#appUpdateBtn').click();assert.match(await page.title(),/V1.35.1/);assert(await page.evaluate(()=>!state.swUpdateRequested));
  await page.evaluate(()=>{state.bulkSubmitInFlight=false;});await page.locator('#appUpdateBtn').click();await page.waitForFunction(()=>document.title.includes('V1.34.8'));
  assert.deepEqual(errors,[]);console.log('Live update: native worker first install, foreground discovery without closing, mutation guard, click activation and immediate reload to new HTML passed.');
  await browser.close();await new Promise(r=>server.close(r));})().catch(e=>{console.error(e);server.close();process.exit(1);});
