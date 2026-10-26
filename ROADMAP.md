@@ -1,3 +1,6 @@
+# V1.35.5 — Đã xây dựng
+Lưới Log tất cả PC: thẻ cùng kích thước, tên rút gọn, tối đa 6 thẻ đầy đủ trong một khung. Xem RELEASE_V1.35.5.md. Kế tiếp đề xuất V1.36.0, chưa xây dựng.
+
 # V1.35.4 — Đã xây dựng
 Mở rộng lưới Log tất cả PC: 3–4 cột, thẻ gọn và thêm diện tích danh sách. Xem RELEASE_V1.35.4.md. Kế tiếp đề xuất V1.36.0 — Truy cập nhanh, chưa xây dựng.
 

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.35.4';
+const APP_VERSION = '1.35.5';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -2921,7 +2921,7 @@ function renderBulkItems() {
       <div class="bulk-item-head">
         <div class="bulk-item-title">
           <strong>${window.QuickJiraIssueIcons?.html(state.filterIssues.find(i=>i.key===item.key)||{isSubtask:true})||''}${index + 1}. ${escapeHtml(item.key)}${item.autoAllocated ? '<span class="auto-time-badge">AUTO</span>' : ''}</strong>
-          <span>${escapeHtml(item.summary || 'Chưa có tên công việc')}</span>
+          <span title="${escapeHtml(item.summary || 'Chưa có tên công việc')}">${escapeHtml(item.summary || 'Chưa có tên công việc')}</span>
           </div>
         <button class="bulk-remove-btn" type="button" aria-label="Bỏ ${escapeHtml(item.key)} khỏi danh sách log" title="Bỏ Sub-task này">×</button>
       </div>
