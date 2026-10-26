@@ -147,3 +147,11 @@ html[data-theme=dark] :is(#jiraSearchDialog,#jiraCreateDialog,#jiraQuickEditDial
  .jira-workspace-toolbar { padding-top:6px; padding-bottom:6px; }
  .jira-create-footer { padding-top:7px; padding-bottom:7px; }
 }
+
+/* V1.35.8 — Shared lookup controls; no changes to calendar/logwork forms. */
+:is(#jiraSearchDialog,#jiraEpicDialog,#jiraCreateDialog,#jiraEditDialog,#jiraSubtaskEditDialog){--jira-control-height:44px;--jira-find-width:72px}
+:is(#jiraSearchDialog,#jiraEpicDialog,#jiraCreateDialog,#jiraEditDialog,#jiraSubtaskEditDialog) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select:not([multiple])){box-sizing:border-box;height:var(--jira-control-height)!important;min-height:var(--jira-control-height)!important;max-height:var(--jira-control-height)!important;font-size:16px!important;padding:8px 12px;border-radius:10px;min-width:0}
+:is(#jiraSearchDialog,#jiraEpicDialog,#jiraCreateDialog,#jiraEditDialog,#jiraSubtaskEditDialog) .jira-find-button{box-sizing:border-box;flex:0 0 var(--jira-find-width);width:var(--jira-find-width);min-width:var(--jira-find-width);height:var(--jira-control-height)!important;min-height:var(--jira-control-height)!important;max-height:var(--jira-control-height)!important;padding:0 10px;font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:10px}
+#jiraEpicCreate{box-sizing:border-box;flex:0 0 44px;height:44px;min-height:44px;max-height:44px;border-radius:10px}
+#jiraEpicCreate svg{width:20px;height:20px}
+.jira-meta-icon{display:inline-flex;align-items:center;gap:7px;min-width:0}.jira-meta-icon img{flex:none}

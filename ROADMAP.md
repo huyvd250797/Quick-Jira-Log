@@ -1,3 +1,6 @@
+# V1.35.8 — Đã xây dựng
+Chuẩn hóa controls Tra cứu, Reporter/Created và icon Type/Priority, tải/xem ảnh gốc theo phần. Xem RELEASE_V1.35.8.md. Đề xuất tiếp V1.36.0 — Truy cập nhanh, chưa xây dựng.
+
 # V1.35.7 — Đã xây dựng
 Đồng nhất nền xanh nút tìm kiếm, chuyển + tạo công việc trong Epic vào hàng tìm kiếm và tăng dấu +. Xem RELEASE_V1.35.7.md. Đề xuất tiếp V1.36.0 — Truy cập nhanh, chưa xây dựng.
 

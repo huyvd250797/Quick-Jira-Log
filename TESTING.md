@@ -1,3 +1,14 @@
+# V1.35.8 — Kiểm tra
+
+- npm test: 49 bộ nghiệp vụ/API; thêm image-original-tests kiểm tra scoped image chunks, Content-Range/độ dài, lỗi không hỗ trợ Range, ID/phần ảnh không hợp lệ và proxy priority icon. Jira detail tests xác nhận Reporter, Created, priority ID và không lộ email.
+- Browser detail-polish: PC1440, mobile390/320; 8 nhãn đúng thứ tự, Reporter/Created, hai icon Type/Priority; ghép 2 phần ảnh 4 MB, giải mã ảnh 2048px, zoom tăng kích thước, thu hồi nguồn ảnh khi đóng; không lỗi console.
+- Browser Jira detail và detail-fixes: 4 viewport, đọc mô tả/ảnh, phân trang Subtask/Worklog, trạng thái, tạo Subtask và quyền API mô phỏng.
+- Browser epic-create-recents: 4 viewport sáng/tối, tìm kiếm, tạo Story đúng Epic và dấu + 20px.
+- Browser live-update: service worker đổi phiên bản; syntax/JSON/ZIP được kiểm tra.
+- API Jira được mô phỏng, chưa thử Jira công ty hoặc iPhone/Safari vật lý. Bộ browser jira-editor-images cũ gọi nút + chung đã bỏ từ V1.35.6; đã đổi fixture mở form qua API client để kiểm tra luồng editor hiện có.
+
+---
+
 # V1.35.7 — Kiểm tra giao diện
 
 - Browser epic-create-recents: PC 1440px, mobile 390/320px và ngang 844px; theme sáng/tối. So sánh computed background của các nút tìm công việc, Working Tree, Epic, filter, người phụ trách với nút Logwork: cùng màu xanh; chữ trắng. Nút + cùng hàng, sau Tìm, không tràn, vùng bấm >=44px và SVG 28px. Tạo Story trong Epic vẫn gửi đúng Epic đích.

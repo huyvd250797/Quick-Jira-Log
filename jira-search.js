@@ -129,9 +129,9 @@ window.QuickJiraSearch=(()=>{
     $('jiraDetailCreateSubBtn').hidden=item.issueType.subtask;
     window.QuickJiraActions?.setIssue(item);window.QuickJiraAttachments?.setIssue(item);window.QuickJiraSubtaskEdit?.setIssue(item);
     $('jiraIssuePeekKey').textContent=item.key;$('jiraIssuePeekTitle').textContent=item.summary;$('jiraIssuePeekTitle').title=item.summary;
-    const fields=[['Dự án',item.project.name||item.project.key],['Loại',item.issueType.name],['Trạng thái',item.status.name],['Người phụ trách',item.assignee?.displayName||item.assignee?.username||'Chưa được giao'],['Ưu tiên',item.priority||'—'],['Cập nhật',dateLabel(item.updated)||'—']];
+    const fields=[['Project',item.project.name||item.project.key],['Type',item.issueType.name],['Status',item.status.name],['Assignee',item.assignee?.displayName||item.assignee?.username||'—'],['Reporter',item.reporter?.displayName||item.reporter?.username||'—'],['Priority',item.priority||'—'],['Created',dateLabel(item.created)||'—'],['Updated',dateLabel(item.updated)||'—']];
     const tone=({'green':'green','yellow':'amber','blue':'blue','blue-gray':'slate','medium-gray':'slate','brown':'amber'})[item.status.colorName]||({done:'green',indeterminate:'blue',new:'slate'})[item.status.category]||'slate';
-    $('jiraIssuePeekInfo').innerHTML=fields.map(([name,value])=>`<div><dt>${esc(name)}</dt><dd>${name==='Trạng thái'?`<span class="jira-status jira-tone-${tone}">${esc(value)}</span>`:esc(value)}</dd></div>`).join('');
+    $('jiraIssuePeekInfo').innerHTML=fields.map(([name,value])=>`<div><dt>${esc(name)}</dt><dd>${name==='Status'?`<span class="jira-status jira-tone-${tone}">${esc(value)}</span>`:name==='Type'?`<span class="jira-meta-icon">${window.QuickJiraIssueIcons?.html(item)||''}${esc(value)}</span>`:name==='Priority'&&item.priority?`<span class="jira-meta-icon">${window.QuickJiraIssueIcons?.priority(item).outerHTML||''}${esc(value)}</span>`:esc(value)}</dd></div>`).join('');
     const media={key:item.key,attachments:item.attachments||[]};
     $('jiraIssueDescription').innerHTML=(item.descriptionHtml?QuickJiraContent.rendered(item.descriptionHtml,media):'')||(item.description.text?QuickJiraContent.render(item.description.text,media):'<p class="jira-search-note">Chưa có mô tả.</p>');
     $('jiraDescriptionNotice').hidden=!item.description.truncated;

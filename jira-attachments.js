@@ -1,12 +1,29 @@
 'use strict';
 window.QuickJiraAttachments=(()=>{
  const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- let ctx=null,busy=false;const preview=$('jiraFilePreviewDialog');
+ let ctx=null,busy=false,previewSeq=0,previewAbort=null,previewObject='';const preview=$('jiraFilePreviewDialog');
  const size=n=>n===null?'':n<1024?n+' B':n<1048576?(n/1024).toFixed(0)+' KB':(n/1048576).toFixed(1)+' MB';
  const url=(key,id,download=false)=>'/api?'+new URLSearchParams({action:'jira-attachment-content',key,id,...(download?{download:'1'}:{})});
  function clear(){ctx=null;busy=false;$('jiraFileList').replaceChildren();$('jiraFilesState').textContent='';$('jiraFileInput').value='';$('jiraFileUploadForm').hidden=true;$('jiraFileCheckedBtn').hidden=true;if(preview.open)preview.close();$('jiraFilePreviewImage').removeAttribute('src');}
  function setIssue(item){clear();ctx={key:item.key,items:[],inline:item.attachments||[],loaded:false,locked:false,maxBytes:0};}
- function previewInline(id){const file=ctx?.inline.find(f=>f.id===id);if(!file)return;$('jiraFilePreviewTitle').textContent=file.name;$('jiraFilePreviewState').textContent='Đang tải ảnh…';$('jiraFilePreviewImage').src=url(ctx.key,id)+(file.inline?'':'&thumbnail=1');preview.showModal();$('jiraFilePreviewCloseBtn').focus({preventScroll:true});}
+ function releasePreview(){previewSeq++;previewAbort?.abort();previewAbort=null;if(previewObject){URL.revokeObjectURL(previewObject);previewObject='';}}
+ async function openImage(file){
+  if(!ctx)return;releasePreview();const seq=previewSeq,key=ctx.key,controller=previewAbort=new AbortController();
+  $('jiraFilePreviewTitle').textContent=file.name;$('jiraFilePreviewState').textContent='Đang tải ảnh gốc…';
+  const small=file.inline===true||Number.isSafeInteger(file.size)&&file.size<=3*1048576;
+  $('jiraFilePreviewImage').src=url(key,file.id)+(small?'':'&thumbnail=1');if(!preview.open)preview.showModal();$('jiraFilePreviewCloseBtn').focus({preventScroll:true});
+  if(small)return;
+  try{
+   if(!Number.isSafeInteger(file.size)||file.size>20*1048576)throw Error('Ảnh lớn hơn giới hạn 20 MB; mở Jira để xem bản gốc.');
+   const parts=[],count=Math.ceil(file.size/(2*1048576));
+   for(let i=0;i<count;i++){
+    const response=await fetch(url(key,file.id)+'&part='+i,{credentials:'same-origin',cache:'no-store',signal:controller.signal});if(!response.ok)throw Error('Chưa tải được ảnh gốc; đang dùng ảnh xem trước. Mở Jira để xem bản gốc.');
+    parts.push(await response.blob());if(seq!==previewSeq||ctx?.key!==key)return;$('jiraFilePreviewState').textContent=`Đang tải ảnh gốc · ${Math.round((i+1)/count*100)}%`;
+   }
+   if(seq!==previewSeq||!preview.open)return;previewObject=URL.createObjectURL(new Blob(parts,{type:parts[0]?.type||'image/png'}));$('jiraFilePreviewImage').src=previewObject;
+  }catch(e){if(seq===previewSeq&&e.name!=='AbortError')$('jiraFilePreviewState').textContent=e.message;}
+ }
+ function previewInline(id){const file=ctx?.inline.find(f=>f.id===id);if(file)void openImage(file);}
  async function run(label,fn){if(!ctx||busy||QuickJiraBusy.active)return;const current=ctx;busy=true;const release=QuickJiraBusy.begin(label);try{await fn(current);}catch(e){if(ctx===current)$('jiraFilesState').textContent=e.message;}finally{if(ctx===current)busy=false;release();}}
  function render(){const c=ctx;$('jiraFileList').innerHTML=c.items.map(f=>`<article class="jira-file-card"><div class="jira-file-symbol" aria-hidden="true">${f.preview?'▧':'▤'}</div><div><strong>${esc(f.name)}</strong><small>${esc([size(f.size),f.author].filter(Boolean).join(' · '))}</small><div class="jira-file-actions">${f.preview?`<button type="button" class="text-btn" data-file-preview="${esc(f.id)}">Xem ảnh</button>`:''}${f.size!==null&&f.size<=3*1048576?`<button type="button" class="text-btn" data-file-download="${esc(f.id)}">Tải xuống</button>`:''}${f.url?`<a href="${esc(f.url)}" target="_blank" rel="noopener noreferrer">Mở Jira ↗</a>`:''}</div></div></article>`).join('');}
  async function read(c){const data=await api('/api?'+new URLSearchParams({action:'jira-attachments',key:c.key}));if(ctx!==c)return;c.items=data.items;c.loaded=true;c.maxBytes=data.maxBytes;c.canUpload=data.canUpload;render();$('jiraFileUploadForm').hidden=!c.canUpload;$('jiraFileInput').disabled=c.locked;$('jiraFileUploadBtn').disabled=c.locked;$('jiraFileLimit').textContent='Tối đa '+size(c.maxBytes)+'/tệp';$('jiraFilesState').textContent=c.locked?'Kiểm tra các tệp đã gửi trước khi tải tiếp.':!c.items.length?'Chưa có tệp đính kèm.':c.items.length+' tệp';}
@@ -24,9 +41,9 @@ window.QuickJiraAttachments=(()=>{
   });
  }
  $('jiraFileUploadForm').onsubmit=upload;$('jiraFilesRefreshBtn').onclick=()=>load(true);$('jiraFileCheckedBtn').onclick=()=>{if(!ctx)return;ctx.locked=false;$('jiraFileCheckedBtn').hidden=true;$('jiraFileInput').disabled=false;$('jiraFileUploadBtn').disabled=false;$('jiraFileInput').value='';$('jiraFilesState').textContent='Chọn lại những tệp còn thiếu sau khi đã đối chiếu Jira.';};
- $('jiraFileList').onclick=e=>{const p=e.target.closest('[data-file-preview]'),d=e.target.closest('[data-file-download]');if(d)void download(d.dataset.fileDownload);if(p&&ctx){const f=ctx.items.find(f=>f.id===p.dataset.filePreview);if(!f)return;$('jiraFilePreviewTitle').textContent=f.name;$('jiraFilePreviewState').textContent='Đang tải ảnh…';$('jiraFilePreviewImage').src=url(ctx.key,f.id);preview.showModal();$('jiraFilePreviewCloseBtn').focus({preventScroll:true});}};
- $('jiraFilePreviewImage').onload=()=>$('jiraFilePreviewState').textContent='';$('jiraFilePreviewImage').onerror=()=>$('jiraFilePreviewState').textContent='Không tải được ảnh. Thử tải lại danh sách hoặc mở trên Jira.';
- $('jiraFilePreviewCloseBtn').onclick=()=>preview.close();preview.addEventListener('close',()=>$('jiraFilePreviewImage').removeAttribute('src'));preview.addEventListener('keydown',e=>e.stopPropagation());
+ $('jiraFileList').onclick=e=>{const p=e.target.closest('[data-file-preview]'),d=e.target.closest('[data-file-download]');if(d)void download(d.dataset.fileDownload);if(p&&ctx){const f=ctx.items.find(f=>f.id===p.dataset.filePreview);if(!f)return;void openImage(f);}};
+ $('jiraFilePreviewImage').onload=()=>{if(!new URL($('jiraFilePreviewImage').src,location.href).searchParams.has('thumbnail'))$('jiraFilePreviewState').textContent='';};$('jiraFilePreviewImage').onerror=()=>$('jiraFilePreviewState').textContent='Không tải được ảnh. Thử tải lại danh sách hoặc mở trên Jira.';
+ $('jiraFilePreviewCloseBtn').onclick=()=>preview.close();preview.addEventListener('close',()=>{releasePreview();$('jiraFilePreviewImage').removeAttribute('src');});preview.addEventListener('keydown',e=>e.stopPropagation());
  $('jiraIssueDescription').addEventListener('click',e=>{const button=e.target.closest('[data-jira-inline-image]');if(button)previewInline(button.dataset.jiraInlineImage);});
  $('jiraIssueDescription').addEventListener('error',e=>{if(e.target.tagName!=='IMG')return;const block=e.target.closest('.jira-inline-image');if(!block)return;block.querySelector('button').hidden=true;block.querySelector('.jira-inline-image-error').hidden=false;},true);
  return {clear,setIssue,load};
