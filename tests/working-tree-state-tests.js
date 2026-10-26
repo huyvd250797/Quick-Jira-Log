@@ -1,0 +1,6 @@
+'use strict';
+const assert=require('node:assert/strict'),S=require('../lib/working-tree-state');
+const item={key:'CAL-1',summary:'Title',project:{key:'CAL'},issueType:{id:'99',name:'Epic'},isEpic:true,status:{name:'Done',category:'done'}};
+assert.equal(S.item({...item,key:'../x'}),null);assert.equal(S.item({...item,issueType:{subtask:true}}),null);assert.equal(S.item({...item,project:{key:'CAL OR 1=1'}}),null);
+const clean=S.clean({pins:[item,item,...Array.from({length:50},(_,i)=>({...item,key:'CAL-'+(i+2)}))],root:{project:'CAL',kind:'wrong',q:'x\u0000y',scroll:Infinity,pages:10000},last:{item,q:'hello',assignee:'boss',scroll:444,pages:2}});
+assert.equal(clean.pins.length,30);assert.equal(clean.root.kind,'epics');assert.equal(clean.root.q,'xy');assert.equal(clean.root.scroll,0);assert.equal(clean.root.pages,10);assert.equal(clean.last.scroll,444);assert.equal(clean.last.pages,2);assert.equal(S.clean({last:{item:{...item,isEpic:false}}}).last,null);assert.notEqual(S.key('boss'),S.key('other'));assert.equal(S.key('BOSS'),S.key('boss'));assert(!JSON.stringify(S.clean({pins:[{...item,password:'secret',description:'private'}]})).includes('secret'));console.log('Working Tree state: bounded pins, deduplication, account key, field whitelist, invalid identities/scroll/pages and last Epic validation passed.');

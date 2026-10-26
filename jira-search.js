@@ -104,7 +104,7 @@ window.QuickJiraSearch=(()=>{
       for(const user of data.users){const btn=document.createElement('button');btn.type='button';btn.className='jira-person-option';btn.textContent=`${user.displayName} · ${user.username}`;btn.onclick=()=>{person=user;$('jiraPersonState').textContent=`Đã chọn ${user.displayName} (${user.username})`;$('jiraPersonResults').replaceChildren();countFilters();changed();};$('jiraPersonResults').append(btn);}
     }catch(e){if(token===generation){$('jiraPersonResults').replaceChildren();$('jiraPersonState').textContent=e.message;}}});
   }
-  function clearDetail(){detailContext=null;detailStack=[];detailOrigin=null;detailRetry=null;
+  function clearDetail(){window.QuickJiraTree?.setDetail(null);detailContext=null;detailStack=[];detailOrigin=null;detailRetry=null;
     window.QuickJiraReading?.reset();
     $('jiraDetailCreateSubBtn').hidden=true;
     window.QuickJiraActions?.clear();window.QuickJiraAttachments?.clear();window.QuickJiraSubtaskEdit?.clear();
@@ -125,7 +125,7 @@ window.QuickJiraSearch=(()=>{
   }
   function emptyPart(){return {items:[],next:0,total:null,loaded:false,more:false,limited:false,error:''};}
   function renderDetail(){
-    const item=detailContext.issue;window.QuickJiraIssueIcons?.create(item);
+    const item=detailContext.issue;window.QuickJiraIssueIcons?.create(item);window.QuickJiraTree?.setDetail(item);
     $('jiraDetailCreateSubBtn').hidden=item.issueType.subtask;
     window.QuickJiraActions?.setIssue(item);window.QuickJiraAttachments?.setIssue(item);window.QuickJiraSubtaskEdit?.setIssue(item);
     $('jiraIssuePeekKey').textContent=item.key;$('jiraIssuePeekTitle').textContent=item.summary;$('jiraIssuePeekTitle').title=item.summary;

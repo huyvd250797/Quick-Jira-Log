@@ -1,3 +1,14 @@
+# V1.36.0 — Kiểm tra
+
+- `npm test`: 50 bộ, bổ sung kiểm tra whitelist/giới hạn/tách tài khoản dữ liệu ghim, trạng thái khôi phục; mở rộng API tree kiểm tra status, currentUser, unassigned, username có dấu nháy, đầu vào sai và giữ quan hệ Epic xuyên Project.
+- Browser working-tree-quick: 1440/390/320/844px; ghim/bỏ ghim từ danh sách/chi tiết, reload khôi phục 2 trang và vị trí cuộn ở danh sách Project/Epic, chọn Status/Assignee cá nhân, xóa lọc, từ chối quyền khi mở ghim, đổi tài khoản và lỗi quota localStorage. Kiểm tra không tràn ngang, không lỗi JS.
+- Browser Working Tree cũ: 4 viewport, tìm gần đúng, mở chi tiết/tạo Subtask và lỗi quyền.
+- Hồi quy Epic create/recents, detail polish và PWA live-update theo log kiểm tra của phiên xây dựng.
+- Cú pháp JS/CJS, JSON, ID HTML, shell assets và ZIP kiểm tra trước bàn giao.
+- Jira được mô phỏng; chưa truy cập Jira công ty hoặc iPhone/Safari thật. Không tuyên bố mọi môi trường đều đã kiểm thử.
+
+---
+
 # V1.35.8 — Kiểm tra
 
 - npm test: 49 bộ nghiệp vụ/API; thêm image-original-tests kiểm tra scoped image chunks, Content-Range/độ dài, lỗi không hỗ trợ Range, ID/phần ảnh không hợp lệ và proxy priority icon. Jira detail tests xác nhận Reporter, Created, priority ID và không lộ email.

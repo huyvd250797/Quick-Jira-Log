@@ -30,6 +30,10 @@ const originalFetch=global.fetch,secret=process.env.APP_SESSION_SECRET;let serve
  mode='partial';r=await request({kind:'children',key:'EPU01-1',q:'quan ho'});assert.equal(r.data.issues[0].key,'EPU01-2831');assert.equal(r.data.nextStartAt,26);r=await request({kind:'children',key:'EPU01-1',q:'283'});assert.equal(r.data.issues[0].key,'EPU01-2831');
  mode='fallback';assert.equal((await request()).status,200);assert.equal(calls.at(-1).method,'GET');
  mode='';const count=calls.length;assert.equal((await request({},false)).status,401);assert.equal((await request({},true,'POST')).status,405);assert.equal(calls.length,count);
+ r=await request({kind:'children',key:'EPU01-1',status:'3',assignee:'@me'});assert.equal(r.status,200);assert(calls.at(-1).body.jql.includes('status = "3" AND assignee = currentUser()'));assert(!calls.at(-1).body.jql.includes('project ='));
+ r=await request({kind:'children',key:'EPU01-1',assignee:'@unassigned'});assert(calls.at(-1).body.jql.includes('assignee is EMPTY'));
+ r=await request({kind:'children',key:'EPU01-1',assignee:'a" OR project=X'});assert.equal(r.status,200);assert(calls.at(-1).body.jql.includes('assignee = "a\\" OR project=X"'));
+ for(const q of [{status:'3 OR 1=1'},{assignee:'bad\nuser'},{assignee:'x'.repeat(256)}])assert.equal((await request(q)).status,400);
  assert(calls.every(c=>c.method==='GET'||c.path.endsWith('/search')),'No Jira mutations');
  console.log('Working Tree API: hierarchy discovery, cross-project children, literal search, paging, permissions, read-only and error handling passed');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=originalFetch;if(secret===undefined)delete process.env.APP_SESSION_SECRET;else process.env.APP_SESSION_SECRET=secret;if(server)await new Promise(r=>server.close(r));});
