@@ -6,6 +6,8 @@
   --muted: #596b82;
   --line: #dce4ee;
   --primary: #2164ca;
+  --action-primary: #2164ca;
+  --action-primary-hover: #1953ad;
   --primary2: #1953ad;
   --primary-soft: #edf3fd;
   --shadow: 0 4px 18px rgba(23, 44, 75, .05);
@@ -28,8 +30,8 @@ button:focus-visible, a:focus-visible, summary:focus-visible, [tabindex]:focus-v
 label { font-size: 13px; font-weight: 650; color: var(--text); letter-spacing: normal; min-width: 0; }
 input, textarea, select { border-radius: var(--radius-control); }
 textarea { line-height: 1.5; }
-.primary { background: #2164ca; box-shadow: none; font-weight: 700; letter-spacing: normal; border-radius: var(--radius-control); }
-.primary:hover:not(:disabled) { background: #1953ad; }
+.primary { background: var(--action-primary); box-shadow: none; font-weight: 700; letter-spacing: normal; border-radius: var(--radius-control); }
+.primary:hover:not(:disabled) { background: var(--action-primary-hover); }
 .secondary, .soft-btn, .icon-btn, .header-tool-btn, .header-icon-btn { border-radius: var(--radius-control); box-shadow: none; }
 .card, .status-card, .result, .hours-card { border-color: var(--line); border-radius: var(--radius-panel); box-shadow: var(--shadow); }
 .card-title h2, .settings-head h2 { font-weight: 700; }

@@ -1,3 +1,13 @@
+# V1.35.7 — Kiểm tra giao diện
+
+- Browser epic-create-recents: PC 1440px, mobile 390/320px và ngang 844px; theme sáng/tối. So sánh computed background của các nút tìm công việc, Working Tree, Epic, filter, người phụ trách với nút Logwork: cùng màu xanh; chữ trắng. Nút + cùng hàng, sau Tìm, không tràn, vùng bấm >=44px và SVG 28px. Tạo Story trong Epic vẫn gửi đúng Epic đích.
+- Browser Working Tree và Jira filters: 4 viewport, tải/tìm/lọc/mở công việc và tạo Subtask theo quyền mô phỏng đạt.
+- Browser live-update: cập nhật service worker và tải bản mới đạt.
+- Các bộ run-tests, jira-create-ui-tests và jira-filter-tests đạt; cú pháp các JS thay đổi, JSON, ID HTML duy nhất và ZIP kiểm tra được. Không chạy lại toàn bộ 48 bộ nghiệp vụ vì đây là chỉnh giao diện; kết quả V1.35.6 phía dưới thuộc lần trước.
+- Không gọi Jira công ty hoặc thiết bị iPhone/Safari vật lý. Chưa push/deploy.
+
+---
+
 # V1.35.6 — Kiểm tra
 
 - `npm test`: 48 bộ nghiệp vụ/API đạt. Mở rộng kiểm tra Epic Link thực tế trong payload/readback; từ chối khác dự án, không phải Epic, tạo Subtask từ luồng Epic, thiếu/quyền chỉ đọc Epic Link, sửa Epic Link trái ngữ cảnh; replay không tạo trùng. Thêm kiểm tra truy vấn bổ sung loại cho tối đa 10 mục vừa xem, chặn mã không hợp lệ.
