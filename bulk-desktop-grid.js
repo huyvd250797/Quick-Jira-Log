@@ -8,7 +8,7 @@
   const css=getComputedStyle(list),chrome=getComputedStyle(card),header=card.querySelector('.bulk-sticky-header'),footer=card.querySelector('.bulk-footer');
   const n=v=>parseFloat(v)||0,cols=css.gridTemplateColumns.split(' ').length,gap=n(css.rowGap),padding=n(css.paddingTop)+n(css.paddingBottom);
   const available=Math.max(0,innerHeight*.94-n(chrome.paddingTop)-n(chrome.paddingBottom)-n(chrome.borderTopWidth)-n(chrome.borderBottomWidth)-header.getBoundingClientRect().height-footer.getBoundingClientRect().height-4);
-  const auto=card.classList.contains('is-auto-mode'),minimum=auto?142:202,preferred=auto?160:244;
+  const auto=card.classList.contains('is-auto-mode'),minimum=auto?142:200,preferred=auto?160:244;
   const rows=Math.max(1,Math.min(Math.floor(6/cols),Math.ceil(list.children.length/cols)||1,Math.floor((available-padding+gap)/(minimum+gap))||1));
   const height=Math.max(minimum,Math.min(preferred,Math.floor((available-padding-gap*(rows-1))/rows)));
   for(const [key,value] of [['--bulk-row-height',height+'px'],['--bulk-grid-height',(height*rows+gap*(rows-1)+padding)+'px']])if(list.style.getPropertyValue(key)!==value)list.style.setProperty(key,value);

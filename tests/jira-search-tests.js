@@ -48,6 +48,8 @@ const oldFetch=global.fetch,secret=process.env.APP_SESSION_SECRET;let server;
  mode='expired';for(const action of ['jira-search','jira-search-options']){r=await request(action);assert.equal(r.status,401);assert(r.headers.get('set-cookie'));}
  mode='';const before=calls.length;for(const action of ['jira-search','jira-search-options']){r=await request(action,{},false);assert.equal(r.status,401);r=await request(action,{},true,'POST');assert.equal(r.status,405);}assert.equal(calls.length,before);
  r=await request('jira-search',{q:'x'});assert.equal(r.status,400);r=await request('jira-search-options',{project:'../x'});assert.equal(r.status,400);
+ mode='';r=await request('jira-search',{keys:'EPU01-123,EPU01-12'});assert.equal(r.status,200);assert.equal(calls.at(-1).body.jql,'key in ("EPU01-123","EPU01-12") ORDER BY key ASC');assert.equal(calls.at(-1).body.maxResults,10);
+ for(const keys of ['EPU01-1) OR project=X','../bad',Array.from({length:11},(_,i)=>'EPU01-'+i).join(',')]){r=await request('jira-search',{keys});assert.equal(r.status,400);}
  assert(calls.every(x=>x.method==='GET'||(x.method==='POST'&&x.path==='/rest/api/2/search')),'Feature performs no Jira writes');
  console.log('Jira search: literal queries, exact keys, filters, pagination, metadata, permissions, expired sessions, read-only and data minimization passed');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=oldFetch;if(secret===undefined)delete process.env.APP_SESSION_SECRET;else process.env.APP_SESSION_SECRET=secret;if(server)await new Promise(r=>server.close(r));});

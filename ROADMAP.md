@@ -1,3 +1,6 @@
+# V1.35.6 — Đã xây dựng
+Tiến trình log ngày/tuần, chuyển về lịch thật sau thành công, icon vừa xem lưu bền và tạo công việc theo Epic. Xem RELEASE_V1.35.6.md. Đề xuất tiếp V1.36.0 — Truy cập nhanh, chưa xây dựng.
+
 # V1.35.5 — Đã xây dựng
 Lưới Log tất cả PC: thẻ cùng kích thước, tên rút gọn, tối đa 6 thẻ đầy đủ trong một khung. Xem RELEASE_V1.35.5.md. Kế tiếp đề xuất V1.36.0, chưa xây dựng.
 

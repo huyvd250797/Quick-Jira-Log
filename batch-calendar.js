@@ -154,21 +154,24 @@ window.QuickJiraBatch=(()=>{
  async function save(){
   if(!job||job.running||job.owner!==state.user)return;
   const current=job,all=plans(),pending=all.filter(p=>!job.status[p.key]);if(!pending.length)return;
-  current.running=true;current.error='';state.calendarMovePending=true;update();$('batchConfirmSave').disabled=true;
+  current.running=true;current.error='';state.calendarMovePending=true;startLogProgress('bulk',pending.length);updateLogProgress({percent:1,phase:'Đối chiếu giờ trống trước khi log'});update();$('batchConfirmSave').disabled=true;
   try{
    // Preflight the complete chosen scope before the first mutation, then the server checks every exact write again.
-   const occupied=await readOccupied([...new Set(pending.map(p=>p.date))],current.owner);
+   const saveDates=[...new Set(pending.map(p=>p.date))];
+   const occupied=await readOccupied(saveDates,current.owner,(done,label)=>updateLogProgress({percent:2+done/saveDates.length*13,phase:label||'Đối chiếu giờ trống'}));
    P.validate(pending,occupied,job.dates);
    // Pending blocks which overlap are created in one request/rollback scope.
    // The server can therefore reject every occupied range without exempting old Jira logs.
-   for(const group of R.saveGroups(pending)){
+   let completed=0;
+   for(const group of R.saveBatches(pending)){
     if(state.user!==current.owner)throw Error('Phiên đăng nhập đã thay đổi.');
     const groupKey=group.map(p=>p.key).sort().join('|'),date=group[0].date;
     const requestId=current.requestIds[groupKey]||=createRequestId('batch-plan');
     const body={date,requestId,items:group.map(p=>({key:p.key,project:p.project,timeSpent:p.minutes+'m',description:p.description||p.summary,overtime:false})),confirmOverlaps:group.some(p=>p.allowOverlap===true),exactPlan:group.map(p=>({key:p.key,date:p.date,segments:p.segments,allowOverlap:p.allowOverlap===true}))};
     group.forEach(p=>{current.status[p.key]='Đang gửi';freeze(p.key);});update();
     try{
-     const result=await api('/api?action=bulk-worklog',{method:'POST',requestId,body:JSON.stringify(body)});
+     const result=await api('/api?action=bulk-worklog',{method:'POST',requestId,body:JSON.stringify(body),onProgress:event=>updateLogProgress({percent:15+80*(completed+group.length*Math.min(100,Number(event.percent)||0)/100)/pending.length,phase:event.phase||'Đang ghi worklog'})});
+     completed+=group.length;updateLogProgress({percent:15+80*completed/pending.length,phase:`Đã log ${completed}/${pending.length} Subtask`});
      for(const p of group){const warnings=(result.transitions||[]).filter(x=>x.key===p.key&&x.ok===false).map(x=>x.message||'Chưa chuyển được trạng thái Jira');if(warnings.length)(current.notes||={})[p.key]=warnings.join('; ');current.status[p.key]='Đã log';freeze(p.key);}
     }catch(e){
      const known=[400,403,404,409,422].includes(e.status)&&!e.details?.resultUnknown;
@@ -179,8 +182,32 @@ window.QuickJiraBatch=(()=>{
    }
    if(!current.error)showToast(Object.values(current.status).some(x=>x!=='Đã log')?'Đã log phần chưa gửi; vẫn có dòng cần kiểm tra Jira.':'Đã log thành công toàn bộ lịch xem trước.');
   }catch(e){current.error=e.message;}
-  finally{current.running=false;state.calendarMovePending=false;$('batchConfirmSave').disabled=false;renderWorklogHistory();update();void refreshDashboard({force:true});}
+  finally{
+   current.running=false;state.calendarMovePending=false;$('batchConfirmSave').disabled=false;
+   if(state.user===current.owner&&job===current){
+    const complete=!current.error&&all.every(p=>current.status[p.key]==='Đã log');
+    if(complete){
+     updateLogProgress({percent:97,phase:'Đã ghi Jira · Đang mở lịch đã log'});
+     completeReview(current);
+     // Release draft state before reading; the history loader otherwise renders preview again.
+     await loadWorklogHistory({quiet:true,force:true});
+     if(state.user===current.owner&&Object.keys(current.notes||{}).length){state.historyNotice=[state.historyNotice,'Giờ đã log; một số trạng thái Jira chưa chuyển: '+Object.entries(current.notes).map(([key,note])=>key+' — '+note).join('; ')].filter(Boolean).join(' · ');renderWorklogHistory();}
+    }else{renderWorklogHistory();update();}
+    finishLogProgress(complete,complete?null:{message:current.error||'Còn dòng cần kiểm tra trên Jira.'});
+    void refreshDashboard({force:true});
+   }else finishLogProgress(false,{message:'Phiên đăng nhập đã thay đổi.'});
+  }
  }
+ function completeReview(current){
+  resetCalendarInteraction();state.calendarDrafts.clear();job=null;
+  $('batchConfirmDialog').close();$('batchDraftDialog').close();
+  $('historyOverlay').classList.remove('batch-preview');$('batchPreviewBar').hidden=true;
+  $('historyTitle').textContent='Worklog đã log';state.historyItems=[];state.historyLoaded=false;state.historyError='';state.historyNotice='';
+  lockedControls.forEach(id=>{const el=$(id);if(el){el.disabled=el.dataset.batchDisabled==='true';delete el.dataset.batchDisabled;}});
+  const sent=new Set(Object.keys(current.status));for(const key of sent){state.bulkSelectedKeys.delete(key);state.bulkDrafts.delete(key);}
+  state.filterIssues=state.filterIssues.filter(x=>!sent.has(x.key));renderFilterIssues();renderBulkItems();renderWorklogHistory();
+ }
+
  function back(){if(!job||job.running)return;if(!window.confirm('Rời lịch xem trước? Bản nháp chưa log sẽ được bỏ; các worklog đã ghi được giữ nguyên.'))return;
   const current=job,s=job.snapshot;current.running=true;
   resetCalendarInteraction();$('batchConfirmDialog').close();$('batchDraftDialog').close();void exitCalendarFullscreen();

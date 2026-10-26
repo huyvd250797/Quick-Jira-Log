@@ -18,3 +18,5 @@ assert.throws(()=>P.validate([{...a,allowOverlap:'true'}]));
 assert.throws(()=>P.validate([{key:'EPU-1',date:days[0],allowOverlap:true,segments:[{start:'08:00',minutes:60},{start:'08:30',minutes:60}]}]),'one Subtask cannot overlap itself');
 assert.equal(R.saveGroups([a,{...a,key:'EPU-2',allowOverlap:true},make('EPU-3',days[1],'08:00',60)]).length,2);
 console.log('Batch review: atomic split 8h swap, multi-partner swap, full-day resize/lunch exclusion, shortening, pending overlap and rejected immutable partners, scope and strict approvals passed.');
+
+assert.equal(R.saveBatches([make('EPU-1',days[0],'08:00',60),make('EPU-2',days[0],'09:00',60),make('EPU-3',days[1],'08:00',60)]).length,2,'same-day requests batch; dates stay separate');

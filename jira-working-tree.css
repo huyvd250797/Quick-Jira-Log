@@ -47,3 +47,6 @@ dialog.wt-dialog[open] { display:flex; flex-direction:column; animation:wt-enter
  .wt-sheet-head h2 { font-size:16px; }
 }
 @media(prefers-reduced-motion:reduce){ .wt-loading,dialog.wt-dialog[open] { animation:none; } }
+
+/* V1.35.6: creation belongs to the opened Epic. */
+.jira-workspace-toolbar .jira-source-switch{flex:1;min-width:0}#jiraEpicDialog .wt-sheet-head>div{flex:1;min-width:0}#jiraEpicCreate{flex:0 0 42px;width:42px;height:42px;padding:0}#jiraEpicForm .primary,#jiraTreeFind{background:var(--primary,#2166cb);color:#fff;border-color:transparent}

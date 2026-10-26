@@ -1,3 +1,15 @@
+# V1.35.6 — Kiểm tra
+
+- `npm test`: 48 bộ nghiệp vụ/API đạt. Mở rộng kiểm tra Epic Link thực tế trong payload/readback; từ chối khác dự án, không phải Epic, tạo Subtask từ luồng Epic, thiếu/quyền chỉ đọc Epic Link, sửa Epic Link trái ngữ cảnh; replay không tạo trùng. Thêm kiểm tra truy vấn bổ sung loại cho tối đa 10 mục vừa xem, chặn mã không hợp lệ.
+- `npm run test:batch-save-ui`: NDJSON chạy từ HTTP server với nhiều mốc tiến trình; ngày/tuần thành công, lỗi xác định, gián đoạn chưa rõ kết quả. Kiểm tra %, thanh tiến trình, gộp 2 Subtask cùng ngày thành 1 POST; thành công không còn draft/nút lưu/cảnh báo khi đóng; lỗi giữ nháp/khóa tránh log trùng.
+- `npm run test:epic-create-ui`: 1440/390/320/844px, metadata vừa xem cũ được bổ sung trong một truy vấn, tải lại giữ icon Story/Bug, bỏ nút + chung, mở Epic và tạo Story với project/Epic cố định, xem lại Epic đích, payload không dùng parent Subtask. Nút tìm xanh/chữ trắng, giao diện không tràn.
+- Browser hồi quy: Working Tree, Jira create, issue-icons, batch-review, batch-day-review (mỗi bộ 4 viewport); desktop-workspace 5 viewport; live-update service worker native đạt.
+- Tinh chỉnh tối thiểu chiều cao thẻ PC 202→200px để vẫn đủ 6 thẻ ở 1366×768 khi phần cảnh báo vượt 8h ngày làm việc xuất hiện. Mobile không đổi.
+- Kiểm tra cú pháp JS/CJS, JSON, asset shell, ID HTML và ZIP.
+- API Jira được mô phỏng. Chưa gọi Jira công ty hoặc xác minh trên iPhone/Safari vật lý. Không đưa ra cam kết thời gian: gộp theo ngày giảm số request/đối chiếu; Jira và mạng vẫn quyết định độ trễ thực tế.
+
+---
+
 # V1.35.5 — Lưới Subtask đồng đều, tối đa 6 thẻ
 
 ## Thay đổi

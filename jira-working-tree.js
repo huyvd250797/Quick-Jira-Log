@@ -40,9 +40,10 @@ window.QuickJiraTree=(()=>{
  $('jiraTreeForm').onsubmit=e=>{e.preventDefault();clearTimeout(timer);search();};
  $('jiraTreeProject').onchange=()=>{revision++;root=null;body.replaceChildren(message('Bấm Tìm để tải danh sách của dự án đã chọn.'));$('jiraTreeFind').disabled=false;$('jiraTreeFind').textContent='Tìm';};
  $('jiraEpicForm').onsubmit=e=>{e.preventDefault();clearTimeout(timer);searchEpic();};$('jiraEpicQuery').oninput=()=>{clearTimeout(timer);timer=setTimeout(searchEpic,350);};
+ $('jiraEpicCreate').onclick=()=>{if(epic)void window.QuickJiraCreate?.open({epic:{...epic,project:{key:epicPage.params.project}}});};
  $('jiraEpicClose').onclick=()=>dialog.close();dialog.addEventListener('close',()=>{clearTimeout(timer);epicPage=epic=null;document.documentElement.style.overflow=savedOverflow;focus?.isConnected&&focus.focus({preventScroll:true});});
  dialog.addEventListener('keydown',e=>e.stopPropagation());
  // Native dialog prevents background clicks; prevent wheel/touch scroll chaining as well.
  for(const type of ['wheel','touchmove'])dialog.addEventListener(type,e=>{if(!e.target.closest('#jiraEpicList')&&e.cancelable)e.preventDefault();},{passive:false});
- return {reset,created(){/* Child rows do not contain expanded subtask lists; opening details reads fresh. */},activate(){if(!root&&!body.children.length)body.append(message('Chọn dự án để duyệt Epic.'));}};
+ return {reset,created(key){if(epic?.key===key&&epicPage)searchEpic();},activate(){if(!root&&!body.children.length)body.append(message('Chọn dự án để duyệt Epic.'));}};
 })();

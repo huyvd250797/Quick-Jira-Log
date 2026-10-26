@@ -18,7 +18,7 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright'),{ser
  await page.goto('http://127.0.0.1:4255');await page.waitForFunction(()=>!QuickJiraBusy.active&&QuickJiraBusy.count===0&&!document.body.classList.contains('booting'));
  await page.locator(viewport.width<900?'#mobileJiraSearchBtn':'#jiraSearchBtn').click();await page.waitForFunction(()=>!QuickJiraBusy.active&&QuickJiraBusy.count===0);
  await page.locator('#jiraTreeModeBtn').click();await page.locator('#jiraTreeProject').fill('EPU01');await page.locator('#jiraTreeFind').click();await page.waitForSelector('.wt-node');assert.equal(await page.locator('.wt-toggle').count(),0);assert.equal(await page.locator('.wt-node script').count(),0);
- const toolbar=await page.evaluate(()=>{const a=document.getElementById('jiraCreateBtn').getBoundingClientRect(),b=document.querySelector('.jira-source-switch').getBoundingClientRect();return {same:Math.abs(a.top-b.top)<6,fits:a.right<=innerWidth};});assert(toolbar.same&&toolbar.fits);
+ assert(await page.locator('#jiraCreateBtn').isHidden());
  await page.locator('#jiraTreeBody .wt-open').first().click();await page.waitForSelector('#jiraEpicList .wt-node');assert(await page.locator('#jiraEpicDialog').evaluate(e=>e.open));assert.equal(await page.locator('#jiraEpicDialog input:focus').count(),0);
  assert.equal(await page.locator('#jiraEpicList .wt-type-icon').count(),1);
  await page.locator('#jiraEpicQuery').fill('EPU01-');await page.waitForTimeout(500);await page.waitForSelector('#jiraEpicList .wt-node');

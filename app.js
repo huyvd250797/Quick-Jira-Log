@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.35.5';
+const APP_VERSION = '1.35.6';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1847,7 +1847,7 @@ function closeLogProgress() {
 function updateLogProgress(event) {
   const progress = state.logProgress;
   if (!progress?.active) return;
-  progress.percent = Math.max(progress.percent, Math.min(99, Number(event.percent) || 0));
+  progress.percent = Math.max(progress.percent, Math.min(99, Math.round(Number(event.percent) || 0)));
   progress.phase = String(event.phase || progress.phase);
   paintLogProgress();
 }

@@ -4,16 +4,25 @@ window.QuickJiraSearch=(()=>{
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const keyPattern=/^[A-Z][A-Z0-9_]*-\d+$/;
   let owner='',generation=0,busy=false,loadedOptions=false,items=[],recent=[],next=0,more=false,savedQuery=null,person=null,source=null,lastRetry=null;
+  let recentTypes={},recentAttempted=false;
   let detailContext=null,detailStack=[],detailOrigin=null,detailRetry=null;
   let mode='search',filtersLoaded=false;
   function compactFilter(value){$('jiraFilterTools').hidden=value;$('jiraFilterExpandBtn').setAttribute('aria-expanded',String(!value));}
   $('jiraFilterExpandBtn').onclick=()=>compactFilter(!$('jiraFilterTools').hidden);
   const resultPane=$('jiraSearchResultsPane');
   const storeKey=()=>`quick-jira-log:jira-recent:v1:${encodeURIComponent(owner)}`;
-  function writeRecent(){try{localStorage.setItem(storeKey(),JSON.stringify(recent));return true;}catch{return false;}}
+  function writeRecent(){try{localStorage.setItem(storeKey(),JSON.stringify(recent));localStorage.setItem(storeKey()+':types',JSON.stringify(Object.fromEntries(recent.filter(k=>recentTypes[k]).map(k=>[k,recentTypes[k]]))));return true;}catch{return false;}}
   function renderRecent(){
     $('jiraRecentSection').hidden=!recent.length;
-    $('jiraRecentList').innerHTML=recent.map(key=>`<button type="button" class="jira-recent-chip" data-jira-open="${esc(key)}">${window.QuickJiraIssueIcons?.html(items.find(i=>i.key===key)||{key})||''}${esc(key)}</button>`).join('');
+    $('jiraRecentList').innerHTML=recent.map(key=>`<button type="button" class="jira-recent-chip" data-jira-open="${esc(key)}">${window.QuickJiraIssueIcons?.html(items.find(i=>i.key===key)||{key,issueType:recentTypes[key]})||''}${esc(key)}</button>`).join('');
+  }
+  async function hydrateRecent(){
+    if(recentAttempted||!owner)return;const missing=recent.filter(k=>!recentTypes[k]);if(!missing.length)return;
+    recentAttempted=true;const token=generation;
+    try{const data=await api('/api?'+new URLSearchParams({action:'jira-search',keys:missing.join(',')}));if(token!==generation)return;
+     for(const item of data.issues||[])if(recent.includes(item.key)&&item.issueType?.id)recentTypes[item.key]=item.issueType;
+     writeRecent();renderRecent();
+    }catch{/* Keep recents usable when permissions/network prevent reading type metadata. */}
   }
   function clearView(){
     window.QuickJiraCreate?.reset();
@@ -27,11 +36,12 @@ window.QuickJiraSearch=(()=>{
     $('jiraSearchState').textContent='Nhập từ khóa hoặc chọn bộ lọc rồi bấm Tìm kiếm.';$('jiraSearchState').classList.remove('is-error');countFilters();
   }
   function login(user){window.QuickJiraIssueIcons?.login(user);
-    generation++;owner=String(user?.username||'').toLowerCase();busy=false;clearView();recent=[];
+    generation++;owner=String(user?.username||'').toLowerCase();busy=false;clearView();recent=[];recentTypes={};recentAttempted=false;
     if(owner)try{const raw=JSON.parse(localStorage.getItem(storeKey())||'[]');if(Array.isArray(raw))recent=[...new Set(raw.filter(x=>typeof x==='string'&&keyPattern.test(x)))].slice(0,10);}catch{}
+    if(owner)try{const saved=JSON.parse(localStorage.getItem(storeKey()+':types')||'{}');for(const key of recent){const t=saved[key];if(t&&typeof t.name==='string'&&/^\d{1,20}$/.test(t.id||''))recentTypes[key]={id:t.id,name:t.name.slice(0,100),subtask:t.subtask===true};}}catch{}
     $('jiraSearchBtn').classList.toggle('hidden',!owner);renderRecent();
   }
-  function logout(){window.QuickJiraIssueIcons?.reset();generation++;owner='';busy=false;if(peek.open)peek.close();if(dialog.open)dialog.close();clearView();recent=[];renderRecent();$('jiraSearchBtn').classList.add('hidden');$('jiraIssuePeekInfo').replaceChildren();$('jiraIssuePeekTitle').textContent='';$('jiraIssuePeekKey').textContent='';$('jiraIssueOpenLink').removeAttribute('href');}
+  function logout(){window.QuickJiraIssueIcons?.reset();generation++;owner='';busy=false;if(peek.open)peek.close();if(dialog.open)dialog.close();clearView();recent=[];recentTypes={};recentAttempted=false;renderRecent();$('jiraSearchBtn').classList.add('hidden');$('jiraIssuePeekInfo').replaceChildren();$('jiraIssuePeekTitle').textContent='';$('jiraIssuePeekKey').textContent='';$('jiraIssueOpenLink').removeAttribute('href');}
   async function run(label,work){
     if(busy||!owner)return;busy=true;const token=generation,release=QuickJiraBusy.begin(label);
     try{return await work(token);}finally{if(token===generation)busy=false;release();}
@@ -58,7 +68,7 @@ window.QuickJiraSearch=(()=>{
     if(!owner||QuickJiraBusy.active)return;
     source=document.activeElement;closeDesktopEditor();closeAllToolOverlays({restore:true});
     if(!dialog.open)dialog.showModal();$('jiraSearchFilters').open=matchMedia('(min-width:900px)').matches;
-    $('jiraSearchCloseBtn').focus({preventScroll:true});renderRecent();if(!loadedOptions&&!busy)await loadOptions();
+    $('jiraSearchCloseBtn').focus({preventScroll:true});renderRecent();void hydrateRecent();if(!loadedOptions&&!busy)await loadOptions();
   }
   function dateLabel(value){const d=new Date(value);return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'}).format(d);}
   function renderItems(){
@@ -142,7 +152,7 @@ window.QuickJiraSearch=(()=>{
       if(opening){detailStack=[];detailOrigin=origin;}else if(back)detailStack.pop();else if(!replace&&detailContext?.issue.key!==key){detailStack.push(detailContext.issue.key);detailStack=detailStack.slice(-20);}
       detailContext={issue:item,tab:'description',parts:{subtasks:emptyPart(),worklogs:emptyPart()}};
       $('jiraIssueOpenLink').href=url.href;renderDetail();
-      recent=[key,...recent.filter(x=>x!==key)].slice(0,10);const persisted=writeRecent();renderRecent();if(!persisted)$('jiraSearchState').textContent='Mục vừa xem được giữ trong phiên này; trình duyệt chưa cho phép lưu trên thiết bị.';
+      recentTypes[key]=item.issueType;recent=[key,...recent.filter(x=>x!==key)].slice(0,10);const persisted=writeRecent();renderRecent();if(!persisted)$('jiraSearchState').textContent='Mục vừa xem được giữ trong phiên này; trình duyệt chưa cho phép lưu trên thiết bị.';
       if(!peek.open)peek.showModal();$('jiraIssuePeekCloseBtn').focus({preventScroll:true});
     }catch(e){if(token!==generation)return;if(peek.open)detailMessage(e.message,()=>openIssue(key,{back,replace}));else{$('jiraSearchState').textContent=e.message;$('jiraSearchState').classList.add('is-error');lastRetry=()=>openIssue(key);$('jiraSearchRetryBtn').hidden=false;}}});
   }
@@ -207,7 +217,7 @@ window.QuickJiraSearch=(()=>{
   $('jiraProject').addEventListener('change',countFilters);
   for(const id of ['jiraStatus','jiraType','jiraAssignee'])$(id).addEventListener('change',()=>{if(id==='jiraAssignee')$('jiraPersonPicker').hidden=$('jiraAssignee').value!=='@person';countFilters();});
   $('jiraResetBtn').onclick=()=>{$('jiraProject').value='';$('jiraStatus').value='';$('jiraType').value='';$('jiraAssignee').value='';person=null;$('jiraPersonPicker').hidden=true;countFilters();changed();};
-  $('jiraRecentClearBtn').onclick=()=>{recent=[];if(!writeRecent())$('jiraSearchState').textContent='Đã xóa khỏi phiên xem này; trình duyệt chưa cho phép cập nhật dữ liệu lưu trên thiết bị.';renderRecent();};
+  $('jiraRecentClearBtn').onclick=()=>{recent=[];recentTypes={};if(!writeRecent())$('jiraSearchState').textContent='Đã xóa khỏi phiên xem này; trình duyệt chưa cho phép cập nhật dữ liệu lưu trên thiết bị.';renderRecent();};
   for(const id of ['jiraSearchResults','jiraRecentList'])$(id).addEventListener('click',e=>{const button=e.target.closest('[data-jira-open]');if(button)void openIssue(button.dataset.jiraOpen);});
   if(typeof state!=='undefined'&&state.user)login(state.user);
   return {login,logout,open,openIssue,openCreated:key=>openIssue(key),async refreshDetail(key,tab='description'){if(detailContext?.issue.key!==key)return;await openIssue(key,{replace:true});if(detailContext?.issue.key===key){const top=resultPane.scrollTop;items=items.map(x=>x.key===key?{...x,...detailContext.issue}:x);renderItems();resultPane.scrollTop=top;selectDetailTab(tab);}}};

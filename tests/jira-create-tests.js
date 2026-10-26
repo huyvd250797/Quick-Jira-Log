@@ -29,13 +29,14 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
    if(mode==='lost')throw Error('lost AFTER Jira created');if(mode==='write503')return Response.json({}, {status:503});
    return Response.json(mode==='missing-key'?{}:{key,id:String(number)},{status:201});
   }
-  if(path==='/rest/api/2/issuetype')return Response.json(types);
+  if(path==='/rest/api/2/field')return Response.json([{id:'customfield_888',schema:{custom:'com.pyxis.greenhopper.jira:gh-epic-link'}}]);
+  if(path==='/rest/api/2/issuetype')return Response.json([...types,{id:'99',name:'Epic',subtask:false}]);
   if(path==='/rest/api/2/project')return Response.json([{key:'CAL',name:'Dự án <script>'},{key:'OTHER',name:'Dự án khác'}]);
   if(path==='/rest/api/2/mypermissions')return Response.json({permissions:{CREATE_ISSUES:{havePermission:mode!=='denied'},ASSIGN_ISSUES:{havePermission:mode!=='no-assign'},MODIFY_REPORTER:{havePermission:mode==='modify-reporter'}}});
   if(path.startsWith('/rest/api/2/issue/createmeta/CAL/issuetypes')){
    if(mode==='legacy')return Response.json({}, {status:404});
    const typeRows=mode==='paged'?[...types,...Array.from({length:51},(_,i)=>({id:String(1000+i),name:'Type '+i,subtask:false}))]:types;
-   let rows=path.endsWith('/issuetypes')?typeRows:fields();if(mode==='missing-subtask'&&path.endsWith('/issuetypes'))rows=rows.map(({subtask,...rest})=>rest);const start=Number(u.searchParams.get('startAt')||0),values=rows.slice(start,start+50);
+   let rows=path.endsWith('/issuetypes')?typeRows:fields();if(mode.startsWith('epic')&&!path.endsWith('/issuetypes')&&mode!=='epic-no-field')rows.push({fieldId:'customfield_888',name:'Epic Link',required:true,operations:mode==='epic-readonly'?['get']:['set'],schema:{type:'any',custom:'com.pyxis.greenhopper.jira:gh-epic-link'}});if(mode==='missing-subtask'&&path.endsWith('/issuetypes'))rows=rows.map(({subtask,...rest})=>rest);const start=Number(u.searchParams.get('startAt')||0),values=rows.slice(start,start+50);
    return Response.json({start,...(mode==='missing-subtask'?{isLast:start+values.length>=rows.length}:{last:start+values.length>=rows.length}),size:values.length,total:rows.length,values});
   }
   if(path==='/rest/api/2/issue/createmeta'){assert.equal(u.searchParams.get('projectKeys'),'CAL');return Response.json({projects:[{key:'CAL',issuetypes:types.map(t=>({...t,fields:Object.fromEntries(fields().map(r=>[r.fieldId,r]))}))}]});}
@@ -48,7 +49,7 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
   if(path.startsWith('/rest/api/2/issue/')){
    const key=path.split('/').at(-1);
    if(created.has(key)){if(mode==='verify-denied')return Response.json({}, {status:403});const data=structuredClone(created.get(key));if(data.timetracking)data.timetracking.originalEstimateSeconds=require('../lib/jira-create-fields').estimateSeconds(data.timetracking.originalEstimate);if(mode==='ignored-field')data.customfield_12345={id:'999'};return Response.json({key,fields:data});}
-   return Response.json({key,fields:{summary:'Công việc cha',project:{key:key.startsWith('OTHER')?'OTHER':'CAL'},issuetype:{id:key==='CAL-5'?'5':'1',subtask:key==='CAL-5'}}});
+   return Response.json({key,fields:{summary:'Công việc cha',project:{key:key.startsWith('OTHER')?'OTHER':'CAL'},issuetype:{id:key==='CAL-99'?'99':key==='CAL-5'?'5':'1',subtask:key==='CAL-5'}}});
   }
   throw Error('Unexpected '+path);
  };
@@ -89,5 +90,14 @@ const oldFetch=global.fetch,oldSecret=process.env.APP_SESSION_SECRET;let server;
  r=await request('jira-create-subtask-context',{key:'CAL-1',type:'1'});assert.equal(r.status,400);r=await request('jira-create-subtask-context',{key:'CAL-5'});assert.equal(r.status,400);
  mode='denied';r=await request('jira-create-subtask-context',{key:'CAL-1'});assert.equal(r.status,403);
  mode='modify-reporter';m=await meta();assert(m.canModifyReporter);p=body(m);p.fields.reporter='alice';p.fields.timetracking='2h 30m';r=await request('jira-create',{},p);assert.equal(r.data.outcome,'confirmed');assert.deepEqual(created.get(r.data.key).reporter,{name:'alice'});assert.deepEqual(created.get(r.data.key).timetracking,{originalEstimate:'2h 30m'});
+ mode='epic';let ep=await request('jira-create-meta',{project:'CAL',type:'1',epic:'CAL-99'});assert.equal(ep.status,200);assert.deepEqual(ep.data.epic,{key:'CAL-99',field:'customfield_888'});
+ const epBody={...body(ep.data),type:'1',parent:'',epic:'CAL-99'};r=await request('jira-create',{},epBody);assert.equal(r.data.outcome,'confirmed');assert.equal(created.get(r.data.key).customfield_888,'CAL-99');assert(!created.get(r.data.key).parent);
+ before=mutations;r=await request('jira-create',{},epBody);assert(r.data.replayed);assert.equal(mutations,before);
+ r=await request('jira-create-meta',{project:'CAL',type:'5',epic:'CAL-99'});assert.equal(r.status,400);
+ r=await request('jira-create-meta',{project:'CAL',type:'1',epic:'CAL-1'});assert.equal(r.status,400);
+ r=await request('jira-create-meta',{project:'CAL',type:'1',epic:'OTHER-99'});assert.equal(r.status,400);
+ for(const next of ['epic-no-field','epic-readonly']){mode=next;r=await request('jira-create-meta',{project:'CAL',type:'1',epic:'CAL-99'});assert.equal(r.status,422);}
+ mode='epic';r=await request('jira-create',{}, {...epBody,requestId:crypto.randomUUID(),fields:{...epBody.fields,customfield_888:'CAL-1'}});assert.equal(r.status,400);assert.equal(mutations,before);
+ console.log('Epic creation: real Epic Link payload/readback/replay, type/project/parent validation, missing/read-only screen field and tampering rejected.');
  console.log('Jira create: dynamic IDs/fields, modern paging/legacy, parent/project/type, assignee/reporter, defaults/unsupported, validation/permissions/CSRF, verified writes, concurrent/replay/lost response passed');
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(async()=>{global.fetch=oldFetch;if(oldSecret===undefined)delete process.env.APP_SESSION_SECRET;else process.env.APP_SESSION_SECRET=oldSecret;if(server)await new Promise(r=>server.close(r));});
