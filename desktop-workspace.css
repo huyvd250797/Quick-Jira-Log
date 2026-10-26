@@ -96,3 +96,44 @@
   #psPeople { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
   #psPeople .ps-person { margin:0; padding:16px; }
 }
+/* V1.35.4 — More visible bulk rows without changing mobile or Jira workspaces. */
+@media (min-width:900px) {
+  body.desktop-editor-open #bulkCard:not(.hidden) {
+    width:min(1180px,calc(100vw - 40px)) !important;
+    max-height:94dvh; top:3dvh; padding:16px 18px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-sticky-header { gap:8px 20px; padding-bottom:10px; }
+  body.desktop-editor-open #bulkCard .bulk-title h2 { font-size:19px; }
+  body.desktop-editor-open #bulkCard .bulk-title { min-height:26px; }
+  body.desktop-editor-open #bulkCard .bulk-header-date :is(input,select),
+  body.desktop-editor-open #bulkCard .bulk-week-display { height:36px; min-height:36px; }
+  body.desktop-editor-open #bulkCard .bulk-capacity-card { padding:8px 10px; }
+  body.desktop-editor-open #bulkCard .bulk-items,
+  body.desktop-editor-open #bulkCard.is-auto-mode .bulk-items {
+    max-height:calc(94dvh - 185px); gap:10px; padding:2px 2px 10px;
+  }
+  body.desktop-editor-open #bulkCard .bulk-item { padding:11px 12px; gap:7px; }
+  body.desktop-editor-open #bulkCard .bulk-item-head { gap:8px; }
+  body.desktop-editor-open #bulkCard .bulk-item-title { gap:3px; }
+  body.desktop-editor-open #bulkCard .bulk-item-title strong { font-size:13px; }
+  body.desktop-editor-open #bulkCard .bulk-item-title > span { font-size:13px; line-height:1.4; }
+  body.desktop-editor-open #bulkCard .bulk-remove-btn { width:28px; height:28px; min-width:28px; min-height:28px; flex-basis:28px; padding:0; }
+  body.desktop-editor-open #bulkCard .bulk-item-fields { grid-template-columns:minmax(0,1fr) 84px; gap:7px 9px; }
+  body.desktop-editor-open #bulkCard .bulk-time-field { gap:3px; }
+  body.desktop-editor-open #bulkCard .bulk-time-field > span:first-child { font-size:11px; }
+  body.desktop-editor-open #bulkCard .bulk-preset-row { gap:6px; }
+  body.desktop-editor-open #bulkCard .bulk-preset-btn { min-height:28px; padding:4px 6px; font-size:11px; }
+  body.desktop-editor-open #bulkCard .bulk-description-details { padding-top:5px; }
+  body.desktop-editor-open #bulkCard .bulk-description-details > summary { min-height:24px; font-size:11px; }
+  body.desktop-editor-open #bulkCard .bulk-description-details > summary > span { font-size:11px; }
+  body.desktop-editor-open #bulkCard .bulk-footer { padding-top:10px; gap:12px; }
+  body.desktop-editor-open #bulkCard .bulk-summary strong { font-size:20px; }
+  body.desktop-editor-open #bulkCard .bulk-actions button { min-height:38px; padding:7px 10px; }
+}
+@media (min-width:1280px) {
+  body.desktop-editor-open #bulkCard:not(.hidden):has(.bulk-item:nth-child(3)) { width:min(1760px,calc(100vw - 48px)) !important; }
+  body.desktop-editor-open #bulkCard:has(.bulk-item:nth-child(3)) .bulk-items { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media (min-width:1800px) {
+  body.desktop-editor-open #bulkCard:has(.bulk-item:nth-child(4)) .bulk-items { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}

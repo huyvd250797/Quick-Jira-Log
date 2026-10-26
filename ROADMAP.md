@@ -1,3 +1,6 @@
+# V1.35.4 — Đã xây dựng
+Mở rộng lưới Log tất cả PC: 3–4 cột, thẻ gọn và thêm diện tích danh sách. Xem RELEASE_V1.35.4.md. Kế tiếp đề xuất V1.36.0 — Truy cập nhanh, chưa xây dựng.
+
 # V1.35.3 — Đã xây dựng
 Chuẩn hóa PC cho Log tất cả và các chức năng Jira/thống kê, stylesheet tách biệt từ 900px, mobile giữ nguyên. Xem RELEASE_V1.35.3.md. Kế tiếp đề xuất V1.36.0 — Truy cập nhanh, chưa xây dựng.
 
