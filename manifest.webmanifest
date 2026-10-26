@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.35.2 – Thống kê dự án theo thành viên, Jira & Logwork.",
+  "description": "Quick Jira Log V1.35.3 – Thống kê dự án theo thành viên, Jira & Logwork.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

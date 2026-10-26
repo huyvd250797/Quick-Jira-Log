@@ -1,0 +1,98 @@
+/* V1.35.3 — Desktop only. Mobile rules and calendar fullscreen remain unchanged. */
+@media (min-width:900px) {
+  /* A short bulk draft uses a short dialog; a long draft scrolls its list. */
+  body.desktop-editor-open #bulkCard:not(.hidden) {
+    width:min(1120px,calc(100vw - 64px)) !important;
+    height:auto; max-height:88dvh; top:6dvh; padding:22px 24px;
+    overflow:hidden; border-radius:18px;
+  }
+  body.desktop-editor-open #bulkCard #bulkForm { flex:0 1 auto; overflow:hidden; }
+  body.desktop-editor-open #bulkCard .bulk-sticky-header {
+    display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);
+    gap:12px 24px; padding:0 0 16px; margin:0; box-shadow:none;
+  }
+  body.desktop-editor-open #bulkCard .bulk-title { grid-column:1/-1; grid-row:1; margin:0; }
+  body.desktop-editor-open #bulkCard .bulk-title h2 { font-size:21px; }
+  body.desktop-editor-open #bulkCard .bulk-plan-options { grid-column:1; grid-row:2; margin:0; align-self:center; gap:10px 18px; justify-content:flex-start; }
+  body.desktop-editor-open #bulkCard .bulk-header-controls { grid-column:2; grid-row:2; width:auto; margin:0; justify-content:flex-end; }
+  body.desktop-editor-open #bulkCard .bulk-header-date { max-width:320px; }
+  body.desktop-editor-open #bulkCard .bulk-capacity-card { grid-column:1/-1; grid-row:3; align-self:auto; margin:0; }
+  body.desktop-editor-open #bulkCard .bulk-items { flex:0 1 auto; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); max-height:calc(88dvh - 290px); overflow:auto; gap:14px; padding-bottom:14px; }
+  body.desktop-editor-open #bulkCard .bulk-item { padding:16px; border-radius:12px; }
+  body.desktop-editor-open #bulkCard .bulk-item-title > span { font-size:14px; line-height:1.5; }
+  body.desktop-editor-open #bulkCard .bulk-item-title strong { font-size:14px; }
+  body.desktop-editor-open #bulkCard .bulk-footer { grid-template-columns:minmax(0,1fr) auto; gap:18px; padding-top:16px; }
+  body.desktop-editor-open #bulkCard .bulk-actions { grid-template-columns:100px minmax(210px,260px); width:auto; }
+  body.desktop-editor-open #bulkCard .bulk-actions button { font-size:13px; min-height:42px; }
+  body.desktop-editor-open #bulkCard.is-auto-mode .bulk-footer { grid-template-columns:1fr; justify-items:end; }
+  body.desktop-editor-open #bulkCard.is-auto-mode .bulk-items { max-height:calc(88dvh - 220px); }
+
+  /* Jira lookup is a desktop workspace with bounded reading widths. */
+  #jiraSearchDialog { width:min(1220px,calc(100vw - 64px)); height:min(86dvh,900px); max-height:88dvh; border-radius:16px; }
+  #jiraSearchDialog .jira-search-head { padding:16px 22px; }
+  #jiraSearchDialog .jira-workspace-toolbar { padding:12px 22px; }
+  #jiraSearchDialog .jira-source-switch { flex:0 1 510px; }
+  #jiraSearchDialog .jira-source-switch button { min-width:120px; font-size:13px; padding:10px 16px; }
+  #jiraSearchDialog #jiraCreateBtn { margin-left:auto; }
+  #jiraSearchResultsPane { padding:18px 22px; }
+  #jiraSearchDialog .jira-search-results { gap:14px; }
+  #jiraSearchDialog .jira-issue-card { padding:16px 18px; }
+  #jiraSearchDialog .wt-toolbar { display:grid; grid-template-columns:200px minmax(200px,1fr) 200px auto; align-items:end; padding:14px 22px; gap:14px; }
+  #jiraSearchDialog .wt-toolbar label { min-width:0; }
+  #jiraSearchDialog .wt-toolbar :is(input,select) { min-height:42px; font-size:14px; }
+  #jiraSearchDialog .wt-scope { padding:8px 22px; }
+  #jiraTreeBody { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; gap:14px; padding:8px 22px 22px; }
+  #jiraTreeBody .wt-node { margin:0; display:flex; flex-direction:column; justify-content:space-between; padding:16px; }
+  #jiraTreeBody > :is(.wt-message,.wt-more) { grid-column:1/-1; }
+
+  #jiraEpicDialog.wt-dialog { width:min(1060px,calc(100vw - 80px)); height:auto; max-height:86dvh; border-radius:16px; }
+  #jiraEpicDialog .wt-sheet-head { padding:18px 22px; }
+  #jiraEpicDialog .wt-sheet-head h2 { font-size:19px; -webkit-line-clamp:2; }
+  #jiraEpicDialog .wt-epic-search { padding:12px 22px; }
+  #jiraEpicList { flex:0 1 auto; max-height:calc(86dvh - 185px); display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; gap:12px; padding:14px 22px 22px; }
+  #jiraEpicList .wt-node { margin:0; padding:15px; display:flex; flex-direction:column; justify-content:space-between; }
+  #jiraEpicList > :is(.wt-message,.wt-more) { grid-column:1/-1; }
+  .wt-title { font-size:14px; line-height:1.5; }
+
+  /* Details and forms share a centered shell, one scrolling body, compact actions. */
+  #jiraIssuePeekDialog { width:min(1080px,calc(100vw - 80px)); height:min(86dvh,920px); max-height:88dvh; border-radius:16px; }
+  #jiraIssuePeekDialog .jira-search-head { padding:18px 24px; }
+  #jiraIssuePeekDialog .jira-detail-tabs { padding:10px 24px; gap:8px; }
+  #jiraIssuePeekDialog .jira-detail-tabs button { flex:0 1 auto; min-width:110px; padding:10px 16px; }
+  #jiraDetailBody { padding:0 24px 24px; }
+  #jiraIssuePeekDialog #jiraIssuePeekInfo { grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px 24px; padding:18px 0; }
+  #jiraSubtaskList { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+  #jiraIssueDescription { max-width:960px; }
+  #jiraIssuePeekDialog > footer { padding:14px 24px; justify-content:flex-end; }
+  #jiraIssuePeekDialog > footer button,#jiraIssuePeekDialog > footer a { flex:0 0 auto; width:auto; min-width:120px; }
+
+  #jiraCreateDialog,#jiraSubtaskEditDialog { width:min(1000px,calc(100vw - 80px)); height:auto; max-height:88dvh; border-radius:16px; }
+  #jiraCreateDialog .jira-create-body,#jiraSubtaskEditDialog > .jira-action-body { flex:0 1 auto; max-height:calc(88dvh - 170px); padding:18px 24px; }
+  #jiraCreateDialog .jira-create-empty { padding:18px; }
+  #jiraCreateFields,#jiraSubtaskEditFields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 20px; align-items:start; }
+  #jiraCreateFields > .jira-create-field,#jiraSubtaskEditFields > .jira-subtask-field { min-width:0; margin:0; }
+  #jiraCreateFields > .jira-create-field:has(.jira-editor,textarea,input[id$="summary"]),
+  #jiraSubtaskEditFields > .jira-subtask-field:has(.jira-editor,textarea,input[id$="summary"]) { grid-column:1/-1; }
+  #jiraCreateDialog .jira-editor-surface,#jiraSubtaskEditDialog .jira-editor-surface { min-height:190px; max-height:320px; }
+  #jiraCreateDialog .jira-create-footer,#jiraSubtaskEditDialog > footer { padding:14px 24px; justify-content:flex-end; gap:12px; }
+  #jiraCreateDialog .jira-create-footer button,#jiraSubtaskEditDialog > footer button { flex:0 0 auto; min-width:120px; width:auto; }
+  #jiraCreateConfirmDialog,#jiraSubtaskConfirmDialog { width:min(960px,calc(100vw - 80px)); max-height:88dvh; border-radius:16px; }
+  .jira-subtask-change { display:grid; grid-template-columns:1fr 1fr; gap:12px 20px; }
+  .jira-subtask-change h3 { grid-column:1/-1; }
+  #projectStatsDialog { width:min(1200px,calc(100vw - 64px)); max-height:88dvh; border-radius:16px; }
+  #projectStatsDialog .ps-controls { gap:12px 18px; }
+}
+@media (min-width:900px) {
+  #jiraQuickEditDialog { width:min(760px,calc(100vw - 80px)); max-height:86dvh; border-radius:16px; }
+  #jiraQuickEditDialog .jira-search-head { padding:18px 24px; }
+  #jiraQuickEditDialog .jira-action-body { padding:18px 24px; }
+  #jiraUpdateConfirmDialog { width:min(640px,calc(100vw - 80px)); max-height:86dvh; }
+  #jiraUpdateConfirmDialog footer { display:flex; justify-content:flex-end; gap:12px; }
+  #jiraUpdateConfirmDialog footer button { flex:none; min-width:120px; width:auto; }
+  #projectStatsDialog .ps-toolbar { display:flex; flex-wrap:wrap; gap:12px 16px; }
+  #projectStatsDialog .ps-toolbar > label { flex:1 1 150px; }
+  #projectStatsDialog .ps-toolbar > button { flex:0 0 auto; width:auto; min-width:135px; }
+  #projectStatsDialog .ps-list-tools { max-width:600px; }
+  #psPeople { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  #psPeople .ps-person { margin:0; padding:16px; }
+}

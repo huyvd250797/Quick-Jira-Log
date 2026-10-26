@@ -1,3 +1,6 @@
+# V1.35.3 — Đã xây dựng
+Chuẩn hóa PC cho Log tất cả và các chức năng Jira/thống kê, stylesheet tách biệt từ 900px, mobile giữ nguyên. Xem RELEASE_V1.35.3.md. Kế tiếp đề xuất V1.36.0 — Truy cập nhanh, chưa xây dựng.
+
 # V1.35.2 — Đã xây dựng
 Đồng nhất icon loại công việc ở các danh sách Jira/logwork/thống kê. Xem RELEASE_V1.35.2.md. Đề xuất kế tiếp V1.36.0 — Truy cập nhanh, chưa xây dựng.
 
