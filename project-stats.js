@@ -68,11 +68,29 @@ window.QuickJiraProjectReport=(()=>{
  async function open(){if(!owner||QuickJiraBusy.active)return;origin=document.activeElement;closeDesktopEditor();closeAllToolOverlays({restore:true});QuickJiraStatsScroll.lock();if(!d.open)d.showModal();document.documentElement.classList.add('project-stats-open');document.body.classList.add('project-stats-open');$('psClose').focus({preventScroll:true});
   if(job)paint(job);if(projectsLoaded)return;const token=seq;try{const data=await api('/api?action=jira-search-options');if(token!==seq)return;projectsLoaded=true;$('psProjects').innerHTML=data.projects.map(p=>`<option value="${esc(p.key)}" label="${esc(p.name)}"></option>`).join('');if(data.warnings.length&&!job)$('psState').textContent='Có thể nhập trực tiếp mã dự án để thống kê.';}catch(e){if(token===seq&&!job)$('psState').textContent=e.message;}
  }
+ // Keep decimal digits together; the comma belongs to the integer line.
+ function kpiValue(value){
+  const text=String(value),number=text.match(/^(\d[\d.]*)(?:,(\d+))?$/);
+  if(number)return `<span class="ps-kpi-part">${esc(number[1])}${number[2]?',':''}</span>${number[2]?`<wbr><span class="ps-kpi-part ps-kpi-fraction">${esc(number[2])}</span>`:''}`;
+  return text.split(' ').map(part=>`<span class="ps-kpi-part">${esc(part)}</span>`).join(' ');
+ }
+ function fitKpiValues(){
+  for(const value of $('psKpis').querySelectorAll('strong')){
+   value.style.removeProperty('font-size');const available=value.clientWidth;
+   if(!available)continue;
+   const base=parseFloat(getComputedStyle(value).fontSize),widest=Math.max(0,...[...value.children].map(part=>part.getBoundingClientRect().width));
+   // Reduce only a token that cannot fit on its own; never drop numeric digits.
+   if(widest>available)value.style.fontSize=(Math.floor(base*available/widest*10)/10)+'px';
+  }
+ }
+ let kpiWidth=0;
+ const kpiObserver=new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width!==kpiWidth){kpiWidth=width;fitKpiValues();}});
+ kpiObserver.observe($('psKpis'));
  function render(){if(!report)return;const filter=$('psPerson').value;let people=report.people.filter(p=>!filter||p.id===filter);const sort=$('psSort').value;people.sort(sort==='name'?(a,b)=>a.name.localeCompare(b.name):sort==='tasks'?(a,b)=>b.subtasks-a.subtasks||b.seconds-a.seconds:(a,b)=>b.seconds-a.seconds);
-  $('psKpis').innerHTML=[['Tổng giờ',fmt(report.seconds)],['Ngày (Man-days)',QuickJiraProjectStats.manDays(report.seconds)],['Thành viên có log',report.people.length],['Subtask',report.subtasks]].map(([a,b])=>`<article><small>${a}</small><strong>${esc(b)}</strong></article>`).join('');
+  $('psKpis').innerHTML=[['Tổng giờ',fmt(report.seconds)],['Ngày <span class="ps-md-unit">(Man-days)</span>',QuickJiraProjectStats.manDays(report.seconds)],['Thành viên có log',report.people.length],['Subtask',report.subtasks]].map(([a,b])=>`<article><small>${a}</small><strong>${kpiValue(b)}</strong></article>`).join('');
   const max=Math.max(1,...report.people.map(p=>p.seconds));
   $('psPeople').innerHTML=people.length?people.map(p=>`<button type="button" class="ps-person" data-person="${esc(p.id)}" aria-expanded="${selected===p.id}"><div class="ps-person-head"><strong>${esc(p.name)}</strong><b>${fmt(p.seconds)} <span aria-hidden="true">›</span></b></div><div class="ps-meter" aria-hidden="true"><i style="width:${p.seconds/max*100}%"></i></div><div class="ps-meta"><span>${p.subtasks} Subtask đã log · ${p.share.toLocaleString('vi-VN',{maximumFractionDigits:1})}% tổng giờ</span><span>${p.regular?fmt(p.regular)+' thường · ':''}${p.overtime?fmt(p.overtime)+' OT · ':''}${p.unknown?fmt(p.unknown)+' chưa rõ OT':''}</span></div></button>`).join(''):'<p>Không có worklog trong kỳ đã chọn.</p>';
-  renderFirstLog();detail();
+  fitKpiValues();renderFirstLog();detail();
  }
  function detail(){const p=report?.people.find(p=>p.id===selected);$('psDetail').hidden=!p;if(!p)return;
   $('psDetail').innerHTML=`<div class="ps-detail-head"><h3>${esc(p.name)}</h3><button id="psDetailClose" class="text-btn" type="button">Thu gọn</button></div>`+p.issues.map(t=>`<details class="ps-task"><summary><span><strong>${window.QuickJiraIssueIcons?.html(t)||''}${esc(t.key)}</strong> · ${t.isSubtask?'Subtask':'Công việc khác'}<small>${esc(t.summary)}</small></span><b>${fmt(t.seconds)}</b></summary>${t.logs.sort((a,b)=>a.start.localeCompare(b.start)).map(w=>`<div class="ps-log"><div><strong>${esc(w.date.split('-').reverse().join('/'))} · ${esc(new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(w.start)))}</strong><span>${esc(w.description||'Không có mô tả')}</span></div><b>${fmt(w.seconds)}<small>${w.overtimeKnown?(w.overtime?'OT':'Thường'):'Chưa rõ OT'}</small></b></div>`).join('')}</details>`).join('');

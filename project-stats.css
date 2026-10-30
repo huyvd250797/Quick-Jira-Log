@@ -43,8 +43,8 @@ html[data-theme=dark] #projectStatsDialog input[type=date]{color-scheme:dark}
 #projectStatsDialog #psLoad{background:var(--action-primary,#2164ca);color:#fff;border:1px solid var(--action-primary,#2164ca)}
 #projectStatsDialog #psLoad:hover{background:var(--action-primary-hover,#1954af)}
 #projectStatsDialog .ps-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-#projectStatsDialog .ps-kpis article{border:1px solid var(--line);background:var(--bg);padding:15px 16px;gap:8px;min-width:0}
-#projectStatsDialog .ps-kpis strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere;font-size:25px;line-height:1.2}
+#projectStatsDialog .ps-kpis article{border:1px solid var(--line);background:var(--primary-soft,#eaf2ff);padding:15px 16px;gap:8px;min-width:0}
+#projectStatsDialog .ps-kpis strong{font-variant-numeric:tabular-nums;overflow-wrap:normal;word-break:normal;font-size:25px;line-height:1.2;display:block;min-width:0}
 #projectStatsDialog .ps-kpis small{font-size:12px;line-height:1.4}
 #projectStatsDialog .ps-list-tools{display:grid;grid-template-columns:minmax(170px,1fr) minmax(150px,.8fr) minmax(230px,1.5fr);gap:12px;align-items:start;padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:14px;margin:14px 0}
 .ps-member-field{min-width:0;display:grid;gap:6px}.ps-member-picker{position:relative;min-width:0}
@@ -62,3 +62,8 @@ html[data-theme=dark] #projectStatsDialog input[type=date]{color-scheme:dark}
 
 .ps-member-options[data-placement=above]{top:auto;bottom:calc(100% + 6px)}
 #projectStatsDialog .ps-first-log a{white-space:nowrap}
+
+/* V1.37.1 — Restore the original KPI tint and wrap whole numeric tokens. */
+html[data-theme=dark] #projectStatsDialog .ps-kpis article{background:#1b3555}
+.ps-kpi-part,.ps-md-unit{white-space:nowrap}
+@media(max-width:899px){#projectStatsDialog .ps-md-unit{display:block}}

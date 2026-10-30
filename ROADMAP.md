@@ -1,3 +1,11 @@
+# V1.37.1 — Hiệu chỉnh block thống kê — đã xây dựng
+
+Khôi phục màu nền cũ, tách nhãn mobile thành Ngày / (Man-days), xuống dòng toàn bộ phần thập phân và co phần nguyên dài theo chiều rộng. Kiểm tra theo TESTING.md. Dựa trên V1.37.0, không đổi API/dữ liệu.
+
+Phiên bản tiếp theo đề xuất: **V1.38.0 — Logwork từ Tra cứu**, chọn nhiều Subtask và chuyển sang Log tất cả hiện có; chưa xây dựng.
+
+---
+
 # V1.37.0 — Thống kê dự án: Man-days & mốc log đầu tiên
 
 | Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật và dữ liệu | Điều kiện hoàn thành | Trạng thái / phụ thuộc |
