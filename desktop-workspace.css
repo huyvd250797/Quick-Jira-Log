@@ -92,7 +92,7 @@
   #projectStatsDialog .ps-toolbar { display:flex; flex-wrap:wrap; gap:12px 16px; }
   #projectStatsDialog .ps-toolbar > label { flex:1 1 150px; }
   #projectStatsDialog .ps-toolbar > button { flex:0 0 auto; width:auto; min-width:135px; }
-  #projectStatsDialog .ps-list-tools { max-width:600px; }
+  #projectStatsDialog .ps-list-tools { max-width:none; width:100%; box-sizing:border-box; }
   #psPeople { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
   #psPeople .ps-person { margin:0; padding:16px; }
 }

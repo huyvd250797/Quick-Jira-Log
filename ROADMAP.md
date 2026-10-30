@@ -1,9 +1,20 @@
+# V1.37.0 — Thống kê dự án: Man-days & mốc log đầu tiên
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật và dữ liệu | Điều kiện hoàn thành | Trạng thái / phụ thuộc |
+| --- | --- | --- | --- | --- | --- |
+| V1.37.0 | Thống kê dự án rõ ràng hơn | 4 KPI, Man-days, tìm thành viên, mốc Subtask đầu tiên, bộ lọc đẹp hơn | Tính từ giây gốc; mốc toàn thời gian trong trang đọc hiện có; checkpoint; lọc thành viên cục bộ | Unit/API và browser PC/mobile; xác minh Jira thật sau deploy | Đã xây dựng trên V1.36.0 |
+| V1.38.0 | Logwork từ Tra cứu | Chọn nhiều Subtask đủ điều kiện, chuyển sang Log tất cả và review lịch | Tái dùng luồng phân bổ/xem trước/xác nhận; kiểm tra quyền/điều kiện | Boss chọn trước khi xây dựng | Đề xuất, chưa xây dựng |
+
+Phạm vi mới của Boss dùng số V1.37.0 cho thống kê; đề xuất Logwork từ Tra cứu trước đây chuyển sang V1.38.0. Không tự triển khai phần đó.
+
+---
+
 # V1.36.0 — Working Tree: Truy cập nhanh
 
 | Phiên bản | Mục tiêu | Chức năng | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
 | --- | --- | --- | --- | --- | --- |
 | V1.36.0 | Mở đúng Epic/công việc nhanh | Ghim, tiếp tục Epic, khôi phục vị trí, lọc Status/Assignee | localStorage theo tài khoản; JQL server; đọc lại quyền khi mở | Unit/API và UI theo TESTING.md; cần kiểm tra Jira thực tế sau deploy | Đã xây dựng |
-| V1.37.0 | Logwork từ Tra cứu | Chọn nhiều Subtask đủ điều kiện và chuyển sang Log tất cả hiện có | Tái sử dụng luồng phân bổ/xem trước/xác nhận, kiểm tra điều kiện Jira | Boss chọn trước xây dựng | Đề xuất, chưa xây dựng |
+| V1.38.0 | Logwork từ Tra cứu | Chọn nhiều Subtask đủ điều kiện và chuyển sang Log tất cả hiện có | Tái sử dụng luồng phân bổ/xem trước/xác nhận, kiểm tra điều kiện Jira | Boss chọn trước xây dựng | Đề xuất, chưa xây dựng |
 
 # V1.35.8 — Đã xây dựng
 Chuẩn hóa controls Tra cứu, Reporter/Created và icon Type/Priority, tải/xem ảnh gốc theo phần. Xem RELEASE_V1.35.8.md. Đề xuất tiếp V1.36.0 — Truy cập nhanh, chưa xây dựng.

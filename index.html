@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.36.0</title>
+  <title>Quick Jira Log · V1.37.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -48,7 +48,7 @@
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.36.0</div>
+      <div class="boot-version">V1.37.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -57,7 +57,7 @@
     <section class="brand">
       <button id="brandRefreshBtn" class="logo-refresh-btn" type="button" aria-label="Làm mới dữ liệu, giữ phiên hiện tại" title="Làm mới dữ liệu"><img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" /></button>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.36.0</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.37.0</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -456,7 +456,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.36.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.37.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -659,7 +659,7 @@
   <label>Từ ngày<input id="psFrom" type="date" required></label><label>Đến ngày<input id="psTo" type="date" required></label>
   <div class="ps-job-actions"><button id="psLoad" class="primary" type="submit">Xem thống kê</button><button id="psPause" class="secondary" type="button" hidden>Tạm dừng</button><button id="psRetry" class="secondary" type="button" hidden>Thử lại phần lỗi</button></div>
  </form>
- <main class="ps-body"><div id="psState" role="status" aria-live="polite">Chọn dự án để xem thống kê.</div><p id="psWarning" class="ps-warning" hidden></p><section id="psContent" hidden><div id="psKpis" class="ps-kpis"></div><div class="ps-list-tools"><label>Thành viên<select id="psPerson"><option value="">Tất cả</option></select></label><label>Sắp xếp<select id="psSort"><option value="hours">Giờ đã log</option><option value="tasks">Subtask đã log</option><option value="name">Tên thành viên</option></select></label></div><div id="psPeople"></div><section id="psDetail" hidden aria-label="Chi tiết thành viên"></section></section><details class="ps-note"><summary>Cách tính dữ liệu</summary><p>Theo ngày làm việc · Giờ Việt Nam. Chỉ gồm dữ liệu tài khoản có quyền xem. Subtask được đếm riêng theo từng người ghi worklog, không theo Assignee; một Subtask chung có thể xuất hiện ở nhiều thành viên. Giờ trên Story/Task/Bug vẫn được cộng.</p></details></main>
+ <main class="ps-body"><div id="psState" role="status" aria-live="polite">Chọn dự án để xem thống kê.</div><p id="psWarning" class="ps-warning" hidden></p><section id="psContent" hidden><div id="psKpis" class="ps-kpis"></div><div class="ps-list-tools"><div class="ps-member-field"><label for="psPersonQuery">Thành viên</label><div id="psMemberPicker" class="ps-member-picker"><input id="psPersonQuery" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="psMemberOptions" placeholder="Tất cả thành viên" autocomplete="off" maxlength="160"><button id="psPersonClear" class="ps-member-clear" type="button" aria-label="Xóa lọc thành viên" hidden>×</button><div id="psMemberOptions" class="ps-member-options" role="listbox" aria-label="Thành viên có log" hidden></div></div><select id="psPerson" hidden aria-label="Thành viên đã chọn"><option value="">Tất cả</option></select></div><label>Sắp xếp<select id="psSort"><option value="hours">Giờ đã log</option><option value="tasks">Subtask đã log</option><option value="name">Tên thành viên</option></select></label><div id="psFirstLog" class="ps-first-log" role="status"></div></div><div id="psPeople"></div><section id="psDetail" hidden aria-label="Chi tiết thành viên"></section></section><details class="ps-note"><summary>Cách tính dữ liệu</summary><p>Theo ngày làm việc · Giờ Việt Nam. Chỉ gồm dữ liệu tài khoản có quyền xem. Subtask được đếm riêng theo từng người ghi worklog, không theo Assignee; một Subtask chung có thể xuất hiện ở nhiều thành viên. Giờ trên Story/Task/Bug vẫn được cộng. Ngày (Man-days) = tổng giờ trong kỳ ÷ 8, gồm cả Overtime. Mốc log Subtask đầu tiên lấy ngày giờ worklog trên toàn thời gian trong phạm vi dự án đã chọn, không theo ngày tạo Subtask hoặc bộ lọc thành viên/kỳ. Mốc này chỉ phản ánh dữ liệu còn tồn tại mà tài khoản có quyền xem; khi tải thiếu, kết quả là tạm tính.</p></details></main>
  </dialog>
  <script src="/lib/project-stats.js" defer></script><script src="/lib/progress-eta.js" defer></script><script src="/stats-scroll-lock.js" defer></script><script src="/project-stats.js" defer></script><script src="/resume-state.js" defer></script><script src="/soft-refresh.js" defer></script>
 <dialog id="bulkAllocationHelpDialog" aria-labelledby="bulkAllocationHelpTitle"><header><h2 id="bulkAllocationHelpTitle">Hướng dẫn Log tất cả</h2><button id="bulkAllocationHelpClose" type="button" class="icon-btn" aria-label="Đóng hướng dẫn">×</button></header>

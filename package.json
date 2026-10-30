@@ -1,6 +1,6 @@
 {
   "name": "quick-jira-log",
-  "version": "1.36.0",
+  "version": "1.37.0",
   "private": true,
   "engines": {
     "node": "24.x"
@@ -57,6 +57,7 @@
     "test:batch-save-ui": "node tests/browser/batch-save-progress.cjs",
     "test:epic-create-ui": "node tests/browser/epic-create-recents.cjs",
     "test:detail-polish": "node tests/browser/detail-polish.cjs",
-    "test:tree-quick": "node tests/working-tree-state-tests.js && node tests/working-tree-tests.js && node tests/browser/working-tree-quick.cjs"
+    "test:tree-quick": "node tests/working-tree-state-tests.js && node tests/working-tree-tests.js && node tests/browser/working-tree-quick.cjs",
+    "test:stats-insights": "node tests/project-stats-tests.js && node tests/browser/project-stats-insights.cjs"
   }
 }

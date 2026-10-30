@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),http=require('node:http');
-const api=require('../api'),{createSessionCookie}=require('../lib/session'),{aggregate}=require('../lib/project-stats'),{filters}=require('../handlers/project-stats');
+const api=require('../api'),{createSessionCookie}=require('../lib/session'),{aggregate,manDays,firstWorklog,memberMatches}=require('../lib/project-stats'),{filters}=require('../handlers/project-stats');
 const original=global.fetch;let server,mode='',writes=0,pluginReads=0,queries=[];
 const log=(id,author='a',started='2026-10-22T08:00:00.000+0700')=>({id:String(id),author:{key:author,displayName:author},started,timeSpentSeconds:1800,comment:'Fixture'});
 (async()=>{
@@ -27,6 +27,7 @@ const log=(id,author='a',started='2026-10-22T08:00:00.000+0700')=>({id:String(id
    if(m!=='GET'){writes++;throw Error('No writes allowed');}
    if(mode==='worklog-denied')return Response.json({}, {status:403});const start=Number(u.searchParams.get('startAt'));
    if(mode==='bad-worklog')return Response.json({total:2,startAt:start});
+   if(mode==='first-pages'){return Response.json({total:2,startAt:start,worklogs:[start===0?log(90,'new','2026-10-22T08:00:00.000+0700'):log(91,'first','2010-01-01T23:30:00.000Z')]});}
    if(mode==='big'){assert.equal(u.searchParams.get('maxResults'),'500');const rows=Array.from({length:Math.min(500,501-start)},(_,i)=>log(1000+start+i));return Response.json({total:501,startAt:start,worklogs:rows});}
    const rows=start===0?[log(101),log(102,'b','2012-01-01T08:00:00.000+0700'),log(103,'a','2026-10-21T17:30:00.000Z')]:[log(104)];
    return Response.json({total:4,startAt:start,worklogs:rows});
@@ -57,9 +58,14 @@ const log=(id,author='a',started='2026-10-22T08:00:00.000+0700')=>({id:String(id
  const tail=await request({op:'worklogs',key:'CAL-1',ot:'0',startAt:500});assert.equal(tail.data.items.length,1);assert(!tail.data.hasMore);assert.equal(aggregate([...large.data.items,...tail.data.items]).seconds,501*1800);mode='';
 
  mode='embedded';r=await request({project:'CAL'});assert.equal(r.status,200);assert.equal(r.data.issues[0].worklogs.items.length,1,'Embedded data is filtered by actual worklog date');
+ assert.equal(r.data.issues[0].worklogs.firstWorklog.authorId,'b');assert.equal(r.data.issues[0].worklogs.firstWorklog.date,'2012-01-01','First entry survives period filter');assert.equal(r.data.issues[1].worklogs.firstWorklog,null);
  assert.equal(r.data.issues[0].worklogs.ids.length,2);assert(!r.data.issues[0].worklogs.hasMore);assert.equal(r.data.issues[1].worklogs.total,0);
  for(const i of r.data.issues.slice(2))assert.equal(i.worklogs,undefined,'Partial/missing/malformed fields must use paged GET');
  r=await request({project:'CAL',all:1});assert.equal(r.data.issues[0].worklogs.items.length,2);mode='';
+ mode='first-pages';const firstPage=await request({op:'worklogs',key:'CAL-1',ot:'0'}),lastPage=await request({op:'worklogs',key:'CAL-1',ot:'0',startAt:1});assert.equal(lastPage.data.items.length,0);const earliest=firstWorklog(firstPage.data.firstWorklog,lastPage.data.firstWorklog);assert.equal(earliest.authorId,'first');assert.equal(earliest.date,'2010-01-02','Vietnam work date uses started, not creation or lexical ISO order');mode='';
+ assert.equal(manDays(28800),'1');assert.equal(manDays(3600),'0,13');assert.equal(manDays(0),'0');assert.equal(manDays(72000),'2,5');
+ assert(memberMatches({name:'Võ Đức Huy',username:'huyvd',id:'abc'},'vo huy'));assert(memberMatches({name:'Võ Đức Huy',username:'huyvd'},'HUYVD'));assert(!memberMatches({name:'Huy'},'Alice'));
+ assert.equal(firstWorklog({key:'CAL-1',id:'1',start:'2026-10-22T08:00:00+0700'},{key:'CAL-2',id:'2',start:'2026-10-22T01:30:00Z'}).id,'1','Compare absolute instants across offsets');
  mode='no-worklog';r=await request({project:'CAL'});assert.equal(r.status,200);assert(!queries.at(-1).fields.includes('worklog'));
  mode='benchmark';let count=0,seconds=0,requests=0;
  for(let cursor=0;cursor<1000;cursor+=100){const page=await request({project:'CAL',all:1,startAt:cursor});assert.equal(page.status,200);requests++;for(const i of page.data.issues){assert(i.worklogs&&!i.worklogs.hasMore);count++;seconds+=aggregate(i.worklogs.items).seconds;}}

@@ -17,9 +17,9 @@ window.QuickJiraProjectReport=(()=>{
  }
  const matches=j=>j&&JSON.stringify(j.filter)===JSON.stringify(filter());
  function stopJob(){if(job){job.controller.abort();job.task?.cancel();job.receiptHandle?.cancel();job=null;}}
- function clear(){seq++;stopJob();projectsLoaded=false;working=false;$('psLoad').disabled=false;items=[];report=null;selected='';$('psContent').hidden=true;$('psWarning').hidden=true;$('psPeople').replaceChildren();$('psDetail').replaceChildren();$('psProjects').replaceChildren();$('psProject').value='';$('psScope').value='all';$('psPeriod').value='month';$('psAnchor').value=today();$('psYear').value=today().slice(0,4);$('psState').textContent='Chọn dự án để xem thống kê.';period();$('psPause').hidden=true;$('psRetry').hidden=true;}
+ function clear(){seq++;stopJob();projectsLoaded=false;working=false;$('psLoad').disabled=false;items=[];report=null;selected='';$('psContent').hidden=true;$('psWarning').hidden=true;$('psPeople').replaceChildren();$('psDetail').replaceChildren();$('psProjects').replaceChildren();$('psProject').value='';$('psScope').value='all';$('psPeriod').value='month';$('psAnchor').value=today();$('psYear').value=today().slice(0,4);$('psState').textContent='Chọn dự án để xem thống kê.';period();$('psPerson').replaceChildren(new Option('Tất cả thành viên',''));$('psPersonQuery').value='';closeMembers();$('psPause').hidden=true;$('psRetry').hidden=true;}
  function ui(){return Object.fromEntries(['psScope','psProject','psPeriod','psAnchor','psYear','psFrom','psTo','psPerson','psSort'].map(id=>[id,$(id).value]));}
- function meta(j){return {failures:j.issues.filter(t=>t.error).map(t=>[t.key,t.error]),runID:j.runID,filter:j.filter,offset:j.offset,total:j.total,phase:j.phase,paused:j.paused,status:j.finished?'complete':j.paused?'paused':'running',warnings:j.warnings,error:j.error,ui:ui(),view:d.open?'stats':'other',scroll:d.querySelector('.ps-body').scrollTop};}
+ function meta(j){return {failures:j.issues.filter(t=>t.error).map(t=>[t.key,t.error]),runID:j.runID,filter:j.filter,offset:j.offset,total:j.total,phase:j.phase,paused:j.paused,status:j.finished?'complete':j.paused?'paused':'running',warnings:j.warnings,error:j.error,firstLogSchema:j.firstLogSchema||0,ui:ui(),view:d.open?'stats':'other',scroll:d.querySelector('.ps-body').scrollTop};}
  async function checkpoint(j,page=null){
   if(!valid(j)||j.storageDisabled)return;
   try{const ok=await QuickJiraReportStorage.commit(j.owner,j.runID,page,meta(j));if(!ok&&valid(j)){j.paused=true;j.storageDisabled=true;j.storageWarning='Tác vụ đã thay đổi ở cửa sổ khác. Hãy mở một thống kê mới.';}}
@@ -32,7 +32,7 @@ window.QuickJiraProjectReport=(()=>{
  function addIssue(j,t){
   if(j.keys.has(t.key))return;
   const {worklogs,...info}=t,row={...info,offset:0,total:null,ids:new Set(),done:false,error:'',inflight:false};
-  if(worklogs){row.offset=worklogs.nextStartAt;row.total=worklogs.total;row.done=!worklogs.hasMore;for(const id of worklogs.ids)row.ids.add(id);for(const x of worklogs.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask,issueType:t.issueType,issueTypeId:t.issueTypeId});}
+  if(worklogs){row.firstWorklog=worklogs.firstWorklog||null;row.offset=worklogs.nextStartAt;row.total=worklogs.total;row.done=!worklogs.hasMore;for(const id of worklogs.ids)row.ids.add(id);for(const x of worklogs.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask,issueType:t.issueType,issueTypeId:t.issueTypeId});}
   j.keys.add(t.key);j.issues.push(row);
  }
  async function restore(user,token){
@@ -48,7 +48,7 @@ window.QuickJiraProjectReport=(()=>{
    for(const p of saved.pages.filter(p=>p.kind==='logs').sort((a,b)=>a.offset-b.offset)){
     const t=byKey.get(p.issue);if(!t||t.done||p.offset!==t.offset)continue;for(const id of p.payload.ids)t.ids.add(id);
     for(const x of p.payload.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask,issueType:t.issueType,issueTypeId:t.issueTypeId});
-    t.total=p.payload.total;t.offset=p.payload.nextStartAt;t.done=!p.payload.hasMore;
+    t.firstWorklog=QuickJiraProjectStats.firstWorklog(t.firstWorklog,p.payload.firstWorklog);t.total=p.payload.total;t.offset=p.payload.nextStartAt;t.done=!p.payload.hasMore;
    }
    for(const p of saved.pages.filter(p=>p.kind==='ot'))for(const x of p.payload){const item=j.items.get(x.id);if(item){Object.assign(item,x);j.verified.add(x.id);}}
    for(const [key,error] of m.failures||[]){const t=byKey.get(key);if(t)t.error=error;}
@@ -57,7 +57,7 @@ window.QuickJiraProjectReport=(()=>{
    j.resumeNotice='Đã khôi phục dữ liệu lưu '+new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'}).format(new Date(m.savedAt))+(repair?' · Kiểm tra và đọc bù checkpoint thiếu':'');
    job=j;for(const id of ['psScope','psProject','psPeriod','psAnchor','psYear','psFrom','psTo','psSort'])if(m.ui?.[id]!==undefined)$(id).value=m.ui[id];period();
    if(m.status==='running'&&!m.paused)j.paused=false;
-   summarize(j);paint(j);if(m.view==='stats')await open();
+   summarize(j);if(report?.people.some(p=>p.id===m.ui?.psPerson)){$('psPerson').value=m.ui.psPerson;syncMemberInput();render();}paint(j);if(m.view==='stats')await open();
    requestAnimationFrame(()=>{if(valid(j))d.querySelector('.ps-body').scrollTop=m.scroll||0;});
    if((m.status==='running'||repair)&&!j.paused)void execute(j);else if(j.paused){makeTask(j);paint(j);}
    else if(j.finished&&QuickJiraBusy.docked){makeTask(j);const p=progress(j),partial=!!j.error||!!j.warnings.length||j.issues.some(t=>t.error);j.task({label:partial?'Thống kê cần xử lý':'Thống kê hoàn tất',error:partial,done:p.done,total:p.total===null?undefined:p.total,overallPercent:QuickJiraEta.overall(j.phase,p.done,p.total)});j.receiptHandle=j.task;j.task=null;}
@@ -69,15 +69,58 @@ window.QuickJiraProjectReport=(()=>{
   if(job)paint(job);if(projectsLoaded)return;const token=seq;try{const data=await api('/api?action=jira-search-options');if(token!==seq)return;projectsLoaded=true;$('psProjects').innerHTML=data.projects.map(p=>`<option value="${esc(p.key)}" label="${esc(p.name)}"></option>`).join('');if(data.warnings.length&&!job)$('psState').textContent='Có thể nhập trực tiếp mã dự án để thống kê.';}catch(e){if(token===seq&&!job)$('psState').textContent=e.message;}
  }
  function render(){if(!report)return;const filter=$('psPerson').value;let people=report.people.filter(p=>!filter||p.id===filter);const sort=$('psSort').value;people.sort(sort==='name'?(a,b)=>a.name.localeCompare(b.name):sort==='tasks'?(a,b)=>b.subtasks-a.subtasks||b.seconds-a.seconds:(a,b)=>b.seconds-a.seconds);
-  $('psKpis').innerHTML=[['Tổng giờ',fmt(report.seconds)],['Thành viên có log',report.people.length],['Subtask duy nhất',report.subtasks]].map(([a,b])=>`<article><small>${a}</small><strong>${esc(b)}</strong></article>`).join('');
+  $('psKpis').innerHTML=[['Tổng giờ',fmt(report.seconds)],['Ngày (Man-days)',QuickJiraProjectStats.manDays(report.seconds)],['Thành viên có log',report.people.length],['Subtask',report.subtasks]].map(([a,b])=>`<article><small>${a}</small><strong>${esc(b)}</strong></article>`).join('');
   const max=Math.max(1,...report.people.map(p=>p.seconds));
   $('psPeople').innerHTML=people.length?people.map(p=>`<button type="button" class="ps-person" data-person="${esc(p.id)}" aria-expanded="${selected===p.id}"><div class="ps-person-head"><strong>${esc(p.name)}</strong><b>${fmt(p.seconds)} <span aria-hidden="true">›</span></b></div><div class="ps-meter" aria-hidden="true"><i style="width:${p.seconds/max*100}%"></i></div><div class="ps-meta"><span>${p.subtasks} Subtask đã log · ${p.share.toLocaleString('vi-VN',{maximumFractionDigits:1})}% tổng giờ</span><span>${p.regular?fmt(p.regular)+' thường · ':''}${p.overtime?fmt(p.overtime)+' OT · ':''}${p.unknown?fmt(p.unknown)+' chưa rõ OT':''}</span></div></button>`).join(''):'<p>Không có worklog trong kỳ đã chọn.</p>';
-  detail();
+  renderFirstLog();detail();
  }
  function detail(){const p=report?.people.find(p=>p.id===selected);$('psDetail').hidden=!p;if(!p)return;
   $('psDetail').innerHTML=`<div class="ps-detail-head"><h3>${esc(p.name)}</h3><button id="psDetailClose" class="text-btn" type="button">Thu gọn</button></div>`+p.issues.map(t=>`<details class="ps-task"><summary><span><strong>${window.QuickJiraIssueIcons?.html(t)||''}${esc(t.key)}</strong> · ${t.isSubtask?'Subtask':'Công việc khác'}<small>${esc(t.summary)}</small></span><b>${fmt(t.seconds)}</b></summary>${t.logs.sort((a,b)=>a.start.localeCompare(b.start)).map(w=>`<div class="ps-log"><div><strong>${esc(w.date.split('-').reverse().join('/'))} · ${esc(new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(w.start)))}</strong><span>${esc(w.description||'Không có mô tả')}</span></div><b>${fmt(w.seconds)}<small>${w.overtimeKnown?(w.overtime?'OT':'Thường'):'Chưa rõ OT'}</small></b></div>`).join('')}</details>`).join('');
   $('psDetailClose').onclick=()=>{selected='';render();};
  }
+
+ // Search only members who contributed worklogs to this report; no extra Jira user scan.
+ let memberOptions=[],memberActive=-1;
+ function syncMemberInput(){const p=report?.people.find(p=>p.id===$('psPerson').value);$('psPersonQuery').value=p?p.name:'';$('psPersonClear').hidden=!p;}
+ function closeMembers(){$('psMemberOptions').hidden=true;$('psPersonQuery').setAttribute('aria-expanded','false');$('psPersonQuery').removeAttribute('aria-activedescendant');memberActive=-1;}
+ function showMembers(){
+  const q=$('psPersonQuery').value;memberOptions=[{id:'',name:'Tất cả thành viên',username:''},...(report?.people||[])].filter((p,i)=>i===0||QuickJiraProjectStats.memberMatches(p,q));
+  memberActive=-1;$('psMemberOptions').innerHTML=memberOptions.map((p,i)=>`<button id="psMemberOption${i}" type="button" role="option" aria-selected="${$('psPerson').value===p.id}" data-member-index="${i}"><strong>${esc(p.name)}</strong>${p.username?`<small>${esc(p.username)}</small>`:''}</button>`).join('')+(memberOptions.length===1&&q?'<p>Không tìm thấy thành viên có log trong kỳ.</p>':'');
+  $('psMemberOptions').hidden=false;$('psPersonQuery').setAttribute('aria-expanded','true');$('psPersonQuery').removeAttribute('aria-activedescendant');
+  const box=$('psPersonQuery').getBoundingClientRect(),pane=d.querySelector('.ps-body').getBoundingClientRect(),below=Math.min(innerHeight,pane.bottom)-box.bottom-10,above=box.top-Math.max(0,pane.top)-10;
+  const flip=below<160&&above>below;$('psMemberOptions').dataset.placement=flip?'above':'below';$('psMemberOptions').style.maxHeight=Math.max(44,Math.min(210,Math.floor(flip?above:below)))+'px';
+ }
+ function chooseMember(index){const p=memberOptions[index];if(!p)return;$('psPerson').value=p.id;closeMembers();$('psPerson').dispatchEvent(new Event('change'));$('psPersonQuery').focus({preventScroll:true});closeMembers();}
+ $('psPersonQuery').addEventListener('focus',showMembers);
+ $('psPersonQuery').addEventListener('click',showMembers);
+ $('psPersonQuery').addEventListener('input',showMembers);
+ $('psPersonQuery').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();closeMembers();syncMemberInput();return;}
+  if(!['ArrowDown','ArrowUp','Enter'].includes(e.key))return;
+  if(e.key==='Enter'&&$('psMemberOptions').hidden)return;e.preventDefault();
+  if($('psMemberOptions').hidden)showMembers();
+  if(e.key==='Enter'){if(memberActive>=0)chooseMember(memberActive);return;}
+  memberActive=(memberActive+(e.key==='ArrowDown'?1:-1)+memberOptions.length)%memberOptions.length;
+  for(const [i,node] of [...$('psMemberOptions').querySelectorAll('[role=option]')].entries())node.classList.toggle('is-active',i===memberActive);
+  const node=$('psMemberOption'+memberActive);$('psPersonQuery').setAttribute('aria-activedescendant',node.id);node.scrollIntoView({block:'nearest'});
+ });
+ $('psMemberOptions').addEventListener('mousedown',e=>e.preventDefault());
+ $('psMemberOptions').onclick=e=>{const option=e.target.closest('[data-member-index]');if(option)chooseMember(Number(option.dataset.memberIndex));};
+ $('psPersonClear').onclick=()=>{$('psPerson').value='';closeMembers();$('psPerson').dispatchEvent(new Event('change'));};
+ document.addEventListener('pointerdown',e=>{if(!e.target.closest('#psMemberPicker')){closeMembers();syncMemberInput();}});
+ $('psPersonQuery').addEventListener('blur',()=>{setTimeout(()=>{if(!$('psMemberPicker').contains(document.activeElement)){closeMembers();syncMemberInput();}},0);});
+ function renderFirstLog(){
+  const node=$('psFirstLog'),j=job;if(!j||!matches(j)){node.textContent='';return;}
+  const first=j.issues.filter(t=>t.isSubtask).reduce((a,t)=>QuickJiraProjectStats.firstWorklog(a,t.firstWorklog),null);
+  const known=j.firstLogSchema===1,complete=known&&!j.warnings.length&&j.phase!=='issues'&&j.issues.every(t=>t.done&&!t.error),scope=j.filter.project||'Tất cả dự án';
+  const label=complete?'Log Subtask đầu tiên':known?'Log Subtask sớm nhất đã đọc · Tạm tính':'Log Subtask đầu tiên';
+  let content='';
+  if(!known)content='<span>Cập nhật thống kê để xác định mốc log đầu tiên.</span>';
+  else if(first){const when=new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(first.start));content=`<strong>${esc(when)}</strong><span>${esc(first.authorName)} · <a href="https://task.ascvn.com.vn/browse/${encodeURIComponent(first.key)}" target="_blank" rel="noopener noreferrer">${esc(first.key)}</a></span>`;}
+  else content=`<span>${complete?'Chưa có worklog Subtask được phép xem.':'Đang xác định mốc đầu tiên…'}</span>`;
+  node.innerHTML=`<small>${label}</small>${content}<small>Toàn thời gian · ${esc(scope)}</small>`;
+ }
+
  function progress(j){
   const discovery=j.phase==='issues',ot=j.phase==='overtime',done=discovery?j.issues.length:ot?j.verified.size:j.issues.filter(t=>t.done||t.error).length,total=discovery?j.total:ot?j.items.size:j.issues.length;
   const percent=total===null?'—':total===0?'100':String(Math.floor(Math.min(1,done/total)*100));
@@ -109,7 +152,7 @@ window.QuickJiraProjectReport=(()=>{
  async function request(j,params){return api('/api?'+new URLSearchParams({action:'project-stats',...j.filter,...params}),{silentBusy:true,signal:j.controller.signal});}
  function valid(j){return job===j&&owner===j.owner&&!j.controller.signal.aborted;}
  function summarize(j){if(!matches(j))return;items=[...j.items.values()];report=QuickJiraProjectStats.aggregate(items);selected='';$('psContent').hidden=false;
-  const person=$('psPerson').value;$('psPerson').innerHTML='<option value="">Tất cả</option>'+report.people.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join('');if(report.people.some(p=>p.id===person))$('psPerson').value=person;render();
+  const person=$('psPerson').value;$('psPerson').innerHTML='<option value="">Tất cả</option>'+report.people.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>').join('');if(report.people.some(p=>p.id===person))$('psPerson').value=person;syncMemberInput();if(!$('psMemberOptions').hidden)showMembers();render();
   if(!j.hasRendered){j.hasRendered=true;requestAnimationFrame(()=>{if(valid(j)&&matches(j))d.querySelector('.ps-body').scrollTo({top:0,behavior:'instant'});});}
  }
  async function readIssue(j,t){
@@ -117,7 +160,7 @@ window.QuickJiraProjectReport=(()=>{
    const pageOffset=t.offset,d=await request(j,{op:'worklogs',key:t.key,startAt:t.offset,ot:'0'});if(!valid(j))return;
    if(d.key!==t.key||!Array.isArray(d.ids)||d.ids.some(id=>t.ids.has(id))||(d.hasMore&&d.nextStartAt<=t.offset))throw Error('Trang worklog bị lặp hoặc không tiến lên.');
    if(t.total!==null&&t.total!==d.total)j.warnings.push(t.key+': worklog thay đổi trong lúc tải; cần đối chiếu lại.');
-   t.total=d.total;for(const id of d.ids)t.ids.add(id);
+   t.firstWorklog=QuickJiraProjectStats.firstWorklog(t.firstWorklog,d.firstWorklog);t.total=d.total;for(const id of d.ids)t.ids.add(id);
    for(const x of d.items)j.items.set(x.id,{...x,project:t.project,summary:t.summary,isSubtask:t.isSubtask,issueType:t.issueType,issueTypeId:t.issueTypeId});
    t.offset=d.nextStartAt;t.done=!d.hasMore;await checkpoint(j,{key:'logs|'+t.key+'|'+pageOffset,kind:'logs',issue:t.key,offset:pageOffset,payload:d});if(valid(j))paint(j);
   }
@@ -164,13 +207,13 @@ window.QuickJiraProjectReport=(()=>{
   if(($('psScope').value==='one'&&!f.project)||(f.project&&!/^[A-Z][A-Z0-9_]{0,99}$/.test(f.project))||(f.all!=='1'&&(!QuickJiraUi.validDate(f.from)||!QuickJiraUi.validDate(f.to)||f.to<f.from))){$('psState').textContent='Nhập mã dự án và khoảng ngày hợp lệ.';return;}
   if(job?.running&&matches(job))return;
   stopJob();seq++;report=null;items=[];selected='';$('psContent').hidden=true;$('psWarning').hidden=true;d.querySelector('.ps-body').scrollTop=0;
-  job={filter:Object.freeze(f),owner,controller:new AbortController(),offset:0,total:null,phase:'issues',issues:[],keys:new Set(),items:new Map(),warnings:[],paused:false,running:false,error:'',task:null,runID:crypto.randomUUID(),verified:new Set(),storageDisabled:false};const current=job;try{await QuickJiraReportStorage.start(owner,meta(current));}catch(e){current.storageWarning=storageMessage(e);current.storageDisabled=true;}if(valid(current)){void execute(current);}
+  job={filter:Object.freeze(f),owner,controller:new AbortController(),offset:0,total:null,phase:'issues',issues:[],keys:new Set(),items:new Map(),warnings:[],paused:false,running:false,error:'',task:null,runID:crypto.randomUUID(),verified:new Set(),storageDisabled:false,firstLogSchema:1};const current=job;try{await QuickJiraReportStorage.start(owner,meta(current));}catch(e){current.storageWarning=storageMessage(e);current.storageDisabled=true;}if(valid(current)){void execute(current);}
  }
  function changed(){period();if(job){report=null;$('psContent').hidden=true;if(!job.running)summarize(job);paint(job);}}
  $('psPause').onclick=()=>{if(!job)return;if(job.paused&&!job.running)void execute(job);else{job.paused=true;paint(job);}};
  $('psRetry').onclick=()=>{if(!job||job.running)return;for(const t of job.issues)t.error='';if(job.phase!=='issues')job.phase='worklogs';void execute(job);};
  $('psForm').onsubmit=e=>{e.preventDefault();void load();};for(const id of ['psScope','psProject','psPeriod','psAnchor','psYear','psFrom','psTo'])$(id).addEventListener('change',changed);
- $('psPerson').onchange=()=>{selected='';render();};$('psSort').onchange=render;$('psPeople').onclick=e=>{const b=e.target.closest('[data-person]');if(!b)return;selected=selected===b.dataset.person?'':b.dataset.person;render();if(selected)$('psDetail').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});};
+ $('psPerson').onchange=()=>{selected='';syncMemberInput();render();void flush();};$('psSort').onchange=()=>{render();void flush();};$('psPeople').onclick=e=>{const b=e.target.closest('[data-person]');if(!b)return;selected=selected===b.dataset.person?'':b.dataset.person;render();if(selected)$('psDetail').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});};
  $('psClose').onclick=()=>{if(!QuickJiraBusy.active)d.close();};d.addEventListener('cancel',e=>{if(QuickJiraBusy.active)e.preventDefault();});d.addEventListener('keydown',e=>e.stopPropagation());d.addEventListener('close',()=>{document.documentElement.classList.remove('project-stats-open');document.body.classList.remove('project-stats-open');origin?.focus({preventScroll:true});});
  $('projectStatsBtn').onclick=open;$('mobileProjectStatsBtn').onclick=open;
  document.addEventListener('visibilitychange',()=>{if(document.hidden)void flush();else if(job?.running){job.eta=QuickJiraEta.create();paint(job);}});window.addEventListener('pagehide',()=>{void flush();});

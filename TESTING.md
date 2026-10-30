@@ -1,3 +1,18 @@
+# V1.37.0 — Kiểm tra
+
+- `npm test`: 50 bộ nghiệp vụ/API đạt. Mở rộng project-stats-tests: Man-days (0h/1h/8h/20h), tên không dấu/username, thời điểm ISO khác offset, mốc ở trang sau và nằm ngoài kỳ, embedded worklog đầy đủ giữ mốc, trang rỗng/thiếu/sai và quyền/không ghi Jira.
+- Browser `project-stats-insights.cjs`: 1440×900, 390×844, 320×683, 844×390; 4 KPI cùng hàng, 16h = 2 Man-days gồm OT, Subtask duy nhất, tìm/chọn/xóa lọc thành viên bằng tên/username và bàn phím, không gọi thêm Jira, nội dung tìm không tạo HTML.
+- Browser mốc đầu tiên: worklog Subtask 2019 nằm sau trang 2026, loại bỏ worklog Story 2010; ngày/giờ/người/mã đúng; không đổi theo kỳ/thành viên; kỳ không có giờ vẫn giữ mốc; reload checkpoint giữ mốc và thành viên; lỗi quyền cho Tạm tính và retry sửa mốc; checkpoint cũ yêu cầu cập nhật thay vì đoán.
+- Browser giao diện sáng/tối: PC hàng bộ lọc/mốc rộng đầy đủ; mobile không tràn ngang; select/input 44px có CSS, listbox nằm trong viewport, hỗ trợ cuộn.
+- Browser `background-loading.cjs`: 4 viewport đạt tải nền, chuyển màn hình, tiến độ, pause/resume/retry, account/stale guard, khôi phục checkpoint, lỗi quota, bubble kéo/dock/ETA, khóa scroll nền và bảo vệ thao tác ghi/CSP.
+- Browser `live-update.cjs`: native service worker phát hiện bản mới khi app đang mở, chặn reload khi đang ghi và bấm cập nhật lên HTML mới đạt.
+- Kiểm tra cú pháp JS/CJS, JSON, ID HTML, version runtime/shell và ZIP CRC trước đóng gói.
+- Jira được mô phỏng; chưa thử tài khoản Jira công ty, iPhone/Safari vật lý. Không khẳng định tuyệt đối tất cả môi trường không có lỗi.
+
+Lệnh UI: cài Playwright/Chromium trong môi trường kiểm thử, đặt `QJL_CHROMIUM_PATH` nếu dùng Chromium riêng; chạy `npm run test:stats-insights`, `npm run test:loading`, `npm run test:update-live`.
+
+---
+
 # V1.36.0 — Kiểm tra
 
 - `npm test`: 50 bộ, bổ sung kiểm tra whitelist/giới hạn/tách tài khoản dữ liệu ghim, trạng thái khôi phục; mở rộng API tree kiểm tra status, currentUser, unassigned, username có dấu nháy, đầu vào sai và giữ quan hệ Epic xuyên Project.

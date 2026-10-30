@@ -32,3 +32,33 @@ html[data-theme=dark] #projectStatsDialog input[type=date]{color-scheme:dark}
 #projectStatsDialog input[readonly],#projectStatsDialog input:disabled{opacity:.65}
 @media(max-width:600px){#projectStatsDialog .ps-toolbar{grid-template-columns:repeat(2,minmax(0,1fr));max-height:49dvh;overflow:auto;overscroll-behavior:contain;flex-shrink:0}.ps-job-actions button{flex:1;font-size:12px;padding:10px}}
 @media(max-height:500px) and (orientation:landscape){#projectStatsDialog .ps-toolbar{grid-template-columns:repeat(4,minmax(0,1fr));max-height:38dvh;overflow:auto;flex-shrink:0}.ps-job-actions{grid-column:auto}.ps-job-actions button{font-size:11px;padding:6px}}
+
+/* V1.37: shared field geometry and report-only searchable member picker. */
+#projectStatsDialog input,#projectStatsDialog select{border:1px solid var(--line);border-radius:10px;box-shadow:none;outline:none;font-family:inherit;font-weight:500;transition:border-color .15s,box-shadow .15s}
+#projectStatsDialog input:focus-visible,#projectStatsDialog select:focus-visible{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+#projectStatsDialog select{appearance:none;-webkit-appearance:none;padding-right:34px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='m6 8 4 4 4-4' stroke='%238594ab' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")!important;background-position:right 10px center;background-repeat:no-repeat;background-size:18px}
+#projectStatsDialog .ps-toolbar{background:var(--card);gap:12px 16px}
+#projectStatsDialog .ps-toolbar label,#projectStatsDialog .ps-list-tools label{color:var(--muted);font-size:12px;line-height:1.4}
+#projectStatsDialog .ps-job-actions button{height:44px;padding:0 18px;border-radius:10px;font-size:14px;font-weight:650}
+#projectStatsDialog #psLoad{background:var(--action-primary,#2164ca);color:#fff;border:1px solid var(--action-primary,#2164ca)}
+#projectStatsDialog #psLoad:hover{background:var(--action-primary-hover,#1954af)}
+#projectStatsDialog .ps-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+#projectStatsDialog .ps-kpis article{border:1px solid var(--line);background:var(--bg);padding:15px 16px;gap:8px;min-width:0}
+#projectStatsDialog .ps-kpis strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere;font-size:25px;line-height:1.2}
+#projectStatsDialog .ps-kpis small{font-size:12px;line-height:1.4}
+#projectStatsDialog .ps-list-tools{display:grid;grid-template-columns:minmax(170px,1fr) minmax(150px,.8fr) minmax(230px,1.5fr);gap:12px;align-items:start;padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:14px;margin:14px 0}
+.ps-member-field{min-width:0;display:grid;gap:6px}.ps-member-picker{position:relative;min-width:0}
+#projectStatsDialog #psPersonQuery{padding-right:34px!important;background-color:var(--card)!important}
+#projectStatsDialog .ps-list-tools select{background-color:var(--card)!important}
+#projectStatsDialog .ps-member-clear{position:absolute;right:1px;top:1px;width:38px;height:42px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--muted);font-size:23px;cursor:pointer}
+.ps-member-options{position:absolute;z-index:5;top:calc(100% + 6px);left:0;min-width:100%;max-width:min(360px,calc(100vw - 62px));width:max-content;max-height:210px;overflow:auto;overscroll-behavior:contain;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:5px;box-shadow:0 12px 30px rgba(0,0,0,.22);box-sizing:border-box}
+#projectStatsDialog .ps-member-options button{display:grid;gap:2px;width:100%;min-height:44px;height:auto;text-align:left;padding:9px 10px;margin:0;border:0;border-radius:7px;background:transparent;color:var(--text);font-size:14px;font-weight:400;cursor:pointer;overflow-wrap:anywhere;white-space:normal}
+.ps-member-options strong{font-weight:600}.ps-member-options small{color:var(--muted);font-size:12px}.ps-member-options p{padding:8px 10px;margin:0;color:var(--muted);font-size:12px}
+#projectStatsDialog .ps-member-options button:hover,#projectStatsDialog .ps-member-options .is-active,#projectStatsDialog .ps-member-options [aria-selected=true]{background:var(--primary-soft)}
+.ps-first-log{display:grid;gap:4px;min-width:0;padding-left:14px;border-left:1px solid var(--line);font-size:13px;line-height:1.4;overflow-wrap:anywhere}.ps-first-log strong{font-size:14px;font-variant-numeric:tabular-nums}.ps-first-log small{font-size:11px;color:var(--muted)}.ps-first-log a{color:var(--primary);text-underline-offset:3px}
+@media(max-width:760px){#projectStatsDialog .ps-list-tools{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ps-first-log{grid-column:1/-1;padding:10px 0 0;border-left:0;border-top:1px solid var(--line);grid-template-columns:1fr auto}.ps-first-log>small:last-child{grid-column:1/-1}.ps-first-log>span{grid-column:1/-1}}
+@media(max-width:600px){#projectStatsDialog .ps-kpis{gap:6px}#projectStatsDialog .ps-kpis article{padding:11px 8px;border-radius:11px}#projectStatsDialog .ps-kpis strong{font-size:20px}#projectStatsDialog .ps-kpis small{font-size:10px;min-height:28px}#projectStatsDialog .ps-list-tools{padding:11px;gap:10px}#projectStatsDialog .ps-toolbar{gap:10px}#projectStatsDialog .ps-job-actions button{padding:0 12px}}
+@media(max-width:360px){#projectStatsDialog .ps-kpis strong{font-size:17px}#projectStatsDialog .ps-kpis article{padding:10px 6px}#projectStatsDialog .ps-list-tools{padding:10px;gap:8px}}
+
+.ps-member-options[data-placement=above]{top:auto;bottom:calc(100% + 6px)}
+#projectStatsDialog .ps-first-log a{white-space:nowrap}

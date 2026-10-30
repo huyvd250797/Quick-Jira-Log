@@ -7,6 +7,7 @@ const {parseJiraStartedAtWorkTimezone}=require('../lib/scheduler');
 const {enrichHistory}=require('../lib/worklogpro');
 const {readStatsOvertime}=require('../lib/stats-overtime');
 const {readLabel}=require('../lib/worklog-label');
+const {firstWorklog}=require('../lib/project-stats');
 const keyPattern=/^[A-Z][A-Z0-9_]*-\d+$/;
 function filters(q){
  const project=String(q.project||'').trim().toUpperCase(),from=String(q.from||''),to=String(q.to||''),all=q.all==='1',startAt=Number(q.startAt||0),op=String(q.op||'issues');
@@ -47,15 +48,18 @@ async function worklogPage(f,q,auth){
 }
 function normalizeWorklogs(d,f,key){
  if(!Array.isArray(d?.worklogs)||!Number.isSafeInteger(d.total)||d.total<0||Number(d.startAt)!==f.startAt||d.worklogs.length>500||d.worklogs.length+f.startAt>d.total||(!d.worklogs.length&&f.startAt<d.total))throw new JiraError('Jira trả thiếu hoặc sai trang worklog.',502);
- const seen=new Set(),items=[];
+ const seen=new Set(),items=[];let first=null;
  for(const w of d.worklogs){
   const id=String(w.id||''),date=parseJiraStartedAtWorkTimezone(w.started),a=w.author||{},authorId=String(a.key||a.accountId||a.name||''),seconds=Number(w.timeSpentSeconds);
   if(!id||seen.has(id)||!date||!authorId||!Number.isFinite(seconds)||seconds<=0)throw new JiraError('Worklog thiếu hoặc lặp thông tin; chưa cộng trang này.',502);
+  const entry={id,key,authorId,authorName:String(a.displayName||a.name||authorId),authorUsername:String(a.name||a.accountId||authorId),date:date.date,start:String(w.started)};
+  // Keep the all-time first entry before the reporting period filters hours.
+  first=firstWorklog(first,entry);
   seen.add(id);if(!f.all&&(date.date<f.from||date.date>f.to))continue;
-  items.push({id,key,authorId,authorName:String(a.displayName||a.name||authorId),date:date.date,start:String(w.started),seconds,description:readLabel(w.comment).description,overtime:false,overtimeKnown:false});
+  items.push({...entry,seconds,description:readLabel(w.comment).description,overtime:false,overtimeKnown:false});
  }
  const next=f.startAt+d.worklogs.length;
- return {key,items,ids:[...seen],total:d.total,nextStartAt:next,hasMore:next<d.total};
+ return {key,items,firstWorklog:first,ids:[...seen],total:d.total,nextStartAt:next,hasMore:next<d.total};
 }
 module.exports=async(req,res)=>{
  if(req.method!=='GET')return methodNotAllowed(res,['GET']);const auth=getSession(req);if(!auth)return sendJson(res,401,{ok:false,error:'Vui lòng đăng nhập Jira.'});
