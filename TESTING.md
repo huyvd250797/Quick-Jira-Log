@@ -1,3 +1,15 @@
+# V1.37.2 — Kiểm tra
+
+- `npm test`: 50 bộ nghiệp vụ/API. Working Tree bổ sung 151 dòng nguồn, match ở dòng 1/32/131/151; mỗi API đọc tối đa 125 dòng và trả cursor, giữ cả match đầu/cuối, chữ hoa/thường và không dấu, không dùng cap 10.000 của Tra cứu thường. Các kiểm tra quyền, JQL literal, Epic Link xuyên Project và không ghi Jira giữ nguyên.
+- `tests/browser/lookup-desktop-search.cjs`: 1920×1080, 1366×768, 1024×768, 390×844, 320×683, 844×390. Một lần nhập tự đọc 3 lượt cursor; Epic cũng tự đọc hết; lỗi trang sau giữ kết quả và retry đúng cursor; thay từ khóa trong lượt tìm đang treo không nhận kết quả cũ. Duyệt rỗng vẫn phân trang.
+- PC: khung Tra cứu gần toàn màn hình, vùng kết quả >65% khung ở Tìm/Filter/Working Tree và Epic khi bộ lọc đóng; bộ lọc mở/chọn được, không tràn ngang. Mobile: vô hiệu hóa stylesheet desktop mới không đổi hình học Tra cứu/form/danh sách.
+- Browser Working Tree cũ và quick access: ghim/khôi phục trang/vị trí, filter Status/Assignee, từ chối quyền, tạo Subtask, storage/account. PC ghim mặc định thu gọn; test mở nhóm trước thao tác ghim đã lưu.
+- Browser hồi quy Tra cứu, Filter Jira, tạo Story đúng Epic/recents, chi tiết Type/Priority/Reporter/Created và ảnh gốc; native PWA live-update.
+- Kiểm tra syntax JS/CJS, JSON, ID HTML, version, stylesheet mới trong service worker shell và ZIP CRC.
+- Dữ liệu Jira mô phỏng; chưa thử Jira công ty hay iPhone/Safari vật lý. Không khẳng định mọi môi trường không có lỗi.
+
+---
+
 # V1.37.1 — Thống kê dự án: Hiệu chỉnh block chỉ số
 
 - Khôi phục nền KPI như trước V1.37.0: xanh nhạt theo primary-soft ở giao diện sáng, #1b3555 ở giao diện tối, áp dụng cả bốn block.

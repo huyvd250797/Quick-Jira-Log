@@ -1,3 +1,14 @@
+# V1.37.2 — Working Tree Search & Desktop Lookup — đã xây dựng
+
+| Phiên bản | Mục tiêu | Chức năng | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- | --- |
+| V1.37.2 | Tìm đủ kết quả, tăng không gian Tra cứu PC | Quét tiếp tự động; tìm mã/tên không dấu/hoa thường; progress/retry; PC rộng và bộ lọc gọn | Cursor Jira nguồn, API bounded scan + hủy request cũ; desktop stylesheet từ 900px | API/browser, hồi quy cây/filter/chi tiết; xác minh Jira thật sau deploy | Đã xây dựng trên V1.37.1 |
+| V1.38.0 | Logwork từ Tra cứu | Chọn nhiều Subtask, chuyển sang Log tất cả, review và xác nhận | Tái sử dụng luồng log hiện có | Boss chọn trước khi xây dựng | Đề xuất, chưa xây dựng |
+
+Không cần chạy migration mới. ZIP: **Quick Jira Log V1.37.2 — Working Tree Search & Desktop Lookup.zip**.
+
+---
+
 # V1.37.1 — Hiệu chỉnh block thống kê — đã xây dựng
 
 Khôi phục màu nền cũ, tách nhãn mobile thành Ngày / (Man-days), xuống dòng toàn bộ phần thập phân và co phần nguyên dài theo chiều rộng. Kiểm tra theo TESTING.md. Dựa trên V1.37.0, không đổi API/dữ liệu.
