@@ -58,8 +58,10 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
   const expected=async token=>page.evaluate(token=>{const el=document.createElement('span');el.style.color='var('+token+')';$('bulkCapacityCard').append(el);const color=getComputedStyle(el).color;el.remove();return color;},token);
   assert.equal(await color(),await expected('--primary'));
   await page.locator('.bulk-item').first().locator('.bulk-time').fill('7h');await page.locator('.bulk-item').first().locator('.bulk-time').dispatchEvent('input');await page.waitForTimeout(250);
+  await page.waitForFunction(value=>getComputedStyle(document.getElementById('bulkCapacityBar')).backgroundColor===value,await expected('--ok'));
   assert.equal(await color(),await expected('--ok'),'8h is green');
   await page.locator('.bulk-item').first().locator('.bulk-time').fill('8h');await page.locator('.bulk-item').first().locator('.bulk-time').dispatchEvent('input');await page.waitForTimeout(250);
+  await page.waitForFunction(value=>getComputedStyle(document.getElementById('bulkCapacityBar')).backgroundColor===value,await expected('--danger'));
   assert.equal(await color(),await expected('--danger'),'9h is red');assert(!(await page.locator('#bulkLogBtn').isDisabled()),'allocation can report an unplaced oversized item');
   await page.locator('.bulk-item').first().locator('.bulk-time').fill('1h');await page.locator('.bulk-item').first().locator('.bulk-time').dispatchEvent('input');await page.waitForTimeout(250);
 
@@ -80,7 +82,8 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
    await page.evaluate(t=>applyTheme(t),theme);await page.waitForTimeout(200);
    const layout=await page.evaluate(()=>{const card=$('bulkCard'),list=$('bulkItems'),footer=card.querySelector('.bulk-footer'),header=card.querySelector('.bulk-sticky-header');return {list:list.getBoundingClientRect().toJSON(),card:card.getBoundingClientRect().toJSON(),footer:footer.getBoundingClientRect().toJSON(),header:header.getBoundingClientRect().toJSON(),wide:card.scrollWidth>card.clientWidth+1,outerScroll:card.scrollHeight>card.clientHeight+1};});
    assert(!layout.wide&&!layout.outerScroll,JSON.stringify(layout));assert(layout.list.y>=layout.header.bottom-1);assert(layout.list.bottom<=layout.footer.y+1);
-   assert(layout.list.height>(viewport.height>500?viewport.height*.48:120),JSON.stringify(layout));
+   // Desktop uses a content-sized dialog for the two remaining cards (V1.35.3+).
+   assert(layout.list.height>(mobile?(viewport.height>500?viewport.height*.48:120):180),JSON.stringify(layout));
    if(process.env.QJL_QA_OUTPUT){fs.mkdirSync(process.env.QJL_QA_OUTPUT,{recursive:true});await page.screenshot({path:path.join(process.env.QJL_QA_OUTPUT,`bulk-${viewport.width}-${theme}.png`)});}
   }
   // The list scrolls independently and the first title is not hidden behind a sticky header.

@@ -1,3 +1,14 @@
+# V1.37.3 — Log tất cả PC: Cuộn & thẻ rõ ràng — đã xây dựng
+
+| Phiên bản | Mục tiêu | Phạm vi | Trạng thái |
+| --- | --- | --- | --- |
+| V1.37.3 | Cuộn ổn định, dễ phân biệt Subtask trên PC | Wheel toàn hộp thoại; mô tả cuộn riêng; viền/nền/bóng sáng tối; giữ mobile | Đã xây dựng trên V1.37.2 |
+| V1.38.0 | Logwork từ Tra cứu | Chọn Subtask từ Tra cứu → Log tất cả → xem trước và xác nhận | Đề xuất, chưa xây dựng |
+
+Không cần chạy migration mới. File: **Quick Jira Log V1.37.3 — Desktop Bulk Scroll & Card Clarity.zip**.
+
+---
+
 # V1.37.2 — Working Tree Search & Desktop Lookup — đã xây dựng
 
 | Phiên bản | Mục tiêu | Chức năng | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |

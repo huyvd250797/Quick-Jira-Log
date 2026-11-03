@@ -174,3 +174,26 @@
   body.desktop-editor-open #bulkCard .bulk-description-details > summary { min-height:22px; }
   body.desktop-editor-open #bulkCard .bulk-item-fields { gap:6px 9px; }
 }
+/* V1.37.3 — Distinct desktop tiles without changing mobile geometry. */
+@media (min-width:900px) {
+  body.desktop-editor-open #bulkCard .bulk-items,
+  body.desktop-editor-open #bulkCard.is-auto-mode .bulk-items {
+    border-radius:14px;
+    background:#f0f4fa; scrollbar-gutter:stable;
+  }
+  body.desktop-editor-open #bulkCard .bulk-item {
+    background:#fff; border:1px solid #aabbd0;
+    box-shadow:0 2px 5px rgba(23,44,75,.09),inset 3px 0 #81a7db;
+  }
+  body.desktop-editor-open #bulkCard .bulk-item:is(:hover,:focus-within) {
+    border-color:#5481bc; box-shadow:0 2px 7px rgba(23,44,75,.13),inset 3px 0 #2164ca;
+  }
+  html[data-theme="dark"] body.desktop-editor-open #bulkCard .bulk-items { background:#0e1929; }
+  html[data-theme="dark"] body.desktop-editor-open #bulkCard .bulk-item {
+    background:#1a2b43; border-color:#425873;
+    box-shadow:0 2px 5px rgba(0,0,0,.2),inset 3px 0 #4d76a8;
+  }
+  html[data-theme="dark"] body.desktop-editor-open #bulkCard .bulk-item:is(:hover,:focus-within) {
+    border-color:#82a8d8; box-shadow:0 2px 7px rgba(0,0,0,.25),inset 3px 0 #8ab9ff;
+  }
+}

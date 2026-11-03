@@ -1,3 +1,17 @@
+# V1.37.3 — Kiểm tra
+
+- `npm test`: 50 bộ nghiệp vụ/API hiện có.
+- `npm run test:bulk-scroll`: Chromium 1920×1080, 1906×907 (tương đương ảnh Boss gửi), 1366×768, 1024×768 và mobile 390×844. Wheel thật tại header/options/date/footer/title/input/OT/preset/summary/khoảng trống, cả auto và nhập giờ. Kiểm tra không đổi TimeSpent, đầu/cuối không cuộn nền, delta pixel/line/page, Ctrl-wheel, mô tả dài cuộn riêng rồi chuyển ra danh sách, modal con, thẻ bằng nhau/tối đa 6, màu/viền/bóng sáng tối. Tắt stylesheet desktop trên mobile không đổi hình học/màu thẻ.
+- `tests/browser/desktop-workspace.cjs`: giữ khung ngắn cho ít thẻ, 3 cột và 6 thẻ đầy đủ khi đủ chỗ, danh sách dài cuộn trong khung, sửa mô tả không đổi chiều cao thẻ, footer trong viewport, mobile 390/320 không ảnh hưởng.
+- `tests/browser/logwork-compact.cjs`: hồi quy bố cục, nhập giờ/OT, progress, khóa cuộn nền và ô lịch ở PC/mobile.
+- `tests/browser/batch-save-progress.cjs`: log theo ngày/tuần thành công, lỗi, gián đoạn; % tiến độ, chuyển sang lịch thật sau thành công, không còn nháp/cảnh báo sai.
+- `tests/browser/live-update.cjs`: nhận/cập nhật bản PWA V1.37.3 khi app đang mở.
+- Sửa đồng bộ bài test compact cũ: đợi màu progress chuyển xong thay vì chụp giữa transition; PC chỉ còn 2 thẻ thì kiểm tra khung gọn theo nội dung, không yêu cầu chiều cao như danh sách dài. Không thay assertion nghiệp vụ/ghi Jira.
+- Syntax JS/CJS, JSON/version và ZIP CRC trước bàn giao. Không đổi API hay dữ liệu Jira.
+- Các kiểm tra dùng dữ liệu mô phỏng và Chromium, chưa kiểm chứng Jira công ty/iPhone/Safari vật lý.
+
+---
+
 # V1.37.2 — Kiểm tra
 
 - `npm test`: 50 bộ nghiệp vụ/API. Working Tree bổ sung 151 dòng nguồn, match ở dòng 1/32/131/151; mỗi API đọc tối đa 125 dòng và trả cursor, giữ cả match đầu/cuối, chữ hoa/thường và không dấu, không dùng cap 10.000 của Tra cứu thường. Các kiểm tra quyền, JQL literal, Epic Link xuyên Project và không ghi Jira giữ nguyên.

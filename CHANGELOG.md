@@ -1,3 +1,11 @@
+# V1.37.3 — Desktop Bulk Scroll & Card Clarity — 2026-11-03
+
+- Sửa wheel guard PC trong app.js: chuyển cuộn dọc toàn hộp thoại Log tất cả đến bulkItems thay vì chặn ở header/footer hoặc kẹt trong bulk-item-fields. Giữ native scroll cho mô tả/OT mở, chuyển sang danh sách khi tới mép; chuẩn hóa delta pixel/line/page, giữ Ctrl/Cmd-wheel và modal con.
+- desktop-workspace.css: chỉ từ 900px, tăng phân biệt thẻ bằng nền/viền/bóng/nét nhấn, hover/focus tĩnh, hỗ trợ sáng/tối. Không đổi chiều cao thẻ hoặc khoảng cách lưới/mobile.
+- Thêm regression browser bulk-desktop-scroll.cjs, script npm run test:bulk-scroll, cập nhật version/PWA/tài liệu. Không đổi API/dependency/DB. Không cần chạy migration mới.
+
+---
+
 # Quick Jira Log V1.37.2 — Working Tree Search & Desktop Lookup
 
 ## Sửa tìm kiếm Working Tree

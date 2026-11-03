@@ -1,6 +1,6 @@
 {
   "name": "quick-jira-log",
-  "version": "1.37.2",
+  "version": "1.37.3",
   "private": true,
   "engines": {
     "node": "24.x"
@@ -59,6 +59,7 @@
     "test:detail-polish": "node tests/browser/detail-polish.cjs",
     "test:tree-quick": "node tests/working-tree-state-tests.js && node tests/working-tree-tests.js && node tests/browser/working-tree-quick.cjs",
     "test:stats-insights": "node tests/project-stats-tests.js && node tests/browser/project-stats-insights.cjs",
-    "test:lookup-desktop": "node tests/working-tree-tests.js && node tests/browser/lookup-desktop-search.cjs"
+    "test:lookup-desktop": "node tests/working-tree-tests.js && node tests/browser/lookup-desktop-search.cjs",
+    "test:bulk-scroll": "node tests/browser/bulk-desktop-scroll.cjs"
   }
 }

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.37.2';
+const APP_VERSION = '1.37.3';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -601,6 +601,28 @@ function setupBulkScrollGuard(card) {
     if (!active() || event.target.closest?.('dialog[open], #logConfirmOverlay:not(.hidden), #backgroundTasks')) return;
     const list = $('bulkItems');
     let node = event.target instanceof Element ? event.target : null;
+    // Desktop: the entire dialog is a wheel surface for the task list. Do not
+    // let the fixed header/footer or a card's clipped fields swallow scrolling.
+    if (event.type === 'wheel' && innerWidth >= 900 && document.body.dataset.desktopEditor === 'bulkCard') {
+      if (event.ctrlKey || event.metaKey) return;
+      if (node && card.contains(node) && Math.abs(dy) >= Math.abs(dx)) {
+        // Expanded descriptions/OT fields retain native scrolling until their
+        // boundary; subsequent wheel movement then continues through the list.
+        const fields = node.closest('.bulk-item-fields');
+        if (fields && fields.querySelector('.bulk-description-details[open], .bulk-overtime:checked')) {
+          let inner = node;
+          while (inner && inner !== list && list.contains(inner)) {
+            if (/auto|scroll/.test(getComputedStyle(inner).overflowY) && inner.scrollHeight > inner.clientHeight + 1 &&
+                ((dy > 0 && inner.scrollTop < inner.scrollHeight - inner.clientHeight - 1) || (dy < 0 && inner.scrollTop > 0))) return;
+            inner = inner.parentElement;
+          }
+        }
+        if (event.cancelable) event.preventDefault();
+        const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? list.clientHeight : 1;
+        list.scrollTop += dy * unit;
+        return;
+      }
+    }
     if (node && list.contains(node) && Math.abs(dy) >= Math.abs(dx)) {
       while (node && list.contains(node)) {
         const css = getComputedStyle(node);
