@@ -1,3 +1,19 @@
+# V1.37.4 — Kiểm tra
+
+- `npm test`: 50 bộ nghiệp vụ/API hiện có; đồng bộ version V1.37.4.
+- `npm run test:bulk-space`: Chromium 1920×1080, 1904×884, CSS 1523×707 ở device scale 1.25, 1366×768, 1280×600, 1024×768, 900×650; mobile 390×844, 320×683, 844×390. Kiểm tra khung/lề trong viewport, danh sách >62% chiều cao hộp thoại trước trạng thái thông báo dài, thẻ bằng nhau/tối đa 6, 6 thẻ đầy đủ trên desktop 3 cột từ 1280×600, các control thẻ đóng không bị cắt, header/footer không đè danh sách.
+- Đổi ngày/tuần, auto/manual, cuối tuần, progress chuẩn bị và status dài xuống dòng, danh sách 30 thẻ, resize khi đang cuộn. Hiện progress/cảnh báo dài thu nhỏ list trong khung, không kéo footer ra ngoài. Mobile tắt stylesheet desktop có hình học giống hệt khi bật.
+- So sánh trước/sau dùng chính CSS/JS bulk từ ZIP V1.37.3, cùng fixture 6 Subtask và viewport CSS 1523×707: vùng list 256→499px, 3→6 thẻ trọn vẹn. Viewport 1280×600: 256→406px, 3→6 thẻ.
+- `tests/browser/desktop-workspace.cjs`: ít thẻ vẫn hộp thoại gọn, danh sách dài/cuộn, 6 thẻ đồng kích thước trên PC phổ biến; footer trong viewport, mobile không ảnh hưởng.
+- `tests/browser/bulk-desktop-scroll.cjs`: hồi quy wheel các vị trí, auto/manual, mô tả/OT cuộn riêng và chuyển sang danh sách ở mép, không đổi giờ khi wheel, khóa trang nền, sáng/tối và mobile.
+- `tests/browser/logwork-compact.cjs`: nhập giờ/preset/OT, chỉnh mô tả, progress, cuối tuần, ghi đúng payload, ô lịch 30 phút và read-only; PC 1440/mobile 390/320/844.
+- `tests/browser/batch-save-progress.cjs`: log ngày/tuần thành công, lỗi/gián đoạn, % xử lý, chuyển lịch thật sau thành công, bỏ trạng thái nháp.
+- `tests/browser/live-update.cjs`: cập nhật PWA V1.37.4 đang mở, chặn cập nhật trong lúc đang ghi.
+- Syntax JS/CJS, JSON/version, CSS/query khác giữ nguyên, ZIP CRC. Không đổi API/business files.
+- Kiểm tra dùng Chromium/Jira mô phỏng; chưa xác minh Jira công ty hoặc iPhone/Safari vật lý.
+
+---
+
 # V1.37.3 — Kiểm tra
 
 - `npm test`: 50 bộ nghiệp vụ/API hiện có.

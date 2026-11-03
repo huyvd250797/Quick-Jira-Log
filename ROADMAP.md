@@ -1,3 +1,14 @@
+# V1.37.4 — Desktop Bulk Workspace — đã xây dựng
+
+| Phiên bản | Mục tiêu | Chức năng chính | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái/phụ thuộc |
+| --- | --- | --- | --- | --- | --- |
+| V1.37.4 | Tối đa không gian danh sách Log tất cả PC | Khung gần toàn cửa sổ, header/capacity gọn, 6 thẻ đồng kích thước khi đủ chỗ | CSS bulk desktop hợp nhất, đo kích thước scroller thực; không đổi API | Kiểm tra nhiều viewport/zoom, cuộn và luồng nhập giờ/OT/xác nhận | Đã xây dựng trên V1.37.3 |
+| V1.38.0 | Logwork từ Tra cứu | Chọn Subtask → Log tất cả → xem trước và xác nhận | Tái sử dụng luồng hiện có, kiểm tra quyền/điều kiện Jira | Boss chọn trước khi xây dựng | Đề xuất, chưa xây dựng |
+
+Không cần chạy migration mới. ZIP: **Quick Jira Log V1.37.4 — Desktop Bulk Workspace.zip**.
+
+---
+
 # V1.37.3 — Log tất cả PC: Cuộn & thẻ rõ ràng — đã xây dựng
 
 | Phiên bản | Mục tiêu | Phạm vi | Trạng thái |

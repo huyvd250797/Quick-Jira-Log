@@ -1,3 +1,13 @@
+# V1.37.4 — Desktop Bulk Workspace — 2026-11-03
+
+- Thay các lớp CSS bulk desktop cũ chồng nhau bằng một nhóm quy tắc trong desktop-workspace.css. Giữ nguyên toàn bộ quy tắc Tra cứu/form khác và media mobile.
+- Hộp thoại nhiều thẻ dùng chiều cao/chiều rộng cửa sổ với lề nhỏ; form/list flex:1, header/footer cố định. Compact hàng điều khiển và dải capacity; cửa sổ thấp dùng nhãn ngày nằm cạnh ô ngày.
+- bulk-desktop-grid.js đọc list.clientHeight, dùng offsetHeight cho header/footer khung ít thẻ, quan sát ResizeObserver cả list/header/footer và tránh đo transform animation. Tối đa 6 thẻ đồng chiều cao; cập nhật theo viewport/progress/nội dung.
+- PC TimeSpent cùng hàng ô nhập, summary mô tả giảm padding; giữ cuộn, mở mô tả/OT và màu thẻ từ V1.37.3. API/ghi dữ liệu không đổi.
+- Thêm browser bulk-desktop-space.cjs và script npm run test:bulk-space; cập nhật version/PWA/tài liệu. Không cần chạy migration mới.
+
+---
+
 # V1.37.3 — Desktop Bulk Scroll & Card Clarity — 2026-11-03
 
 - Sửa wheel guard PC trong app.js: chuyển cuộn dọc toàn hộp thoại Log tất cả đến bulkItems thay vì chặn ở header/footer hoặc kẹt trong bulk-item-fields. Giữ native scroll cho mô tả/OT mở, chuyển sang danh sách khi tới mép; chuẩn hóa delta pixel/line/page, giữ Ctrl/Cmd-wheel và modal con.
