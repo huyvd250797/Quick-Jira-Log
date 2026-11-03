@@ -1,3 +1,15 @@
+# V1.37.5 — Kiểm tra
+
+- npm test: 50 bộ nghiệp vụ/API; version V1.37.5.
+- bulk-desktop-space: 30 thẻ, 10 viewport PC/mobile, thẻ nhập giờ đồng chiều cao 190px, các trường đóng không bị cắt, bỏ trần 6 thẻ; nhiều cột/hàng gọn, header/footer trong khung, progress/auto/tuần/cuối tuần/resize. 1904×884: 15 thẻ, 1920×1080:20, CSS1523×707:8. Mobile giữ nguyên.
+- bulk-desktop-scroll: 100 thẻ để đủ dài trong cả auto/manual, wheel toàn khung, textarea/OT, không cuộn nền/đổi TimeSpent. Cập nhật fixture và bỏ assertion giới hạn 6 đã bị thay thế.
+- desktop-workspace: ít thẻ, nhiều thẻ, thẻ đều nhau/mở mô tả, mobile. Bỏ assertion 8 thẻ bắt buộc cuộn vì giờ có thể hiển thị nhiều hơn.
+- logwork-compact: nhập giờ/OT/mô tả, progress, ghi payload, lịch và mobile.
+- batch-save-progress và live-update: log ngày/tuần, lỗi/gián đoạn, hoàn tất lịch thật; cập nhật PWA.
+- Chromium/Jira mô phỏng; chưa thử Jira công ty/iPhone/Safari vật lý. Không đổi API/business code.
+
+---
+
 # V1.37.4 — Kiểm tra
 
 - `npm test`: 50 bộ nghiệp vụ/API hiện có; đồng bộ version V1.37.4.
