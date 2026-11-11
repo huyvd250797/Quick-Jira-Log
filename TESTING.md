@@ -1,3 +1,11 @@
+# V1.37.6 — Kiểm tra
+
+- `npm test` đạt toàn bộ bộ kiểm tra nghiệp vụ/API.
+- Kiểm tra render bằng Node với worklog mô phỏng. Số thứ tự khớp thứ tự giờ, số Subtask và tên; lọc một người đánh số lại từ 1; danh sách rỗng không có thẻ. Man-days khớp tổng giờ thường, OT và giờ chưa rõ OT.
+- Đã bổ sung kiểm tra thứ tự và vị trí Man-days vào `npm run test:stats-insights`. Phần kiểm tra API đạt, phần Chromium bị chặn lúc khởi động trong môi trường hiện tại. Chưa xác minh bố cục trên trình duyệt hoặc Jira thật.
+
+---
+
 # V1.37.5 — Kiểm tra
 
 - npm test: 50 bộ nghiệp vụ/API; version V1.37.5.

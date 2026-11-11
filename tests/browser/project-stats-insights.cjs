@@ -9,9 +9,9 @@ const core=require('../../lib/project-stats');
   p.on('pageerror',e=>errors.push(e.message));
   const entry=(id,key,date,authorId,authorName,seconds)=>({id,key,date:date.slice(0,10),start:date,authorId,authorName,authorUsername:authorId,seconds,overtime:false,overtimeKnown:false,description:'Fixture'});
   const logs={
-   'CAL-1':[entry('11','CAL-1','2020-01-01T08:00:00+0700','old','Người log cũ',1800),entry('12','CAL-1','2026-10-22T08:00:00+0700','huyvd','Nguyễn Đức Huy',28800)],
-   'CAL-2':[entry('21','CAL-2','2026-10-22T08:00:00+0700','anvo','Võ Bình An',14400),entry('22','CAL-2','2019-03-01T08:30:00+0700','first-user','Đặng An — Người đầu tiên',1800)],
-   'CAL-3':[entry('31','CAL-3','2010-01-01T08:00:00+0700','parent','Parent earlier',1800),entry('32','CAL-3','2026-10-22T13:30:00+0700','huyvd','Nguyễn Đức Huy',14400)]
+   'CAL-1':[entry('11','CAL-1','2020-01-01T08:00:00+0700','old','Người log cũ',1800),entry('12','CAL-1','2026-10-22T08:00:00+0700','huyvd','Nguyễn Đức Huy',14400)],
+   'CAL-2':[entry('21','CAL-2','2026-10-22T08:00:00+0700','anvo','Võ Bình An',36000),entry('22','CAL-2','2019-03-01T08:30:00+0700','first-user','Đặng An — Người đầu tiên',1800)],
+   'CAL-3':[entry('31','CAL-3','2010-01-01T08:00:00+0700','parent','Parent earlier',1800),entry('32','CAL-3','2026-10-22T13:30:00+0700','huyvd','Nguyễn Đức Huy',7200)]
   };
   await p.route('**/api?*',async route=>{
    const q=new URL(route.request().url()).searchParams,a=q.get('action');calls.push(Object.fromEntries(q));let data={ok:true},status=200;
@@ -37,10 +37,34 @@ const core=require('../../lib/project-stats');
   await p.evaluate(()=>QuickJiraProjectReport.open());await idle();
   await p.locator('#psScope').selectOption('one');await p.locator('#psProject').fill('CAL');await p.locator('#psPeriod').selectOption('custom');await p.locator('#psFrom').fill('2026-10-01');await p.locator('#psTo').fill('2026-10-31');await p.locator('#psLoad').click();await loaded();
   assert.deepEqual(await p.locator('#psKpis article strong').allTextContents(),['16h','2','2','2']);
+  const cardsByRank=()=>p.locator('.ps-person').evaluateAll(cards=>cards.map(card=>[
+   card.dataset.person,
+   card.querySelector('.ps-person-rank').textContent,
+   card.querySelector('.ps-person-days').textContent
+  ]));
+  const an=['anvo','1.','1,25 Man-days'],huy=['huyvd','2.','0,75 Man-days'];
+  assert.deepEqual(await cardsByRank(),[an,huy]);
+  assert.equal(await p.locator('[data-person="anvo"] .ps-person-breakdown').textContent(),'10h OT');
+  assert.equal(await p.locator('[data-person="huyvd"] .ps-person-breakdown').textContent(),'6h thường');
+  await p.locator('#psSort').selectOption('name');
+  assert.deepEqual(await cardsByRank(),[['huyvd','1.','0,75 Man-days'],['anvo','2.','1,25 Man-days']]);
+  await p.locator('#psSort').selectOption('tasks');
+  assert.deepEqual(await cardsByRank(),[an,huy]);
+  await p.locator('#psSort').selectOption('hours');
+  assert.deepEqual(await cardsByRank(),[an,huy]);
+  const inBounds=await p.locator('.ps-person').evaluateAll(cards=>cards.every(card=>{
+   const time=card.querySelector('.ps-person-time').getBoundingClientRect();
+   const breakdown=card.querySelector('.ps-person-breakdown').getBoundingClientRect();
+   const days=card.querySelector('.ps-person-days').getBoundingClientRect();
+   const bounds=card.getBoundingClientRect();
+   return Math.abs(days.right-time.right)<1 && days.right<bounds.right &&
+    days.bottom<bounds.bottom && (days.left>=breakdown.right||days.top>=breakdown.bottom);
+  }));
+  assert(inBounds,'Man-days is at the bottom right with no overlap');
   const first=await p.locator('#psFirstLog').innerText();assert.match(first,/01\/03\/2019/);assert.match(first,/08:30/);assert.match(first,/Đặng An/);assert.match(first,/CAL-2/);assert(!first.includes('2010'));assert(!first.includes('Tạm tính'));
   const cards=await p.locator('#psKpis article').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().y));assert(cards.every(y=>Math.abs(y-cards[0])<1),'Four KPIs stay on one row');
   if(viewport.width>900){const ys=await p.locator('.ps-list-tools').evaluate(n=>[n.querySelector('.ps-member-field').offsetTop,n.querySelector('#psFirstLog').offsetTop]);assert(Math.abs(ys[0]-ys[1])<3);}
-  await p.locator('#psPersonQuery').fill('nguyen huy');assert.equal(await p.locator('#psMemberOptions [role=option]').count(),2);await p.locator('#psPersonQuery').press('ArrowDown');await p.locator('#psPersonQuery').press('ArrowDown');await p.locator('#psPersonQuery').press('Enter');assert.equal(await p.locator('.ps-person').count(),1);assert.equal(await p.locator('#psPerson').inputValue(),'huyvd');assert.equal(await p.locator('#psFirstLog').innerText(),first,'Member filter does not change project start');
+  await p.locator('#psPersonQuery').fill('nguyen huy');assert.equal(await p.locator('#psMemberOptions [role=option]').count(),2);await p.locator('#psPersonQuery').press('ArrowDown');await p.locator('#psPersonQuery').press('ArrowDown');await p.locator('#psPersonQuery').press('Enter');assert.equal(await p.locator('.ps-person').count(),1);assert.equal(await p.locator('#psPerson').inputValue(),'huyvd');assert.deepEqual(await cardsByRank(),[['huyvd','1.','0,75 Man-days']]);assert.equal(await p.locator('#psFirstLog').innerText(),first,'Member filter does not change project start');
   await p.locator('#psPersonClear').click();assert.equal(await p.locator('.ps-person').count(),2);
   const count=calls.length;await p.locator('#psPersonQuery').fill('ANVO');await p.locator('#psMemberOptions [data-member-index="1"]').click();assert.equal(await p.locator('#psPerson').inputValue(),'anvo');assert.equal(calls.length,count,'Member search is local, no added Jira requests');
   await p.locator('#psPersonQuery').fill('<script>');assert.match(await p.locator('#psMemberOptions').innerText(),/Không tìm thấy/);assert.equal(await p.locator('#psMemberOptions script').count(),0);await p.locator('#psPersonQuery').press('Escape');assert.equal(await p.locator('#psPersonQuery').inputValue(),'Võ Bình An');

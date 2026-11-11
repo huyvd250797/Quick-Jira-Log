@@ -86,10 +86,32 @@ window.QuickJiraProjectReport=(()=>{
  let kpiWidth=0;
  const kpiObserver=new ResizeObserver(entries=>{const width=entries[0].contentRect.width;if(width!==kpiWidth){kpiWidth=width;fitKpiValues();}});
  kpiObserver.observe($('psKpis'));
+ function personCard(person, index, maxSeconds){
+  const share=person.share.toLocaleString('vi-VN',{maximumFractionDigits:1});
+  const breakdown=[
+   person.regular && fmt(person.regular)+' thường',
+   person.overtime && fmt(person.overtime)+' OT',
+   person.unknown && fmt(person.unknown)+' chưa rõ OT'
+  ].filter(Boolean).join(' · ');
+  return `<button type="button" class="ps-person" data-person="${esc(person.id)}" aria-expanded="${selected===person.id}">
+   <div class="ps-person-head">
+    <strong><span class="ps-person-rank">${index+1}.</span> ${esc(person.name)}</strong>
+    <b>${fmt(person.seconds)} <span aria-hidden="true">›</span></b>
+   </div>
+   <div class="ps-meter" aria-hidden="true"><i style="width:${person.seconds/maxSeconds*100}%"></i></div>
+   <div class="ps-meta">
+    <span>${person.subtasks} Subtask đã log · ${share}% tổng giờ</span>
+    <span class="ps-person-time">
+     <span class="ps-person-breakdown">${breakdown}</span>
+     <span class="ps-person-days" title="Tổng giờ đã log ÷ 8, gồm cả Overtime">${QuickJiraProjectStats.manDays(person.seconds)} Man-days</span>
+    </span>
+   </div>
+  </button>`;
+ }
  function render(){if(!report)return;const filter=$('psPerson').value;let people=report.people.filter(p=>!filter||p.id===filter);const sort=$('psSort').value;people.sort(sort==='name'?(a,b)=>a.name.localeCompare(b.name):sort==='tasks'?(a,b)=>b.subtasks-a.subtasks||b.seconds-a.seconds:(a,b)=>b.seconds-a.seconds);
   $('psKpis').innerHTML=[['Tổng giờ',fmt(report.seconds)],['Ngày <span class="ps-md-unit">(Man-days)</span>',QuickJiraProjectStats.manDays(report.seconds)],['Thành viên có log',report.people.length],['Subtask',report.subtasks]].map(([a,b])=>`<article><small>${a}</small><strong>${kpiValue(b)}</strong></article>`).join('');
   const max=Math.max(1,...report.people.map(p=>p.seconds));
-  $('psPeople').innerHTML=people.length?people.map(p=>`<button type="button" class="ps-person" data-person="${esc(p.id)}" aria-expanded="${selected===p.id}"><div class="ps-person-head"><strong>${esc(p.name)}</strong><b>${fmt(p.seconds)} <span aria-hidden="true">›</span></b></div><div class="ps-meter" aria-hidden="true"><i style="width:${p.seconds/max*100}%"></i></div><div class="ps-meta"><span>${p.subtasks} Subtask đã log · ${p.share.toLocaleString('vi-VN',{maximumFractionDigits:1})}% tổng giờ</span><span>${p.regular?fmt(p.regular)+' thường · ':''}${p.overtime?fmt(p.overtime)+' OT · ':''}${p.unknown?fmt(p.unknown)+' chưa rõ OT':''}</span></div></button>`).join(''):'<p>Không có worklog trong kỳ đã chọn.</p>';
+  $('psPeople').innerHTML=people.length?people.map((p,index)=>personCard(p,index,max)).join(''):'<p>Không có worklog trong kỳ đã chọn.</p>';
   fitKpiValues();renderFirstLog();detail();
  }
  function detail(){const p=report?.people.find(p=>p.id===selected);$('psDetail').hidden=!p;if(!p)return;
@@ -158,7 +180,7 @@ window.QuickJiraProjectReport=(()=>{
    $('psState').innerHTML=`<div class="ps-progress-head"><span>${j.running?'<i class="ps-spinner" aria-hidden="true"></i>':''}<strong>${esc(status)}</strong></span><b>${p.done}/${p.total??'?'} · ${p.percent}%</b></div><div class="ps-progress-track" aria-hidden="true"><i style="width:${p.percent==='—'?15:p.percent}%"></i></div><small>${esc(caption)}</small>${etaText?'<small class="ps-eta">'+esc(etaText)+'</small>':''}`;
    $('psContent').hidden=j.running&&!report;$('projectStatsDialog').classList.toggle('ps-is-loading',j.running&&!report);
    let unknown=0;if(report)for(const item of j.items.values())if(!item.overtimeKnown)unknown+=item.seconds;
-   if(j.running&&j.phase==='overtime')for(const node of $('psPeople').querySelectorAll('.ps-meta>span:last-child'))if(node.textContent!=='Đang đối chiếu Overtime…')node.textContent='Đang đối chiếu Overtime…';
+   if(j.running&&j.phase==='overtime')for(const node of $('psPeople').querySelectorAll('.ps-person-breakdown'))if(node.textContent!=='Đang đối chiếu Overtime…')node.textContent='Đang đối chiếu Overtime…';
    const warnings=[...new Set([...j.warnings,...errors,j.error,j.storageWarning,unknown?fmt(unknown)+' chưa xác định Overtime; vẫn cộng vào tổng giờ.':''])].filter(Boolean);
    $('psWarning').hidden=!warnings.length;$('psWarning').textContent=warnings.join(' ');
   }else $('psState').textContent='Bộ lọc chưa áp dụng. Tác vụ nền vẫn dùng bộ lọc đã bấm Xem thống kê.';

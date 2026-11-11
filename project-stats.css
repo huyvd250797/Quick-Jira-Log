@@ -67,3 +67,30 @@ html[data-theme=dark] #projectStatsDialog input[type=date]{color-scheme:dark}
 html[data-theme=dark] #projectStatsDialog .ps-kpis article{background:#1b3555}
 .ps-kpi-part,.ps-md-unit{white-space:nowrap}
 @media(max-width:899px){#projectStatsDialog .ps-md-unit{display:block}}
+
+.ps-person-rank {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.ps-person-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px 8px;
+  min-width: 0;
+  margin-left: auto;
+  text-align: right;
+}
+
+.ps-person-breakdown:empty {
+  display: none;
+}
+
+.ps-person-days {
+  color: var(--text);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

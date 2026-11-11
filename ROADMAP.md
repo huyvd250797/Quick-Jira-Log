@@ -1,3 +1,15 @@
+# Quick Jira Log V1.37.6 — Member Man-days & Ranking
+
+- **Thống kê dự án → thẻ thành viên** hiển thị Man-days ở góc dưới bên phải, sau phần phân loại giờ.
+- Man-days bằng tổng giây đã log của thành viên trong kỳ chia 28.800, gồm giờ thường, OT và giờ chưa xác định OT. Hiển thị tối đa hai chữ số thập phân theo định dạng tiếng Việt. Ví dụ 8h thường + 2h OT = 1,25 Man-days.
+- Số thứ tự đứng trước tên và bắt đầu từ 1 theo danh sách đang hiển thị. Với **Giờ đã log**, người có nhiều giờ nhất đứng đầu. Số thứ tự cập nhật khi đổi sang Subtask đã log, Tên thành viên hoặc lọc một thành viên.
+
+Đã xây dựng trên source V1.37.5 Boss gửi. **Không cần chạy migration mới.**
+
+**Đề xuất tiếp theo:** V1.38.0 — Logwork từ Tra cứu, đưa Subtask đã chọn sang luồng Log tất cả để xem trước và xác nhận.
+
+---
+
 # Quick Jira Log V1.37.5 — Compact Subtask Grid
 
 - Sửa cách hiểu của V1.37.4: tăng diện tích vùng chứa, không kéo dài từng thẻ. Thẻ PC cố định 190px khi nhập giờ, 120px khi Phân bổ tự động; tóm tắt tối đa 2 dòng, mở sửa mô tả/OT vẫn cuộn trong thẻ khi cần.
