@@ -1,3 +1,11 @@
+# Quick Jira Log V1.38.5 — Calendar & Reports Polish
+
+- `npm test` chạy bộ hồi quy Node.js, gồm bộ kiểm tra lịch, tổng hợp cá nhân, thống kê và tính man-days.
+- Kiểm tra nhãn trạng thái lịch bằng mô phỏng, đối chiếu cấu trúc HTML và tài nguyên bố cục với V1.38.4, xác nhận màu chú giải dùng chung token với biểu đồ.
+- Chromium bị môi trường chặn lúc tạo socket. Chưa xác minh trực quan và thao tác kéo trên trình duyệt PC/mobile.
+
+---
+
 # Quick Jira Log V1.38.4 — Jira Cards & Forms Polish
 
 - `npm test` chạy bộ hồi quy Node.js.

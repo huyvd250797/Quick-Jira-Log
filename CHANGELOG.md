@@ -1,3 +1,13 @@
+# Quick Jira Log V1.38.5 — Calendar & Reports Polish
+
+- Đổi nhãn **Worklog đã log** thành **Lịch** trên thanh công cụ PC, taskbar mobile và tiêu đề màn lịch. Sau khi ghi lịch nháp, tiêu đề trở lại **Lịch**.
+- Tăng tương phản trục giờ, vạch chia và ngày hiện tại. Dùng màu kèm nhãn **Đã log**, **Chưa log** hoặc **Chưa lưu**. Trạng thái cần kiểm tra có nhãn riêng. Lưới giờ và thao tác kéo, chỉnh thời lượng, xác nhận giữ theo V1.38.4.
+- **Tổng hợp → Tuần** giữ vị trí mở từ taskbar và thao tác xem chi tiết theo Sub-task Type. Màu Giờ thường, OT và Chưa rõ đồng bộ giữa cột biểu đồ và chú giải.
+- Làm rõ tên thành viên, số thứ tự, giờ và man-days trong Thống kê dự án. Số liệu dùng chữ số độ rộng đều.
+- Trạng thái tải, trống, tạm tính và lỗi dùng màu và nội dung giải thích. Bộ lọc, công thức và API giữ theo bản nền.
+
+---
+
 # Quick Jira Log V1.38.4 — Jira Cards & Forms Polish
 
 - Tăng tương phản của mã Jira và tên công việc trong Tra cứu. Thông tin dự án, người phụ trách và dòng phụ dùng màu chữ phụ. Vẫn áp dụng quy tắc hiển thị tên dài hiện có.

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.38.4';
+const APP_VERSION = '1.38.5';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1434,15 +1434,19 @@ function renderSummary() {
   $('plannerOverlay').querySelector('.summary-body').setAttribute('aria-busy', String(summary.loading));
   const status = $('summaryState');
   status.classList.toggle('is-warning', !!summary.error || summary.partial);
+  status.dataset.reportState = summary.loading ? 'loading' : summary.error ? 'error' : summary.partial ? 'partial' : '';
   if (summary.loading) { status.textContent = 'Đang tổng hợp từ Jira…'; return; }
-  if (summary.error) { status.textContent = `${summary.error} Bấm ↻ để thử lại.`; return; }
+  if (summary.error) { status.textContent = `Lỗi tải · ${summary.error} Bấm ↻ để thử lại.`; return; }
   if (!summary.loaded) { status.textContent = ''; return; }
   const all = QuickJiraSummary.aggregate(summary.items, range, '', vietnamToday());
   if (summary.project && !all.availableProjects.includes(summary.project)) summary.project = '';
   const data = QuickJiraSummary.aggregate(summary.items, range, summary.project, vietnamToday());
   $('summaryProject').innerHTML = `<option value="">Tất cả</option>${all.availableProjects.map(project => `<option value="${escapeHtml(project)}">${escapeHtml(project)}</option>`).join('')}`;
   $('summaryProject').value = summary.project;
-  status.textContent = summary.partial ? 'Dữ liệu chưa đầy đủ · Số liệu tạm tính. Bấm ↻ để tải lại.' : `Cập nhật ${summary.updated} · ${data.items.length} worklog${data.items.length ? ' · Bấm biểu đồ để xem chi tiết' : ' trong kỳ đã chọn'}`;
+  if (!summary.partial && !data.items.length) status.dataset.reportState = 'empty';
+  status.textContent = summary.partial ? 'Dữ liệu tạm tính · Một số worklog chưa tải đủ. Bấm ↻ để tải lại.'
+    : !data.items.length ? 'Chưa có worklog trong kỳ đã chọn.'
+      : `Cập nhật ${summary.updated} · ${data.items.length} worklog · Bấm biểu đồ để xem chi tiết`;
   const fmt = summaryDuration;
   const unclassified = data.unknown > 0;
   $('summaryRegular').textContent = unclassified ? (data.regular ? `≥ ${fmt(data.regular)}` : '—') : fmt(data.regular);
@@ -1779,6 +1783,16 @@ function calendarAppearance(item) {
   return { ot, project, style, classes, badge: ot ? '<span class="ot-ribbon" aria-hidden="true">OT</span>' : '' };
 }
 
+function calendarLogLabel(item) {
+  if (item.batchNew) {
+    const label = item.batchStatus || (item.batchOverlap ? 'Chưa log · Trùng' : 'Chưa log');
+    const tone = item.batchStatus === 'Đã log' ? 'saved' : item.batchStatus === 'Cần kiểm tra Jira' ? 'warning' : 'draft';
+    return { label, tone };
+  }
+  if (item.calendarSplitUncertain) return { label: 'Cần đối chiếu', tone: 'warning' };
+  return calendarIsDraft(item) ? { label: 'Chưa lưu', tone: 'draft' } : { label: 'Đã log', tone: 'saved' };
+}
+
 let weekFitFrame = 0;
 function fitWeekToViewport() {
   applyCalendarZoomGeometry();
@@ -1801,7 +1815,7 @@ function renderWeeklyCalendar(date) {
   for (const item of items) { from = Math.min(from, Math.floor(QuickJiraUi.minuteOfDay(item.start) / 60) * 60); to = Math.max(to, Math.min(1440, Math.ceil((QuickJiraUi.minuteOfDay(item.start) + Number(item.minutes)) / 60) * 60)); }
   const height = to - from; // CSS scale stretches in fullscreen; all events keep the same minute ratio.
   const signature=()=>JSON.stringify([date,days,state.user?.username,calendarViewedUser?.key,calendarReadOnly(),state.projectColors,state.projectPalette,
-    displayed.map(item=>[item.key,item.id,item.project,item.date,item.start,item.end,item.minutes,item.timeSpentSeconds,item.summary,item.description,item.overtime,item.overtimeKnown,item.calendarReadOnly,item.calendarSplitRoot,item.calendarSplitCount,calendarIsDraft(item)])]);
+    displayed.map(item=>[item.key,item.id,item.project,item.date,item.start,item.end,item.minutes,item.timeSpentSeconds,item.summary,item.description,item.overtime,item.overtimeKnown,item.calendarReadOnly,item.calendarSplitRoot,item.calendarSplitCount,item.calendarSplitUncertain,item.batchStatus,item.batchOverlap,calendarIsDraft(item)])]);
   const existing=$('weeklyCalendar').querySelector('.weekly-inner');
   if(existing?._calendarSignature===signature()){fitWeekToViewport();return;}
 
@@ -1819,8 +1833,9 @@ function renderWeeklyCalendar(date) {
     return `<div class="week-day-column${isWeekendDateClient(day) ? ' is-weekend' : ''}" data-calendar-date="${day}" data-from-minute="${from}">${slots}${events.map(event => {
       const globalIndex = eventIndexes.get(event.item);
       const appearance = calendarAppearance(event.item);
-      const label = `${calendarIsDraft(event.item) ? 'Chưa lưu · ' : ''}${event.item.calendarSplitRoot?(event.item.calendarSplitCount?'Nhóm '+event.item.calendarSplitCount+' phần · Kéo để gom lại · ':'Nhóm tách cần đối chiếu · '):''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
-      return `<button type="button" class="week-worklog-block${event.item.calendarSplitRoot&&!event.item.calendarSplitUncertain?' is-split-group':''}${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${event.item.batchOverlap?' is-batch-overlap':''}${event.item.calendarReadOnly?' is-batch-existing':''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong>${escapeHtml(event.item.key)}${event.item.batchNew ? ' <em class="batch-new-label">'+escapeHtml(event.item.batchStatus || (event.item.batchOverlap?'Chưa log · Trùng':'Chưa log'))+'</em>' : event.item.calendarReadOnly?' <em class="batch-existing-label">Đã log</em>':''}</strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly||(event.item.calendarSplitRoot&&!event.item.batchNew)?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
+      const logState = calendarLogLabel(event.item);
+      const label = `${logState.label} · ${event.item.calendarSplitRoot?(event.item.calendarSplitCount?'Nhóm '+event.item.calendarSplitCount+' phần · Kéo để gom lại · ':'Nhóm tách cần đối chiếu · '):''}${event.item.key}${appearance.ot ? ' · OT' : ''} · ${event.item.start}–${event.item.end} · ${format(event.item.minutes)} · ${event.item.summary || event.item.description || ''}`;
+      return `<button type="button" class="week-worklog-block${event.item.calendarSplitRoot&&!event.item.calendarSplitUncertain?' is-split-group':''}${calendarIsDraft(event.item) ? ' is-calendar-draft' : ''}${event.item.batchOverlap?' is-batch-overlap':''}${event.item.calendarReadOnly?' is-batch-existing':''}${appearance.classes}${event.end - event.start < 40 ? ' is-short' : ''}${event.end - event.start < 20 ? ' is-tiny' : ''}" data-week-event="${globalIndex}" data-log-state="${logState.tone}" style="${appearance.style}top:calc(${event.start - from} * var(--week-minute-px, 1px));height:calc(${event.end - event.start} * var(--week-minute-px, 1px));left:calc(${event.lane / event.lanes * 100}% + 2px);width:calc(${100 / event.lanes}% - 4px)" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${appearance.badge}<strong><span class="calendar-log-key">${escapeHtml(event.item.key)}</span> <em class="calendar-log-label${event.item.batchNew ? ' batch-new-label' : event.item.calendarReadOnly ? ' batch-existing-label' : ''}">${escapeHtml(logState.label)}</em></strong><span>${escapeHtml(event.item.start)}–${escapeHtml(event.item.end)} · ${escapeHtml(format(event.item.minutes))}</span><small>${escapeHtml(event.item.summary || event.item.description || '')}</small>${calendarReadOnly()||event.item.calendarReadOnly||(event.item.calendarSplitRoot&&!event.item.batchNew)?'':'<span class="calendar-resize-handle" data-calendar-resize title="Kéo cạnh dưới để đổi thời lượng" aria-hidden="true"></span>'}</button>`;
     }).join('')}</div>`;
   }).join('');
   $('weeklyCalendar').innerHTML = `<div class="weekly-scroll" tabindex="0" aria-label="Lịch tuần theo khung giờ, cuộn ngang để xem đủ ngày"><div class="weekly-inner" style="--week-days:${days.length};--week-minute-px:1px;--week-morning-start:${480 - from};--week-morning-end:${720 - from};--week-afternoon-start:${810 - from};--week-afternoon-end:${1050 - from}"><div class="week-grid-heading"><span class="week-time-heading">Giờ</span>${headers}</div><div class="week-grid-body" data-minute-range="${height}" style="height:calc(${height} * var(--week-minute-px, 1px))"><div class="week-time-ruler">${ticks}</div>${columns}</div></div></div>`;
@@ -2026,7 +2041,7 @@ function renderCalendarAgenda(date) {
   const items = state.historyItems.filter(item => item.date === date).sort((a, b) => a.start.localeCompare(b.start) || a.key.localeCompare(b.key));
   const minutes = items.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
   $('calendarDayHeading').innerHTML = `<strong>${escapeHtml(historyDayLabel(date))}</strong><span>${items.length} worklog · ${escapeHtml(formatHistoryTimeSpent(minutes))}</span>`;
-  $('calendarAgenda').innerHTML = items.length ? items.map((item, index) => { const appearance = calendarAppearance(item); return `<button class="calendar-event${appearance.classes}" style="${appearance.style}" type="button" data-event-index="${index}" title="Xem và sửa ${escapeHtml(item.key)}${appearance.ot ? ' · OT' : ''}">${appearance.badge}<span class="calendar-event-time">${escapeHtml(item.start)}<small>${escapeHtml(item.end)}</small></span><span class="calendar-event-copy"><strong>${window.QuickJiraIssueIcons?.html(item)||''}${escapeHtml(item.key)} <em>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</em></strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="calendar-event-arrow" aria-hidden="true">›</span></button>`; }).join('') : '<p class="calendar-empty">Chưa có worklog trong ngày này.</p>';
+  $('calendarAgenda').innerHTML = items.length ? items.map((item, index) => { const appearance = calendarAppearance(item), logState = calendarLogLabel(item); return `<button class="calendar-event${appearance.classes}" data-log-state="${logState.tone}" style="${appearance.style}" type="button" data-event-index="${index}" title="Xem và sửa ${escapeHtml(item.key)}${appearance.ot ? ' · OT' : ''}">${appearance.badge}<span class="calendar-event-time">${escapeHtml(item.start)}<small>${escapeHtml(item.end)}</small></span><span class="calendar-event-copy"><strong>${window.QuickJiraIssueIcons?.html(item)||''}${escapeHtml(item.key)} <em>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</em> <em class="calendar-log-label">${escapeHtml(logState.label)}</em></strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="calendar-event-arrow" aria-hidden="true">›</span></button>`; }).join('') : '<p class="calendar-empty">Chưa có worklog trong ngày này.</p>';
   $('calendarAgenda').querySelectorAll('[data-event-index]').forEach(button => button.addEventListener('click', () => openCorrection(items[Number(button.dataset.eventIndex)])));
 }
 
@@ -2059,14 +2074,19 @@ function renderWorklogHistory() {
   $('historyListViewBtn').setAttribute('aria-pressed', String(!calendar));
   $('historyCalendarViewBtn').setAttribute('aria-pressed', String(calendar));
   $('historySummary').classList.toggle('hidden', !calendar && (state.historyLoading || !state.historyLoaded || !!state.historyError));
-  if (calendar && !retainGrid && (state.historyLoading || !state.historyLoaded || state.historyError)) $('historySummary').textContent = 'Worklog cá nhân · Giờ Việt Nam';
+  if (calendar && !retainGrid && (state.historyLoading || !state.historyLoaded || state.historyError)) {
+    $('historySummary').textContent = 'Worklog cá nhân · Giờ Việt Nam';
+    $('historySummary').dataset.reportState = '';
+  }
   let message = '';
   if (state.historyLoading) message = calendar ? `Đang tải worklog trong ${state.calendarMode === 'week' ? 'tuần' : 'tháng'} từ Jira...` : 'Đang tải worklog từ Jira...';
-  else if (state.historyError) message = state.historyError;
+  else if (state.historyError) message = `Lỗi tải · ${state.historyError}`;
   else if (!state.historyLoaded) message = 'Chọn ngày hoặc KEY rồi tìm worklog.';
   else if (state.historyNotice) message = state.historyNotice;
-  else if (!state.historyItems.length && !calendar) message = 'Không có worklog của bạn trong ngày này.';
+  else if (!state.historyItems.length && !calendar) message = 'Chưa có worklog trong ngày đã chọn.';
   stateEl.textContent = message;
+  stateEl.dataset.reportState = state.historyLoading ? 'loading' : state.historyError ? 'error'
+    : state.historyNotice ? 'partial' : state.historyLoaded && !state.historyItems.length ? 'empty' : '';
   if (state.historyError || (state.historyNotice && !state.historyLoading)) {
     const retry = document.createElement('button');
     retry.type = 'button'; retry.className = 'soft-btn history-retry-btn'; retry.textContent = 'Thử lại';
@@ -2083,9 +2103,12 @@ function renderWorklogHistory() {
     return;
   }
   const total = state.historyItems.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-  const visibleWeekDays = calendar && state.calendarMode === 'week' ? QuickJiraUi.weekRange($('historyDate').value || vietnamToday()).days : [];
-  $('historySummary').textContent = calendar && state.calendarMode === 'week'
-    ? `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.filter(item => visibleWeekDays.includes(item.date)).length} worklog · T2–CN · Giờ Việt Nam`
+  const weekly = calendar && state.calendarMode === 'week';
+  const visibleWeekDays = weekly ? QuickJiraUi.weekRange($('historyDate').value || vietnamToday()).days : [];
+  const count = weekly ? state.historyItems.filter(item => visibleWeekDays.includes(item.date)).length : state.historyItems.length;
+  $('historySummary').dataset.reportState = state.historyNotice ? 'partial' : !count ? 'empty' : '';
+  $('historySummary').textContent = weekly
+    ? `${state.historyNotice ? 'Tạm tính · ' : ''}${count ? count + ' worklog' : 'Chưa có worklog'} · T2–CN · Giờ Việt Nam`
     : `${state.historyNotice ? 'Tạm tính · ' : ''}${state.historyItems.length} worklog · ${calendar ? QuickJiraCalendar.displayDuration(total) : formatHistoryTimeSpent(total)}${calendar ? ' trong tháng' : ' trong ngày'} · Giờ Việt Nam`;
   if (calendar) {
     wrap.innerHTML = '';

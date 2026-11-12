@@ -23,7 +23,7 @@ const {chromium}=require('playwright'),{server}=require('./serve.cjs');
    const source=calendarBlockFor(b),from=source.getBoundingClientRect().toJSON(),background=getComputedStyle(source).backgroundColor,ribbon=source.querySelector('.ot-ribbon')&&getComputedStyle(source.querySelector('.ot-ribbon')).transform;stageCalendarMove(a,b,QuickJiraDrafts.drop(a,b,calendarPreviewItems(),b));
    const job=calendarSwapMotion;if(!job)return null;
    job.animations.forEach(x=>x.pause());
-   return{background,ribbon,from,to:job.destination.getBoundingClientRect().toJSON(),duration:job.animations[0].effect.getTiming().duration,frames:job.animations[0].effect.getKeyframes().map(x=>x.transform),cloneKey:job.layer.querySelector('strong').textContent};
+   return{background,ribbon,from,to:job.destination.getBoundingClientRect().toJSON(),duration:job.animations[0].effect.getTiming().duration,frames:job.animations[0].effect.getKeyframes().map(x=>x.transform),cloneKey:job.layer.querySelector('.calendar-log-key').textContent};
   });
   const motion=await stage();assert(motion);assert.equal(motion.cloneKey,'CAL-2');assert.equal(await page.locator('.calendar-swap-flight').evaluate(x=>getComputedStyle(x).backgroundColor),motion.background);assert.equal(await page.locator('.calendar-swap-flight .ot-ribbon').evaluate(x=>getComputedStyle(x).transform),motion.ribbon);assert.equal(await page.locator('.calendar-swap-layer').count(),1);assert.equal(await page.evaluate(()=>getComputedStyle(calendarSwapMotion.destination).opacity),'0');
   const at=async t=>page.evaluate(async t=>{const a=calendarSwapMotion.animations[0];await a.ready;a.currentTime=t;const r=calendarSwapMotion.layer.firstElementChild.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height};},t);

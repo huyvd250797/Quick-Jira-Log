@@ -17,7 +17,7 @@ window.QuickJiraProjectReport=(()=>{
  }
  const matches=j=>j&&JSON.stringify(j.filter)===JSON.stringify(filter());
  function stopJob(){if(job){job.controller.abort();job.task?.cancel();job.receiptHandle?.cancel();job=null;}}
- function clear(){seq++;stopJob();projectsLoaded=false;working=false;$('psLoad').disabled=false;items=[];report=null;selected='';$('psContent').hidden=true;$('psWarning').hidden=true;$('psPeople').replaceChildren();$('psDetail').replaceChildren();$('psProjects').replaceChildren();$('psProject').value='';$('psScope').value='all';$('psPeriod').value='month';$('psAnchor').value=today();$('psYear').value=today().slice(0,4);$('psState').textContent='Chọn dự án để xem thống kê.';period();$('psPerson').replaceChildren(new Option('Tất cả thành viên',''));$('psPersonQuery').value='';closeMembers();$('psPause').hidden=true;$('psRetry').hidden=true;}
+ function clear(){seq++;stopJob();projectsLoaded=false;working=false;$('psLoad').disabled=false;items=[];report=null;selected='';$('psContent').hidden=true;$('psWarning').hidden=true;$('psPeople').replaceChildren();$('psDetail').replaceChildren();$('psProjects').replaceChildren();$('psProject').value='';$('psScope').value='all';$('psPeriod').value='month';$('psAnchor').value=today();$('psYear').value=today().slice(0,4);$('psState').textContent='Chọn dự án để xem thống kê.';$('psState').dataset.reportState='';period();$('psPerson').replaceChildren(new Option('Tất cả thành viên',''));$('psPersonQuery').value='';closeMembers();$('psPause').hidden=true;$('psRetry').hidden=true;}
  function ui(){return Object.fromEntries(['psScope','psProject','psPeriod','psAnchor','psYear','psFrom','psTo','psPerson','psSort'].map(id=>[id,$(id).value]));}
  function meta(j){return {failures:j.issues.filter(t=>t.error).map(t=>[t.key,t.error]),runID:j.runID,filter:j.filter,offset:j.offset,total:j.total,phase:j.phase,paused:j.paused,status:j.finished?'complete':j.paused?'paused':'running',warnings:j.warnings,error:j.error,firstLogSchema:j.firstLogSchema||0,ui:ui(),view:d.open?'stats':'other',scroll:d.querySelector('.ps-body').scrollTop};}
  async function checkpoint(j,page=null){
@@ -114,7 +114,7 @@ window.QuickJiraProjectReport=(()=>{
  function render(){if(!report)return;const filter=$('psPerson').value;let people=report.people.filter(p=>!filter||p.id===filter);const sort=$('psSort').value;people.sort(sort==='name'?(a,b)=>a.name.localeCompare(b.name):sort==='tasks'?(a,b)=>b.subtasks-a.subtasks||b.seconds-a.seconds:(a,b)=>b.seconds-a.seconds);
   $('psKpis').innerHTML=[['Tổng giờ',fmt(report.seconds)],['Ngày <span class="ps-md-unit">(Man-days)</span>',QuickJiraProjectStats.manDays(report.seconds)],['Thành viên có log',report.people.length],['Subtask',report.subtasks]].map(([a,b])=>`<article><small>${a}</small><strong>${kpiValue(b)}</strong></article>`).join('');
   const max=Math.max(1,...report.people.map(p=>p.seconds));
-  $('psPeople').innerHTML=people.length?people.map((p,index)=>personCard(p,index,max)).join(''):'<p>Không có worklog trong kỳ đã chọn.</p>';
+  $('psPeople').innerHTML=people.length?people.map((p,index)=>personCard(p,index,max)).join(''):'<p data-report-state="empty">Chưa có worklog trong kỳ đã chọn.</p>';
   fitKpiValues();renderFirstLog();detail();
  }
  function detail(){const p=report?.people.find(p=>p.id===selected);$('psDetail').hidden=!p;if(!p)return;
@@ -178,15 +178,29 @@ window.QuickJiraProjectReport=(()=>{
   const eta=QuickJiraEta.update(j.eta,{phase:j.phase,done:p.done,total:p.total,now:performance.now(),running:j.running,paused:j.paused});
   const etaText=j.running&&!j.paused?QuickJiraEta.label(eta,j.phase):'';
   const errors=j.issues.filter(t=>t.error).map(t=>t.key+': '+t.error);
-  const status=j.recovering?'Đang khôi phục tiến độ':j.running?(j.paused?'Đang tạm dừng…':p.label):j.paused?'Đã tạm dừng':j.error||errors.length||j.warnings.length?'Dữ liệu tạm tính — cần xử lý':'Đã tải xong dữ liệu được phép xem';
+  const partial = Boolean(j.error || errors.length || j.warnings.length);
+  const failed = Boolean(j.error && !report?.people.length);
+  const empty = Boolean(report && !report.people.length);
+  const reportState = j.recovering || (j.running && !j.paused) ? 'loading'
+    : j.paused ? '' : failed ? 'error' : partial ? 'partial' : empty ? 'empty' : '';
+  const status = j.recovering ? 'Đang khôi phục tiến độ'
+    : j.paused ? (j.running ? 'Đang tạm dừng…' : 'Đã tạm dừng')
+      : j.running ? 'Đang tải · ' + p.label
+        : failed ? 'Lỗi tải · Chưa đọc được dữ liệu'
+          : partial ? 'Dữ liệu tạm tính · Một số worklog chưa tải đủ'
+            : empty ? 'Chưa có worklog trong kỳ đã chọn.' : 'Đã tải xong dữ liệu được phép xem';
   if(matches(j)){
+   $('psState').dataset.reportState=reportState;
    $('psState').innerHTML=`<div class="ps-progress-head"><span>${j.running?'<i class="ps-spinner" aria-hidden="true"></i>':''}<strong>${esc(status)}</strong></span><b>${p.done}/${p.total??'?'} · ${p.percent}%</b></div><div class="ps-progress-track" aria-hidden="true"><i style="width:${p.percent==='—'?15:p.percent}%"></i></div><small>${esc(caption)}</small>${etaText?'<small class="ps-eta">'+esc(etaText)+'</small>':''}`;
    $('psContent').hidden=j.running&&!report;$('projectStatsDialog').classList.toggle('ps-is-loading',j.running&&!report);
    let unknown=0;if(report)for(const item of j.items.values())if(!item.overtimeKnown)unknown+=item.seconds;
    if(j.running&&j.phase==='overtime')for(const node of $('psPeople').querySelectorAll('.ps-person-breakdown'))if(node.textContent!=='Đang đối chiếu Overtime…')node.textContent='Đang đối chiếu Overtime…';
    const warnings=[...new Set([...j.warnings,...errors,j.error,j.storageWarning,unknown?fmt(unknown)+' chưa xác định Overtime; vẫn cộng vào tổng giờ.':''])].filter(Boolean);
    $('psWarning').hidden=!warnings.length;$('psWarning').textContent=warnings.join(' ');
-  }else $('psState').textContent='Bộ lọc chưa áp dụng. Tác vụ nền vẫn dùng bộ lọc đã bấm Xem thống kê.';
+  }else{
+   $('psState').dataset.reportState='';
+   $('psState').textContent='Bộ lọc chưa áp dụng. Tác vụ nền vẫn dùng bộ lọc đã bấm Xem thống kê.';
+  }
   $('psPause').hidden=!j.running&&!j.paused;$('psPause').disabled=j.running&&j.paused;$('psPause').textContent=j.paused?'Tiếp tục':'Tạm dừng';
   $('psRetry').hidden=j.running||j.paused||(!j.error&&!errors.length);$('psLoad').disabled=false;
   j.task?.update({label:(j.paused?'Đã tạm dừng · ':p.label+' · ')+(j.filter.project||'Tất cả dự án'),...(p.total===null?{detail:'Đang xác định tổng số công việc'}:{done:p.done,total:p.total}),overallPercent:QuickJiraEta.overall(j.phase,p.done,p.total),eta:etaText,status:j.paused?'paused':''});

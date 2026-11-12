@@ -419,3 +419,107 @@ html[data-theme] .brand .header-tool-icon,
   color: var(--qjl-accent);
   cursor: progress;
 }
+
+/* Calendar and reports share tones without changing the underlying grid. */
+:root {
+  --qjl-calendar-grid: #cbd7e7;
+  --qjl-report-regular: #326abb;
+  --qjl-report-ot: #ad7016;
+  --qjl-report-unknown: #6b7b91;
+}
+
+html[data-theme="dark"] {
+  --qjl-calendar-grid: #3c506b;
+  --qjl-report-regular: #80b4ff;
+  --qjl-report-ot: #e9b760;
+  --qjl-report-unknown: #a1adc0;
+}
+
+#historyOverlay :is(.week-time-heading, .week-time-ruler) {
+  background-color: var(--qjl-surface);
+  border-color: var(--qjl-calendar-grid);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+#historyOverlay .week-day-column {
+  border-left-color: var(--qjl-calendar-grid);
+  background-image: linear-gradient(to bottom, transparent calc(100% - 1px), var(--qjl-calendar-grid) 0);
+}
+
+#historyOverlay .week-day-heading.is-today {
+  box-shadow: inset 0 -2px var(--qjl-focus);
+}
+
+#historyOverlay .week-day-heading.is-today:not(.is-selected) { background-color: var(--qjl-action-tint); }
+#historyOverlay .week-day-heading.is-today > span { color: var(--qjl-accent); }
+#historyOverlay .calendar-day.is-today .calendar-day-number { background: var(--action-primary); }
+
+#historyOverlay .week-worklog-block > strong {
+  display: flex;
+  align-items: baseline;
+  gap: .3em;
+}
+
+#historyOverlay .calendar-log-key {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#historyOverlay .calendar-log-label {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: 3px;
+  background-color: var(--qjl-ok-bg);
+  color: var(--ok);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 650;
+  opacity: 1;
+}
+
+#historyOverlay [data-log-state="draft"] .calendar-log-label {
+  background-color: var(--qjl-action-tint);
+  color: var(--qjl-accent);
+}
+
+#historyOverlay [data-log-state="warning"] .calendar-log-label,
+#historyOverlay .is-batch-overlap[data-log-state="draft"] .calendar-log-label {
+  background-color: var(--qjl-warn-bg);
+  color: var(--qjl-warn);
+}
+
+#plannerOverlay .summary-kpi > strong,
+#projectStatsDialog :is(.ps-person-head b, .ps-person-rank, .ps-person-days, .ps-kpis strong) {
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+#plannerOverlay #summaryRegular { color: var(--qjl-accent); }
+#plannerOverlay #summaryOvertime { color: var(--qjl-warn); }
+#plannerOverlay #summaryTotal { color: var(--qjl-home-hours); }
+
+#plannerOverlay :is(.summary-stacked, .summary-legend) .regular { background: var(--qjl-report-regular); }
+#plannerOverlay :is(.summary-stacked, .summary-legend) .ot { background: var(--qjl-report-ot); }
+#plannerOverlay :is(.summary-stacked, .summary-legend) .unknown { background: var(--qjl-report-unknown); }
+
+#projectStatsDialog .ps-person-head > strong { color: var(--text); font-weight: 750; }
+#projectStatsDialog :is(.ps-person-head > b, .ps-person-rank, .ps-person-days) { color: var(--qjl-accent); }
+
+html[data-theme] [data-report-state="loading"] { color: var(--qjl-accent); }
+html[data-theme] [data-report-state="empty"] { color: var(--muted); }
+html[data-theme] [data-report-state="partial"] { color: var(--qjl-warn); }
+html[data-theme] [data-report-state="error"] { color: var(--danger); }
+
+html[data-theme] :is(#summaryState, #worklogHistoryState, #psState)[data-report-state="partial"] {
+  background-color: var(--qjl-warn-bg);
+  border-color: var(--qjl-warn-line);
+  color: var(--qjl-warn);
+}
+
+html[data-theme] :is(#summaryState, #worklogHistoryState, #psState)[data-report-state="error"] {
+  background-color: var(--qjl-error-bg);
+  border-color: var(--qjl-error-line);
+  color: var(--danger);
+}

@@ -1,3 +1,12 @@
+# Quick Jira Log V1.38.5 — Calendar & Reports Polish
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.38.5 | Calendar & Reports Polish · nhãn Lịch, trục giờ, trạng thái và cách đọc báo cáo | Đã xây dựng source |
+| V1.38.6 | Visual QA · rà soát sáng/tối trên PC/mobile | Đề xuất |
+
+---
+
 # Quick Jira Log V1.38.4 — Jira Cards & Forms Polish
 
 | Phiên bản | Phạm vi | Trạng thái |

@@ -232,7 +232,7 @@ window.QuickJiraBatch=(()=>{
   resetCalendarInteraction();state.calendarDrafts.clear();job=null;
   $('batchConfirmDialog').close();$('batchDraftDialog').close();
   $('historyOverlay').classList.remove('batch-preview');$('batchPreviewBar').hidden=true;
-  $('historyTitle').textContent='Worklog đã log';state.historyItems=[];state.historyLoaded=false;state.historyError='';state.historyNotice='';
+  $('historyTitle').textContent='Lịch';state.historyItems=[];state.historyLoaded=false;state.historyError='';state.historyNotice='';
   lockedControls.forEach(id=>{const el=$(id);if(el){el.disabled=el.dataset.batchDisabled==='true';delete el.dataset.batchDisabled;}});
   const sent=new Set(Object.keys(current.status));for(const key of sent){state.bulkSelectedKeys.delete(key);state.bulkDrafts.delete(key);}
   state.filterIssues=state.filterIssues.filter(x=>!sent.has(x.key));renderFilterIssues();renderBulkItems();renderWorklogHistory();
