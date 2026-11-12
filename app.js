@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.38.3';
+const APP_VERSION = '1.38.4';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1066,6 +1066,7 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   $('project').value = normalizedProject;
   $('date').value = logDate;
   $('description').value = summary || '';
+  for (const id of ['date', 'description', 'timeSpent']) showFieldError($(id));
   if ($('overtime')) $('overtime').checked = false;
   if ($('overtimeStart')) $('overtimeStart').value = '';
   $('calendarStartField').classList.toggle('hidden', !state.calendarLogContext);
@@ -1658,20 +1659,27 @@ function enhanceDurationInputs(root = document) {
   });
 }
 
+function showFieldError(input, message = '') {
+  const id = `${input.id}-error`;
+  let error = $(id);
+  if (!error && !message) return;
+  if (!error) {
+    error = document.createElement('small');
+    error.id = id;
+    error.className = 'field-error hidden';
+    error.setAttribute('aria-live', 'polite');
+    (input.closest('.duration-stepper') || input).after(error);
+    input.setAttribute('aria-describedby', [input.getAttribute('aria-describedby'), id].filter(Boolean).join(' '));
+  }
+  error.textContent = message;
+  error.classList.toggle('hidden', !message);
+  input.setAttribute('aria-invalid', String(Boolean(message)));
+}
+
 function validateDurationField(input) {
   const minutes = QuickJiraUi.durationMinutes(input.value);
   const valid = Number.isFinite(minutes) && minutes > 0;
-  const id = `${input.id}-error`;
-  let error = $(id);
-  if (!error) {
-    error = document.createElement('small');
-    error.id = id; error.className = 'field-error hidden'; error.setAttribute('aria-live', 'polite');
-    input.closest('.duration-stepper').after(error);
-    input.setAttribute('aria-describedby', [input.getAttribute('aria-describedby'), id].filter(Boolean).join(' '));
-  }
-  error.textContent = valid ? '' : 'Nhập thời lượng hợp lệ, ví dụ 30m, 1h hoặc 1h 30m.';
-  error.classList.toggle('hidden', valid);
-  input.setAttribute('aria-invalid', String(!valid));
+  showFieldError(input, valid ? '' : 'Nhập thời lượng hợp lệ, ví dụ 30m, 1h hoặc 1h 30m.');
   return valid;
 }
 
@@ -3311,6 +3319,7 @@ document.querySelectorAll('.preset-btn').forEach(button => {
   button.addEventListener('click', () => {
     const value = button.dataset.time || '';
     $('timeSpent').value = value;
+    showFieldError($('timeSpent'));
     state.prefs.lastTimeSpent = value;
     savePrefs();
     syncSinglePresetState();
@@ -3496,10 +3505,32 @@ document.addEventListener('keydown', event => {
   }
 });
 
+const worklogRequiredMessages = {
+  date: 'Chọn ngày logwork hợp lệ.',
+  description: 'Nhập mô tả công việc đã thực hiện.',
+  timeSpent: 'Nhập thời lượng, ví dụ 30m hoặc 1h 30m.'
+};
+
+for (const [id, message] of Object.entries(worklogRequiredMessages)) {
+  const input = $(id);
+  input.addEventListener('invalid', () => showFieldError(input, message));
+  if (id !== 'timeSpent') {
+    input.addEventListener('input', () => {
+      if (input.validity.valid && input.value.trim()) showFieldError(input);
+    });
+  }
+}
+
 $('worklogForm').addEventListener('submit', async event => {
   event.preventDefault();
   if (state.submitInFlight || state.bulkSubmitInFlight) return;
   if (!validateDurationFields($('worklogForm'))) return;
+  const description = $('description');
+  if (!description.value.trim()) {
+    showFieldError(description, worklogRequiredMessages.description);
+    description.focus();
+    return;
+  }
   if (singleCapacityExceeded()) {
     updateSingleCapacity();
     return showToast('Tổng giờ thường dự kiến vượt 8h. Hãy giảm thời lượng hoặc chọn Overtime để log ngoài giờ.');
@@ -3513,7 +3544,7 @@ $('worklogForm').addEventListener('submit', async event => {
     project: $('project').value.trim(),
     timeSpent: $('timeSpent').value.trim(),
     date: $('date').value,
-    description: $('description').value.trim(),
+    description: description.value.trim(),
     overtime: $('overtime').checked,
     overtimeStart: $('overtime').checked ? $('overtimeStart').value : '',
     ...(calendarSubmission ? { startTime: $('calendarStart').value } : {})
@@ -3540,6 +3571,8 @@ $('worklogForm').addEventListener('submit', async event => {
   const nextBtn = $('logNextBtn');
   btn.disabled = true;
   if (nextBtn) nextBtn.disabled = true;
+  const activeButton = logAndNext && nextBtn ? nextBtn : btn;
+  activeButton.setAttribute('aria-busy', 'true');
   btn.textContent = 'ĐANG LOG WORK...';
   if (nextBtn && logAndNext) nextBtn.textContent = 'ĐANG LOG...';
   $('resultCard').classList.add('hidden');
@@ -3622,6 +3655,7 @@ $('worklogForm').addEventListener('submit', async event => {
     showToast(error.message);
   } finally {
     state.submitInFlight = false;
+    activeButton.removeAttribute('aria-busy');
     btn.disabled = false;
     btn.textContent = 'LOG WORK';
     if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = 'LOG & NEXT'; }

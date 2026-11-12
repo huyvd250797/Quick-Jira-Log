@@ -108,6 +108,19 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
    await page.locator('#calendarLogDialog').waitFor({state:'visible'});assert.equal(await page.evaluate(()=>state.calendarLogContext.start),start);assert(await cell.evaluate(el=>el.classList.contains('is-selected')));
    await page.locator('[data-calendar-task]').first().click();assert.equal(await page.locator('#calendarStart').inputValue(),start);assert.equal(await page.locator('#date').inputValue(),'2026-10-24');await page.waitForFunction(()=>!state.singleCapacity.loading);assert.equal(await page.locator('#singleCapacityStatus').innerText(),'');
    if(start==='08:30'){
+    const description=page.locator('#description');
+    const previousDescription=await description.inputValue();
+    await description.fill('   ');
+    await page.locator('#logBtn').click();
+    assert.match(await page.locator('#description-error').innerText(),/Nhập mô tả/);
+    assert.equal(await description.getAttribute('aria-invalid'),'true');
+    assert(await page.locator('#logConfirmOverlay').isHidden());
+    await description.fill(previousDescription);
+    assert(await page.locator('#description-error').isHidden());
+    await page.locator('#timeSpent').fill('abc');
+    await page.locator('#logBtn').click();
+    assert.match(await page.locator('#timeSpent-error').innerText(),/Nhập thời lượng/);
+    assert(await page.locator('#logConfirmOverlay').isHidden());
     await page.locator('#timeSpent').fill('30m');await page.locator('#timeSpent').dispatchEvent('input');await page.locator('#logBtn').click();await page.locator('#confirmLogBtn').click();await page.waitForFunction(()=>state.logProgress&&!state.logProgress.active&&!state.submitInFlight);assert.equal(writes.at(-1).body.startTime,'08:30');await page.locator('#closeLogProgressBtn').click();await page.waitForFunction(()=>!$('logProgressDialog').open);
    }
    await page.evaluate(()=>closeCalendarLog({force:true}));assert.equal(await page.locator('.calendar-time-slot.is-selected').count(),0);

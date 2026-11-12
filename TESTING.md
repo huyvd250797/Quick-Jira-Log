@@ -1,3 +1,12 @@
+# Quick Jira Log V1.38.4 — Jira Cards & Forms Polish
+
+- `npm test` chạy bộ hồi quy Node.js.
+- Mô phỏng kiểm tra lỗi ngày, thời lượng sai, mô tả chỉ có khoảng trắng, xóa lỗi khi sửa và mở xác nhận khi dữ liệu hợp lệ.
+- Đối chiếu HTML với bản V1.38.3 sau khi bỏ qua chuỗi phiên bản. CSS mới dùng thuộc tính hiển thị, còn trường lỗi xuất hiện khi có dữ liệu cần sửa.
+- Chromium bị môi trường chặn khi khởi động. Kiểm thử trực quan trên PC/mobile chưa được xác minh.
+
+---
+
 # Quick Jira Log V1.38.3 — Home & Toolbar Polish
 
 - `npm test` với bộ hồi quy Node.js, bao gồm tính giờ và phân bổ Sub-task Type.

@@ -329,3 +329,93 @@ html[data-theme] .brand .header-tool-icon,
 #mobileTaskbar .mobile-taskbar-btn:active:not(:disabled, [aria-disabled="true"]) > span:last-child {
   color: var(--qjl-accent);
 }
+
+/* Jira cards and the existing Logwork controls. */
+#jiraSearchDialog .jira-issue-card {
+  border-color: var(--line);
+  box-shadow: var(--shadow-soft);
+}
+
+#jiraSearchDialog .jira-issue-card:hover {
+  border-color: var(--qjl-focus);
+  background-color: color-mix(in srgb, var(--qjl-action-tint) 42%, var(--card));
+}
+
+#jiraSearchDialog .jira-issue-card .jira-issue-key,
+#jiraIssuePeekDialog #jiraIssuePeekKey {
+  color: var(--qjl-accent);
+  font-weight: 750;
+}
+
+#jiraSearchDialog .jira-card-title,
+#jiraIssuePeekDialog :is(#jiraIssuePeekTitle, .jira-detail-section-title) {
+  color: var(--text);
+  font-weight: 700;
+}
+
+#jiraSearchDialog :is(.jira-card-meta, .jira-card-foot),
+#jiraIssuePeekDialog #jiraIssuePeekInfo dt {
+  color: var(--muted);
+}
+
+#jiraIssuePeekDialog #jiraIssuePeekInfo dt { font-weight: 600; }
+#jiraIssuePeekDialog #jiraIssuePeekInfo dd { color: var(--text); }
+
+:is(#jiraSearchDialog, #jiraIssuePeekDialog) .jira-status {
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 25%, transparent);
+}
+
+#worklogForm :is(input[type="date"], input[type="time"], textarea, .duration-stepper, .overtime-toggle) {
+  background-color: var(--qjl-surface);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+#worklogForm label { color: var(--text); }
+#worklogForm :is(.field-help, .overtime-copy small) { color: var(--muted); }
+
+#worklogForm .overtime-control { background-color: var(--qjl-disabled-text); }
+#worklogForm #overtime:checked + .overtime-control { background: var(--qjl-warn); }
+#worklogForm #overtime:checked + .overtime-control::after { background-color: var(--qjl-warn-bg); }
+
+#worklogForm :is(input[type="date"], input[type="time"], textarea):focus,
+#worklogForm .duration-stepper:focus-within,
+#worklogForm .overtime-toggle:focus-within {
+  outline: 2px solid var(--qjl-focus);
+  outline-offset: 1px;
+}
+
+#worklogForm .duration-stepper > input:focus-visible { outline: none; }
+#worklogForm #overtime:focus-visible + .overtime-control { outline-color: var(--qjl-focus); }
+
+#worklogForm :is(input, textarea)[aria-invalid="true"],
+#worklogForm .duration-stepper:has([aria-invalid="true"]) {
+  border-color: var(--danger);
+  outline-color: var(--danger);
+}
+
+#worklogForm .field-error {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+:is(#worklogForm, #logConfirmOverlay) .secondary:not(:disabled, [aria-disabled="true"]) {
+  background-color: var(--card);
+  color: var(--qjl-accent);
+  border-color: var(--line);
+}
+
+:is(#worklogForm, #logConfirmOverlay) .secondary:hover:not(:disabled, [aria-disabled="true"]) {
+  background-color: var(--qjl-action-tint);
+}
+
+:is(#worklogForm, #logConfirmOverlay) .secondary:active:not(:disabled, [aria-disabled="true"]) {
+  background-color: var(--qjl-action-pressed);
+}
+
+#worklogForm button[aria-busy="true"] {
+  background: var(--qjl-action-tint);
+  color: var(--qjl-accent);
+  cursor: progress;
+}

@@ -1,3 +1,12 @@
+# Quick Jira Log V1.38.4 — Jira Cards & Forms Polish
+
+- Tăng tương phản của mã Jira và tên công việc trong Tra cứu. Thông tin dự án, người phụ trách và dòng phụ dùng màu chữ phụ. Vẫn áp dụng quy tắc hiển thị tên dài hiện có.
+- Đồng bộ kiểu chữ và nhãn trạng thái giữa Tra cứu và Chi tiết. Jira Done dùng sắc xanh lá, nhóm In Progress dùng xanh dương. Nhãn chữ và vị trí giữ theo bố cục V1.38.3.
+- Form Logwork đồng bộ ô ngày, thời lượng, OT và mô tả. Viền focus rõ hơn. Hiện lỗi cạnh ô ngày, thời lượng hoặc mô tả. Mô tả chỉ có khoảng trắng được báo ngay trước bước xác nhận, phù hợp với điều kiện hiện có của máy chủ.
+- Nút gửi đang xử lý có nhãn và trạng thái trợ năng riêng. Hủy, Xác nhận, Log Work và Log & Next giữ vị trí và trình tự thao tác.
+
+---
+
 # Quick Jira Log V1.38.3 — Home & Toolbar Polish
 
 - Màn chính làm nổi số giờ thường hôm nay và tuần này. Các nhãn kỳ, mục tiêu và số giờ còn thiếu dễ phân biệt hơn.

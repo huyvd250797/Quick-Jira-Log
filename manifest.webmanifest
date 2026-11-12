@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.38.3 – Tiến độ giờ thường, tổng hợp cá nhân và công cụ Jira.",
+  "description": "Quick Jira Log V1.38.4 – Tiến độ giờ thường, tổng hợp cá nhân và công cụ Jira.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

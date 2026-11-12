@@ -1,3 +1,12 @@
+# Quick Jira Log V1.38.4 — Jira Cards & Forms Polish
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.38.4 | Jira Cards & Forms Polish · thẻ Tra cứu, Chi tiết Jira và form Logwork | Đã xây dựng source |
+| V1.38.5 | Calendar & Reports Polish · tinh chỉnh Lịch, Tổng hợp và Thống kê | Đề xuất |
+
+---
+
 # Quick Jira Log V1.38.3 — Home & Toolbar Polish
 
 | Phiên bản | Phạm vi | Trạng thái |
