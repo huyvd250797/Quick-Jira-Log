@@ -1,3 +1,12 @@
+# Quick Jira Log V1.37.7 — Faster Bulk Preview
+
+| Phiên bản | Mục tiêu | Chức năng | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- |
+| V1.37.7 | Rút ngắn thời gian mở lịch nháp | Gom truy vấn tuần, tải mô tả trong nền | Mở lịch khi audit hoàn tất, giữ khung đã xác minh và đối chiếu lại trước khi ghi | Đã xây dựng |
+| V1.38.0 | Logwork từ Tra cứu | Chọn Subtask và đưa vào Log tất cả | Dùng được lịch xem trước và xác nhận từ danh sách đã chọn | Đề xuất |
+
+---
+
 # Quick Jira Log V1.37.6 — Member Man-days & Ranking
 
 - **Thống kê dự án → thẻ thành viên** hiển thị Man-days ở góc dưới bên phải, sau phần phân loại giờ.

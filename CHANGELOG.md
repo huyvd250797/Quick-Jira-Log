@@ -1,3 +1,13 @@
+# Quick Jira Log V1.37.7 — Faster Bulk Preview
+
+- **Log tất cả → Lịch sắp log** mở ngay sau khi đối chiếu xong giờ đã log. Các khung đã xác minh xuất hiện dưới nhãn **ĐÃ LOG**, sau đó bổ sung mã, mô tả và phân loại OT trong nền.
+- Dò issue của người dùng bằng một truy vấn JQL theo khoảng tuần thay cho bảy truy vấn theo ngày. Nếu truy vấn khoảng tuần lỗi hoặc bị cắt kết quả, máy chủ quay lại dò từng ngày. Dùng chung kết quả đọc worklog theo issue trong lần đối chiếu và giới hạn tối đa 12 lượt đọc issue đồng thời.
+- Lịch tuần tiếp tục hiển thị đủ bảy ngày. Chế độ Theo tuần chỉ phân bổ vào thứ Hai đến thứ Sáu. Bước **Xác nhận log** vẫn đối chiếu dữ liệu mới và máy chủ kiểm tra lại vị trí chính xác trước khi ghi Jira.
+
+**Không cần chạy migration mới.**
+
+---
+
 # V1.37.6 — Member Man-days & Ranking
 
 - **Thống kê dự án → thẻ thành viên** hiển thị Man-days ở góc dưới bên phải, sau phần phân loại giờ.

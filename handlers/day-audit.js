@@ -8,7 +8,7 @@ const { loadOccupiedRangesStable } = require('../lib/worklog-guard');
 const { dayAuditKey, cacheGet, cacheSet } = require('../lib/app-cache');
 const { createPerf } = require('../lib/perf');
 const { validDate } = require('../lib/ui-tools');
-const { mapWithConcurrency } = require('../lib/async');
+const { mapWithConcurrency, createConcurrencyLimiter } = require('../lib/async');
 const { createProgressChannel } = require('../lib/progress');
 
 const DAY_AUDIT_CACHE_MS = 15 * 1000;
@@ -33,8 +33,16 @@ module.exports = async function handler(req, res) {
       const update=(date,value)=>{fractions.set(date,Math.max(fractions.get(date),value));report(5+90*[...fractions.values()].reduce((s,n)=>s+n,0)/dates.length,'Đang đối chiếu giờ trống');};
       const me=session.me||await getMyself(session),sharedReads=new Map();
       // Request-scoped snapshot only. Never reused for a later save or another account.
+      const preview = url.searchParams.get('scope') === 'batch-preview';
+      const sorted = [...dates].sort();
+      const start = sorted[0], end = sorted.at(-1);
+      const contiguous = Date.parse(end) - Date.parse(start) === (dates.length - 1) * 86400000;
+      const authorRange = preview && dates.length > 1 && contiguous ? [start, end] : undefined;
+      const limitIssueRead = preview ? createConcurrencyLimiter(12) : undefined;
       const days=await mapWithConcurrency(dates,3,async date=>{
-        const guard=await loadOccupiedRangesStable(date,[],me,session,{sharedReads,onProgress:value=>update(date,value)});
+        const guard=await loadOccupiedRangesStable(date,[],me,session,{
+          sharedReads, authorRange, limitIssueRead, onProgress:value=>update(date,value)
+        });
         update(date,1);
         return {date,occupied:displaySegments(guard.occupied.map(r=>({...r,minutes:r.end-r.start}))),checkedIssues:guard.issueKeys.length,checkedWorklogs:guard.checkedWorklogs};
       });

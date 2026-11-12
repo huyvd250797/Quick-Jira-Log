@@ -1,3 +1,11 @@
+# Quick Jira Log V1.37.7 — Faster Bulk Preview
+
+- `npm test` kiểm tra chức năng hiện có, truy vấn tuần, trường hợp truy vấn tuần bị cắt và kiểm tra lại giờ trước khi ghi.
+- Kiểm tra JavaScript mô phỏng 4 Subtask với dữ liệu chi tiết trả chậm. Lịch mở với khung đã đối chiếu, việc làm giàu dữ liệu đợi thao tác kéo kết thúc và bảo toàn bản nháp. Chưa đo độ trễ trên Jira thật.
+- Bộ kiểm thử trình duyệt đã được cập nhật cho luồng tải chi tiết trong nền. Chromium của môi trường build bị chặn khi tạo socket nên chưa chạy được bộ kiểm thử này.
+
+---
+
 # V1.37.6 — Kiểm tra
 
 - `npm test` đạt toàn bộ bộ kiểm tra nghiệp vụ/API.

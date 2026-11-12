@@ -49,6 +49,7 @@ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:320
  const before=await page.evaluate(()=>JSON.stringify([...state.calendarDrafts.values()].map(d=>d.target))),count=confirms;
  await page.evaluate(()=>stageCalendarMove(calendarPreviewItems().find(x=>x.batchNew),{date:'2026-10-20',start:'08:00'}));assert.equal(await page.evaluate(()=>JSON.stringify([...state.calendarDrafts.values()].map(d=>d.target))),before);assert.equal(confirms,count);assert.match(await page.locator('#toast').innerText(),/đã log/);
  await page.evaluate(()=>{const item=calendarPreviewItems().find(x=>x.batchNew);stageCalendarResize(item,QuickJiraBatch.proposeResize(item,720));});assert.equal(await page.evaluate(()=>JSON.stringify([...state.calendarDrafts.values()].map(d=>d.target))),before);
+ await page.locator('.is-batch-existing').filter({hasText:'EPU-10'}).waitFor();
  // Original palette + typography remain, with a 28% black veil over the entire saved block (not the draft).
  for(const theme of ['light','dark']){
   await page.evaluate(t=>{applyTheme(t);state.projectColors=true;renderWorklogHistory();},theme);await page.waitForTimeout(120);

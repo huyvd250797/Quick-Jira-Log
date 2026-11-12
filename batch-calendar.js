@@ -84,12 +84,12 @@ window.QuickJiraBatch=(()=>{
   $('bulkPreviewPercent').textContent=percent+'%';$('bulkPreviewMeter').setAttribute('aria-valuenow',percent);
   $('bulkPreviewMeter').firstElementChild.style.width=percent+'%';$('bulkLogBtn').textContent='Đang xử lý…';
  }
- async function readOccupied(dates,owner,onProgress=()=>{}){
+ async function readOccupied(dates,owner,onProgress=()=>{},preview=false){
   const occupied={};let cursor=0,done=0,reported=0;
   const report=(n,label)=>{if(state.user===owner&&n>reported){reported=n;onProgress(n,label);}};
   if(dates.length>1){
    let data;
-   try{data=await api('/api?action=day-audit&dates='+dates.join(',')+'&force=1',{onProgress:event=>{const percent=Math.max(0,Math.min(100,Number(event.percent)||0));report(dates.length*percent/100,event.phase);}});}catch(e){if(e.code==='RESULT_UNKNOWN')e.message='Kết nối đối chiếu bị gián đoạn. Chưa hoàn tất kiểm tra giờ trống; vui lòng thử lại.';if(![400,404,405].includes(e.status))throw e;}
+   try{data=await api('/api?action=day-audit&dates='+dates.join(',')+'&force=1'+(preview?'&scope=batch-preview':''),{onProgress:event=>{const percent=Math.max(0,Math.min(100,Number(event.percent)||0));report(dates.length*percent/100,event.phase);}});}catch(e){if(e.code==='RESULT_UNKNOWN')e.message='Kết nối đối chiếu bị gián đoạn. Chưa hoàn tất kiểm tra giờ trống; vui lòng thử lại.';if(![400,404,405].includes(e.status))throw e;}
    if(state.user!==owner)throw Error('Tài khoản đã thay đổi.');
    if(data?.days){
     if(!Array.isArray(data.days)||data.days.length!==dates.length||new Set(data.days.map(x=>x.date)).size!==dates.length||data.days.some(x=>!dates.includes(x.date)||!Array.isArray(x.occupied)))throw Error('Chưa đọc được đầy đủ giờ đã log.');
@@ -97,6 +97,49 @@ window.QuickJiraBatch=(()=>{
    }
   }
   await Promise.all(Array.from({length:Math.min(2,dates.length)},async()=>{while(cursor<dates.length){const d=dates[cursor++],data=await api(`/api?action=day-audit&date=${d}&force=1`);if(state.user!==owner)throw Error('Tài khoản đã thay đổi.');if(!Array.isArray(data.occupied))throw Error('Chưa đọc được đầy đủ giờ đã log.');occupied[d]=data.occupied;report(++done);}}));return occupied;
+ }
+ function auditBlocks(dates, occupied) {
+  return dates.flatMap(date => occupied[date].map((slot, i) => ({
+   id: `occupied-${date}-${i}`, key: 'ĐÃ LOG', project: '', date, start: slot.start, end: slot.end,
+   minutes: P.minute(slot.end) - P.minute(slot.start), summary: 'Giờ đã log trên Jira · Chỉ xem',
+   description: 'Giờ đã log trên Jira', calendarReadOnly: true, overtime: false, overtimeKnown: false
+  })));
+ }
+ function detailedBlocks(blocks, items, dates) {
+  const logs = items.filter(x => dates.includes(x.date)).map(x => ({ ...x, calendarReadOnly: true }));
+  const byDate = new Map(dates.map(date => [date, []]));
+  for (const log of logs) byDate.get(log.date).push(log);
+  const gaps = blocks.flatMap(block => {
+   let ranges = [[P.minute(block.start), P.minute(block.end)]];
+   for (const log of byDate.get(block.date)) {
+    const start = P.minute(log.start), end = start + Number(log.minutes);
+    ranges = ranges.flatMap(([a,b]) => start >= b || end <= a ? [[a,b]] :
+     [[a, Math.min(b,start)], [Math.max(a,end), b]].filter(([a,b]) => b > a));
+   }
+   return ranges.map(([start,end], i) => ({ ...block, id: block.id+'-'+i, start: P.time(start), end: P.time(end), minutes: end-start }));
+  });
+  return [...logs, ...gaps];
+ }
+ async function loadPreviewDetails(current, blocks) {
+  const dates = current.reviewDates;
+  try {
+   const data = await api(`/api?action=worklog-history&date=${dates[0]}&endDate=${dates.at(-1)}&force=1`, { silentBusy: true });
+   if (!Array.isArray(data.items) || job !== current || state.user !== current.owner || current.running) return;
+   const existing = detailedBlocks(blocks, data.items, dates);
+   const apply = () => {
+    if (job !== current || state.user !== current.owner || current.running) return;
+    // Updating calendar nodes during a drag would invalidate its target and pointer state.
+    if (calendarGesture || calendarSwapMotion || calendarHoverMotions.size) {
+     setTimeout(apply, 100);
+     return;
+    }
+    state.historyItems = [...existing, ...state.historyItems.filter(x => x.batchNew)];
+    renderCalendarDrafts();
+   };
+   apply();
+  } catch {
+   // The verified occupied blocks are already visible if optional detail loading fails.
+  }
  }
  async function prepare(){
   if(busy()||state.bulkSubmitInFlight)return;
@@ -116,26 +159,12 @@ window.QuickJiraBatch=(()=>{
   const task=QuickJiraBusy.begin('Đang đối chiếu giờ trống',{blocking:false});
   try{
    if(bulkAutoMode()) items.forEach(x=>{x.overtime=false;});
-   const historyPromise=api(`/api?action=worklog-history&date=${reviewDates[0]}&endDate=${reviewDates.at(-1)}&force=1`).then(data=>({data}),error=>({error}));
-   const occupied=await readOccupied(reviewDates,owner,(done,label)=>{task.update({label:'Đối chiếu giờ trống',done:Math.floor(done),total:reviewDates.length});prepProgress(done,reviewDates.length+2,label||'Đối chiếu '+Math.floor(done)+'/'+reviewDates.length+' ngày');});
+   const occupied=await readOccupied(reviewDates,owner,(done,label)=>{task.update({label:'Đối chiếu giờ trống',done:Math.floor(done),total:reviewDates.length});prepProgress(done,reviewDates.length+2,label||'Đối chiếu '+Math.floor(done)+'/'+reviewDates.length+' ngày');},true);
    prepProgress(reviewDates.length,reviewDates.length+2,'Đang tạo lịch nháp');
    const result=P.allocate(items,allocationDates,occupied,!bulkAutoMode());
    if(!result.plans.length)throw Error('Không phân bổ được Subtask nào. '+result.unplaced.map(x=>x.key+': '+x.reason).join('; '));
    const snapshot={bulkScroll:$('bulkItems').scrollTop,items:state.historyItems,date:$('historyDate').value,loaded:state.historyLoaded,view:state.historyView,mode:state.calendarMode,title:$('historyTitle').textContent,error:state.historyError,notice:state.historyNotice};
-   // Occupied ranges come from the authoritative day-audit, including index-delay fallback.
-   let existing=reviewDates.flatMap(d=>occupied[d].map((s,i)=>({id:`occupied-${d}-${i}`,key:'ĐÃ LOG',project:'',date:d,start:s.start,end:s.end,minutes:P.minute(s.end)-P.minute(s.start),summary:'Giờ đã log trên Jira · Chỉ xem',description:'Giờ đã log trên Jira',calendarReadOnly:true,overtime:false,overtimeKnown:true})));
-   try {
-    const history=await historyPromise;if(history.error)throw history.error;const data=history.data;
-    if(state.user!==owner)throw Error('Tài khoản đã thay đổi.');
-    if(Array.isArray(data.items)){
-     const real=data.items.filter(x=>reviewDates.includes(x.date)).map(x=>({...x,calendarReadOnly:true}));
-     const gaps=[];
-     for(const fallback of existing){let ranges=[[P.minute(fallback.start),P.minute(fallback.end)]];
-      for(const log of real.filter(x=>x.date===fallback.date)){const a=P.minute(log.start),b=a+Number(log.minutes);ranges=ranges.flatMap(([s,e])=>a>=e||b<=s?[[s,e]]:[[s,Math.min(e,a)],[Math.max(s,b),e]].filter(([a,b])=>b>a));}
-      ranges.forEach(([s,e],i)=>gaps.push({...fallback,id:fallback.id+'-'+i,start:P.time(s),end:P.time(e),minutes:e-s}));
-     }existing=[...real,...gaps];
-    }
-   }catch(e){if(e.status===401||state.user!==owner)throw e;}
+   const existing = auditBlocks(reviewDates, occupied);
    prepProgress(reviewDates.length+1,reviewDates.length+2,'Đang mở lịch xem trước');
    job={approved:{},removed:[],mode,dates,allocationDates,reviewDates,sourceDate:date,occupied,snapshot,owner,unplaced:result.unplaced,unused:result.unused,status:{},requestIds:{},running:false,error:''};
    state.calendarDrafts.clear();
@@ -147,6 +176,7 @@ window.QuickJiraBatch=(()=>{
    $('historyTitle').textContent='Lịch sắp log';$('historyOverlay').classList.add('batch-preview');$('batchPreviewBar').hidden=false;
    renderWorklogHistory();lockedControls.forEach(id=>{const el=$(id);if(el){el.dataset.batchDisabled=String(el.disabled);el.disabled=true;}});
    openOverlay('historyOverlay','closeHistoryBtn');update();prepProgress(reviewDates.length+2,reviewDates.length+2,'Đã tạo lịch xem trước');
+   void loadPreviewDetails(job, existing);
   }catch(e){showToast(e.message);}finally{preparing=false;controls.forEach(([el,disabled])=>{el.disabled=disabled;});$('bulkPreviewProgress').hidden=true;task();updateBulkTotal();}
  }
  function review(){if(!job||job.running)return;try{P.validate(plans(),job.occupied,job.dates);job.error='';}catch(e){job.error=e.message;}update();$('batchConfirmDialog').showModal();}
