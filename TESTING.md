@@ -1,3 +1,11 @@
+# Quick Jira Log V1.38.1 — Original Toolbar & Personal Summary
+
+- `npm test` chạy bộ hồi quy Node.js, gồm logic tổng hợp theo tuần/tháng và Sub-task Type.
+- Đối chiếu markup với V1.37.7. Bố cục HTML khớp khi bỏ qua chuỗi phiên bản và liên kết stylesheet mới.
+- Bộ kiểm thử trình duyệt có bước mở **Tổng hợp** trực tiếp từ taskbar và kiểm tra taskbar ẩn trong màn chức năng. Chromium bị chặn lúc khởi động nên chưa chạy được kiểm thử giao diện.
+
+---
+
 # Quick Jira Log V1.38.0 — Design System & Navigation
 
 - `npm test` với bộ hồi quy Node.js.

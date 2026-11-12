@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.38.0';
+const APP_VERSION = '1.38.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -71,6 +71,7 @@ const state = {
   mobileEditorScrollY: 0,
   mobileSheetDrag: null,
   theme: 'light',
+  logAndNextRequested: false,
   loginInFlight: false,
   invalidLoginCount: 0,
   loginCooldownUntil: 0,
@@ -514,10 +515,7 @@ function openMobileEditor(cardId) {
   $('mobileEditorBackdrop')?.setAttribute('aria-hidden', 'false');
   $('worklogCard')?.classList.toggle('mobile-bottom-sheet', cardId === 'worklogCard');
   $('bulkCard')?.classList.toggle('mobile-bottom-sheet', cardId === 'bulkCard');
-  requestAnimationFrame(() => {
-    card.scrollTop = 0;
-    card.querySelector('.qjl-worklog-fields')?.scrollTo(0, 0);
-  });
+  requestAnimationFrame(() => { card.scrollTop = 0; });
   return true;
 }
 
@@ -823,7 +821,6 @@ function setLoggedIn(user) {
   $('settingsBtn')?.classList.remove('hidden');
   $('plannerBtn')?.classList.remove('hidden');
   $('historyBtn')?.classList.remove('hidden');
-  $('desktopNavigation').classList.remove('hidden');
   $('mobileTaskbar')?.classList.remove('hidden');
   document.body.classList.add('has-mobile-taskbar');
   $('userLabel').textContent = user?.displayName || user?.username || '';
@@ -872,7 +869,6 @@ function setLoggedOut({preserveResume=false}={}) {
   $('settingsBtn')?.classList.add('hidden');
   $('plannerBtn')?.classList.add('hidden');
   $('historyBtn')?.classList.add('hidden');
-  $('desktopNavigation').classList.add('hidden');
   $('mobileTaskbar')?.classList.add('hidden');
   document.body.classList.remove('has-mobile-taskbar');
   closeAllToolOverlays({ restore: false });
@@ -1573,7 +1569,7 @@ function openHistory() {
   });
 }
 
-function closeHistory({ immediate = false } = {}) {
+function closeHistory() {
   if (window.QuickJiraBatch?.active) return QuickJiraBatch.back();
   closeCalendarZoom(false);
   if (state.calendarMovePending) return;
@@ -1581,13 +1577,7 @@ function closeHistory({ immediate = false } = {}) {
   resetCalendarInteraction();
   void exitCalendarFullscreen();
   closeCorrection({ immediate: true });
-  if (!immediate) return closeOverlay('historyOverlay');
-  const overlay = $('historyOverlay');
-  rememberHistoryNavigation();
-  clearUiAnimation(overlay);
-  overlay.setAttribute('aria-hidden', 'true');
-  overlay.classList.add('hidden');
-  unlockOverlayBody();
+  closeOverlay('historyOverlay');
 }
 
 function addAuditEntry(entry) {
@@ -3232,7 +3222,6 @@ $('bulkRedistributeBtn')?.addEventListener('click', () => {
   void requestBulkSmartAllocation();
 });
 $('closeWorklogBtn').addEventListener('click', () => closeSingleEditorAnimated());
-$('cancelWorklogEditorBtn').addEventListener('click', () => closeSingleEditorAnimated());
 $('mobileEditorBackdrop')?.addEventListener('click', () => {
   if (!$('bulkCard').classList.contains('hidden')) return resetBulkState({ animate: true });
   if (!$('worklogCard').classList.contains('hidden')) closeSingleEditorAnimated({ hideResult: false });
@@ -3465,11 +3454,15 @@ document.addEventListener('keydown', event => {
   if (!$('settingsOverlay')?.classList.contains('hidden')) closeSettings();
 });
 
+$('logBtn')?.addEventListener('click', () => { state.logAndNextRequested = false; });
+$('logNextBtn')?.addEventListener('click', () => { state.logAndNextRequested = true; });
+
+
 document.addEventListener('keydown', event => {
   if ($('worklogCorrectionDialog').open) return;
   const active = document.activeElement;
   const typing = active && ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName);
-  if (event.key === 'Escape' && (document.body.classList.contains('desktop-editor-open') || document.body.classList.contains('mobile-editor-open'))) {
+  if (event.key === 'Escape' && document.body.classList.contains('desktop-editor-open')) {
     event.preventDefault();
     if (!$('bulkCard')?.classList.contains('hidden')) resetBulkState({ animate: true });
     else if (!$('worklogCard')?.classList.contains('hidden')) closeSingleEditorAnimated({ hideResult: false });
@@ -3494,6 +3487,7 @@ document.addEventListener('keydown', event => {
   if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && state.user) {
     if (!$('worklogCard')?.classList.contains('hidden')) {
       event.preventDefault();
+      state.logAndNextRequested = false;
       $('worklogForm')?.requestSubmit($('logBtn'));
     } else if (!$('bulkCard')?.classList.contains('hidden')) {
       event.preventDefault();
@@ -3512,7 +3506,8 @@ $('worklogForm').addEventListener('submit', async event => {
   }
   const calendarSubmission = !!state.calendarLogContext;
   if (calendarSubmission && !/^([01]\d|2[0-3]):[0-5]\d$/.test($('calendarStart').value)) return showCalendarLogError('Vui lòng chọn giờ bắt đầu hợp lệ.');
-  const logAndNext = !calendarSubmission && event.submitter === $('logNextBtn');
+  const logAndNext = !calendarSubmission && state.logAndNextRequested === true;
+  state.logAndNextRequested = false;
   const payload = {
     key: $('key').value.trim(),
     project: $('project').value.trim(),
@@ -3545,7 +3540,6 @@ $('worklogForm').addEventListener('submit', async event => {
   const nextBtn = $('logNextBtn');
   btn.disabled = true;
   if (nextBtn) nextBtn.disabled = true;
-  $('cancelWorklogEditorBtn').disabled = true;
   btn.textContent = 'ĐANG LOG WORK...';
   if (nextBtn && logAndNext) nextBtn.textContent = 'ĐANG LOG...';
   $('resultCard').classList.add('hidden');
@@ -3629,9 +3623,8 @@ $('worklogForm').addEventListener('submit', async event => {
   } finally {
     state.submitInFlight = false;
     btn.disabled = false;
-    $('cancelWorklogEditorBtn').disabled = false;
-    btn.textContent = 'Xác nhận';
-    if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = 'Log & Next'; }
+    btn.textContent = 'LOG WORK';
+    if (nextBtn) { nextBtn.disabled = false; nextBtn.textContent = 'LOG & NEXT'; }
     updateSingleCapacity();
   }
 });

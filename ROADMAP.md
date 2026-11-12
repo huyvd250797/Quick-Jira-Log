@@ -1,3 +1,12 @@
+# Quick Jira Log V1.38.1 — Original Toolbar & Personal Summary
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.38.1 | Khôi phục bố cục và taskbar cũ, trả lại lối vào Tổng hợp cá nhân, giữ chỉnh sửa về hiển thị | Đã xây dựng source |
+| V1.39.0 | Tra cứu & Logwork | Đề xuất |
+
+---
+
 # Quick Jira Log V1.38.0 — Design System & Navigation
 
 | Phiên bản | Mục tiêu | Phạm vi | Trạng thái |
