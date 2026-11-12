@@ -1,3 +1,11 @@
+# Quick Jira Log V1.38.6 — Visual QA
+
+- `npm test` chạy bộ hồi quy Node.js, gồm logic kéo, đổi giờ, chỉnh thời lượng, xác nhận, báo cáo và man-days.
+- Mô phỏng cập nhật vùng nhìn mobile với bàn phím, thanh công cụ trình duyệt và môi trường thiếu VisualViewport. Đối chiếu cấu trúc HTML, API và công thức báo cáo với V1.38.5.
+- Bổ sung kiểm tra trình duyệt cho popup trên viewport thu nhỏ và màu biểu đồ/chú giải sáng/tối. Chromium bị chặn lúc tạo socket. Trình duyệt desktop cũng không kết nối được bản chạy thử local, nên chưa có xác minh bằng trình duyệt hoặc bàn phím trên thiết bị thật.
+
+---
+
 # Quick Jira Log V1.38.5 — Calendar & Reports Polish
 
 - `npm test` chạy bộ hồi quy Node.js, gồm bộ kiểm tra lịch, tổng hợp cá nhân, thống kê và tính man-days.

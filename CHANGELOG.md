@@ -1,3 +1,13 @@
+# Quick Jira Log V1.38.6 — Visual QA
+
+- Rà soát màn chính và taskbar. Giữ thứ tự, nhãn, vùng bấm và quy tắc ẩn thanh công cụ khi mở màn chức năng hoặc form.
+- Chỉnh điểm tràn chữ ở thẻ Tra cứu, dòng Subtask trong Chi tiết và số liệu dài trên thẻ thành viên. Giữ quy tắc cắt tên và vùng hiển thị hiện có.
+- Cải thiện khả năng tiếp cận thanh nút Logwork khi cuộn. Trên mobile, popup xác nhận bám theo vùng nhìn khi bàn phím mở. Phần tóm tắt được cuộn riêng nếu không đủ chỗ. **Hủy**, **Xác nhận** và **Log & Next** giữ thứ tự hiện có.
+- Giới hạn độ rộng nhãn trên block lịch ngắn để mã và nhãn trạng thái cùng có chỗ hiển thị. Giữ trục giờ, khung lịch, thao tác kéo, chỉnh thời lượng và xác nhận theo V1.38.5.
+- Kiểm tra tính nhất quán màu biểu đồ và chú giải. Giữ công thức, bộ lọc và luồng **Tổng hợp → Tuần → Sub-task Type**.
+
+---
+
 # Quick Jira Log V1.38.5 — Calendar & Reports Polish
 
 - Đổi nhãn **Worklog đã log** thành **Lịch** trên thanh công cụ PC, taskbar mobile và tiêu đề màn lịch. Sau khi ghi lịch nháp, tiêu đề trở lại **Lịch**.

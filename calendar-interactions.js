@@ -695,6 +695,7 @@ async function openCalendarLog(date, start) {
   $('calendarTaskSearch').value = '';
   const dialog = $('calendarLogDialog');
   if (!dialog.open) dialog.showModal();
+  syncMobileEditorViewport();
   $('closeCalendarLogBtn').focus({ preventScroll: true });
   await loadCalendarPicker();
 }

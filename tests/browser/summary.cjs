@@ -82,6 +82,13 @@ const { server } = require('./serve.cjs');
         return { overflow: sheet.scrollWidth > sheet.clientWidth + 1, bad: controls.filter(x => { const r = x.getBoundingClientRect(); return r.left < box.left - 1 || r.right > box.right + 1; }).map(x => x.id) };
       });
       assert.equal(fit.overflow, false, JSON.stringify({ viewport, fit })); assert.deepEqual(fit.bad, [], JSON.stringify({ viewport, fit }));
+      for (const tone of ['regular', 'ot', 'unknown']) {
+        const [bar, legend] = await page.evaluate(tone => {
+          const color = selector => getComputedStyle(document.querySelector(selector)).backgroundColor;
+          return [color('.summary-stacked .' + tone), color('.summary-legend .' + tone)];
+        }, tone);
+        assert.equal(bar, legend, `${tone} chart and legend colors match in ${theme}`);
+      }
       if (process.env.QJL_QA_OUTPUT) { fs.mkdirSync(process.env.QJL_QA_OUTPUT, { recursive: true }); await page.screenshot({ path: path.join(process.env.QJL_QA_OUTPUT, `summary-${viewport.width}-${theme}.png`) }); }
     }
     await page.locator('#summaryTypes [data-summary-type="1"]').click();

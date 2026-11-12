@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.38.5';
+const APP_VERSION = '1.38.6';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -172,6 +172,7 @@ function confirmLogAction({ title, message, rows = [], confirmLabel = 'XÁC NH�
   const overlay = $('logConfirmOverlay');
   if (!overlay) return Promise.resolve(window.confirm(message || 'Xác nhận Logwork?'));
   state.confirmOpen = true;
+  syncMobileEditorViewport();
   $('logConfirmTitle').textContent = title || 'Xác nhận Logwork';
   $('logConfirmMessage').textContent = message || 'Worklog sẽ được ghi lên Jira. Hãy kiểm tra lại thông tin trước khi xác nhận.';
   $('logConfirmSummary').innerHTML = rows.map(([label, value]) => `
@@ -489,10 +490,16 @@ function closeDesktopEditor() {
 }
 
 function syncMobileEditorViewport() {
-  if (!document.body.classList.contains('mobile-editor-open')) return;
+  if (!isMobileEditorMode()) return;
+  if (!document.body.classList.contains('mobile-editor-open') && !state.calendarLogContext && !state.confirmOpen) return;
   const viewport = window.visualViewport;
-  document.documentElement.style.setProperty('--editor-vvh', `${viewport?.height || innerHeight}px`);
-  document.documentElement.style.setProperty('--editor-offset-top', `${viewport?.offsetTop || 0}px`);
+  const root = document.documentElement;
+  const height = viewport?.height || innerHeight;
+  const top = viewport?.offsetTop || 0;
+  root.style.setProperty('--editor-vvh', `${height}px`);
+  root.style.setProperty('--editor-bottom-gap', `${Math.max(0, innerHeight - height - top)}px`);
+  root.style.setProperty('--editor-offset-top', `${top}px`);
+  root.toggleAttribute('data-editor-compact', height <= 480);
 }
 window.addEventListener('resize', syncMobileEditorViewport);
 window.visualViewport?.addEventListener('resize', syncMobileEditorViewport);

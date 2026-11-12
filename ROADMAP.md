@@ -1,9 +1,18 @@
+# Quick Jira Log V1.38.6 — Visual QA
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.38.6 | Visual QA · tràn chữ, nhãn lịch, vùng nút khi cuộn và các bài kiểm tra hồi quy | Đã xây dựng source |
+| V1.39.0 | Tra cứu & Logwork · chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả | Đề xuất |
+
+---
+
 # Quick Jira Log V1.38.5 — Calendar & Reports Polish
 
 | Phiên bản | Phạm vi | Trạng thái |
 | --- | --- | --- |
 | V1.38.5 | Calendar & Reports Polish · nhãn Lịch, trục giờ, trạng thái và cách đọc báo cáo | Đã xây dựng source |
-| V1.38.6 | Visual QA · rà soát sáng/tối trên PC/mobile | Đề xuất |
+| V1.38.6 | Visual QA · rà soát sáng/tối trên PC/mobile | Đã xây dựng source |
 
 ---
 
@@ -33,7 +42,7 @@
 | V1.38.3 | Home & Toolbar Polish · tinh chỉnh màn chính và taskbar theo bố cục V1.38.1 | Đã xây dựng source |
 | V1.38.4 | Jira Cards & Forms Polish · tinh chỉnh Tra cứu, chi tiết và form Logwork | Đề xuất |
 | V1.38.5 | Calendar & Reports Polish · tinh chỉnh Lịch, Tổng hợp và Thống kê | Đề xuất |
-| V1.38.6 | Visual QA · rà soát sáng/tối trên PC/mobile | Đề xuất |
+| V1.38.6 | Visual QA · rà soát sáng/tối trên PC/mobile | Đã xây dựng source |
 
 ---
 

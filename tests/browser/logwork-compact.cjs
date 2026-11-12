@@ -121,7 +121,30 @@ const {chromium}=require('playwright'),{server,state:backend}=require('./serve.c
     await page.locator('#logBtn').click();
     assert.match(await page.locator('#timeSpent-error').innerText(),/Nhập thời lượng/);
     assert(await page.locator('#logConfirmOverlay').isHidden());
-    await page.locator('#timeSpent').fill('30m');await page.locator('#timeSpent').dispatchEvent('input');await page.locator('#logBtn').click();await page.locator('#confirmLogBtn').click();await page.waitForFunction(()=>state.logProgress&&!state.logProgress.active&&!state.submitInFlight);assert.equal(writes.at(-1).body.startTime,'08:30');await page.locator('#closeLogProgressBtn').click();await page.waitForFunction(()=>!$('logProgressDialog').open);
+    await page.locator('#timeSpent').fill('30m');
+    await page.locator('#timeSpent').dispatchEvent('input');
+    await page.locator('#logBtn').click();
+    if(mobile){
+     await page.evaluate(()=>{
+      Object.defineProperties(visualViewport,{
+       height:{configurable:true,value:Math.max(205,Math.round(innerHeight*.65))},
+       offsetTop:{configurable:true,value:12}
+      });
+      syncMobileEditorViewport();
+     });
+     await page.waitForFunction(()=>!$('logConfirmOverlay').classList.contains('qjl-opening'));
+     const actionBounds=await page.evaluate(()=>{
+      const bounds=$('logConfirmOverlay').querySelector('.confirm-actions').getBoundingClientRect();
+      return {top:bounds.top,bottom:bounds.bottom,max:visualViewport.offsetTop+visualViewport.height};
+     });
+     assert(actionBounds.top>=11&&actionBounds.bottom<=actionBounds.max+1,JSON.stringify(actionBounds));
+     await page.evaluate(()=>{
+      delete visualViewport.height;
+      delete visualViewport.offsetTop;
+      syncMobileEditorViewport();
+     });
+    }
+    await page.locator('#confirmLogBtn').click();await page.waitForFunction(()=>state.logProgress&&!state.logProgress.active&&!state.submitInFlight);assert.equal(writes.at(-1).body.startTime,'08:30');await page.locator('#closeLogProgressBtn').click();await page.waitForFunction(()=>!$('logProgressDialog').open);
    }
    await page.evaluate(()=>closeCalendarLog({force:true}));assert.equal(await page.locator('.calendar-time-slot.is-selected').count(),0);
   }

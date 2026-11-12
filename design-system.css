@@ -523,3 +523,90 @@ html[data-theme] :is(#summaryState, #worklogHistoryState, #psState)[data-report-
   border-color: var(--qjl-error-line);
   color: var(--danger);
 }
+
+/* Keep long labels inside their existing cards and first lines. */
+#jiraSearchDialog .jira-card-top > *,
+#jiraIssuePeekDialog #jiraSubtaskList .jira-card-top > *,
+#projectStatsDialog .ps-person-head > strong {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+#jiraSearchDialog :is(.jira-card-meta, .jira-card-foot) > span {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+#projectStatsDialog .ps-person-head > b {
+  flex: 0 1 auto;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-align: end;
+}
+
+#historyOverlay .week-worklog-block > strong .calendar-log-key { min-inline-size: 0; }
+#historyOverlay .week-worklog-block > strong .calendar-log-label {
+  flex: 0 0 auto;
+  max-inline-size: 60%;
+}
+#historyOverlay .week-worklog-block.is-tiny > strong .calendar-log-label { max-inline-size: 50%; }
+
+body.desktop-editor-open #worklogCard .log-submit-actions,
+#worklogCard.mobile-bottom-sheet .log-submit-actions,
+#calendarLogDialog .log-submit-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 8;
+  background: var(--card);
+}
+
+/* Use the visible viewport for confirmation when the soft keyboard is open. */
+@media (max-width: 899px) {
+  #worklogCard.mobile-bottom-sheet .log-submit-actions .log-submit-btn {
+    position: static;
+    box-shadow: none;
+  }
+
+  #calendarLogDialog[open] {
+    bottom: var(--editor-bottom-gap, 0px);
+    max-height: calc(var(--editor-vvh, 100dvh) - env(safe-area-inset-top));
+  }
+
+  #logConfirmOverlay,
+  #calendarLogDialog #logConfirmOverlay {
+    inset-block: var(--editor-offset-top, 0px) auto;
+    height: var(--editor-vvh, 100dvh);
+  }
+
+  #logConfirmOverlay .confirm-dialog {
+    max-height: 100%;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  #logConfirmOverlay .confirm-summary {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  #logConfirmOverlay .confirm-summary-row > * {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  #logConfirmOverlay .confirm-actions > button {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  #worklogCard.mobile-bottom-sheet:focus-within {
+    scroll-padding-block: 48px 72px;
+  }
+  html[data-editor-compact] #worklogCard.mobile-bottom-sheet .worklog-sticky-header { position: static; }
+}
+
+@media (max-width: 899px) and (max-height: 480px) {
+  #worklogCard.mobile-bottom-sheet .worklog-sticky-header { position: static; }
+}
