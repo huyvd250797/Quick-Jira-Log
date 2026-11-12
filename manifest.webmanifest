@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.37.7 – Tối ưu xem trước Log tất cả, Jira & Logwork.",
+  "description": "Quick Jira Log V1.38.0 – Giao diện và điều hướng cho Jira & Logwork trên PC và mobile.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

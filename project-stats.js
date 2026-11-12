@@ -58,15 +58,18 @@ window.QuickJiraProjectReport=(()=>{
    job=j;for(const id of ['psScope','psProject','psPeriod','psAnchor','psYear','psFrom','psTo','psSort'])if(m.ui?.[id]!==undefined)$(id).value=m.ui[id];period();
    if(m.status==='running'&&!m.paused)j.paused=false;
    summarize(j);if(report?.people.some(p=>p.id===m.ui?.psPerson)){$('psPerson').value=m.ui.psPerson;syncMemberInput();render();}paint(j);if(m.view==='stats')await open();
-   requestAnimationFrame(()=>{if(valid(j))d.querySelector('.ps-body').scrollTop=m.scroll||0;});
+   requestAnimationFrame(()=>{if(valid(j)){reportScroll=m.scroll||0;reportBody.scrollTop=reportScroll;}});
    if((m.status==='running'||repair)&&!j.paused)void execute(j);else if(j.paused){makeTask(j);paint(j);}
    else if(j.finished&&QuickJiraBusy.docked){makeTask(j);const p=progress(j),partial=!!j.error||!!j.warnings.length||j.issues.some(t=>t.error);j.task({label:partial?'Thống kê cần xử lý':'Thống kê hoàn tất',error:partial,done:p.done,total:p.total===null?undefined:p.total,overallPercent:QuickJiraEta.overall(j.phase,p.done,p.total)});j.receiptHandle=j.task;j.task=null;}
   }catch(e){if(owner===user&&seq===token)$('psState').textContent='Chưa khôi phục được dữ liệu đã lưu. Có thể chạy thống kê mới.';}
  }
- function login(user){owner=String(user?.username||'');clear();$('projectStatsBtn').classList.toggle('hidden',!owner);const token=seq;restoring=restore(owner,token).finally(()=>{if(seq===token)restoring=null;});}
- function logout({preserve=false}={}){const previous=owner;owner='';clear();if(previous&&!preserve)void QuickJiraReportStorage.clear(previous).catch(()=>{});if(d.open)d.close();$('projectStatsBtn').classList.add('hidden');}
+ function login(user){reportScroll=0;owner=String(user?.username||'');clear();$('projectStatsBtn').classList.toggle('hidden',!owner);const token=seq;restoring=restore(owner,token).finally(()=>{if(seq===token)restoring=null;});}
+ function logout({preserve=false}={}){reportScroll=0;const previous=owner;owner='';clear();if(previous&&!preserve)void QuickJiraReportStorage.clear(previous).catch(()=>{});if(d.open)d.close();$('projectStatsBtn').classList.add('hidden');}
+ const reportBody=d.querySelector('.ps-body');
+ let reportScroll=0;
+ reportBody.addEventListener('scroll',()=>{if(d.open)reportScroll=reportBody.scrollTop;});
  async function open(){if(!owner||QuickJiraBusy.active)return;origin=document.activeElement;closeDesktopEditor();closeAllToolOverlays({restore:true});QuickJiraStatsScroll.lock();if(!d.open)d.showModal();document.documentElement.classList.add('project-stats-open');document.body.classList.add('project-stats-open');$('psClose').focus({preventScroll:true});
-  if(job)paint(job);if(projectsLoaded)return;const token=seq;try{const data=await api('/api?action=jira-search-options');if(token!==seq)return;projectsLoaded=true;$('psProjects').innerHTML=data.projects.map(p=>`<option value="${esc(p.key)}" label="${esc(p.name)}"></option>`).join('');if(data.warnings.length&&!job)$('psState').textContent='Có thể nhập trực tiếp mã dự án để thống kê.';}catch(e){if(token===seq&&!job)$('psState').textContent=e.message;}
+  const savedScroll=reportScroll;if(job)paint(job);reportBody.scrollTop=savedScroll;if(projectsLoaded)return;const token=seq;try{const data=await api('/api?action=jira-search-options');if(token!==seq)return;projectsLoaded=true;$('psProjects').innerHTML=data.projects.map(p=>`<option value="${esc(p.key)}" label="${esc(p.name)}"></option>`).join('');if(data.warnings.length&&!job)$('psState').textContent='Có thể nhập trực tiếp mã dự án để thống kê.';}catch(e){if(token===seq&&!job)$('psState').textContent=e.message;}
  }
  // Keep decimal digits together; the comma belongs to the integer line.
  function kpiValue(value){

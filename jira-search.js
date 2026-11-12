@@ -10,6 +10,45 @@ window.QuickJiraSearch=(()=>{
   function compactFilter(value){$('jiraFilterTools').hidden=value;$('jiraFilterExpandBtn').setAttribute('aria-expanded',String(!value));}
   $('jiraFilterExpandBtn').onclick=()=>compactFilter(!$('jiraFilterTools').hidden);
   const resultPane=$('jiraSearchResultsPane');
+  const mobileFilters=$('jiraMobileFiltersDialog');
+  const filterFields=$('jiraFilterFields');
+  const filterIds=['jiraProject','jiraStatus','jiraType','jiraAssignee'];
+  let resultScroll=0, filterDraft=null;
+  resultPane.addEventListener('scroll',()=>{if(dialog.open&&mode!=='tree')resultScroll=resultPane.scrollTop;});
+
+  function openMobileFilters(){
+    if(mobileFilters.open||busy)return;
+    filterDraft={
+      values:filterIds.map(id=>$(id).value), person,
+      personQuery:$('jiraPersonQuery').value, personState:$('jiraPersonState').textContent
+    };
+    $('jiraMobileFilterBody').append(filterFields);
+    mobileFilters.showModal();
+    $('jiraMobileFilterCancel').focus({preventScroll:true});
+  }
+
+  function closeMobileFilters(apply){
+    if(!filterDraft||(apply&&busy))return;
+    const saved=filterDraft;filterDraft=null;
+    if(!apply){
+      filterIds.forEach((id,index)=>{$(id).value=saved.values[index];});
+      person=saved.person;
+      $('jiraPersonQuery').value=saved.personQuery;
+      $('jiraPersonState').textContent=saved.personState;
+      $('jiraPersonResults').replaceChildren();
+      $('jiraPersonPicker').hidden=$('jiraAssignee').value!=='@person';
+    }
+    $('jiraSearchFilters').append(filterFields);
+    mobileFilters.close();
+    countFilters();
+    if(apply)void search();
+  }
+
+  $('jiraMobileFiltersBtn').onclick=openMobileFilters;
+  $('jiraMobileFilterCancel').onclick=()=>closeMobileFilters(false);
+  $('jiraMobileFilterApply').onclick=()=>closeMobileFilters(true);
+  mobileFilters.addEventListener('cancel',event=>{event.preventDefault();closeMobileFilters(false);});
+
   const storeKey=()=>`quick-jira-log:jira-recent:v1:${encodeURIComponent(owner)}`;
   function writeRecent(){try{localStorage.setItem(storeKey(),JSON.stringify(recent));localStorage.setItem(storeKey()+':types',JSON.stringify(Object.fromEntries(recent.filter(k=>recentTypes[k]).map(k=>[k,recentTypes[k]]))));return true;}catch{return false;}}
   function renderRecent(){
@@ -25,6 +64,9 @@ window.QuickJiraSearch=(()=>{
     }catch{/* Keep recents usable when permissions/network prevent reading type metadata. */}
   }
   function clearView(){
+    closeMobileFilters(false);
+    resultScroll=0;resultPane.scrollTop=0;
+    $('jiraSearchFilters').open=false;
     window.QuickJiraCreate?.reset();
     clearDetail();
     items=[];savedQuery=null;next=0;more=false;lastRetry=null;loadedOptions=false;person=null;dialog.classList.remove('has-jira-results');
@@ -46,11 +88,11 @@ window.QuickJiraSearch=(()=>{
     if(busy||!owner)return;busy=true;const token=generation,release=QuickJiraBusy.begin(label);
     try{return await work(token);}finally{if(token===generation)busy=false;release();}
   }
-  function countFilters(){const n=['jiraProject','jiraStatus','jiraType','jiraAssignee'].filter(id=>$(id).value.trim()).length;$('jiraFilterCount').textContent=n?String(n):'';}
-  function changed(){if(savedQuery){$('jiraSearchState').textContent='Điều kiện đã thay đổi. Bấm Tìm kiếm để cập nhật kết quả.';$('jiraSearchState').classList.remove('is-error');$('jiraSearchMoreBtn').hidden=true;$('jiraSearchRetryBtn').hidden=true;lastRetry=null;}}
+  function countFilters(){const n=filterIds.filter(id=>$(id).value.trim()).length;for(const id of ['jiraFilterCount','jiraMobileFilterCount'])$(id).textContent=n?String(n):'';}
+  function changed(){if(!filterDraft&&savedQuery){$('jiraSearchState').textContent='Điều kiện đã thay đổi. Bấm Tìm kiếm để cập nhật kết quả.';$('jiraSearchState').classList.remove('is-error');$('jiraSearchMoreBtn').hidden=true;$('jiraSearchRetryBtn').hidden=true;lastRetry=null;}}
   function setOptions(id,values,label){const select=$(id),old=select.value;select.innerHTML=`<option value="">${label}</option>`+values.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');if(values.some(x=>x.id===old))select.value=old;}
   function renderMode(){dialog.classList.toggle('jira-tree-mode',mode==='tree');$('jiraTreePane').hidden=mode!=='tree';resultPane.hidden=mode==='tree';$('jiraTreeModeBtn').setAttribute('aria-pressed',String(mode==='tree'));dialog.classList.toggle('jira-filter-mode',mode==='filter');for(const value of ['search','filter'])$(value==='search'?'jiraSearchModeBtn':'jiraFilterModeBtn').setAttribute('aria-pressed',String(mode===value));$('jiraSearchForm').hidden=mode!=='search';$('jiraSavedForm').hidden=mode!=='filter';}
-  async function changeMode(value){if(busy||QuickJiraBusy.active||value===mode)return;if(mode==='tree')window.QuickJiraTree?.pause();mode=value;renderMode();dialog.classList.remove('has-jira-results');items=[];savedQuery=null;next=0;more=false;lastRetry=null;renderItems();$('jiraSearchRetryBtn').hidden=true;$('jiraSearchCount').textContent=value==='filter'?'Công việc từ filter':'Kết quả tìm kiếm';$('jiraSearchScope').textContent='';$('jiraSearchState').textContent=value==='filter'?'Chọn filter Jira để xem công việc.':'Nhập từ khóa hoặc dùng bộ lọc rồi tìm kiếm.';resultPane.scrollTop=0;if(value==='tree')window.QuickJiraTree?.activate();if(value==='filter'&&!filtersLoaded)await loadSavedFilters();}
+  async function changeMode(value){if(busy||QuickJiraBusy.active||value===mode)return;if(mode==='tree')window.QuickJiraTree?.pause();mode=value;renderMode();dialog.classList.remove('has-jira-results');items=[];savedQuery=null;next=0;more=false;lastRetry=null;renderItems();$('jiraSearchRetryBtn').hidden=true;$('jiraSearchCount').textContent=value==='filter'?'Công việc từ filter':'Kết quả tìm kiếm';$('jiraSearchScope').textContent='';$('jiraSearchState').textContent=value==='filter'?'Chọn filter Jira để xem công việc.':'Nhập từ khóa hoặc dùng bộ lọc rồi tìm kiếm.';resultScroll=0;resultPane.scrollTop=0;if(value==='tree')window.QuickJiraTree?.activate();if(value==='filter'&&!filtersLoaded)await loadSavedFilters();}
   async function loadSavedFilters(){return run('Đang tải filter đã lưu trên Jira…',async token=>{
     $('jiraSavedRetryBtn').hidden=true;try{const data=await api('/api?'+new URLSearchParams({action:'jira-saved-filters',q:$('jiraSavedName').value.trim()}));if(token!==generation)return;
      const old=$('jiraSavedSelect').value;$('jiraSavedSelect').innerHTML='<option value="">Chọn filter</option>'+data.filters.map(f=>`<option value="${esc(f.id)}">${f.favourite?'★ ':''}${esc(f.name)}${f.owner?' · '+esc(f.owner):''}</option>`).join('');if(data.filters.some(f=>f.id===old))$('jiraSavedSelect').value=old;
@@ -67,7 +109,8 @@ window.QuickJiraSearch=(()=>{
   async function open(){
     if(!owner||QuickJiraBusy.active)return;
     source=document.activeElement;closeDesktopEditor();closeAllToolOverlays({restore:true});
-    if(!dialog.open)dialog.showModal();$('jiraSearchFilters').open=false;if(mode==='tree')window.QuickJiraTree?.activate();
+    const scroll=resultScroll;if(!dialog.open)dialog.showModal();if(mode==='tree')window.QuickJiraTree?.activate();
+    else resultPane.scrollTop=scroll;
     $('jiraSearchCloseBtn').focus({preventScroll:true});renderRecent();void hydrateRecent();if(!loadedOptions&&!busy)await loadOptions();
   }
   function dateLabel(value){const d=new Date(value);return Number.isNaN(d.getTime())?'':new Intl.DateTimeFormat('vi-VN',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'}).format(d);}
@@ -84,7 +127,7 @@ window.QuickJiraSearch=(()=>{
     let params;try{params=append?savedQuery:query();}catch(e){$('jiraSearchState').textContent=e.message;$('jiraSearchState').classList.add('is-error');return;}if(!params)return;
     return run('Đang tìm công việc trên Jira…',async token=>{
       const startAt=append?next:0;$('jiraSearchRetryBtn').hidden=true;$('jiraSearchState').classList.remove('is-error');$('jiraSearchState').textContent='Đang tìm kiếm…';lastRetry=()=>search(append);
-      if(!append){items=[];more=false;renderItems();$('jiraSearchCount').textContent='Kết quả tìm kiếm';$('jiraSearchScope').textContent='';}
+      if(!append){items=[];more=false;resultScroll=0;resultPane.scrollTop=0;renderItems();$('jiraSearchCount').textContent='Kết quả tìm kiếm';$('jiraSearchScope').textContent='';}
       try{
         const data=await api('/api?'+new URLSearchParams({action:params.mode==='filter'?'jira-filter-issues':'jira-search',...params,startAt:String(startAt)}));if(token!==generation)return;
         const firstNew=data.issues.find(x=>!items.some(old=>old.key===x.key));
@@ -92,17 +135,19 @@ window.QuickJiraSearch=(()=>{
         if(data.revision)savedQuery.revision=data.revision;if(params.mode==='filter')compactFilter(true);dialog.classList.add('has-jira-results');
         const top=resultPane.scrollTop;renderItems();resultPane.scrollTop=top;
         $('jiraSearchCount').textContent=`${items.length} / ${data.total} công việc`;
-        const labels=[params.project,params.q?`“${params.q}”`:''];$('jiraSearchScope').textContent=data.filter?`Filter: ${data.filter.name}`:labels.filter(Boolean).join(' · ')||'Theo bộ lọc đã chọn';
+        const selectedLabel=(id,value)=>value?[...$(id).options].find(option=>option.value===value)?.textContent||value:'';
+        const assignee=person?.username===params.assignee?person.displayName:selectedLabel('jiraAssignee',params.assignee);
+        const labels=[params.project,params.q?`“${params.q}”`:'',selectedLabel('jiraStatus',params.status),selectedLabel('jiraType',params.type),assignee];$('jiraSearchScope').textContent=data.filter?`Filter: ${data.filter.name}`:labels.filter(Boolean).join(' · ')||'Theo bộ lọc đã chọn';
         $('jiraSearchState').textContent=items.length?(data.hasMore?'Còn kết quả khác. Bấm Tải thêm để xem.':'Đã hiển thị hết kết quả.'):'Không tìm thấy công việc phù hợp với từ khóa và bộ lọc.';
         if(append&&firstNew)$('jiraSearchResults').querySelector(`[data-jira-open="${CSS.escape(firstNew.key)}"]`)?.focus({preventScroll:true});
       }catch(e){if(token!==generation)return;$('jiraSearchState').textContent=e.message;$('jiraSearchState').classList.add('is-error');if(e.status===409&&params.mode==='filter'){more=false;renderItems();lastRetry=()=>search(false);}$('jiraSearchRetryBtn').hidden=false;}
     });
   }
-  async function findPeople(){const q=$('jiraPersonQuery').value.trim();if(q.length<2){$('jiraPersonState').textContent='Nhập ít nhất 2 ký tự.';return;}person=null;
-    return run('Đang tìm nhân sự trên Jira…',async token=>{try{const data=await api('/api?'+new URLSearchParams({action:'calendar-users',query:q}));if(token!==generation)return;
+  async function findPeople(){const draft=filterDraft;const q=$('jiraPersonQuery').value.trim();if(q.length<2){$('jiraPersonState').textContent='Nhập ít nhất 2 ký tự.';return;}person=null;
+    return run('Đang tìm nhân sự trên Jira…',async token=>{try{const data=await api('/api?'+new URLSearchParams({action:'calendar-users',query:q}));if(token!==generation||(draft&&filterDraft!==draft))return;
       $('jiraPersonResults').replaceChildren();$('jiraPersonState').textContent=data.users.length?'Chọn đúng người phụ trách:':'Không tìm thấy nhân sự phù hợp.';
       for(const user of data.users){const btn=document.createElement('button');btn.type='button';btn.className='jira-person-option';btn.textContent=`${user.displayName} · ${user.username}`;btn.onclick=()=>{person=user;$('jiraPersonState').textContent=`Đã chọn ${user.displayName} (${user.username})`;$('jiraPersonResults').replaceChildren();countFilters();changed();};$('jiraPersonResults').append(btn);}
-    }catch(e){if(token===generation){$('jiraPersonResults').replaceChildren();$('jiraPersonState').textContent=e.message;}}});
+    }catch(e){if(token===generation&&(!draft||filterDraft===draft)){$('jiraPersonResults').replaceChildren();$('jiraPersonState').textContent=e.message;}}});
   }
   function clearDetail(){window.QuickJiraTree?.setDetail(null);detailContext=null;detailStack=[];detailOrigin=null;detailRetry=null;
     window.QuickJiraReading?.reset();
@@ -204,7 +249,7 @@ window.QuickJiraSearch=(()=>{
   $('jiraDetailTabs').addEventListener('keydown',e=>{const buttons=[...$('jiraDetailTabs').querySelectorAll('[role=tab]')],i=buttons.indexOf(document.activeElement),n=buttons.length;if(i<0)return;const index=e.key==='ArrowRight'?(i+1)%n:e.key==='ArrowLeft'?(i+n-1)%n:e.key==='Home'?0:e.key==='End'?n-1:-1;if(index<0)return;e.preventDefault();buttons[index].focus();selectDetailTab(buttons[index].dataset.jiraTab);});
   dialog.addEventListener('close',()=>{source?.focus({preventScroll:true});});
   for(const d of [dialog,peek]){d.addEventListener('keydown',e=>e.stopPropagation());d.addEventListener('cancel',e=>{if(QuickJiraBusy.active)e.preventDefault();});}
-  $('jiraSearchForm').onsubmit=e=>{e.preventDefault();void search();};$('jiraSearchMoreBtn').onclick=()=>search(true);$('jiraSearchRetryBtn').onclick=()=>lastRetry?.();
+  $('jiraSearchForm').onsubmit=e=>{e.preventDefault();if(mobileFilters.open)closeMobileFilters(true);else void search();};$('jiraSearchMoreBtn').onclick=()=>search(true);$('jiraSearchRetryBtn').onclick=()=>lastRetry?.();
   $('jiraTreeModeBtn').onclick=()=>changeMode('tree');
   $('jiraSearchModeBtn').onclick=()=>changeMode('search');$('jiraFilterModeBtn').onclick=()=>changeMode('filter');$('jiraSavedFindBtn').onclick=loadSavedFilters;$('jiraSavedRetryBtn').onclick=loadSavedFilters;
   $('jiraSavedForm').onsubmit=e=>{e.preventDefault();void search();};$('jiraSavedName').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();void loadSavedFilters();}};

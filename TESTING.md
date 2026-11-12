@@ -1,3 +1,11 @@
+# Quick Jira Log V1.38.0 — Design System & Navigation
+
+- `npm test` với bộ hồi quy Node.js.
+- Kiểm tra cấu trúc HTML, cú pháp JavaScript và mô phỏng điều hướng qua Tra cứu, Lịch, Thống kê và Tổng quan. Kiểm tra trạng thái mục đang mở và chặn chuyển màn khi còn nháp lịch.
+- Bộ kiểm thử trình duyệt Tra cứu đã được mở rộng cho khôi phục bộ lọc/cuộn, hủy bộ lọc mobile và giữ ngày/dự án/kỳ khi chuyển màn. Chromium bị môi trường chặn lúc tạo socket nên chưa xác minh bố cục thực tế, thao tác với bàn phím ảo và Jira thật.
+
+---
+
 # Quick Jira Log V1.37.7 — Faster Bulk Preview
 
 - `npm test` kiểm tra chức năng hiện có, truy vấn tuần, trường hợp truy vấn tuần bị cắt và kiểm tra lại giờ trước khi ghi.

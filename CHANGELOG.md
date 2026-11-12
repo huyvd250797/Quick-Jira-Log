@@ -1,3 +1,15 @@
+# Quick Jira Log V1.38.0 — Design System & Navigation
+
+- Điều hướng giữa **Tổng quan, Tra cứu, Lịch và Thống kê**. Thanh điều hướng nằm trên ở PC, nằm dưới ở mobile, đánh dấu màn hiện tại. Trên mobile, mở **Cài đặt và công cụ** để vào **Tổng hợp giờ & Overtime**.
+- Tổng quan, Tra cứu và Logwork dùng chung kiểu tiêu đề, màu sáng/tối, viền, ô nhập và focus. Tên Subtask dài xuống dòng. Kết quả Tra cứu hiển thị điều kiện lọc đang dùng, trạng thái tải, rỗng và lỗi.
+- Bộ lọc Tra cứu trên PC mở trong panel. Trên mobile, bottom sheet có vùng cuộn, **Hủy** hoàn lại lựa chọn cũ và **Áp dụng** thực hiện tìm kiếm.
+- Form Logwork tách vùng cuộn khỏi thanh hành động. **Hủy** ở trái, **Xác nhận** ở phải. Trên mobile, chiều cao form và hộp xác nhận bám theo vùng nhìn khi bàn phím mở. **Log & Next** vẫn có ở form log đơn thông thường.
+- Giữ từ khóa, bộ lọc và vị trí cuộn của kết quả Tra cứu, ngày và kiểu xem Lịch, dự án và kỳ Thống kê trong phiên. Luồng lịch nháp vẫn yêu cầu xử lý bản nháp trước khi chuyển sang màn khác.
+
+**Không cần chạy migration mới.**
+
+---
+
 # Quick Jira Log V1.37.7 — Faster Bulk Preview
 
 - **Log tất cả → Lịch sắp log** mở ngay sau khi đối chiếu xong giờ đã log. Các khung đã xác minh xuất hiện dưới nhãn **ĐÃ LOG**, sau đó bổ sung mã, mô tả và phân loại OT trong nền.

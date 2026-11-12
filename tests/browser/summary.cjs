@@ -39,6 +39,7 @@ const { server } = require('./serve.cjs');
     });
     await page.goto('http://127.0.0.1:4193');
     await page.waitForFunction(() => !document.body.classList.contains('booting'));
+    if (viewport.width < 900) await page.locator('#settingsBtn').click();
     await page.locator(viewport.width >= 900 ? '#plannerBtn' : '#mobilePlannerBtn').click();
     await page.waitForFunction(() => state.summary.loaded && !state.summary.loading);
     assert.equal(await page.locator('#summaryRegular').textContent(), '40h'); assert.equal(await page.locator('#summaryOvertime').textContent(), '2h'); assert.equal(await page.locator('#summaryTotal').textContent(), '42h');

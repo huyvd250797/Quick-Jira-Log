@@ -24,7 +24,45 @@ const assert=require('node:assert/strict'),{chromium}=require('playwright'),{ser
   await page.locator('.jira-issue-card').first().click();await page.waitForFunction(()=>document.getElementById('jiraIssuePeekDialog').open&&!QuickJiraBusy.active && QuickJiraBusy.count===0);assert.equal(await page.locator('#jiraIssuePeekTitle img').count(),0);assert.equal(await page.locator('#jiraRecentList button').count(),1);await page.locator('#jiraIssuePeekCloseBtn').click();
   const geometry=await page.evaluate(()=>{const d=document.getElementById('jiraSearchDialog'),r=d.getBoundingClientRect();return {fits:r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1,noHorizontal:d.scrollWidth<=d.clientWidth+1};});assert(geometry.fits&&geometry.noHorizontal);
   await page.locator('#jiraSearchCloseBtn').click();await page.evaluate(()=>QuickJiraSearch.open());await page.waitForFunction(()=>!QuickJiraBusy.active && QuickJiraBusy.count===0);assert.equal(await page.locator('#jiraRecentList button').count(),1);
-  await page.evaluate(()=>document.getElementById('jiraSearchFilters').open=true);await page.locator('#jiraProject').fill('EPU01');await page.locator('#jiraStatus').selectOption('3');await page.locator('#jiraType').selectOption('5');await page.locator('#jiraAssignee').selectOption('@person');await page.locator('#jiraPersonQuery').fill('nhân');await page.locator('#jiraPersonFindBtn').click();await page.waitForFunction(()=>!QuickJiraBusy.active && QuickJiraBusy.count===0);await page.locator('.jira-person-option').click();await page.locator('#jiraSearchForm button[type=submit]').click();await page.waitForFunction(()=>!QuickJiraBusy.active && QuickJiraBusy.count===0);const last=requests.filter(x=>x.a==='jira-search').at(-1);assert.equal(last.params.assignee,'someone');assert.equal(last.params.project,'EPU01');assert.equal(last.params.status,'3');assert.equal(last.params.type,'5');
+  if(viewport.width<900)await page.locator('#jiraMobileFiltersBtn').click();else await page.locator('#jiraSearchFilters summary').click();await page.locator('#jiraProject').fill('EPU01');await page.locator('#jiraStatus').selectOption('3');await page.locator('#jiraType').selectOption('5');await page.locator('#jiraAssignee').selectOption('@person');await page.locator('#jiraPersonQuery').fill('nhân');await page.locator('#jiraPersonFindBtn').click();await page.waitForFunction(()=>!QuickJiraBusy.active && QuickJiraBusy.count===0);await page.locator('.jira-person-option').click();await page.locator(viewport.width<900?'#jiraMobileFilterApply':'#jiraSearchForm button[type=submit]').click();await page.waitForFunction(()=>!QuickJiraBusy.active && QuickJiraBusy.count===0);const last=requests.filter(x=>x.a==='jira-search').at(-1);assert.equal(last.params.assignee,'someone');assert.equal(last.params.project,'EPU01');assert.equal(last.params.status,'3');assert.equal(last.params.type,'5');
+  const savedScroll=await page.locator('#jiraSearchResultsPane').evaluate(pane=>{
+    pane.scrollTop=480;
+    return pane.scrollTop;
+  });
+  await page.locator('#jiraSearchDialog [data-qjl-nav="history"]').click();
+  await page.waitForFunction(()=>document.getElementById('historyOverlay').getAttribute('aria-hidden')==='false'&&!QuickJiraBusy.active);
+  await page.locator('#historyOverlay [data-qjl-nav="search"]').click();
+  await page.waitForFunction(()=>document.getElementById('jiraSearchDialog').open&&!QuickJiraBusy.active);
+  assert.equal(await page.locator('#jiraQuery').inputValue(),'hỗ trợ');
+  assert.equal(await page.locator('#jiraProject').inputValue(),'EPU01');
+  assert.equal(await page.locator('#jiraStatus').inputValue(),'3');
+  assert.equal(await page.locator('#jiraSearchResultsPane').evaluate(pane=>pane.scrollTop),savedScroll);
+  assert.equal(await page.locator('#jiraSearchDialog [aria-current="page"]').textContent(),'Tra cứu');
+  if(viewport.width<900){
+    await page.locator('#jiraMobileFiltersBtn').click();
+    await page.locator('#jiraProject').fill('OTHER');
+    await page.locator('#jiraMobileFilterCancel').click();
+    assert.equal(await page.locator('#jiraProject').inputValue(),'EPU01','Cancel restores previous filter');
+  }
+  await page.locator('#jiraSearchDialog [data-qjl-nav="history"]').click();
+  await page.waitForFunction(()=>!state.historyLoading && document.getElementById('historyOverlay').getAttribute('aria-hidden')==='false');
+  await page.evaluate(()=>{$('historyDate').value='2026-10-17';void loadWorklogHistory({quiet:true});});
+  await page.waitForFunction(()=>!state.historyLoading);
+  await page.locator('#historyOverlay [data-qjl-nav="stats"]').click();
+  await page.waitForFunction(()=>document.getElementById('projectStatsDialog').open);
+  await page.locator('#psScope').selectOption('one');
+  await page.locator('#psProject').fill('EPU01');
+  await page.locator('#psPeriod').selectOption('week');
+  await page.locator('#projectStatsDialog [data-qjl-nav="history"]').click();
+  await page.waitForFunction(()=>!state.historyLoading && document.getElementById('historyOverlay').getAttribute('aria-hidden')==='false');
+  assert.equal(await page.locator('#historyDate').inputValue(),'2026-10-17');
+  await page.locator('#historyOverlay [data-qjl-nav="stats"]').click();
+  await page.waitForFunction(()=>document.getElementById('projectStatsDialog').open);
+  assert.equal(await page.locator('#psScope').inputValue(),'one');
+  assert.equal(await page.locator('#psProject').inputValue(),'EPU01');
+  assert.equal(await page.locator('#psPeriod').inputValue(),'week');
+  await page.locator('#projectStatsDialog [data-qjl-nav="search"]').click();
+  await page.waitForFunction(()=>document.getElementById('jiraSearchDialog').open&&!QuickJiraBusy.active);
   denied=true;await page.locator(viewport.width>=900?'.jira-issue-card':'#jiraRecentList button').first().click();await page.waitForFunction(()=>!QuickJiraBusy.active && QuickJiraBusy.count===0);assert.equal(await page.locator('#jiraIssuePeekDialog').evaluate(e=>e.open),false);assert((await page.locator('#jiraSearchState').textContent()).includes('quyền'));denied=false;
   await page.evaluate(()=>{QuickJiraSearch.logout();QuickJiraSearch.login({username:'another'});});assert.equal(await page.locator('#jiraRecentList button').count(),0);assert.equal(await page.locator('.jira-issue-card').count(),0);
   await page.evaluate(()=>QuickJiraSearch.login({username:'boss'}));assert.equal(await page.locator('#jiraRecentList button').count(),1);
