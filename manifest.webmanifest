@@ -1,7 +1,7 @@
 {
   "name": "Quick Jira Log",
   "short_name": "Jira Log",
-  "description": "Quick Jira Log V1.38.1 – Giao diện sáng/tối và thanh công cụ Jira & Logwork.",
+  "description": "Quick Jira Log V1.38.2 – Giao diện sáng/tối đồng bộ cho Jira & Logwork.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

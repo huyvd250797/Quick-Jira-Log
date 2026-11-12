@@ -1,53 +1,243 @@
-/* Visual polish for the existing workspace and toolbars. */
+/* Visual tokens shared by the existing PC and mobile layouts. */
 :root {
-  --qjl-surface: #f7f9fd;
-  --qjl-accent: #164eb0;
-  --qjl-focus: #2969d7;
-  --qjl-action-tint: #e7efff;
+  --bg: #f2f5f9;
+  --card: #ffffff;
+  --text: #18273d;
+  --muted: #506078;
+  --line: #d4ddea;
+  --primary: #174fa8;
+  --primary2: #123f88;
+  --primary-soft: #e9f0fd;
+  --action-primary: #2059b5;
+  --action-primary-hover: #184a9b;
+  --ok: #146349;
+  --danger: #a72b47;
+  --shadow: 0 2px 8px rgb(30 49 77 / 6%);
+  --shadow-soft: 0 1px 4px rgb(30 49 77 / 5%);
+  --qjl-surface: #f7f9fc;
+  --qjl-accent: var(--primary);
+  --qjl-focus: #2864c3;
+  --qjl-action-tint: var(--primary-soft);
+  --qjl-action-pressed: #dce8fa;
+  --qjl-primary-pressed: #123d82;
+  --qjl-disabled-text: #54647c;
+  --qjl-disabled-fill: #e8edf5;
+  --qjl-ok-bg: #e5f3ed;
+  --qjl-ok-line: #a9d2bf;
+  --qjl-warn: #815100;
+  --qjl-warn-bg: #fff2d9;
+  --qjl-warn-line: #e0c58f;
+  --qjl-error-bg: #fcecf0;
+  --qjl-error-line: #e3b5c0;
+  --qjl-dialog-shadow: 0 14px 36px rgb(24 42 67 / 17%);
+  --qjl-visual-card-radius: 12px;
+  --qjl-visual-control-radius: 10px;
+  --qjl-icon-stroke: 1.8;
 }
 
 html[data-theme="dark"] {
-  --qjl-surface: #101c2d;
-  --qjl-accent: #b5d1ff;
-  --qjl-focus: #8cb9ff;
-  --qjl-action-tint: #223c62;
+  --bg: #0c1422;
+  --card: #142034;
+  --text: #ebf1fb;
+  --muted: #aabbd2;
+  --line: #34465f;
+  --primary: #b0ceff;
+  --primary2: #91bbfa;
+  --primary-soft: #21395b;
+  --action-primary: #2c63be;
+  --action-primary-hover: #2357aa;
+  --ok: #98dfbe;
+  --danger: #ffadc0;
+  --shadow: 0 2px 8px rgb(0 0 0 / 18%);
+  --shadow-soft: 0 1px 4px rgb(0 0 0 / 16%);
+  --qjl-surface: #101b2c;
+  --qjl-focus: #9ac5ff;
+  --qjl-action-pressed: #2b4870;
+  --qjl-primary-pressed: #19488f;
+  --qjl-disabled-text: #a3b5ce;
+  --qjl-disabled-fill: #243449;
+  --qjl-ok-bg: #17362d;
+  --qjl-ok-line: #335b4e;
+  --qjl-warn: #f6d28c;
+  --qjl-warn-bg: #392d1d;
+  --qjl-warn-line: #6f5730;
+  --qjl-error-bg: #3a2331;
+  --qjl-error-line: #694156;
+  --qjl-dialog-shadow: 0 14px 36px rgb(0 0 0 / 34%);
 }
 
-:where(.brand, .mobile-taskbar, #dashboardCard, #worklogCard, #jiraSearchDialog, #plannerOverlay, #historyOverlay, #projectStatsDialog)
-  :is(button, input, textarea, select, summary, a):focus-visible {
-  outline: 2px solid var(--qjl-focus);
-  outline-offset: 2px;
-}
-
-:where(#dashboardCard, #worklogCard, #jiraSearchDialog, #plannerOverlay, #historyOverlay, #projectStatsDialog) h2 {
+/* Type styles preserve font sizes and the existing wrapping constraints. */
+:is(.card-title, .settings-head, .jira-search-head, .ps-head, .dashboard-heading) h2 {
+  font-weight: 700;
   letter-spacing: -.02em;
 }
 
-#dashboardCard .hours-card > div strong,
-#plannerOverlay .summary-kpi strong { font-variant-numeric: tabular-nums; }
+:is(.issue-key-line strong, .jira-issue-key, #selectedIssueKey, .worklog-history-key strong) {
+  color: var(--qjl-accent);
+  font-weight: 700;
+}
 
-#jiraSearchDialog .jira-issue-key,
-#worklogCard #selectedIssueKey { color: var(--qjl-accent); }
+:is(.issue-summary, .jira-card-title, #selectedIssueSummary, .bulk-item-title > span) {
+  color: var(--text);
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
 
-#jiraSearchDialog .jira-card-title,
-#worklogCard #selectedIssueSummary { overflow-wrap: anywhere; }
+:is(.issue-meta, .jira-card-meta, .jira-card-foot, .field-help, .card-subtitle, .ps-meta) {
+  color: var(--muted);
+}
 
-#filterIssueSearch,
-#jiraSearchDialog input:not([type="checkbox"]),
-#jiraSearchDialog select,
-#worklogCard :is(input:not([type="checkbox"]), textarea) {
-  background: var(--qjl-surface);
+:is(.hours-card strong, .summary-kpi strong, .summary-row-title b, .ps-kpis strong,
+  .ps-person-head b, .bulk-summary strong, .duration-stepper > input, .calendar-event-time,
+  .worklog-history-minutes, .week-time-ruler span) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Surface colors and border radii do not change the size of any container. */
+:is(.hours-card, .status-card, .issue-row, .selected-issue-card, .summary-kpi, .summary-chart, .ps-person) {
+  border-color: var(--line);
+  box-shadow: var(--shadow-soft);
+}
+
+:is(.issue-row, .selected-issue-card, .summary-kpi, .summary-chart, .ps-person),
+#jiraSearchDialog .jira-issue-card {
+  border-radius: var(--qjl-visual-card-radius);
+}
+
+:is(#jiraSearchDialog, #jiraIssuePeekDialog, #calendarLogDialog, #worklogCorrectionDialog,
+  #projectStatsDialog, .jira-action-dialog, .settings-sheet, .confirm-dialog) {
+  border-color: var(--line);
+  box-shadow: var(--qjl-dialog-shadow);
+}
+
+:is(.settings-sheet, .confirm-dialog, .jira-action-dialog,
+  #jiraSearchDialog, #jiraIssuePeekDialog, #projectStatsDialog) {
+  background-color: var(--card);
+  color: var(--text);
+}
+
+:is(.shell, dialog) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]),
+  textarea, select) {
+  background-color: var(--qjl-surface);
   border-color: var(--line);
   color: var(--text);
 }
 
-.brand .header-tool-btn:hover,
-#mobileTaskbar .mobile-taskbar-btn:is(:hover, :active) {
-  color: var(--qjl-accent);
-  background: var(--qjl-action-tint);
+:is(input, textarea)::placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 
-/* Leave the main-screen tools behind when another screen or editor is open. */
+:is(.shell, dialog) :is(input, textarea, select)[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+/* Semantic colors complement the existing status names and messages. */
+html[data-theme] .jira-status:is(.jira-status-done, .jira-tone-green) {
+  color: var(--ok);
+  background-color: var(--qjl-ok-bg);
+}
+
+html[data-theme] .jira-status:is(.jira-status-indeterminate, .jira-tone-blue) {
+  color: var(--qjl-accent);
+  background-color: var(--qjl-action-tint);
+}
+
+html[data-theme] .jira-status.jira-tone-amber {
+  color: var(--qjl-warn);
+  background-color: var(--qjl-warn-bg);
+}
+
+html[data-theme] .jira-status.jira-tone-slate {
+  color: var(--muted);
+  background-color: var(--qjl-surface);
+}
+
+html[data-theme] .result.ok {
+  background: var(--qjl-ok-bg);
+  border-color: var(--qjl-ok-line);
+}
+
+html[data-theme] .result.ok h3 { color: var(--ok); }
+
+html[data-theme] :is(.summary-state.is-warning, .summary-deficit, .ps-warning, .warning-toast) {
+  background: var(--qjl-warn-bg);
+  border-color: var(--qjl-warn-line);
+  color: var(--qjl-warn);
+}
+
+html[data-theme] .summary-kpi.is-overtime > strong { color: var(--qjl-warn); }
+
+html[data-theme] :is(.result.error, .jira-search-state.is-error, .calendar-interaction-state.is-error,
+  #historyOverlay .history-state.is-error, .login-error) {
+  background: var(--qjl-error-bg);
+  border-color: var(--qjl-error-line);
+  color: var(--danger);
+}
+
+:is(.field-error, .error-text, #calendarSaveError) { color: var(--danger); }
+
+/* Toolbar and dialog controls keep their existing icon boxes and hit targets. */
+:is(.header-tool-icon, .mobile-taskbar-icon, .header-icon-btn, .icon-btn, .calendar-icon-btn)
+  svg[viewBox="0 0 24 24"] {
+  stroke-width: var(--qjl-icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+:is(.primary, .secondary, .soft-btn, .icon-btn, .header-icon-btn, .header-tool-btn, .calendar-icon-btn) {
+  border-radius: var(--qjl-visual-control-radius);
+}
+
+button.primary:not(:disabled, [aria-disabled="true"], .danger-btn) {
+  background: var(--action-primary);
+  color: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+button.primary:hover:not(:disabled, [aria-disabled="true"], .danger-btn) {
+  background: var(--action-primary-hover);
+}
+
+button.primary:active:not(:disabled, [aria-disabled="true"], .danger-btn) {
+  background: var(--qjl-primary-pressed);
+}
+
+:is(.secondary, .soft-btn, .icon-btn, .header-icon-btn, .header-tool-btn, .calendar-icon-btn,
+  .calendar-refresh-btn, .mobile-taskbar-btn, .preset-btn, .bulk-preset-btn):hover:not(:disabled, [aria-disabled="true"]) {
+  background-color: var(--qjl-action-tint);
+  color: var(--qjl-accent);
+}
+
+:is(.secondary, .soft-btn, .icon-btn, .header-icon-btn, .header-tool-btn, .calendar-icon-btn,
+  .calendar-refresh-btn, .mobile-taskbar-btn, .preset-btn, .bulk-preset-btn):active:not(:disabled, [aria-disabled="true"]) {
+  background-color: var(--qjl-action-pressed);
+  color: var(--qjl-accent);
+}
+
+button:is(.primary, .secondary, .soft-btn, .icon-btn, .header-icon-btn, .header-tool-btn,
+  .calendar-icon-btn, .calendar-refresh-btn, .preset-btn, .bulk-preset-btn, .duration-step-controls button):is(:disabled, [aria-disabled="true"]) {
+  opacity: 1;
+  background: var(--qjl-disabled-fill);
+  border-color: var(--line);
+  color: var(--qjl-disabled-text);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+:is(button, input, textarea, select, summary, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--qjl-focus);
+  outline-offset: 2px;
+}
+
+@media (hover: none) {
+  :is(.mobile-taskbar-btn, .header-tool-btn):hover:not(:active) {
+    background-color: transparent;
+    color: var(--muted);
+  }
+}
+
+/* Keep the V1.38.1 main-screen toolbar visibility rules. */
 body:is(.mobile-editor-open, .desktop-editor-open) #mobileTaskbar,
 body:has(dialog[open], .settings-overlay:not(.hidden)) #mobileTaskbar,
 body.desktop-editor-open .brand .header-tool-btn,

@@ -1,3 +1,12 @@
+# Quick Jira Log V1.38.2 — Visual Foundation
+
+- `npm test` với bộ hồi quy Node.js.
+- Kiểm tra 11 cặp màu chữ/nền trên mỗi giao diện, gồm chữ phụ, nút chính, nút vô hiệu hóa và nhãn trạng thái. Các cặp đã đo đạt tối thiểu 5,12:1 ở chế độ sáng và 5,78:1 ở chế độ tối.
+- Đối chiếu HTML và logic ứng dụng với ZIP V1.38.1 sau khi chuẩn hóa chuỗi phiên bản. Các stylesheet khác và quy tắc hiện taskbar khớp bản nền. Giao diện mới được thực hiện trong `design-system.css`.
+- Chromium bị môi trường chặn khi tạo socket. So sánh hình ảnh và kích thước thực tế trên PC/mobile chưa được xác minh.
+
+---
+
 # Quick Jira Log V1.38.1 — Original Toolbar & Personal Summary
 
 - `npm test` chạy bộ hồi quy Node.js, gồm logic tổng hợp theo tuần/tháng và Sub-task Type.

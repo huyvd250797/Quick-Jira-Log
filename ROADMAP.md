@@ -1,3 +1,15 @@
+# Quick Jira Log V1.38.2 — Visual Foundation
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.38.2 | Visual Foundation · bộ màu, kiểu chữ, viền, bóng, icon và trạng thái điều khiển | Đã xây dựng source |
+| V1.38.3 | Home & Toolbar Polish · tinh chỉnh màn chính và taskbar theo bố cục V1.38.1 | Đề xuất |
+| V1.38.4 | Jira Cards & Forms Polish · tinh chỉnh Tra cứu, chi tiết và form Logwork | Đề xuất |
+| V1.38.5 | Calendar & Reports Polish · tinh chỉnh Lịch, Tổng hợp và Thống kê | Đề xuất |
+| V1.38.6 | Visual QA · rà soát sáng/tối trên PC/mobile | Đề xuất |
+
+---
+
 # Quick Jira Log V1.38.1 — Original Toolbar & Personal Summary
 
 | Phiên bản | Phạm vi | Trạng thái |
