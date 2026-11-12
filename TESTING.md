@@ -1,3 +1,12 @@
+# Quick Jira Log V1.38.3 — Home & Toolbar Polish
+
+- `npm test` với bộ hồi quy Node.js, bao gồm tính giờ và phân bổ Sub-task Type.
+- Đối chiếu HTML, logic dashboard, thứ tự nút, stylesheet bố cục và quy tắc hiện taskbar với source V1.38.2. Các thay đổi giao diện nằm trong phần bổ sung của `design-system.css`.
+- Kiểm tra độ tương phản giữa số giờ và nền thẻ, giữa phần đã log và rãnh tiến độ, giữa icon và nền icon ở giao diện sáng/tối.
+- Chromium bị môi trường chặn lúc tạo socket. Bố cục trực quan và thao tác trên PC/mobile chưa được xác minh trong trình duyệt.
+
+---
+
 # Quick Jira Log V1.38.2 — Visual Foundation
 
 - `npm test` với bộ hồi quy Node.js.

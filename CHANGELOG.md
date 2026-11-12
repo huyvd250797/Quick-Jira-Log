@@ -1,3 +1,12 @@
+# Quick Jira Log V1.38.3 — Home & Toolbar Polish
+
+- Màn chính làm nổi số giờ thường hôm nay và tuần này. Các nhãn kỳ, mục tiêu và số giờ còn thiếu dễ phân biệt hơn.
+- Rãnh thanh tiến độ và phần đã log dùng màu theo giao diện sáng/tối. Giữ cách tính và các nhãn hiện có, gồm thông báo cuối tuần và dữ liệu tạm tính.
+- Thẻ giờ, trạng thái tài khoản và danh sách Subtask dùng viền dịu hơn và bóng nhẹ. Thanh công cụ dùng cùng màu icon, nét và độ tương phản nhãn.
+- Giữ bố cục, thứ tự nút, vùng bấm và quy tắc hiện taskbar của V1.38.2. Vào **Tổng hợp → Tuần** từ taskbar để xem giờ thường, OT, tổng giờ và phân bổ theo Sub-task Type.
+
+---
+
 # Quick Jira Log V1.38.2 — Visual Foundation
 
 - Đồng bộ bảng màu sáng/tối cho nền, thẻ, popup, ô nhập, chữ và viền. Các nhãn trạng thái hiện có dùng chung màu thành công, cảnh báo, lỗi và đang thực hiện.

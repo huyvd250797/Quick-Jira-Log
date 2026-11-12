@@ -245,3 +245,87 @@ body:has(dialog[open], .settings-overlay:not(.hidden)) .brand .header-tool-btn {
   visibility: hidden;
   pointer-events: none;
 }
+
+/* Home and toolbar refinements. Positioning and hit targets live in the base styles. */
+:root {
+  --qjl-home-hours: #172f53;
+  --qjl-home-track: #dce6f4;
+  --qjl-home-fill: #3067bd;
+  --qjl-home-border: #dce4ef;
+  --qjl-home-shadow: 0 1px 3px rgb(22 47 83 / 5%);
+  --qjl-toolbar-shadow: 0 5px 16px rgb(22 47 83 / 10%);
+}
+
+html[data-theme="dark"] {
+  --qjl-home-hours: #f1f6ff;
+  --qjl-home-track: #2c405b;
+  --qjl-home-fill: #83b3ff;
+  --qjl-home-border: #2f4058;
+  --qjl-home-shadow: 0 1px 3px rgb(0 0 0 / 14%);
+  --qjl-toolbar-shadow: 0 5px 16px rgb(0 0 0 / 28%);
+}
+
+#dashboardCard .hours-card,
+#statusCard,
+#filterCard {
+  background-color: var(--card);
+  border-color: var(--qjl-home-border);
+  box-shadow: var(--qjl-home-shadow);
+}
+
+#dashboardCard .hours-card > span {
+  color: var(--text);
+  font-weight: 700;
+}
+
+#dashboardCard :is(#dashboardToday, #dashboardWeek) {
+  color: var(--qjl-home-hours);
+  font-weight: 800;
+}
+
+#dashboardCard .hours-card small {
+  color: var(--muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+#dashboardCard .hours-card > p {
+  color: var(--qjl-accent);
+  font-weight: 650;
+}
+
+#dashboardCard .hours-meter { background: var(--qjl-home-track); }
+#dashboardCard .hours-meter > span { background: var(--qjl-home-fill); }
+
+#mobileTaskbar {
+  background: var(--card);
+  border-color: var(--qjl-home-border);
+  box-shadow: var(--qjl-toolbar-shadow);
+}
+
+#mobileTaskbar .mobile-taskbar-btn > span:last-child {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.brand .header-tool-btn:not(:disabled, [aria-disabled="true"]) {
+  border-color: var(--qjl-home-border);
+  box-shadow: var(--qjl-home-shadow);
+}
+
+.brand .header-tool-btn > span:last-child { color: inherit; }
+
+html[data-theme] .brand .header-tool-icon,
+#mobileTaskbar .mobile-taskbar-icon {
+  background: var(--qjl-action-tint);
+  color: var(--qjl-accent);
+}
+
+.brand .header-tool-icon svg,
+#mobileTaskbar .mobile-taskbar-icon svg {
+  stroke-width: var(--qjl-icon-stroke);
+}
+
+#mobileTaskbar .mobile-taskbar-btn:active:not(:disabled, [aria-disabled="true"]) > span:last-child {
+  color: var(--qjl-accent);
+}
