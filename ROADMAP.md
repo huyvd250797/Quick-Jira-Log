@@ -1,9 +1,19 @@
+# Quick Jira Log V1.39.0 — Seasonal Themes
+
+| Phiên bản | Mục tiêu | Phạm vi | Điều kiện kiểm tra | Trạng thái |
+| --- | --- | --- | --- | --- |
+| V1.39.0 | Cá nhân hóa theo dịp | 10 chủ đề, lịch dương và âm, sinh nhật riêng, chuyển động chọn được | Kiểm tra mốc ngày và tài khoản, xem trước sáng/tối, xác nhận trình duyệt và FPS trên thiết bị mục tiêu | Đã xây dựng source, đã chạy kiểm thử logic |
+| V1.40.0 | Tra cứu & Logwork | Chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả | Xem trước lịch và xác nhận đúng danh sách đã chọn | Đề xuất |
+| V1.41.0 | Logwork Workspace | Tinh chỉnh nhập giờ, phân bổ và phản hồi theo Subtask | Hoàn thành logwork theo nhóm và đối chiếu kết quả từng Subtask | Đề xuất |
+
+---
+
 # Quick Jira Log V1.38.6 — Visual QA
 
 | Phiên bản | Phạm vi | Trạng thái |
 | --- | --- | --- |
 | V1.38.6 | Visual QA · tràn chữ, nhãn lịch, vùng nút khi cuộn và các bài kiểm tra hồi quy | Đã xây dựng source |
-| V1.39.0 | Tra cứu & Logwork · chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả | Đề xuất |
+| V1.40.0 | Tra cứu & Logwork · chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả | Đề xuất |
 
 ---
 
@@ -51,7 +61,7 @@
 | Phiên bản | Phạm vi | Trạng thái |
 | --- | --- | --- |
 | V1.38.1 | Khôi phục bố cục và taskbar cũ, trả lại lối vào Tổng hợp cá nhân, giữ chỉnh sửa về hiển thị | Đã xây dựng source |
-| V1.39.0 | Tra cứu & Logwork | Đề xuất |
+| V1.40.0 | Tra cứu & Logwork | Đề xuất |
 
 ---
 
@@ -60,9 +70,9 @@
 | Phiên bản | Mục tiêu | Phạm vi | Trạng thái |
 | --- | --- | --- | --- |
 | V1.38.0 | Chuẩn hóa nền tảng UI PC và mobile | Bộ giao diện dùng chung, điều hướng, bottom sheet, thanh xác nhận Logwork và giữ trạng thái giữa các màn | Đã xây dựng source |
-| V1.39.0 | Tra cứu & Logwork | Chọn nhiều Subtask, đưa vào Log tất cả và xem trước lịch | Đề xuất |
-| V1.40.0 | Logwork Workspace | Tinh chỉnh nhập giờ và phân bổ, thao tác theo thẻ, phản hồi từng Subtask | Đề xuất |
-| V1.41.0–V2.0.0 | Hoàn thiện trải nghiệm | Lịch, Tổng quan & Thống kê, form Jira, hiệu năng và nghiệm thu phát hành | Đề xuất |
+| V1.40.0 | Tra cứu & Logwork | Chọn nhiều Subtask, đưa vào Log tất cả và xem trước lịch | Đề xuất |
+| V1.41.0 | Logwork Workspace | Tinh chỉnh nhập giờ và phân bổ, thao tác theo thẻ, phản hồi từng Subtask | Đề xuất |
+| V1.42.0–V2.0.0 | Hoàn thiện trải nghiệm | Lịch, Tổng quan & Thống kê, form Jira, hiệu năng và nghiệm thu phát hành | Đề xuất |
 
 ---
 
@@ -71,7 +81,7 @@
 | Phiên bản | Mục tiêu | Chức năng | Điều kiện hoàn thành | Trạng thái |
 | --- | --- | --- | --- | --- |
 | V1.37.7 | Rút ngắn thời gian mở lịch nháp | Gom truy vấn tuần, tải mô tả trong nền | Mở lịch khi audit hoàn tất, giữ khung đã xác minh và đối chiếu lại trước khi ghi | Đã xây dựng |
-| V1.39.0 | Logwork từ Tra cứu | Chọn Subtask và đưa vào Log tất cả | Dùng được lịch xem trước và xác nhận từ danh sách đã chọn | Đã chuyển sang V1.39.0 theo roadmap UI/UX |
+| V1.40.0 | Logwork từ Tra cứu | Chọn Subtask và đưa vào Log tất cả | Dùng được lịch xem trước và xác nhận từ danh sách đã chọn | Đã chuyển sang V1.40.0 theo roadmap UI/UX |
 
 ---
 

@@ -1,3 +1,14 @@
+# Quick Jira Log V1.39.0 — Seasonal Themes
+
+- Thêm Cấu hình giao diện với 10 chủ đề theo mockup. Cảnh đầu trang dùng SVG theo từng chủ đề, khối Sub-task trống có điểm nhấn ở góc. Giáng sinh dùng xanh dương và trắng.
+- Thêm chế độ mặc định, theo lịch và chọn thủ công. Các ngày lễ có lịch sẵn. Hai dịp âm lịch được quy đổi theo giờ Việt Nam. Có lịch một lần, lặp hằng năm và ưu tiên khi lịch trùng.
+- Sinh nhật do người dùng đặt và lưu riêng theo từng tài khoản Jira trên trình duyệt. Nghỉ mát áp dụng theo khoảng ngày được đặt.
+- Mỗi chủ đề có hai hiệu ứng, xem trước trước khi lưu, công tắc chuyển động riêng và toàn app, hỗ trợ Giảm chuyển động của thiết bị. Tài nguyên giao diện có trong cache PWA.
+- Không cần chạy migration mới.
+
+---
+
+
 # Quick Jira Log V1.38.6 — Visual QA
 
 - Rà soát màn chính và taskbar. Giữ thứ tự, nhãn, vùng bấm và quy tắc ẩn thanh công cụ khi mở màn chức năng hoặc form.

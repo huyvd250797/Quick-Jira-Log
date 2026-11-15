@@ -1,3 +1,13 @@
+# Quick Jira Log V1.39.0 — Seasonal Themes
+
+- `npm run test:seasonal-ui` chạy Playwright với API Jira giả lập. Dùng `QJL_CHROMIUM_PATH` nếu đã có Chromium. Có thể cài riêng công cụ kiểm thử bằng `npm install --no-save --package-lock=false playwright` và `npx playwright install chromium`. Chromium trong môi trường bàn giao bị chặn ngay khi mở socket, nên bộ kiểm thử hiển thị, thao tác và cache bằng trình duyệt chưa chạy được tại đây.
+- Kiểm chứng 60 FPS trên thiết bị thật. Mở chủ đề có hiệu ứng trong 10 giây, ghi bằng trình đo hiệu năng của trình duyệt, rồi lặp lại khi cuộn và mở cài đặt. Đối chiếu thời gian khung hình ổn định quanh 16,7 ms trên màn 60 Hz. Kiểm tra tắt chuyển động riêng, tắt toàn app, Giảm chuyển động hệ điều hành và chuyển app qua nền. Việc giới hạn lớp và thuộc tính CSS giúp giảm việc vẽ lại. Cần đo trên Safari iPhone và các trình duyệt mục tiêu để xác nhận tốc độ ở bản triển khai.
+- `npm test` kiểm thử hồi quy và logic mới. Các ca chủ đề có thời điểm nửa đêm giờ Việt Nam, mốc đầu/cuối, hai lịch âm, tháng nhuận, khoảng vượt năm, sinh nhật theo tài khoản, lỗi ngày, lưu/hủy, thay đổi từ tab khác và 20 hiệu ứng chỉ dùng transform/opacity.
+- Mốc đối chiếu Tết và Trung thu 2026–2027 lấy từ bảng lịch lễ hội của Vietnam Tourism. Quy đổi tháng âm lịch dựa trên chu kỳ sóc và trung khí theo phương pháp Hồ Ngọc Đức, với múi giờ Việt Nam UTC+7.
+
+---
+
+
 # Quick Jira Log V1.38.6 — Visual QA
 
 - `npm test` chạy bộ hồi quy Node.js, gồm logic kéo, đổi giờ, chỉnh thời lượng, xác nhận, báo cáo và man-days.

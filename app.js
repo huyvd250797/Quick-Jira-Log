@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.38.6';
+const APP_VERSION = '1.39.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -777,6 +777,7 @@ function applyTheme(theme, { persist = true } = {}) {
   $('lightThemeBtn')?.classList.toggle('active', next === 'light');
   $('darkThemeBtn')?.classList.toggle('active', next === 'dark');
   if (persist) { try { localStorage.setItem(STORAGE.theme, next); } catch {} }
+  window.QuickJiraSeasonalThemes?.syncThemeColor();
 }
 
 function toggleTheme() {
@@ -815,6 +816,7 @@ function setLoggedIn(user) {
   clearLoginCooldown();
   if (state.user !== user) resetHistoryNavigation();
   state.user = user;
+  window.QuickJiraSeasonalThemes?.setAccount(user);
   window.QuickJiraSearch?.login(user);
   window.QuickJiraProjectReport?.login(user);
   void window.QuickJiraResume?.login(user);
@@ -856,6 +858,7 @@ function setLoggedOut({preserveResume=false}={}) {
   $('bulkAllocationHelpDialog').close();bulkHelpOwner='';
   resetHistoryNavigation();
   state.user = null;
+  window.QuickJiraSeasonalThemes?.setAccount(null);
   window.QuickJiraSearch?.logout();
   window.QuickJiraProjectReport?.logout({preserve:preserveResume});
   window.QuickJiraResume?.logout({preserve:preserveResume});
@@ -3471,7 +3474,7 @@ $('clearAuditHistoryBtn').addEventListener('click', () => {
   renderAuditHistory();
 });
 document.addEventListener('keydown', event => {
-  if (event.key !== 'Escape') return;
+  if (event.key !== 'Escape' || $('seasonalDialog')?.open) return;
   if ($('logProgressDialog').open) { event.preventDefault(); if (!state.logProgress?.active) closeLogProgress(); return; }
   if ($('worklogCorrectionDialog').open) {
     event.preventDefault();

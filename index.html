@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.38.6</title>
+  <title>Quick Jira Log · V1.39.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -44,22 +44,24 @@
   <link rel="stylesheet" href="/desktop-workspace.css" />
   <link rel="stylesheet" href="/desktop-lookup.css" />
   <link rel="stylesheet" href="/design-system.css" />
+  <link rel="stylesheet" href="/seasonal-themes.css" />
 </head>
 <body class="booting">
   <div id="bootSplash" class="boot-splash" role="status" aria-live="polite">
     <div class="boot-card">
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.38.6</div>
+      <div class="boot-version">V1.39.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
   </div>
   <main class="shell">
     <section class="brand">
+      <div id="seasonalHomeScene" class="seasonal-scene" aria-hidden="true"></div>
       <button id="brandRefreshBtn" class="logo-refresh-btn" type="button" aria-label="Làm mới dữ liệu, giữ phiên hiện tại" title="Làm mới dữ liệu"><img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" /></button>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.38.6</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.39.0</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -156,7 +158,7 @@
         <span class="skeleton-line skeleton-key"></span><span class="skeleton-line skeleton-summary"></span><span class="skeleton-line skeleton-meta"></span>
       </div>
       <div id="filterError" class="filter-state error-text hidden"></div>
-      <div id="filterEmpty" class="filter-state hidden">Không còn Sub-task chưa logwork phù hợp.</div>
+      <div id="filterEmpty" class="filter-state hidden">Không còn Sub-task chưa logwork phù hợp.<span id="seasonalTaskArt" aria-hidden="true"></span></div>
       <div id="filterIssueList" class="issue-list hidden"></div>
     </section>
 
@@ -296,6 +298,7 @@
             <button id="lightThemeBtn" class="theme-choice-btn" type="button">☀ Sáng</button>
             <button id="darkThemeBtn" class="theme-choice-btn" type="button">☾ Tối</button>
           </div>
+          <button id="seasonalOpenBtn" class="secondary" type="button" aria-haspopup="dialog" aria-controls="seasonalDialog">Cấu hình giao diện</button>
         </div>
 
         <div class="settings-section">
@@ -458,7 +461,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.38.6 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.39.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -473,6 +476,72 @@
     <div id="toast" class="toast hidden" role="status"></div>
     <div id="warningToast" class="toast warning-toast hidden" role="status"></div>
   </main>
+  <dialog id="seasonalDialog" aria-labelledby="seasonalTitle">
+    <form id="seasonalForm">
+      <header class="seasonal-dialog-head">
+        <div><h2 id="seasonalTitle">Cấu hình giao diện</h2><p id="seasonalAccount"></p></div>
+        <button id="seasonalCloseBtn" class="icon-btn" type="button" aria-label="Đóng" autofocus>×</button>
+      </header>
+      <div class="seasonal-settings-scroll">
+        <fieldset class="seasonal-modes">
+          <legend>Chế độ áp dụng</legend>
+          <label><input type="radio" name="seasonalMode" value="base"><span>Mặc định</span></label>
+          <label><input type="radio" name="seasonalMode" value="schedule"><span>Theo lịch</span></label>
+          <label><input type="radio" name="seasonalMode" value="manual"><span>Chọn thủ công</span></label>
+        </fieldset>
+        <p id="seasonalCurrent" role="status"></p>
+        <label class="seasonal-check"><input id="seasonalMotion" type="checkbox"> Hiệu ứng động toàn app</label>
+        <p id="seasonalReduced" hidden>Thiết bị đang bật Giảm chuyển động.</p>
+        <div class="seasonal-picker-row">
+          <label for="seasonalTheme">Chủ đề</label>
+          <select id="seasonalTheme"></select>
+        </div>
+        <div id="seasonalPreview" aria-label="Xem trước chủ đề">
+          <div class="seasonal-preview-hero">
+            <div id="seasonalPreviewScene" class="seasonal-scene" aria-hidden="true"></div>
+            <strong id="seasonalPreviewTitle"></strong>
+          </div>
+          <div class="seasonal-preview-metric" aria-hidden="true"><b>40h</b><span> / 40h</span><i></i></div>
+        </div>
+        <div class="seasonal-rule">
+          <label class="seasonal-check"><input id="seasonalEnabled" type="checkbox"> Áp dụng chủ đề theo lịch</label>
+          <label class="seasonal-check"><input id="seasonalRuleMotion" type="checkbox"> Hiệu ứng động của chủ đề</label>
+          <label>Hiệu ứng
+            <select id="seasonalEffect"></select>
+          </label>
+          <label>Lịch áp dụng
+            <select id="seasonalScheduleType">
+              <option value="default">Lịch mặc định</option>
+              <option value="annual">Lặp hằng năm</option>
+              <option value="once">Một khoảng ngày cụ thể</option>
+            </select>
+          </label>
+          <p id="seasonalScheduleHint"></p>
+          <div id="seasonalAnnualFields" class="seasonal-date-fields" hidden>
+            <label>Từ ngày (DD/MM)<input id="seasonalAnnualStart" type="text" placeholder="20/12" maxlength="5" autocomplete="off"></label>
+            <label>Đến ngày (DD/MM)<input id="seasonalAnnualEnd" type="text" placeholder="25/12" maxlength="5" autocomplete="off"></label>
+          </div>
+          <div id="seasonalOnceFields" class="seasonal-date-fields" hidden>
+            <label>Từ ngày<input id="seasonalOnceStart" type="date"></label>
+            <label>Đến ngày<input id="seasonalOnceEnd" type="date"></label>
+          </div>
+          <div class="seasonal-priority">
+            <span id="seasonalPriority"></span>
+            <div>
+              <button id="seasonalUp" class="secondary" type="button" aria-label="Tăng ưu tiên">↑</button>
+              <button id="seasonalDown" class="secondary" type="button" aria-label="Giảm ưu tiên">↓</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="seasonal-dialog-footer">
+        <p id="seasonalError" role="alert" hidden></p>
+        <div><button id="seasonalCancel" class="secondary" type="button">Hủy</button>
+        <button class="primary" type="submit">Lưu cài đặt</button></div>
+      </footer>
+    </form>
+  </dialog>
+
   <dialog id="appIconDialog" aria-labelledby="appIconTitle" aria-describedby="appIconDescription">
     <header><h2 id="appIconTitle">Icon ứng dụng mới</h2><button id="closeAppIconBtn" class="icon-btn" type="button" aria-label="Đóng hướng dẫn icon" autofocus>×</button></header>
     <div class="icon-help-preview"><img src="/icons/icon-192-v1152.png" width="80" height="80" alt="Đồng hồ và dấu check xanh lá" /><div><strong>Quick Jira Log</strong><span>Ghi nhận giờ làm thành công</span></div></div>
@@ -537,6 +606,9 @@
   <script src="/calendar-scroll-guard.js" defer></script>
   <script src="/lib/calendar-zoom.js" defer></script>
   <script src="/calendar-zoom.js" defer></script>
+  <script src="/lib/seasonal-calendar.js" defer></script>
+  <script src="/seasonal-scenes.js" defer></script>
+  <script src="/seasonal-themes.js" defer></script>
   <script src="/app.js" defer></script>
   <script src="/lib/batch-review.js" defer></script>
   <script src="/batch-calendar.js" defer></script>

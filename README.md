@@ -1,3 +1,42 @@
+# Quick Jira Log V1.39.0 — Seasonal Themes
+
+Vào **⚙ Cài đặt → Giao diện → Cấu hình giao diện** sau khi đăng nhập Jira. Chọn **Theo lịch** để đổi chủ đề tự động, **Chọn thủ công** để áp dụng một chủ đề liên tục, hoặc **Mặc định** để trở về giao diện sáng/tối thông thường. Sáng/tối vẫn được chọn bằng nút hiện có. Trong cửa sổ cấu hình, mẫu xem trước cập nhật theo chủ đề và hiệu ứng đang chọn. Bấm **Lưu cài đặt** ở góc phải để áp dụng.
+
+## Lịch và hiệu ứng
+
+| Chủ đề | Lịch mặc định | Hiệu ứng chọn được |
+| --- | --- | --- |
+| Tết Nguyên đán | 27 tháng Chạp đến mùng 5 Tết theo âm lịch Việt Nam | Cánh mai rơi, cành mai lay nhẹ |
+| Nghỉ mát | Đặt theo lịch nghỉ thực tế | Sóng vỗ chậm, lá dừa lay nhẹ |
+| Ngày 30/04 | 30/04–01/05 | Quốc kỳ bay nhẹ, ánh sáng trên mặt cờ |
+| Quốc tế Thiếu nhi | 01/06 | Diều lượn nhẹ, bong bóng bay lên |
+| Sinh nhật | Tự đặt theo từng tài khoản Jira | Nến lung linh, giấy màu chúc mừng |
+| Tết Trung thu | 13–15 tháng 8 âm lịch Việt Nam | Đèn ông sao đung đưa, mây trôi ngang mặt trăng |
+| Khai giảng | 05/09 | Trang vở lật nhẹ, lá rơi |
+| Halloween | 30–31/10 | Nến bí ngô lung linh, sương trôi chậm |
+| Ngày 20/11 | 19–20/11 | Cánh hoa rơi, ánh sáng lướt trên thiệp |
+| Giáng sinh | 20–25/12 | Tuyết rơi thưa, dây đèn trắng sáng dịu |
+
+- **Sinh nhật hằng năm.** Chọn **Sinh nhật → Lặp hằng năm**, nhập ngày/tháng theo dạng `DD/MM`. Nhập cùng một ngày ở hai ô để áp dụng đúng ngày đó. Mốc 29/02 chỉ được áp dụng vào năm nhuận. Mỗi tài khoản Jira có cấu hình riêng trong trình duyệt hiện tại. Muốn dùng trên thiết bị khác, nhập lại tại thiết bị đó.
+- **Khoảng ngày tùy chỉnh.** Lịch dương tùy chỉnh có thể lặp hằng năm hoặc áp dụng một lần. Lịch lặp từ tháng 12 đến tháng 1 tự qua năm. Chọn **Lịch mặc định** để trả Tết hoặc Trung thu về lịch âm của app. Các khoảng tính cả ngày đầu lẫn ngày cuối.
+- **Lịch trùng nhau.** Dùng các nút mũi tên để chỉnh ưu tiên. Số 1 là cao nhất. Theo mặc định, Sinh nhật đứng đầu, Nghỉ mát đứng cuối. App dùng giờ Việt Nam để đánh giá khi mở, khi quay lại app hoặc qua nửa đêm trong phiên đang mở.
+- **Chuyển động.** Có công tắc cho toàn app và riêng từng chủ đề. Cài đặt Giảm chuyển động của thiết bị có hiệu lực với cả màn chính và xem trước. Các cảnh đầu trang được vẽ SVG theo mockup, tách lớp theo vật thể. Chỉ tối đa ba lớp chuyển động với transform/opacity, tạm dừng cảnh màn chính khi có modal, ngừng chuyển động khi trang vào nền. Giáng sinh dùng xanh dương và trắng. Nội dung trong thẻ dữ liệu dùng nền trơn.
+- Cấu hình giao diện dùng bộ nhớ trình duyệt, gắn với tài khoản Jira đang đăng nhập. Tính năng không gửi ngày sinh lên Jira hoặc máy chủ.
+
+## Chạy và nâng cấp
+
+1. Giải nén ZIP, mở thư mục `Quick-Jira-Log` bằng Node.js 24.x. Chạy `npm ci` rồi `npm test`. App dùng HTML/CSS/JavaScript tĩnh và Vercel Function tại `/api`, không có bước biên dịch frontend.
+2. Để chạy với Jira trên máy, đặt `APP_SESSION_SECRET` từ 32 ký tự trở lên và các biến hiện có theo `.env.example`, sau đó chạy `vercel dev` từ thư mục source. Không dùng `file://` vì cần API. Xem ghi chú trong `.env.example` về thời hạn phiên, Redis/KV và WorklogPRO.
+3. Với repo có sẵn, clone/fetch nhánh deploy, tích hợp source và giữ thay đổi riêng trước khi commit/push. Nếu tạo repo mới, chạy `git init -b main`, `git add .`, `git commit -m "Release v1.39.0"`, thêm remote GitHub và `git push -u origin main`. Giữ file môi trường thật ngoài Git.
+4. Vercel dùng repo/nhánh hiện có hoặc Import Project từ GitHub. Đặt Framework **Other**, Node.js **24.x**, root chứa `index.html`, `package.json` và `api/`. Giữ `vercel.json`, Build Command và Output Directory theo mặc định. Dùng cùng biến môi trường đang hoạt động rồi deploy. Bản sau có thể deploy tự động khi push vào nhánh đã kết nối.
+5. Mở URL deploy, kiểm tra nhãn **V1.39.0**, đăng nhập và thử chọn Giáng sinh, bật/tắt chuyển động, sửa lịch Sinh nhật và chuyển lại **Theo lịch**. Nếu dùng PWA, bấm **Cập nhật** khi có thông báo. Nếu trang vẫn hiện bản cũ, kiểm tra deployment và chờ service worker tải xong trước khi bấm cập nhật.
+6. **Không cần chạy migration mới.** Có thể redeploy V1.38.6 để quay về bản trước. Để phát triển tiếp, dùng lại ZIP V1.39.0.
+
+Xem `TESTING.md` để chạy bộ kiểm tra trên trình duyệt và đo FPS trên thiết bị mục tiêu. **Bản kế tiếp đề xuất** là **V1.40.0 — Tra cứu & Logwork**, chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả.
+
+---
+
+
 # Quick Jira Log V1.38.6 — Visual QA
 
 - Rà soát màn chính và taskbar. Giữ thứ tự, nhãn, vùng bấm và quy tắc ẩn thanh công cụ khi mở màn chức năng hoặc form.
@@ -13,7 +52,7 @@
 3. Kiểm tra footer hiển thị V1.38.6. Nếu dùng PWA, bấm **Cập nhật** khi có thông báo. Kiểm tra màn chính, Jira, Logwork, Lịch và báo cáo ở cả hai chế độ sáng/tối. Trên mobile, thử mở bàn phím và cuộn nội dung trước khi xác nhận.
 4. **Không cần chạy migration mới.** Có thể triển khai lại V1.38.5 để quay về bản trước.
 
-**Bản kế tiếp đề xuất** là V1.39.0 — Tra cứu & Logwork, chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả.
+**Bản kế tiếp đề xuất** là V1.40.0 — Tra cứu & Logwork, chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả.
 
 ---
 
@@ -105,7 +144,7 @@ Bản tiếp theo theo roadmap là **V1.38.4 — Jira Cards & Forms Polish**.
 3. Kiểm tra footer hiển thị **V1.38.1**. Trên PWA, bấm **Cập nhật** khi có thông báo. Mở **Tổng hợp → Tuần**, kiểm tra tổng giờ và **Phân bổ theo Sub-task Type** rồi đóng để kiểm tra taskbar trở lại.
 4. **Không cần chạy migration mới.** Có thể quay về source V1.38.0 khi cần.
 
-Bản kế tiếp theo roadmap là **V1.39.0 — Tra cứu & Logwork**.
+Bản kế tiếp theo roadmap là **V1.40.0 — Tra cứu & Logwork**.
 
 ---
 
@@ -126,7 +165,7 @@ Bản kế tiếp theo roadmap là **V1.39.0 — Tra cứu & Logwork**.
 
 **Không cần chạy migration mới.** Có thể triển khai lại source V1.37.7 để quay về bản trước.
 
-**Phiên bản kế tiếp đề xuất** là V1.39.0 — Tra cứu & Logwork, bổ sung chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả.
+**Phiên bản kế tiếp đề xuất** là V1.40.0 — Tra cứu & Logwork, bổ sung chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả.
 
 ---
 
