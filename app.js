@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.39.1';
+const APP_VERSION = '1.39.2';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -732,7 +732,7 @@ function finishBoot(message = '') {
   document.body.classList.remove('booting');
   if (!splash) return;
   splash.classList.add('leaving');
-  setTimeout(() => splash.remove(), 260);
+  setTimeout(() => { splash.remove(); window.QuickJiraSeasonalScenes?.refresh(); }, 260);
 }
 
 function setBootMessage(message) {

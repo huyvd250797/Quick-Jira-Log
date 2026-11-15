@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.2 — Seasonal Motion & Entry Screens
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.2 | Chuyển động theo cảnh, lịch tự áp dụng, màn tải và đăng nhập theo mùa | Đã xây dựng source |
+| V1.40.0 | Chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.1 — Seasonal Preview & Artwork
 
 | Phiên bản | Phạm vi | Trạng thái |

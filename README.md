@@ -1,3 +1,20 @@
+# Quick Jira Log V1.39.2 — Seasonal Motion & Entry Screens
+
+- Chủ đề tự áp dụng đúng lịch khi đã tích **Áp dụng chủ đề theo lịch**. Khi trùng lịch, app dùng thứ tự ưu tiên. Các khoảng ngày và checkbox lặp hằng năm từ bản cũ vẫn dùng được. Giá trị Chế độ áp dụng cũ không còn chi phối kết quả.
+- Khung xem trước dùng cùng cảnh và hiệu ứng với màn chính. Ảnh nền đứng yên, các vật thể trang trí dịch chuyển trên lớp riêng. Cờ 30/04 có hình học vải thay đổi theo thời gian trên Canvas. Hai hiệu ứng Giáng sinh đều có bông tuyết rơi, với mật độ khác nhau.
+- Màn tải và màn đăng nhập dùng lịch lễ mặc định khi chưa xác định tài khoản. Khi đăng nhập, app chuyển sang lịch riêng của tài khoản Jira. Khi tắt chuyển động hoặc thiết bị yêu cầu giảm chuyển động, vẫn xem được cảnh tĩnh.
+
+## Nâng cấp
+
+1. Giải nén ZIP, mở thư mục có `package.json`. Dùng Node.js 24.x, chạy `npm ci` rồi `npm test`.
+2. Tích hợp source vào nhánh triển khai hiện có. Vercel dùng Framework Other, Node.js 24.x, file `vercel.json` và biến môi trường hiện có. Nếu chạy local, cài Vercel CLI, thiết lập biến theo `.env.example` rồi chạy `vercel dev`.
+3. Khi PWA báo phiên bản mới, bấm **Cập nhật**. Kiểm tra V1.39.2, mở **Cài đặt → Giao diện → Cấu hình giao diện → Xem trước** và thử chủ đề Giáng sinh, 30/04 và công tắc chuyển động.
+4. Không cần migration. Có thể triển khai lại V1.39.1 nếu cần quay về bản trước.
+
+Bản kế tiếp đề xuất là **V1.40.0 — Tra cứu & Logwork**.
+
+---
+
 # Quick Jira Log V1.39.1 — Seasonal Preview & Artwork
 
 - Mười chủ đề dùng minh họa có chiều sâu theo mẫu giao diện. Hình đầu trang và ảnh xem trước dùng chung tệp WebP. Chuyển động nằm trong một lớp riêng với transform/opacity và tôn trọng tùy chọn Giảm chuyển động. Giáng sinh dùng xanh dương và trắng.

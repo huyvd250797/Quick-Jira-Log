@@ -89,6 +89,8 @@ html:not([data-seasonal]) #seasonalTaskArt { display: none; }
   z-index: -1;
   mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
 }
+/* One fixed backdrop, with independent, continuously moving objects above it. */
+.seasonal-scene { container-type: size; }
 .seasonal-scene .seasonal-photo, .seasonal-scene-layer {
   position: absolute;
   inset: 0;
@@ -96,59 +98,130 @@ html:not([data-seasonal]) #seasonalTaskArt { display: none; }
   height: 100%;
 }
 .seasonal-photo { display: block; object-fit: cover; object-position: right center; }
-.seasonal-scene-layer { visibility: hidden; animation: var(--motion, none) var(--duration, 5s) ease-in-out infinite; animation-name: none; }
-html[data-seasonal-motion] #seasonalHomeScene .seasonal-scene-layer,
-#seasonalPreview[data-seasonal-motion] .seasonal-scene-layer { visibility: visible; animation-name: var(--motion, none); }
-body:has(dialog[open], .settings-overlay[aria-hidden="false"]) #seasonalHomeScene .seasonal-scene-layer { animation-play-state: paused; }
-.seasonal-scene-layer.seasonal-photo, .seasonal-wash {
-  mask-image: radial-gradient(ellipse var(--fx-width, 24%) var(--fx-height, 42%) at var(--fx-x, 76%) var(--fx-y, 51%), #000 19%, transparent 94%);
+.seasonal-scene .seasonal-art-april-palace {
+  width: 78%;
+  object-position: center center;
+  mask-image: linear-gradient(90deg, #000 53%, transparent 100%);
 }
-[data-seasonal="tet"] { --fx-x: 72%; --fx-y: 34%; }
-[data-seasonal="vacation"] { --fx-x: 84%; --fx-y: 45%; }
-[data-seasonal="april"] { --fx-x: 62%; --fx-y: 32%; }
-[data-seasonal="children"] { --fx-x: 71%; --fx-y: 42%; }
-[data-seasonal="birthday"] { --fx-x: 76%; --fx-y: 26%; --fx-width: 10%; --fx-height: 28%; }
-[data-seasonal="moon"] { --fx-x: 82%; }
-[data-seasonal="school"] { --fx-x: 69%; --fx-y: 60%; }
-[data-seasonal="halloween"] { --fx-x: 78%; --fx-y: 59%; }
-[data-seasonal="teachers"] { --fx-x: 69%; --fx-y: 57%; }
-[data-seasonal="christmas"] { --fx-x: 76%; --fx-y: 45%; --fx-width: 41%; }
-.seasonal-sway { --motion: season-sway; }
-.seasonal-shore { --motion: season-shore; --fx-y: 74%; --fx-width: 45%; }
-.seasonal-page { --motion: season-page; --duration: 8s; }
-.seasonal-glimmer { --motion: season-glimmer; --duration: 2.9s; background: #ffedbb; }
-[data-seasonal="christmas"] .seasonal-glimmer { background: #d7ecff; }
-.seasonal-mist { --motion: season-mist; --duration: 9s; --fx-y: 73%; --fx-width: 48%; background: #bac0de; }
-.seasonal-particles { --motion: season-drift; --dx: 5px; --dy: 18px; }
-.seasonal-particles i {
+.seasonal-flag {
+  position: absolute;
+  top: 4%;
+  right: 3%;
+  width: 47%;
+  height: 88%;
+  object-fit: contain;
+  object-position: right center;
+}
+.seasonal-scene-layer { visibility: hidden; }
+html[data-seasonal-motion] :is(#seasonalHomeScene, #seasonalBootScene) .seasonal-scene-layer,
+#seasonalPreview[data-seasonal-motion] .seasonal-scene-layer { visibility: visible; }
+
+.seasonal-scene-layer i {
   position: absolute;
   left: var(--x);
-  top: var(--y);
+  top: var(--launch, -12px);
   width: var(--size);
   height: var(--size);
-  background: #fff4b0;
-  border-radius: 65% 30% 65% 40%;
+  border-radius: 70% 30% 65% 40%;
+  background: var(--particle, #ffcf70);
+  --travel: 145px;
+  --travel: calc(100cqh + 22px);
+  --dx: -19px;
+  animation: var(--speed) linear var(--phase) infinite both paused seasonal-fall;
 }
-.seasonal-petals { --duration: 6.6s; --dx: -7px; }
-.seasonal-leaves { --duration: 7.2s; --dx: -12px; }
-.seasonal-leaves i { background: #dcb168; }
-.seasonal-snow { --duration: 8s; --dy: 27px; }
-.seasonal-snow i { border-radius: 50%; background: #fff; }
-.seasonal-bubbles { --dy: -21px; --duration: 6s; }
-.seasonal-bubbles i { border-radius: 50%; border: 1px solid #bcefff; background: transparent; }
-.seasonal-confetti { --motion: season-drift; --duration: 1.8s; --dy: -13px; animation-iteration-count: 1; animation-fill-mode: forwards; }
-.seasonal-confetti i:nth-child(even) { background: #ed9bbc; }
-@keyframes season-sway { 0%, 100% { opacity: 0; } 50% { opacity: .65; transform: translate(3px, -1px) rotate(1deg); } }
-@keyframes season-shore { 0%, 100% { opacity: 0; } 50% { opacity: .65; transform: translate(-3px, 4px); } }
-@keyframes season-glimmer { 0%, 100% { opacity: .08; } 38% { opacity: .33; transform: scale(1.02); } 73% { opacity: .16; } }
-@keyframes season-mist { 0%, 100% { opacity: 0; } 50% { opacity: .28; transform: translateX(-7px); } }
-@keyframes season-page { 0%, 70%, 100% { opacity: 0; } 82% { opacity: .48; transform: skewY(-1.4deg) translateX(4px); } }
-@keyframes season-drift { 0%, 100% { opacity: 0; } 25% { opacity: .82; } 99% { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
-
+html[data-seasonal-motion] :is(#seasonalHomeScene, #seasonalBootScene) .seasonal-scene-layer i,
+#seasonalPreview[data-seasonal-motion] .seasonal-scene-layer i { animation-play-state: running; }
+body:has(dialog[open], .settings-overlay[aria-hidden="false"], #bootSplash:not(.leaving)) #seasonalHomeScene .seasonal-scene-layer i,
+#bootSplash.leaving .seasonal-scene-layer i { animation-play-state: paused !important; }
+.seasonal-snow i {
+  --particle: #f4faff;
+  --dx: 17px;
+  border-radius: 50%;
+  width: calc(var(--size) * .55);
+  height: calc(var(--size) * .55);
+  box-shadow: 0 0 3px #b7ddff;
+}
+.seasonal-snow i:nth-child(3n) { background: none; box-shadow: none; color: #effaff; }
+.seasonal-snow i:nth-child(3n)::before {
+  content: '❄'; position: absolute; inset: 0; font: normal 10px/1 sans-serif;
+}
+.seasonal-leaf i { --particle: #d9a65c; --dx: -28px; }
+[data-seasonal="vacation"] .seasonal-leaf i { --particle: #abbe67; width: calc(var(--size) * 1.5); height: 3px; }
+.seasonal-confetti i { border-radius: 1px; --particle: #ffc084; height: 4px; }
+.seasonal-confetti i:nth-child(even) { --particle: #f29bd4; --dx: 24px; }
+.seasonal-bubble i, .seasonal-spark i, .seasonal-glow i, .seasonal-ember i {
+  --launch: 63%;
+  --particle: #ffd98e;
+  --lift: -40px;
+  --lift: -37cqh;
+  --dx: 12px;
+  border-radius: 50%;
+  animation-name: seasonal-rise;
+}
+.seasonal-bubble i { --launch: 78%; --lift: -68cqh; background: #ccecff22; border: 1px solid #e2fcff; }
+.seasonal-ember i { --launch: 67%; --particle: #ff9e43; }
+.seasonal-ember i, .seasonal-glow i, .seasonal-spark i { width: 3px; height: 3px; box-shadow: 0 0 4px #ffd090; }
+.seasonal-spark i { --launch: 30%; --lift: -21px; }
+.seasonal-cloud i, .seasonal-mist i, .seasonal-surf i, .seasonal-ribbon i {
+  --launch: 72%;
+  border-radius: 70%;
+  animation-name: seasonal-drift;
+}
+.seasonal-cloud i, .seasonal-mist i {
+  width: 70px; height: 15px;
+  background: radial-gradient(ellipse, #d7d7ff66 0%, transparent 72%);
+}
+.seasonal-cloud i { --launch: 48%; }
+.seasonal-surf i { width: 27px; height: 2px; background: #ceffffb3; --launch: 80%; }
+.seasonal-ribbon i { width: 12px; height: 2px; --launch: 45%; background: #ffb34f; }
+.seasonal-ribbon i:nth-child(even) { background: #6dd8fa; --launch: 51%; }
+@keyframes seasonal-fall {
+  from { transform: translate3d(0, -8px, 0) rotate(0); }
+  45% { transform: translate3d(calc(var(--dx) * -.4), calc(var(--travel) * .42), 0) rotate(100deg); }
+  to { transform: translate3d(var(--dx), var(--travel), 0) rotate(280deg); }
+}
+@keyframes seasonal-rise {
+  from { transform: translate3d(0, 0, 0) scale(.6); opacity: 0; }
+  14% { opacity: .95; }
+  76% { opacity: .85; }
+  to { transform: translate3d(var(--dx), var(--lift), 0) scale(1); opacity: 0; }
+}
+@keyframes seasonal-drift {
+  from { transform: translate3d(-35px, 3px, 0) rotate(-8deg); opacity: 0; }
+  22% { opacity: .70; }
+  72% { opacity: .63; }
+  to { transform: translate3d(42px, -6px, 0) rotate(8deg); opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
-  html[data-seasonal-motion] #seasonalHomeScene .seasonal-scene-layer,
-  #seasonalPreview[data-seasonal-motion] .seasonal-scene-layer { visibility: hidden; animation-name: none; }
+  .seasonal-scene .seasonal-scene-layer { display: none; }
 }
+
+html[data-seasonal] #bootSplash { background: var(--season-bg); }
+html[data-seasonal] #bootSplash .boot-card {
+  position: relative; isolation: isolate; border: 1px solid var(--season-line);
+  border-radius: 24px; background: var(--season-card); color: var(--season-text);
+  padding: 102px 18px 27px;
+}
+html[data-seasonal] #bootSplash .boot-version { color: var(--season-text); }
+html[data-seasonal] #bootSplash .boot-message { color: var(--season-text); }
+html[data-seasonal] #bootSplash .boot-spinner {
+  border-color: var(--season-tint); border-top-color: var(--season-accent);
+}
+#seasonalBootScene {
+  z-index: -1; width: 100%; height: 152px;
+  mask-image: linear-gradient(#000 50%, transparent);
+}
+html[data-seasonal] #loginCard {
+  background: var(--season-card); border-color: var(--season-line);
+  --qjl-focus: var(--season-accent);
+}
+html[data-seasonal] #loginCard :is(#username, #password) {
+  background: var(--season-bg); border-color: var(--season-line);
+}
+html[data-seasonal] #loginCard #loginBtn:not(:disabled) {
+  background: var(--season-ink); color: #fff;
+}
+
 @media (max-width: 480px) {
   html[data-theme][data-seasonal] .brand { padding-top: 56px; }
   #seasonalHomeScene { width: min(83%, 325px); }
@@ -179,13 +252,6 @@ body:has(dialog[open], .settings-overlay[aria-hidden="false"]) #seasonalHomeScen
 .seasonal-dialog-footer > div { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
 #seasonalDialog p { margin: 0; }
 #seasonalError { color: var(--danger); font-size: .87rem; padding-bottom: 8px; }
-.seasonal-modes { min-width: 0; margin: 0; padding: 4px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; border: 1px solid var(--line); border-radius: 12px; }
-.seasonal-modes legend { font-size: .8rem; color: var(--muted); padding: 0 4px; }
-#seasonalDialog .seasonal-modes label { position: relative; display: block; margin: 0; font-size: .83rem; }
-.seasonal-modes input { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; }
-.seasonal-modes span { display: grid; place-items: center; min-height: 40px; text-align: center; padding: 3px; border-radius: 8px; cursor: pointer; }
-.seasonal-modes input:checked + span { background: var(--primary-soft); color: var(--primary); }
-.seasonal-modes input:focus-visible + span { outline: 2px solid var(--qjl-focus); outline-offset: -2px; }
 #seasonalDialog select, #seasonalDialog input[type="text"], #seasonalDialog input[type="date"] {
   width: 100%; min-width: 0; max-width: 100%; height: auto; min-height: 42px;
   background: var(--qjl-surface); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; font-size: 1rem;
@@ -218,4 +284,13 @@ body:has(dialog[open], .settings-overlay[aria-hidden="false"]) #seasonalHomeScen
 .seasonal-preview-metric i { display: block; height: 4px; margin-top: 4px; background: var(--season-accent); border-radius: 5px; }
 @media (max-width: 370px) {
   .seasonal-settings-scroll, .seasonal-dialog-head, .seasonal-dialog-footer { padding-inline: 9px; }
+}
+
+.seasonal-petal i { --particle: #ffd477; --dx: -23px; }
+[data-seasonal="teachers"] .seasonal-petal i { --particle: #f1b945; }
+@media (max-height: 440px) {
+  html[data-seasonal] #bootSplash .boot-card { padding-top: 58px; padding-bottom: 14px; }
+  html[data-seasonal] #bootSplash .boot-logo { width: 66px; height: 66px; }
+  html[data-seasonal] #bootSplash .boot-spinner { margin-top: 12px; }
+  #seasonalBootScene { height: 95px; }
 }

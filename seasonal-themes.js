@@ -36,7 +36,7 @@ window.QuickJiraSeasonalThemes = (() => {
   }
 
   function renderHome() {
-    const id = key ? calendar.activeTheme(saved, calendar.today()) : '';
+    const id = calendar.activeTheme(saved, calendar.today());
     const rule = saved.rules[id];
     const stamp = id ? `${id}:${rule.effect}` : '';
     if (stamp !== displayed) {
@@ -44,17 +44,19 @@ window.QuickJiraSeasonalThemes = (() => {
       displayed = stamp;
       if (id) root.dataset.seasonal = id;
       else delete root.dataset.seasonal;
-      byId('seasonalHomeScene').innerHTML = id ? art.scene(id, rule.effect) : '';
+      art.mount(byId('seasonalHomeScene'), id, rule?.effect);
+      art.mount(byId('seasonalBootScene'), id, rule?.effect);
       if (themeChanged || !id) byId('seasonalTaskArt').innerHTML = id ? art.corner(id) : '';
       syncThemeColor();
     }
     root.toggleAttribute('data-seasonal-motion', !!rule?.motion && saved.motion && !reduced.matches && !document.hidden);
+    art.refresh();
   }
 
   function refreshSchedule() {
     clearTimeout(midnightTimer);
     renderHome();
-    if (key && !document.hidden) midnightTimer = setTimeout(refreshSchedule, calendar.untilMidnight() + 30);
+    if (!document.hidden) midnightTimer = setTimeout(refreshSchedule, calendar.untilMidnight() + 30);
     if (dialog.open) renderStatus();
   }
 
@@ -86,11 +88,12 @@ window.QuickJiraSeasonalThemes = (() => {
     if (preview.dataset.scene !== stamp) {
       preview.dataset.scene = stamp;
       preview.dataset.seasonal = editing;
-      byId('seasonalPreviewScene').innerHTML = art.scene(editing, rule.effect);
+      art.mount(byId('seasonalPreviewScene'), editing, rule.effect);
       byId('seasonalPreviewTitle').textContent = calendar.themes[editing].name;
     }
     preview.toggleAttribute('data-seasonal-motion', rule.motion && draft.motion && !reduced.matches && !document.hidden);
     byId('seasonalReduced').hidden = !reduced.matches;
+    art.refresh();
   }
 
   function renderScheduleFields() {
@@ -206,9 +209,8 @@ window.QuickJiraSeasonalThemes = (() => {
     saved = readPreferences();
     editedVersion = JSON.stringify(saved);
     draft = calendar.normalize(saved);
-    editing = draft.mode === 'manual' ? draft.manual : calendar.activeTheme(draft, calendar.today()) || draft.manual;
+    editing = calendar.activeTheme(draft, calendar.today()) || calendar.ids[0];
     byId('seasonalAccount').textContent = name;
-    form.elements.seasonalMode.value = draft.mode;
     byId('seasonalMotion').checked = draft.motion;
     announceError();
     renderRule();
@@ -224,17 +226,12 @@ window.QuickJiraSeasonalThemes = (() => {
     const target = picker.value;
     if (!commitSchedule()) { picker.value = editing; return; }
     editing = target;
-    if (draft.mode === 'manual') draft.manual = editing;
     announceError();
     renderRule();
   });
 
   form.addEventListener('change', event => {
     const input = event.target;
-    if (input.name === 'seasonalMode') {
-      draft.mode = input.value;
-      if (draft.mode === 'manual') draft.manual = editing;
-    }
     if (input.id === 'seasonalMotion') draft.motion = input.checked;
     if (input.id === 'seasonalEnabled') draft.rules[editing].enabled = input.checked;
     if (input.id === 'seasonalRuleMotion') draft.rules[editing].motion = input.checked;
@@ -285,5 +282,6 @@ window.QuickJiraSeasonalThemes = (() => {
     }
   });
 
+  refreshSchedule();
   return { setAccount, syncThemeColor };
 })();

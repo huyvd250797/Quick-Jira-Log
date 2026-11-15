@@ -1,3 +1,10 @@
+# Quick Jira Log V1.39.2 — Seasonal Motion & Entry Screens
+
+- `npm test` kiểm tra lịch, checkbox, lưu cấu hình, cảnh Giáng sinh trên màn tải và cấu trúc 20 biến thể. Kiểm thử Canvas mô phỏng khung hình, xác nhận vải đổi độ cong, mép cột cố định, dừng khi tắt hiệu ứng hoặc ẩn tab và dọn đối tượng đã gỡ.
+- `npm run test:seasonal-ui` có kiểm tra ảnh Canvas thay đổi trên trình duyệt, bố cục xem trước, màn đăng nhập và bộ nhớ PWA. Lần chạy trong môi trường bàn giao bị chặn khi Chromium mở socket. Cần xác nhận trên Safari iPhone và đo FPS bằng công cụ hiệu năng trên thiết bị thật. Mục tiêu là 60 FPS trên màn 60 Hz, tương ứng khoảng 16,7 ms mỗi khung.
+
+---
+
 # Quick Jira Log V1.39.1 — Seasonal Preview & Artwork
 
 - Kiểm tra tự động chế độ lịch mặc định, lịch một lần, lịch lặp, chuyển đổi ô ngày, dữ liệu đã lưu, tách tài khoản và tài nguyên WebP bằng `npm test`.

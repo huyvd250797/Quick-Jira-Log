@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.2 — Seasonal Motion & Entry Screens
+
+- Thay hiệu ứng đổi độ mờ của ảnh bằng vật thể chuyển động độc lập. Cờ 30/04 được vẽ theo từng dải vải biến dạng. Tuyết Giáng sinh rơi theo quỹ đạo riêng.
+- Bỏ Chế độ áp dụng. Quyết định dùng chủ đề theo khoảng ngày, checkbox từng chủ đề và thứ tự ưu tiên.
+- Áp dụng tranh và bảng màu theo ngày cho màn hình tải và đăng nhập. Dùng lịch mặc định trước khi biết tài khoản.
+
+---
+
 # Quick Jira Log V1.39.1 — Seasonal Preview & Artwork
 
 - Thay minh họa 10 chủ đề bằng bộ tranh có chiều sâu nén WebP, chia lớp chuyển động và đóng gói trong cache PWA.

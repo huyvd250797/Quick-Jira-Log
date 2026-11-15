@@ -94,11 +94,11 @@ async function start() {
       await page.locator('#seasonalAnnualEnd').fill('20/12');
       await save(page);
       assert.equal(await page.locator('html').getAttribute('data-seasonal'), 'birthday');
-      const motion = page.locator('#seasonalHomeScene .seasonal-scene-layer').first();
-      assert.notEqual(await motion.evaluate(e => getComputedStyle(e).animationName), 'none');
+      const motion = page.locator('#seasonalHomeScene .seasonal-scene-layer i').first();
+      assert.notEqual(await motion.evaluate(e => getComputedStyle(e).animationPlayState), 'paused');
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.waitForFunction(() => !document.documentElement.hasAttribute('data-seasonal-motion'));
-      assert.equal(await motion.evaluate(e => getComputedStyle(e).animationName), 'none');
+      assert.equal(await motion.evaluate(e => getComputedStyle(e).animationPlayState), 'paused');
       await page.emulateMedia({ reducedMotion: 'no-preference' });
 
       await page.reload();
@@ -119,14 +119,21 @@ async function start() {
       await page.waitForFunction(() => document.documentElement.dataset.seasonal === 'christmas');
 
       await open(page);
-      await page.getByText('Chọn thủ công', {exact: true}).click();
+      assert.equal(await page.locator('[name=seasonalMode]').count(), 0);
       const result = [];
       for (const id of await page.evaluate(() => QuickJiraSeasonal.ids)) {
         await page.locator('#seasonalTheme').selectOption(id);
-        await page.waitForFunction(theme => document.querySelector('#seasonalPreviewScene img')?.src.endsWith('/' + theme + '.webp') && document.querySelector('#seasonalPreviewScene img').naturalWidth > 0, id);
+        await page.waitForFunction(theme => document.querySelector('#seasonalPreviewScene img')?.src.endsWith('/' + (theme === 'april' ? 'april-palace' : theme) + '.webp') && document.querySelector('#seasonalPreviewScene img').naturalWidth > 0, id);
         for (const effect of ['0', '1']) {
           await page.locator('#seasonalEffect').selectOption(effect);
-          assert.notEqual(await page.locator('#seasonalPreviewScene .seasonal-scene-layer').first().evaluate(e => getComputedStyle(e).animationName), 'none');
+          if (id === 'april') {
+            const flag = page.locator('#seasonalPreviewScene canvas');
+            await flag.scrollIntoViewIfNeeded();
+            const first = await flag.evaluate(canvas => canvas.toDataURL());
+            await page.waitForFunction(snapshot => document.querySelector('#seasonalPreviewScene canvas').toDataURL() !== snapshot, first);
+          } else {
+            assert.equal(await page.locator('#seasonalPreviewScene .seasonal-scene-layer i').first().evaluate(e => getComputedStyle(e).animationPlayState), 'running');
+          }
         }
         result.push(id);
       }
@@ -140,6 +147,12 @@ async function start() {
       await page.evaluate(() => applyTheme('dark'));
       assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), '#091a36');
       if (process.env.QJL_QA_DIR) await page.screenshot({path: path.join(process.env.QJL_QA_DIR, 'seasonal-christmas.png')});
+
+      user = null;
+      await page.reload();
+      await page.waitForFunction(() => !document.body.classList.contains('booting') && !document.getElementById('loginCard').classList.contains('hidden'));
+      assert.equal(await page.locator('html').getAttribute('data-seasonal'), 'christmas');
+      assert(await page.locator('#seasonalHomeScene .seasonal-snow').count());
 
       // An installed PWA can load the theme engine, visuals and style offline.
       await page.waitForFunction(() => !!navigator.serviceWorker.controller);

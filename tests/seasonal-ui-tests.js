@@ -16,7 +16,6 @@ class Element {
     this.dataset = {};
     this.attributes = new Map();
     this.listeners = {};
-    this.elements = {seasonalMode: {value: ''}};
   }
   addEventListener(type, callback) { this.listeners[type] = callback; }
   fire(type, details = {}) { this.listeners[type]?.({target: this, preventDefault() {}, ...details}); }
@@ -134,7 +133,7 @@ assert(html.attributes.has('data-seasonal-motion'));
 
 get('seasonalOpenBtn').fire('click');
 const key = lib.accountKey({username: 'b'});
-map.set(key, JSON.stringify({mode: 'base'}));
+map.set(key, JSON.stringify({rules: {christmas: {enabled: false}}}));
 window.fire('storage', {key});
 form.fire('submit');
 assert.match(get('seasonalError').textContent, /tab khác/);
@@ -143,8 +142,8 @@ ui.setAccount({username: 'a'});
 assert.equal(get('seasonalDialog').open, false);
 assert.equal(html.dataset.seasonal, 'birthday');
 ui.setAccount(null);
-assert.equal(html.dataset.seasonal, undefined);
-assert.equal(get('seasonalHomeScene').innerHTML, '');
+assert.equal(html.dataset.seasonal, 'christmas');
+assert(get('seasonalBootScene').innerHTML.includes('seasonal-snow'));
 
 // A V1.39.0 one-time range opens as specific and keeps its exact dates.
 const priorKey = lib.accountKey({username: 'prior'});
@@ -173,13 +172,21 @@ for (const id of lib.ids) {
   for (const effect of [0, 1]) {
     const scene = window.QuickJiraSeasonalScenes.scene(id, effect);
     const layers = Array.from(scene.matchAll(/class="[^"]*seasonal-scene-layer[^"]* seasonal-([a-z]+)"/g), match => match[1]);
-    assert(layers.length >= 1 && layers.length <= 3);
-    for (const layer of layers) assert(css.includes(`.seasonal-${layer} {`), layer);
+    assert.equal((scene.match(/<img /g) || []).length, 1, 'One backdrop per scene');
+    if (id === 'april') {
+      assert.match(scene, /april-palace\.webp/);
+      assert.match(scene, /<canvas .*data-seasonal-flag/);
+    } else {
+      assert.equal(layers.length, 1);
+      for (const layer of layers) assert(css.includes(`.seasonal-${layer} i`), layer);
+    }
   }
 }
 const keyframes = css.slice(css.indexOf('@keyframes'), css.indexOf('@media'));
 const animatedProperties = new Set(Array.from(keyframes.matchAll(/([a-z-]+):/g), match => match[1]));
 assert.deepEqual([...animatedProperties].sort(), ['opacity', 'transform']);
+assert(!index.includes('name="seasonalMode"'));
+assert.match(index, /id="seasonalBootScene"/);
 assert.match(css, /#seasonalPreview\s*\{\s*min-block-size:/);
 assert.match(css, /\.seasonal-settings-scroll > \*\s*\{\s*flex-shrink: 0/);
-console.log('Seasonal UI fixture: midnight timer, validation, account isolation, concurrent tabs, motion controls and all 20 compositor-only keyframes passed.');
+console.log('Seasonal UI fixture: midnight timer, validation, account isolation, concurrent tabs, motion controls and all 20 scene variants passed.');
