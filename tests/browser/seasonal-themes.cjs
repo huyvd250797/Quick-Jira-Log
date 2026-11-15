@@ -7,7 +7,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '../..');
-const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.webp': 'image/webp',
+const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.webp': 'image/webp', '.mp4': 'video/mp4',
   '.webmanifest': 'application/manifest+json' };
 const csp = require('../../vercel.json').headers[0].headers.find(header => header.key === 'Content-Security-Policy').value;
 let user = { username: 'boss-a', displayName: 'Boss A' };
@@ -94,11 +94,12 @@ async function start() {
       await page.locator('#seasonalAnnualEnd').fill('20/12');
       await save(page);
       assert.equal(await page.locator('html').getAttribute('data-seasonal'), 'birthday');
-      const motion = page.locator('#seasonalHomeScene .seasonal-scene-layer i').first();
-      assert.notEqual(await motion.evaluate(e => getComputedStyle(e).animationPlayState), 'paused');
+      const motion = page.locator('#seasonalHomeScene .seasonal-surface');
+      await motion.evaluate(canvas => canvas.scrollIntoView());
+      await page.waitForFunction(() => document.querySelector('#seasonalHomeScene canvas')?.classList.contains('is-ready'));
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.waitForFunction(() => !document.documentElement.hasAttribute('data-seasonal-motion'));
-      assert.equal(await motion.evaluate(e => getComputedStyle(e).animationPlayState), 'paused');
+      assert.equal(await motion.evaluate(e => getComputedStyle(e).visibility), 'hidden');
       await page.emulateMedia({ reducedMotion: 'no-preference' });
 
       await page.reload();
@@ -123,14 +124,18 @@ async function start() {
       const result = [];
       for (const id of await page.evaluate(() => QuickJiraSeasonal.ids)) {
         await page.locator('#seasonalTheme').selectOption(id);
-        await page.waitForFunction(theme => document.querySelector('#seasonalPreviewScene img')?.src.endsWith('/' + (theme === 'april' ? 'april-palace' : theme) + '.webp') && document.querySelector('#seasonalPreviewScene img').naturalWidth > 0, id);
+        await page.waitForFunction(theme => document.querySelector('#seasonalPreviewScene img')?.src.endsWith('/' + theme + '.webp') && document.querySelector('#seasonalPreviewScene img').naturalWidth > 0, id);
         for (const effect of ['0', '1']) {
           await page.locator('#seasonalEffect').selectOption(effect);
-          if (id === 'april') {
-            const flag = page.locator('#seasonalPreviewScene canvas');
-            await flag.scrollIntoViewIfNeeded();
-            const first = await flag.evaluate(canvas => canvas.toDataURL());
-            await page.waitForFunction(snapshot => document.querySelector('#seasonalPreviewScene canvas').toDataURL() !== snapshot, first);
+          if (['vacation', 'april', 'birthday', 'moon', 'halloween'].includes(id)) {
+            const canvas = page.locator('#seasonalPreviewScene canvas');
+            await canvas.evaluate(el => el.scrollIntoView({block: 'center'}));
+            await page.waitForFunction(() => document.querySelector('#seasonalPreviewScene canvas')?.classList.contains('is-ready'));
+            if (id === 'april') {
+              const first = await canvas.screenshot();
+              const second = await canvas.screenshot();
+              assert.notDeepEqual(first, second);
+            }
           } else {
             assert.equal(await page.locator('#seasonalPreviewScene .seasonal-scene-layer i').first().evaluate(e => getComputedStyle(e).animationPlayState), 'running');
           }
@@ -157,7 +162,7 @@ async function start() {
       // An installed PWA can load the theme engine, visuals and style offline.
       await page.waitForFunction(() => !!navigator.serviceWorker.controller);
       await context.setOffline(true);
-      for (const asset of ['/seasonal-themes.css', '/lib/seasonal-calendar.js', '/seasonal-scenes.js', '/seasonal-themes.js', '/seasonal-art/christmas.webp']) {
+      for (const asset of ['/seasonal-themes.css', '/lib/seasonal-calendar.js', '/seasonal-shader.js', '/seasonal-scenes.js', '/seasonal-themes.js', '/seasonal-art/christmas.webp']) {
         assert(await page.evaluate(async pathname => (await fetch(pathname)).ok, asset));
       }
       assert.deepEqual(errors, []);

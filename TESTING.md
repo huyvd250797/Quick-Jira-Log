@@ -1,3 +1,10 @@
+# Quick Jira Log V1.39.3 — Scene Motion Refinement
+
+- Bộ `npm test` kiểm tra lịch, ánh xạ 20 hiệu ứng, các lớp cánh hoa, dơi và tuyết, cũng như việc dừng và dọn renderer. Shader được biên dịch và dựng hai khung cho từng hiệu ứng GPU bằng Mesa OpenGL ES. Đã đối chiếu phần ảnh thay đổi với vùng quy định.
+- Các video H.264 dự phòng có 360 khung trong 6 giây, kiểm tra bằng FFprobe. Chromium bị chặn khi khởi động trong môi trường bàn giao, nên FPS thực tế trên Safari iPhone và khả năng tự phát trên từng thiết bị cần xác nhận sau khi deploy.
+
+---
+
 # Quick Jira Log V1.39.2 — Seasonal Motion & Entry Screens
 
 - `npm test` kiểm tra lịch, checkbox, lưu cấu hình, cảnh Giáng sinh trên màn tải và cấu trúc 20 biến thể. Kiểm thử Canvas mô phỏng khung hình, xác nhận vải đổi độ cong, mép cột cố định, dừng khi tắt hiệu ứng hoặc ẩn tab và dọn đối tượng đã gỡ.

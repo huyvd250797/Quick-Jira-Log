@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.3 — Scene Motion Refinement
+
+- Dựng hiệu ứng theo kết cấu tranh gốc với WebGL và các đoạn video dự phòng 60 khung hình/giây.
+- Tạo cánh có hình dáng và màu riêng cho hoa mai, hoa phượng và hoa hướng dương. Thêm dơi vỗ cánh. Giữ chuyển động tuyết Giáng sinh.
+- Giữ cấu hình lịch, hiệu ứng theo tài khoản và hỗ trợ Giảm chuyển động của hệ điều hành.
+
+---
+
 # Quick Jira Log V1.39.2 — Seasonal Motion & Entry Screens
 
 - Thay hiệu ứng đổi độ mờ của ảnh bằng vật thể chuyển động độc lập. Cờ 30/04 được vẽ theo từng dải vải biến dạng. Tuyết Giáng sinh rơi theo quỹ đạo riêng.

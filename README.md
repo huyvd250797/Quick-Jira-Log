@@ -1,3 +1,18 @@
+# Quick Jira Log V1.39.3 — Scene Motion Refinement
+
+- Tết, Khai giảng và 20/11 dùng hình cánh mai, cánh phượng đỏ và cánh hướng dương. Halloween có dơi vỗ cánh bay ngang, với ánh sáng thay đổi tại đúng hai mắt bí ngô.
+- Nghỉ mát, 30/04, Sinh nhật, Trung thu và Halloween dùng kết cấu từ chính tranh gốc. App biến dạng vùng bọt sóng, tàu dừa, cờ, lửa nến và đèn ông sao hoặc thay đổi độ sáng vùng được chọn. Từng bông tuyết Giáng sinh dùng hiệu ứng cũ.
+- Nếu WebGL không khả dụng, app thử phát video H.264 không tiếng, lặp 6 giây, 60 khung hình/giây. Video này tải khi cần từ máy chủ. Nếu trình duyệt chặn tự phát hoặc chưa tải được video, tranh tĩnh vẫn xuất hiện và hiệu ứng CSS của chủ đề tiếp tục chạy theo cài đặt.
+- Khung Xem trước và giao diện áp dụng dùng chung ảnh và hiệu ứng. Tắt chuyển động, bật Giảm chuyển động hoặc ẩn tab sẽ dừng việc dựng khung hình động.
+
+## Nâng cấp
+
+1. Dùng Node.js 24.x. Trong thư mục source, chạy `npm ci` và `npm test`.
+2. Tích hợp source vào nhánh deploy với cấu hình Vercel và biến môi trường hiện có. Giữ thư mục `seasonal-motion/` để máy chủ phục vụ video dự phòng. Khi mở lại PWA, bấm **Cập nhật**.
+3. Kiểm tra trong **Cài đặt → Giao diện → Cấu hình giao diện → Xem trước**. Kiểm tra V1.39.3 trên màn tải sau khi cập nhật. Không cần migration.
+
+---
+
 # Quick Jira Log V1.39.2 — Seasonal Motion & Entry Screens
 
 - Chủ đề tự áp dụng đúng lịch khi đã tích **Áp dụng chủ đề theo lịch**. Khi trùng lịch, app dùng thứ tự ưu tiên. Các khoảng ngày và checkbox lặp hằng năm từ bản cũ vẫn dùng được. Giá trị Chế độ áp dụng cũ không còn chi phối kết quả.

@@ -5,55 +5,96 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const strips = [];
-const gradient = { addColorStop() {} };
-const context2d = {
-  createLinearGradient: () => gradient,
-  fillRect() {}, beginPath() {}, lineTo() {}, closePath() {}, arc() {}, fill() {},
-  clearRect() { strips.length = 0; },
-  drawImage(...args) { strips.push(args.slice(1)); }
-};
-let motion = true;
-let next;
-const html = { hasAttribute: () => motion };
+const read = file => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
+let next, resize, elapsed, disposed;
+let enabled = true;
 const document = {
-  hidden: false, documentElement: html,
-  createElement: () => ({ getContext: () => context2d }),
+  hidden: false,
+  documentElement: { hasAttribute: () => enabled },
   getElementById: () => null,
   querySelector: () => null
 };
-const flag = { getContext: () => context2d, closest: () => null, isConnected: true };
+const image = { complete: true, naturalWidth: 960, addEventListener() {} };
+const canvas = { isConnected: true, clientWidth: 310, clientHeight: 110,
+  closest: () => null, classList: { add() {}, remove() {} }, addEventListener() {} };
+const container = { querySelector: name => name === 'img' ? image : canvas };
 const window = {};
-const browser = {
+const context = vm.createContext({
   window, document, requestAnimationFrame: callback => { next = callback; return 1; }
+});
+vm.runInContext(read('seasonal-shader.js'), context);
+const { kinds } = window.QuickJiraSeasonalShader;
+window.QuickJiraSeasonalShader.create = (surface, texture, theme, effect) => {
+  assert.equal(surface, canvas);
+  assert.equal(texture, image);
+  assert.equal(theme, 'april');
+  assert.equal(effect, 1);
+  return {
+    resize(w, h) { resize = [w, h]; },
+    draw(seconds) { elapsed = seconds; return true; },
+    dispose() { disposed = true; }
+  };
 };
-const source = fs.readFileSync(path.join(__dirname, '..', 'seasonal-scenes.js'), 'utf8');
-vm.runInNewContext(source, browser);
+vm.runInContext(read('seasonal-scenes.js'), context);
 const art = window.QuickJiraSeasonalScenes;
-const mount = { querySelector: () => flag };
-function tick(ms) { const callback = next; next = null; callback(ms); }
-art.mount(mount, 'april', 0);
-assert.equal(strips.length, 42);
-const initial = strips.map(strip => strip.slice());
+function tick(ms) { const run = next; next = null; run(ms); }
+art.mount(container, 'april', 1);
 tick(100);
-tick(116.67);
-assert.notDeepEqual(initial.at(-1), strips.at(-1));
-assert.deepEqual(initial[0], strips[0], 'Cloth remains pinned at the pole');
-motion = false;
-const stopped = strips.map(strip => strip.slice());
-tick(133.34);
-assert.deepEqual(strips, stopped);
+assert.deepEqual(resize, [310, 110]);
+tick(116.6667);
+assert(Math.abs(elapsed - 1 / 60) < .000001, 'The renderer receives time in seconds.');
+enabled = false;
+tick(133.3334);
 assert.equal(next, null);
-motion = true;
+assert(elapsed < .02);
+enabled = true;
 document.hidden = true;
 art.refresh();
 tick(150);
-assert.deepEqual(strips, stopped);
 assert.equal(next, null);
 document.hidden = false;
-flag.isConnected = false;
+canvas.isConnected = false;
 art.refresh();
 assert.equal(next, null);
+assert(disposed);
+assert.equal(Object.keys(kinds).length, 5);
+assert.match(art.scene('april', 0), /april\.webp/);
+assert.match(art.scene('birthday', 0), /data-seasonal-surface/);
+assert.match(art.scene('birthday', 1), /seasonal-confetti/);
+assert.match(art.scene('halloween', 0), /seasonal-bat-left/);
+assert.match(art.scene('halloween', 1), /seasonal-bat-right/);
 assert.match(art.scene('christmas', 0), /seasonal-snow/);
-assert.match(art.scene('christmas', 1), /seasonal-snow/);
-console.log('Flag canvas: true strip deformation, anchored pole edge, motion off, hidden-tab pause and unmount cleanup passed.');
+console.log('Seasonal motion: source artwork, frame timing, disabled and hidden playback, cleanup, candle and bat and snow layers passed.');
+
+// Simulate a browser with WebGL disabled and verify the media lifecycle.
+window.QuickJiraSeasonalShader.create = () => null;
+let played = 0;
+let unloaded = false;
+const video = {
+  paused: true,
+  setAttribute() {},
+  classList: { add() {}, remove() {} },
+  addEventListener() {},
+  play() { played += 1; this.paused = false; return Promise.resolve(); },
+  pause() { this.paused = true; },
+  removeAttribute(name) { assert.equal(name, 'src'); this.src = ''; },
+  load() { unloaded = true; }
+};
+document.createElement = name => { assert.equal(name, 'video'); return video; };
+canvas.after = attached => assert.equal(attached, video);
+canvas.isConnected = true;
+art.mount(container, 'april', 1);
+tick(200);
+assert.equal(video.src, '/seasonal-motion/april-1.mp4');
+assert.equal(played, 1);
+assert.equal(video.muted, true);
+assert.equal(video.playsInline, true);
+assert.equal(next, null, 'Media playback does not keep a JavaScript frame loop');
+enabled = false;
+art.refresh();
+tick(216.67);
+assert(video.paused);
+canvas.isConnected = false;
+art.refresh();
+assert(unloaded);
+console.log('Media fallback selects the matching 60 FPS loop, pauses and unloads it.');

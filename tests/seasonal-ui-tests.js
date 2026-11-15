@@ -51,6 +51,7 @@ const context = vm.createContext({window, document, Option: class Option {},
   getComputedStyle: () => ({getPropertyValue: () => '#091a36'}),
   setTimeout: (callback, delay) => { nextMidnight = {callback, delay}; },
   clearTimeout: () => { nextMidnight = null; }});
+vm.runInContext(read('seasonal-shader.js'), context);
 vm.runInContext(read('seasonal-scenes.js'), context);
 vm.runInContext(read('seasonal-themes.js'), context);
 const ui = window.QuickJiraSeasonalThemes;
@@ -173,16 +174,13 @@ for (const id of lib.ids) {
     const scene = window.QuickJiraSeasonalScenes.scene(id, effect);
     const layers = Array.from(scene.matchAll(/class="[^"]*seasonal-scene-layer[^"]* seasonal-([a-z]+)"/g), match => match[1]);
     assert.equal((scene.match(/<img /g) || []).length, 1, 'One backdrop per scene');
-    if (id === 'april') {
-      assert.match(scene, /april-palace\.webp/);
-      assert.match(scene, /<canvas .*data-seasonal-flag/);
-    } else {
-      assert.equal(layers.length, 1);
-      for (const layer of layers) assert(css.includes(`.seasonal-${layer} i`), layer);
-    }
+    if (window.QuickJiraSeasonalShader.kinds[id]) assert.match(scene, /<canvas .*data-seasonal-surface/);
+    else assert.equal(layers.length, 1);
+    for (const layer of layers) assert(css.includes(`.seasonal-${layer} i`), layer);
+    if (['tet', 'school', 'halloween', 'teachers'].includes(id)) assert.match(scene, /<svg.*<path/);
   }
 }
-const keyframes = css.slice(css.indexOf('@keyframes'), css.indexOf('@media'));
+const keyframes = [...css.matchAll(/@keyframes [^{]+\{((?:[^{}]|\{[^{}]*\})*)\}/g)].map(match => match[1]).join(' ');
 const animatedProperties = new Set(Array.from(keyframes.matchAll(/([a-z-]+):/g), match => match[1]));
 assert.deepEqual([...animatedProperties].sort(), ['opacity', 'transform']);
 assert(!index.includes('name="seasonalMode"'));

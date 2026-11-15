@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.3 — Scene Motion Refinement
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.3 | Hiệu ứng khớp ảnh gốc, cánh hoa và dơi, video chuyển động dự phòng | Đã xây dựng source |
+| V1.40.0 | Chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.2 — Seasonal Motion & Entry Screens
 
 | Phiên bản | Phạm vi | Trạng thái |
