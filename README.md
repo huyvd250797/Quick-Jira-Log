@@ -1,3 +1,21 @@
+# Quick Jira Log V1.39.1 — Seasonal Preview & Artwork
+
+- Mười chủ đề dùng minh họa có chiều sâu theo mẫu giao diện. Hình đầu trang và ảnh xem trước dùng chung tệp WebP. Chuyển động nằm trong một lớp riêng với transform/opacity và tôn trọng tùy chọn Giảm chuyển động. Giáng sinh dùng xanh dương và trắng.
+- Trong **Cài đặt → Giao diện → Cấu hình giao diện**, ảnh xem trước hiện ngay khi chọn chủ đề hoặc hiệu ứng. Nút **Xem trước** cuộn về khung ảnh để xem lại mà chưa cần lưu.
+- **Lịch mặc định** tự lặp hằng năm ở các dịp đã có sẵn lịch. **Ngày cụ thể** cho phép chọn khoảng ngày một lần. Bật **Lặp lại hằng năm** để nhập ngày/tháng, có thể nhập trùng hai mốc cho một ngày. Sinh nhật và Nghỉ mát tự nhập. Các thiết lập đã lưu từ V1.39.0 tương thích với các ô mới.
+
+## Nâng cấp
+
+1. Mở thư mục chứa `package.json` với Node.js 24.x rồi chạy `npm ci` và `npm test`.
+2. Tích hợp source vào nhánh triển khai hiện có. Vercel giữ cấu hình **Other**, Node.js 24.x, `vercel.json` và biến môi trường hiện có. Để chạy local với API Jira, đặt biến theo `.env.example` và chạy `vercel dev`.
+3. Sau khi deploy, bấm **Cập nhật** nếu PWA báo có phiên bản mới. Kiểm tra nhãn **V1.39.1** rồi thử đổi chủ đề, xem trước và chỉnh một lịch ngày cụ thể.
+4. Không cần chạy migration mới. Có thể redeploy V1.39.0 nếu cần quay về phiên bản trước.
+
+Bản kế tiếp đề xuất là **V1.40.0 — Tra cứu & Logwork**, chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả.
+
+---
+
+
 # Quick Jira Log V1.39.0 — Seasonal Themes
 
 Vào **⚙ Cài đặt → Giao diện → Cấu hình giao diện** sau khi đăng nhập Jira. Chọn **Theo lịch** để đổi chủ đề tự động, **Chọn thủ công** để áp dụng một chủ đề liên tục, hoặc **Mặc định** để trở về giao diện sáng/tối thông thường. Sáng/tối vẫn được chọn bằng nút hiện có. Trong cửa sổ cấu hình, mẫu xem trước cập nhật theo chủ đề và hiệu ứng đang chọn. Bấm **Lưu cài đặt** ở góc phải để áp dụng.

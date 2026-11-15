@@ -9,6 +9,8 @@ window.QuickJiraSeasonalThemes = (() => {
   const form = byId('seasonalForm');
   const picker = byId('seasonalTheme');
   const preview = byId('seasonalPreview');
+  const scheduleType = byId('seasonalScheduleType');
+  const annualRepeat = byId('seasonalRepeat');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const formatDay = value => value.split('-').reverse().join('/');
   const monthDay = value => /^\d{2}\/\d{2}$/.test(value) ? value.split('/').reverse().join('-') : '';
@@ -38,11 +40,12 @@ window.QuickJiraSeasonalThemes = (() => {
     const rule = saved.rules[id];
     const stamp = id ? `${id}:${rule.effect}` : '';
     if (stamp !== displayed) {
+      const themeChanged = !displayed.startsWith(id + ':');
       displayed = stamp;
       if (id) root.dataset.seasonal = id;
       else delete root.dataset.seasonal;
       byId('seasonalHomeScene').innerHTML = id ? art.scene(id, rule.effect) : '';
-      byId('seasonalTaskArt').innerHTML = id ? art.corner(id) : '';
+      if (themeChanged || !id) byId('seasonalTaskArt').innerHTML = id ? art.corner(id) : '';
       syncThemeColor();
     }
     root.toggleAttribute('data-seasonal-motion', !!rule?.motion && saved.motion && !reduced.matches && !document.hidden);
@@ -90,19 +93,22 @@ window.QuickJiraSeasonalThemes = (() => {
     byId('seasonalReduced').hidden = !reduced.matches;
   }
 
-  function renderScheduleFields(type) {
-    byId('seasonalAnnualFields').hidden = type !== 'annual';
-    byId('seasonalOnceFields').hidden = type !== 'once';
+  function renderScheduleFields() {
+    const specific = scheduleType.value === 'specific';
+    const repeat = annualRepeat.checked;
+    byId('seasonalRepeatRow').hidden = !specific;
+    byId('seasonalAnnualFields').hidden = !specific || !repeat;
+    byId('seasonalOnceFields').hidden = !specific || repeat;
     const theme = calendar.themes[editing];
     const hint = byId('seasonalScheduleHint');
-    if (type === 'annual') {
+    if (specific && repeat) {
       hint.textContent = 'Theo dương lịch. Để áp dụng một ngày, chọn cùng ngày ở cả hai ô.';
-    } else if (type === 'once') {
+    } else if (specific) {
       hint.textContent = 'Theo dương lịch, tính cả ngày bắt đầu và ngày kết thúc.';
     } else {
       const range = calendar.defaultRange(editing, Number(calendar.today().slice(0, 4)));
       const dateLabel = range && (range[0] === range[1] ? formatDay(range[0]) : range.map(formatDay).join(' – '));
-      hint.textContent = [theme.label, dateLabel].filter(Boolean).join(' · ') ||
+      hint.textContent = (range && [theme.label, dateLabel, 'Tự lặp hằng năm'].filter(Boolean).join(' · ')) ||
         (editing === 'birthday' ? 'Chưa đặt lịch sinh nhật cho tài khoản này.' : 'Chưa đặt lịch nghỉ mát.');
     }
   }
@@ -123,26 +129,26 @@ window.QuickJiraSeasonalThemes = (() => {
     const effect = byId('seasonalEffect');
     effect.replaceChildren(...calendar.themes[editing].effects.map((label, index) => new Option(label, String(index))));
     effect.value = rule.effect;
-    byId('seasonalScheduleType').value = schedule ? (schedule.repeat ? 'annual' : 'once') : 'default';
+    scheduleType.value = schedule ? 'specific' : 'default';
+    annualRepeat.checked = !!schedule?.repeat;
     const annual = (schedule?.repeat ? [schedule.start, schedule.end] : calendar.themes[editing].dates || []).map(formatDay);
     const once = schedule && !schedule.repeat ? [schedule.start, schedule.end] : [];
     byId('seasonalAnnualStart').value = annual[0] || '';
     byId('seasonalAnnualEnd').value = annual[1] || '';
     byId('seasonalOnceStart').value = once[0] || '';
     byId('seasonalOnceEnd').value = once[1] || '';
-    renderScheduleFields(byId('seasonalScheduleType').value);
+    renderScheduleFields();
     renderPriority();
     renderPreview();
     renderStatus();
   }
 
   function commitSchedule(silent = false) {
-    const type = byId('seasonalScheduleType').value;
-    if (type === 'default') {
+    if (scheduleType.value === 'default') {
       draft.rules[editing].schedule = null;
       return true;
     }
-    const repeat = type === 'annual';
+    const repeat = annualRepeat.checked;
     const start = byId(repeat ? 'seasonalAnnualStart' : 'seasonalOnceStart');
     const end = byId(repeat ? 'seasonalAnnualEnd' : 'seasonalOnceEnd');
     const value = { repeat, start: repeat ? monthDay(start.value.trim()) : start.value,
@@ -153,6 +159,36 @@ window.QuickJiraSeasonalThemes = (() => {
     }
     draft.rules[editing].schedule = value;
     return true;
+  }
+
+  function carryDateFields() {
+    const annualStart = byId('seasonalAnnualStart');
+    const annualEnd = byId('seasonalAnnualEnd');
+    const onceStart = byId('seasonalOnceStart');
+    const onceEnd = byId('seasonalOnceEnd');
+    if (annualRepeat.checked) {
+      if (onceStart.value) annualStart.value = formatDay(onceStart.value.slice(5));
+      if (onceEnd.value) annualEnd.value = formatDay(onceEnd.value.slice(5));
+      return;
+    }
+
+    const start = monthDay(annualStart.value.trim());
+    const end = monthDay(annualEnd.value.trim());
+    if (!calendar.validSchedule({ repeat: true, start, end })) return;
+    if (onceStart.value.slice(5) === start && onceEnd.value.slice(5) === end) return;
+    const today = calendar.today();
+    const currYear = Number(today.slice(0, 4));
+    const crossesYear = Number(end < start);
+    // Use the next valid occurrence, including any in-progress interval and leap day.
+    for (let year = currYear - crossesYear; year <= currYear + 8; year += 1) {
+      const range = { repeat: false, start: `${year}-${start}`, end: `${year + crossesYear}-${end}` };
+      if (range.end < today || !calendar.validSchedule(range)) continue;
+      onceStart.value = range.start;
+      onceEnd.value = range.end;
+      return;
+    }
+    onceStart.value = '';
+    onceEnd.value = '';
   }
 
   function movePriority(offset) {
@@ -203,14 +239,19 @@ window.QuickJiraSeasonalThemes = (() => {
     if (input.id === 'seasonalEnabled') draft.rules[editing].enabled = input.checked;
     if (input.id === 'seasonalRuleMotion') draft.rules[editing].motion = input.checked;
     if (input.id === 'seasonalEffect') draft.rules[editing].effect = Number(input.value);
-    if (input.id === 'seasonalScheduleType') renderScheduleFields(input.value);
     if (input === picker) return;
-    if (input.closest('.seasonal-date-fields') || input.id === 'seasonalScheduleType') {
+    if (input === annualRepeat) carryDateFields();
+    if (input === scheduleType || input === annualRepeat) renderScheduleFields();
+    if (input.closest('.seasonal-date-fields') || input === scheduleType || input === annualRepeat) {
       if (!commitSchedule(true)) return;
     }
     announceError();
     renderPreview();
     renderStatus();
+  });
+
+  byId('seasonalShowPreviewBtn').addEventListener('click', () => {
+    byId('seasonalPreviewHeading').scrollIntoView({ block: 'start', behavior: reduced.matches ? 'instant' : 'smooth' });
   });
 
   byId('seasonalUp').addEventListener('click', () => movePriority(-1));

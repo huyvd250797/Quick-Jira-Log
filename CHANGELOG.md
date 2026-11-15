@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.1 — Seasonal Preview & Artwork
+
+- Thay minh họa 10 chủ đề bằng bộ tranh có chiều sâu nén WebP, chia lớp chuyển động và đóng gói trong cache PWA.
+- Khung xem trước có chiều cao tối thiểu, cuộn cùng nội dung cấu hình và cập nhật theo chủ đề đang chỉnh.
+- Rút lịch còn Lịch mặc định và Ngày cụ thể. Checkbox Lặp lại hằng năm chỉ hiện khi chọn Ngày cụ thể. Dữ liệu lịch V1.39.0 tương thích trực tiếp.
+
+---
+
 # Quick Jira Log V1.39.0 — Seasonal Themes
 
 - Thêm Cấu hình giao diện với 10 chủ đề theo mockup. Cảnh đầu trang dùng SVG theo từng chủ đề, khối Sub-task trống có điểm nhấn ở góc. Giáng sinh dùng xanh dương và trắng.

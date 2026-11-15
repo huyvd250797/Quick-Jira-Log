@@ -66,69 +66,92 @@ html[data-seasonal] #filterEmpty { position: relative; min-height: 60px; padding
   pointer-events: none;
   text-align: right;
 }
-#seasonalTaskArt svg { display: block; width: 100%; height: auto; }
+#seasonalTaskArt img {
+  display: block;
+  width: 100%;
+  height: 37px;
+  object-fit: cover;
+  object-position: right center;
+  mask-image: radial-gradient(ellipse at right bottom, #000 5%, transparent 69%);
+}
 html:not([data-seasonal]) #seasonalTaskArt { display: none; }
 
 .seasonal-scene {
   position: absolute;
-  width: min(63%, 284px);
-  height: auto;
-  aspect-ratio: 300 / 112;
-  top: 0;
-  right: 0;
+  inset: 0 0 0 auto;
+  width: min(64%, 440px);
   overflow: hidden;
   contain: layout paint;
   pointer-events: none;
+  border-radius: inherit;
 }
-#seasonalHomeScene { z-index: -1; }
-.seasonal-scene svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.seasonal-scene-layer { animation-duration: var(--duration, 4.5s); animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+#seasonalHomeScene {
+  z-index: -1;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
+}
+.seasonal-scene .seasonal-photo, .seasonal-scene-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.seasonal-photo { display: block; object-fit: cover; object-position: right center; }
+.seasonal-scene-layer { visibility: hidden; animation: var(--motion, none) var(--duration, 5s) ease-in-out infinite; animation-name: none; }
 html[data-seasonal-motion] #seasonalHomeScene .seasonal-scene-layer,
-#seasonalPreview[data-seasonal-motion] .seasonal-scene-layer { animation-name: var(--motion, none); }
+#seasonalPreview[data-seasonal-motion] .seasonal-scene-layer { visibility: visible; animation-name: var(--motion, none); }
 body:has(dialog[open], .settings-overlay[aria-hidden="false"]) #seasonalHomeScene .seasonal-scene-layer { animation-play-state: paused; }
-.seasonal-petal-a { --motion: season-drift; --duration: 5.6s; --dx: -13px; --dy: 25px; }
-.seasonal-petal-b { --motion: season-drift; --duration: 6.3s; --dx: -17px; --dy: 26px; animation-delay: -.9s; }
-.seasonal-petal-c { --motion: season-drift; --duration: 7.2s; --dx: -8px; --dy: 27px; animation-delay: -3.4s; }
-.seasonal-snow-a { --motion: season-drift; --duration: 6.7s; --dx: 5px; --dy: 31px; }
-.seasonal-snow-b { --motion: season-drift; --duration: 8s; --dx: -5px; --dy: 26px; animation-delay: -2s; }
-.seasonal-leaf { --motion: season-drift; --duration: 6.5s; --dx: -17px; --dy: 32px; }
-.seasonal-sway-branch { --motion: season-sway; --angle: 3deg; transform-origin: 49% 13%; }
-.seasonal-sway-palm { --motion: season-sway; --angle: 5deg; transform-origin: 85% 24%; }
-.seasonal-sway-flag { --motion: season-flag; transform-origin: 41% 16%; --duration: 3.6s; }
-.seasonal-sway-lantern { --motion: season-sway; --angle: 8deg; transform-origin: 84% 4%; }
-.seasonal-shore { --motion: season-shore; --duration: 4.8s; }
-.seasonal-soar { --motion: season-float; --dx: -8px; --dy: -4px; --duration: 5.1s; }
-.seasonal-cloud { --motion: season-float; --dx: 22px; --dy: -4px; --duration: 8s; opacity: .8; }
-.seasonal-mist { --motion: season-float; --dx: -17px; --dy: -1px; --duration: 9s; opacity: .45; }
-.seasonal-bubble-a { --motion: season-drift; --dx: -4px; --dy: -25px; --duration: 5.5s; }
-.seasonal-bubble-b { --motion: season-drift; --dx: 2px; --dy: -29px; --duration: 6.5s; animation-delay: -2s; }
-.seasonal-confetti { --motion: season-confetti; --duration: 1.8s; animation-iteration-count: 1; animation-fill-mode: forwards; }
-.seasonal-flame { --motion: season-flame; --duration: 1.9s; transform-origin: 75% 29%; }
-.seasonal-flame-pumpkin { --motion: season-lamp; --duration: 3.8s; }
-.seasonal-glimmer { --motion: season-glimmer; --dx: 26px; --dy: 1px; opacity: .12; }
-.seasonal-letter-glimmer { --motion: season-glimmer; --dx: 53px; --dy: -5px; opacity: .11; --duration: 5.3s; }
-.seasonal-page { --motion: season-page; --duration: 6s; transform-origin: 69% 59%; }
-.seasonal-lamp-a { --motion: season-lamp; --duration: 3.8s; }
-.seasonal-lamp-b { --motion: season-lamp; --duration: 3.8s; animation-delay: -1.9s; }
-
-@keyframes season-drift { 0%, 100% { transform: translate(0, 0); opacity: 0; } 24% { opacity: .75; } 84% { opacity: .32; } 99% { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
-@keyframes season-sway { 0%, 100% { transform: rotate(calc(-.35 * var(--angle))); } 50% { transform: rotate(var(--angle)); } }
-@keyframes season-flag { 0%, 100% { transform: skewY(-1.2deg) scaleY(.98); } 50% { transform: skewY(2deg) scaleY(1.04); } }
-@keyframes season-shore { 0%, 100% { transform: translateY(-3px); opacity: .35; } 50% { transform: translateY(4px); opacity: .9; } }
-@keyframes season-float { 50% { transform: translate(var(--dx), var(--dy)); } }
-@keyframes season-confetti { from { transform: translateY(10px) scale(.98); opacity: 0; } 30% { opacity: .9; } to { transform: translateY(-12px) scale(1.04); opacity: 0; } }
-@keyframes season-flame { 35% { transform: skewX(5deg) scale(.86, 1.13); opacity: .8; } 70% { transform: skewX(-5deg) scale(1.1, .87); opacity: .96; } }
-@keyframes season-lamp { 50% { opacity: .61; } }
-@keyframes season-glimmer { 0%, 100% { opacity: 0; } 55% { opacity: .19; } 95% { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
-@keyframes season-page { 0%, 72%, 100% { transform: scaleX(1); opacity: .65; } 87% { transform: scaleX(.2) skewY(-16deg); opacity: .95; } }
+.seasonal-scene-layer.seasonal-photo, .seasonal-wash {
+  mask-image: radial-gradient(ellipse var(--fx-width, 24%) var(--fx-height, 42%) at var(--fx-x, 76%) var(--fx-y, 51%), #000 19%, transparent 94%);
+}
+[data-seasonal="tet"] { --fx-x: 72%; --fx-y: 34%; }
+[data-seasonal="vacation"] { --fx-x: 84%; --fx-y: 45%; }
+[data-seasonal="april"] { --fx-x: 62%; --fx-y: 32%; }
+[data-seasonal="children"] { --fx-x: 71%; --fx-y: 42%; }
+[data-seasonal="birthday"] { --fx-x: 76%; --fx-y: 26%; --fx-width: 10%; --fx-height: 28%; }
+[data-seasonal="moon"] { --fx-x: 82%; }
+[data-seasonal="school"] { --fx-x: 69%; --fx-y: 60%; }
+[data-seasonal="halloween"] { --fx-x: 78%; --fx-y: 59%; }
+[data-seasonal="teachers"] { --fx-x: 69%; --fx-y: 57%; }
+[data-seasonal="christmas"] { --fx-x: 76%; --fx-y: 45%; --fx-width: 41%; }
+.seasonal-sway { --motion: season-sway; }
+.seasonal-shore { --motion: season-shore; --fx-y: 74%; --fx-width: 45%; }
+.seasonal-page { --motion: season-page; --duration: 8s; }
+.seasonal-glimmer { --motion: season-glimmer; --duration: 2.9s; background: #ffedbb; }
+[data-seasonal="christmas"] .seasonal-glimmer { background: #d7ecff; }
+.seasonal-mist { --motion: season-mist; --duration: 9s; --fx-y: 73%; --fx-width: 48%; background: #bac0de; }
+.seasonal-particles { --motion: season-drift; --dx: 5px; --dy: 18px; }
+.seasonal-particles i {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  background: #fff4b0;
+  border-radius: 65% 30% 65% 40%;
+}
+.seasonal-petals { --duration: 6.6s; --dx: -7px; }
+.seasonal-leaves { --duration: 7.2s; --dx: -12px; }
+.seasonal-leaves i { background: #dcb168; }
+.seasonal-snow { --duration: 8s; --dy: 27px; }
+.seasonal-snow i { border-radius: 50%; background: #fff; }
+.seasonal-bubbles { --dy: -21px; --duration: 6s; }
+.seasonal-bubbles i { border-radius: 50%; border: 1px solid #bcefff; background: transparent; }
+.seasonal-confetti { --motion: season-drift; --duration: 1.8s; --dy: -13px; animation-iteration-count: 1; animation-fill-mode: forwards; }
+.seasonal-confetti i:nth-child(even) { background: #ed9bbc; }
+@keyframes season-sway { 0%, 100% { opacity: 0; } 50% { opacity: .65; transform: translate(3px, -1px) rotate(1deg); } }
+@keyframes season-shore { 0%, 100% { opacity: 0; } 50% { opacity: .65; transform: translate(-3px, 4px); } }
+@keyframes season-glimmer { 0%, 100% { opacity: .08; } 38% { opacity: .33; transform: scale(1.02); } 73% { opacity: .16; } }
+@keyframes season-mist { 0%, 100% { opacity: 0; } 50% { opacity: .28; transform: translateX(-7px); } }
+@keyframes season-page { 0%, 70%, 100% { opacity: 0; } 82% { opacity: .48; transform: skewY(-1.4deg) translateX(4px); } }
+@keyframes season-drift { 0%, 100% { opacity: 0; } 25% { opacity: .82; } 99% { opacity: 0; transform: translate(var(--dx), var(--dy)); } }
 
 @media (prefers-reduced-motion: reduce) {
   html[data-seasonal-motion] #seasonalHomeScene .seasonal-scene-layer,
-  #seasonalPreview[data-seasonal-motion] .seasonal-scene-layer { animation-name: none; }
+  #seasonalPreview[data-seasonal-motion] .seasonal-scene-layer { visibility: hidden; animation-name: none; }
 }
 @media (max-width: 480px) {
   html[data-theme][data-seasonal] .brand { padding-top: 56px; }
-  #seasonalHomeScene { width: min(66%, 247px); }
+  #seasonalHomeScene { width: min(83%, 325px); }
 }
 #seasonalOpenBtn { width: 100%; margin-top: 9px; }
 #seasonalDialog {
@@ -151,7 +174,7 @@ body:has(dialog[open], .settings-overlay[aria-hidden="false"]) #seasonalHomeScen
 .seasonal-dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 1px solid var(--line); }
 .seasonal-dialog-head h2 { margin: 0; font-size: 1.16rem; }
 #seasonalAccount { margin: 2px 0 0; color: var(--muted); font-size: .83rem; overflow-wrap: anywhere; }
-.seasonal-settings-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 12px 16px; touch-action: pan-y; display: grid; gap: 10px; }
+.seasonal-settings-scroll { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 12px 16px; touch-action: pan-y; display: flex; flex-direction: column; gap: 10px; }
 .seasonal-dialog-footer { border-top: 1px solid var(--line); }
 .seasonal-dialog-footer > div { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
 #seasonalDialog p { margin: 0; }
@@ -170,21 +193,26 @@ body:has(dialog[open], .settings-overlay[aria-hidden="false"]) #seasonalHomeScen
 #seasonalDialog .seasonal-check { display: flex; align-items: center; gap: 8px; margin: 0; min-height: 44px; cursor: pointer; }
 #seasonalDialog .seasonal-check input { padding: 0; margin: 0; width: 18px; height: 18px; accent-color: var(--action-primary); flex: none; }
 #seasonalCurrent, #seasonalScheduleHint, #seasonalReduced { color: var(--muted); font-size: .83rem; }
+.seasonal-effect-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.seasonal-effect-row button { min-height: 42px; }
 .seasonal-rule { display: grid; gap: 7px; }
 .seasonal-picker-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
 .seasonal-date-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .seasonal-priority { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--muted); font-size: .85rem; }
 .seasonal-priority button { min-width: 44px; min-height: 44px; }
+.seasonal-settings-scroll > * { flex-shrink: 0; }
+#seasonalPreviewHeading { scroll-margin-block-start: 8px; margin: 0 0 6px; font-size: .83rem; color: var(--muted); }
 #seasonalPreview {
+  min-block-size: 156px;
   border: 1px solid var(--season-line);
   border-radius: 12px;
   overflow: hidden;
   background: var(--season-bg);
   color: var(--season-text);
 }
-.seasonal-preview-hero { isolation: isolate; position: relative; min-height: 92px; display: flex; align-items: end; padding: 12px; }
-.seasonal-preview-hero .seasonal-scene { z-index: -1; }
-.seasonal-preview-hero strong { background: var(--season-bg); border-radius: 5px; padding: 4px; }
+.seasonal-preview-hero { isolation: isolate; position: relative; min-height: clamp(112px, 30vw, 153px); display: flex; align-items: end; padding: 12px; }
+.seasonal-preview-hero .seasonal-scene { z-index: -1; width: 100%; }
+.seasonal-preview-hero strong { background: var(--season-bg); border-radius: 6px; padding: 4px 8px; }
 .seasonal-preview-metric { margin: 0 12px 10px; padding: 7px 10px; background: var(--season-card); border: 1px solid var(--season-line); border-radius: 8px; }
 .seasonal-preview-metric :is(b, span) { font-variant-numeric: tabular-nums; }
 .seasonal-preview-metric i { display: block; height: 4px; margin-top: 4px; background: var(--season-accent); border-radius: 5px; }

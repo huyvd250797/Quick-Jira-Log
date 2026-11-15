@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.1 — Seasonal Preview & Artwork
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.1 | Minh họa 10 chủ đề, sửa xem trước trên màn nhỏ và đơn giản hóa lịch | Đã xây dựng source |
+| V1.40.0 | Tra cứu & Logwork, chọn nhiều Subtask từ Tra cứu và đưa vào Log tất cả | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.0 — Seasonal Themes
 
 | Phiên bản | Mục tiêu | Phạm vi | Điều kiện kiểm tra | Trạng thái |

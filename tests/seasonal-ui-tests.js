@@ -71,22 +71,40 @@ nextMidnight.callback();
 assert.equal(html.dataset.seasonal, 'christmas');
 assert(html.attributes.has('data-seasonal-motion'));
 assert(get('seasonalHomeScene').innerHTML.includes('seasonal-snow'));
-assert(get('seasonalTaskArt').innerHTML.includes('<svg'));
+assert(get('seasonalTaskArt').innerHTML.includes('/seasonal-art/christmas.webp'));
 
 get('seasonalOpenBtn').fire('click');
 assert.equal(get('seasonalAccount').textContent, 'Account A');
 change('seasonalTheme', 'birthday');
-change('seasonalScheduleType', 'annual');
+assert.equal(get('seasonalRepeatRow').hidden, true);
+change('seasonalScheduleType', 'specific');
+assert.equal(get('seasonalRepeatRow').hidden, false);
+assert.equal(get('seasonalOnceFields').hidden, false);
+change('seasonalRepeat', true, 'checked');
+assert.equal(get('seasonalAnnualFields').hidden, false);
+assert.equal(get('seasonalOnceFields').hidden, true);
 form.fire('submit');
 assert.equal(get('seasonalError').hidden, false);
 assert(get('seasonalAnnualStart').focused);
 change('seasonalAnnualStart', '20/12');
 change('seasonalAnnualEnd', '20/12');
+change('seasonalRepeat', false, 'checked');
+assert.equal(get('seasonalOnceStart').value, '2026-12-20');
+assert.equal(get('seasonalOnceEnd').value, '2026-12-20');
+change('seasonalRepeat', true, 'checked');
 change('seasonalRuleMotion', false, 'checked');
 assert(!get('seasonalPreview').attributes.has('data-seasonal-motion'));
 assert(html.attributes.has('data-seasonal-motion'));
 form.fire('submit');
 assert.equal(get('seasonalDialog').open, false);
+get('seasonalOpenBtn').fire('click');
+assert.equal(get('seasonalScheduleType').value, 'specific');
+assert.equal(get('seasonalRepeat').checked, true);
+assert.equal(get('seasonalAnnualStart').value, '20/12');
+change('seasonalScheduleType', 'default');
+assert.equal(get('seasonalRepeatRow').hidden, true);
+assert.equal(get('seasonalAnnualFields').hidden, true);
+get('seasonalCancel').fire('click');
 assert.equal(html.dataset.seasonal, 'birthday');
 assert(!html.attributes.has('data-seasonal-motion'));
 assert.deepEqual(JSON.parse(map.get(lib.accountKey({username: 'a'}))).rules.birthday.schedule, {
@@ -128,12 +146,33 @@ ui.setAccount(null);
 assert.equal(html.dataset.seasonal, undefined);
 assert.equal(get('seasonalHomeScene').innerHTML, '');
 
+// A V1.39.0 one-time range opens as specific and keeps its exact dates.
+const priorKey = lib.accountKey({username: 'prior'});
+map.set(priorKey, JSON.stringify({rules: {vacation: {schedule: {
+  repeat: false, start: '2026-12-21', end: '2026-12-23'
+}}}}));
+ui.setAccount({username: 'prior'});
+get('seasonalOpenBtn').fire('click');
+change('seasonalTheme', 'vacation');
+assert.equal(get('seasonalScheduleType').value, 'specific');
+assert.equal(get('seasonalRepeat').checked, false);
+assert.equal(get('seasonalOnceStart').value, '2026-12-21');
+change('seasonalRepeat', true, 'checked');
+assert.equal(get('seasonalAnnualStart').value, '21/12');
+change('seasonalRepeat', false, 'checked');
+form.fire('submit');
+assert.deepEqual(JSON.parse(map.get(priorKey)).rules.vacation.schedule, {
+  repeat: false, start: '2026-12-21', end: '2026-12-23'
+});
+
 const css = read('seasonal-themes.css');
 for (const id of lib.ids) {
   assert(css.includes(`[data-seasonal="${id}"]`));
+  const file = fs.readFileSync(path.join(root, "seasonal-art", id + ".webp"));
+  assert.equal(file.toString("ascii", 8, 12), "WEBP");
   for (const effect of [0, 1]) {
     const scene = window.QuickJiraSeasonalScenes.scene(id, effect);
-    const layers = Array.from(scene.matchAll(/class="seasonal-scene-layer seasonal-([^"]+)"/g), match => match[1]);
+    const layers = Array.from(scene.matchAll(/class="[^"]*seasonal-scene-layer[^"]* seasonal-([a-z]+)"/g), match => match[1]);
     assert(layers.length >= 1 && layers.length <= 3);
     for (const layer of layers) assert(css.includes(`.seasonal-${layer} {`), layer);
   }
@@ -141,4 +180,6 @@ for (const id of lib.ids) {
 const keyframes = css.slice(css.indexOf('@keyframes'), css.indexOf('@media'));
 const animatedProperties = new Set(Array.from(keyframes.matchAll(/([a-z-]+):/g), match => match[1]));
 assert.deepEqual([...animatedProperties].sort(), ['opacity', 'transform']);
+assert.match(css, /#seasonalPreview\s*\{\s*min-block-size:/);
+assert.match(css, /\.seasonal-settings-scroll > \*\s*\{\s*flex-shrink: 0/);
 console.log('Seasonal UI fixture: midnight timer, validation, account isolation, concurrent tabs, motion controls and all 20 compositor-only keyframes passed.');

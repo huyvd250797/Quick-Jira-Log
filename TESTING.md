@@ -1,3 +1,10 @@
+# Quick Jira Log V1.39.1 — Seasonal Preview & Artwork
+
+- Kiểm tra tự động chế độ lịch mặc định, lịch một lần, lịch lặp, chuyển đổi ô ngày, dữ liệu đã lưu, tách tài khoản và tài nguyên WebP bằng `npm test`.
+- Bộ Playwright kiểm tra khung xem trước tối thiểu 156 px trên các kích thước màn hình, ảnh tải thành công, lịch và cache PWA. Môi trường này chặn Chromium tại lệnh mở socket khi khởi động. Cần nghiệm thu hiển thị, cuộn cảm ứng và độ mượt trên Safari iPhone sau khi deploy.
+
+---
+
 # Quick Jira Log V1.39.0 — Seasonal Themes
 
 - `npm run test:seasonal-ui` chạy Playwright với API Jira giả lập. Dùng `QJL_CHROMIUM_PATH` nếu đã có Chromium. Có thể cài riêng công cụ kiểm thử bằng `npm install --no-save --package-lock=false playwright` và `npx playwright install chromium`. Chromium trong môi trường bàn giao bị chặn ngay khi mở socket, nên bộ kiểm thử hiển thị, thao tác và cache bằng trình duyệt chưa chạy được tại đây.

@@ -7,7 +7,7 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '../..');
-const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png',
+const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.webp': 'image/webp',
   '.webmanifest': 'application/manifest+json' };
 const csp = require('../../vercel.json').headers[0].headers.find(header => header.key === 'Content-Security-Policy').value;
 let user = { username: 'boss-a', displayName: 'Boss A' };
@@ -66,6 +66,10 @@ async function start() {
       await open(page);
       assert.equal(await page.locator('#seasonalTheme').inputValue(), 'christmas');
       assert.equal(await page.locator('#seasonalAccount').textContent(), 'Boss A');
+      await page.waitForFunction(() => document.querySelector('#seasonalPreviewScene img')?.naturalWidth > 0);
+      assert((await page.locator('#seasonalPreview').boundingBox()).height >= 156, 'Preview must not shrink');
+      assert.equal(await page.locator('#seasonalScheduleType option').count(), 2);
+      assert(await page.locator('#seasonalRepeatRow').isHidden());
       assert(await page.locator('#seasonalDialog').evaluate(dialog => {
         const box = dialog.getBoundingClientRect();
         const scroll = dialog.querySelector('.seasonal-settings-scroll');
@@ -82,7 +86,8 @@ async function start() {
         continue;
       }
       await page.locator('#seasonalTheme').selectOption('birthday');
-      await page.locator('#seasonalScheduleType').selectOption('annual');
+      await page.locator('#seasonalScheduleType').selectOption('specific');
+      await page.locator('#seasonalRepeat').check();
       await page.getByRole('button', {name: 'Lưu cài đặt'}).click();
       assert(await page.locator('#seasonalError').isVisible());
       await page.locator('#seasonalAnnualStart').fill('20/12');
@@ -118,7 +123,7 @@ async function start() {
       const result = [];
       for (const id of await page.evaluate(() => QuickJiraSeasonal.ids)) {
         await page.locator('#seasonalTheme').selectOption(id);
-        assert(await page.locator('#seasonalPreviewScene svg').count() >= 2);
+        await page.waitForFunction(theme => document.querySelector('#seasonalPreviewScene img')?.src.endsWith('/' + theme + '.webp') && document.querySelector('#seasonalPreviewScene img').naturalWidth > 0, id);
         for (const effect of ['0', '1']) {
           await page.locator('#seasonalEffect').selectOption(effect);
           assert.notEqual(await page.locator('#seasonalPreviewScene .seasonal-scene-layer').first().evaluate(e => getComputedStyle(e).animationName), 'none');
@@ -139,7 +144,7 @@ async function start() {
       // An installed PWA can load the theme engine, visuals and style offline.
       await page.waitForFunction(() => !!navigator.serviceWorker.controller);
       await context.setOffline(true);
-      for (const asset of ['/seasonal-themes.css', '/lib/seasonal-calendar.js', '/seasonal-scenes.js', '/seasonal-themes.js']) {
+      for (const asset of ['/seasonal-themes.css', '/lib/seasonal-calendar.js', '/seasonal-scenes.js', '/seasonal-themes.js', '/seasonal-art/christmas.webp']) {
         assert(await page.evaluate(async pathname => (await fetch(pathname)).ok, asset));
       }
       assert.deepEqual(errors, []);
