@@ -1,27 +1,35 @@
 /* Seasonal colors are independent of the semantic Jira status palette. */
-[data-seasonal="tet"] { --season-dark: #210f16; --season-deep: #341720; --season-light: #fff7f5; --season-pale: #fffdfc; --season-bright: #ffd07f; --season-ink: #8c3441; }
-[data-seasonal="vacation"] { --season-dark: #081d24; --season-deep: #102d36; --season-light: #edfafa; --season-pale: #fcffff; --season-bright: #83e5d4; --season-ink: #14685d; }
-[data-seasonal="april"] { --season-dark: #240e13; --season-deep: #3a1720; --season-light: #fdf2ee; --season-pale: #fffaf8; --season-bright: #f6c781; --season-ink: #993645; }
-[data-seasonal="children"] { --season-dark: #121a34; --season-deep: #1b2947; --season-light: #eff6ff; --season-pale: #fbfdff; --season-bright: #a3e6dc; --season-ink: #315d96; }
-[data-seasonal="birthday"] { --season-dark: #211326; --season-deep: #352039; --season-light: #faf1fa; --season-pale: #fffaff; --season-bright: #efb7dc; --season-ink: #843b75; }
-[data-seasonal="moon"] { --season-dark: #14172e; --season-deep: #212543; --season-light: #f3f3fc; --season-pale: #fdfcff; --season-bright: #f6cb87; --season-ink: #61518b; }
-[data-seasonal="school"] { --season-dark: #0b201f; --season-deep: #163230; --season-light: #edf8f3; --season-pale: #fbfff9; --season-bright: #a9e0cf; --season-ink: #2c6662; }
-[data-seasonal="halloween"] { --season-dark: #1b1527; --season-deep: #2b213d; --season-light: #f8f2fc; --season-pale: #fffbff; --season-bright: #ffc18b; --season-ink: #843e1e; }
-[data-seasonal="teachers"] { --season-dark: #241710; --season-deep: #38251e; --season-light: #fbf4ea; --season-pale: #fffdf7; --season-bright: #f6cf9b; --season-ink: #874a35; }
-[data-seasonal="christmas"] { --season-dark: #091a36; --season-deep: #132a49; --season-light: #eef6ff; --season-pale: #fcfeff; --season-bright: #c0e8ff; --season-ink: #235b92; }
+[data-seasonal="tet"] { --season-dark: #210f16; --season-deep: #341720; --season-light: #f0c3b2; --season-pale: #ffdfc5; --season-bright: #ffd07f; --season-ink: #852433; --season-row-light: #f7cbb3; --season-hover-light: #e9ac91; }
+[data-seasonal="vacation"] { --season-dark: #081d24; --season-deep: #102d36; --season-light: #aeded9; --season-pale: #cef0e7; --season-bright: #83e5d4; --season-ink: #155a58; --season-row-light: #b9e6dd; --season-hover-light: #92d2c6; }
+[data-seasonal="april"] { --season-dark: #240e13; --season-deep: #3a1720; --season-light: #ebc2b3; --season-pale: #ffdfc8; --season-bright: #f6c781; --season-ink: #7e2435; --season-row-light: #f3c8b3; --season-hover-light: #e5a58f; }
+[data-seasonal="children"] { --season-dark: #121a34; --season-deep: #1b2947; --season-light: #c1daf0; --season-pale: #dae9fb; --season-bright: #a3e6dc; --season-ink: #284e85; --season-row-light: #c8def3; --season-hover-light: #a9cde8; }
+[data-seasonal="birthday"] { --season-dark: #211326; --season-deep: #352039; --season-light: #e8c4dc; --season-pale: #f6daec; --season-bright: #efb7dc; --season-ink: #712b5f; --season-row-light: #edc7e1; --season-hover-light: #dfaaca; }
+[data-seasonal="moon"] { --season-dark: #14172e; --season-deep: #212543; --season-light: #cecaeb; --season-pale: #e4dafa; --season-bright: #f6cb87; --season-ink: #503d77; --season-row-light: #d8ceef; --season-hover-light: #bfb0df; }
+[data-seasonal="school"] { --season-dark: #0b201f; --season-deep: #163230; --season-light: #bcd9c2; --season-pale: #dcebd0; --season-bright: #a9e0cf; --season-ink: #2e5741; --season-row-light: #c6dfbf; --season-hover-light: #aacda8; }
+[data-seasonal="halloween"] { --season-dark: #1b1527; --season-deep: #2b213d; --season-light: #dcc7e9; --season-pale: #eddbf4; --season-bright: #ffc18b; --season-ink: #5c396c; --season-row-light: #e1c9ee; --season-hover-light: #ceb0e0; }
+[data-seasonal="teachers"] { --season-dark: #241710; --season-deep: #38251e; --season-light: #ead0a4; --season-pale: #f7e3bc; --season-bright: #f6cf9b; --season-ink: #6f422c; --season-row-light: #f0d4a5; --season-hover-light: #dfbc83; }
+[data-seasonal="christmas"] { --season-dark: #091a36; --season-deep: #132a49; --season-light: #bfdced; --season-pale: #dceef8; --season-bright: #c0e8ff; --season-ink: #22527d; --season-row-light: #c6e1f1; --season-hover-light: #a3cce5; }
 
 [data-seasonal] {
   --season-bg: var(--season-light);
   --season-card: var(--season-pale);
-  --season-text: #1b2535;
+  --season-text: #242535;
+  --season-muted: #383e4f;
+  --season-row: var(--season-row-light);
+  --season-hover: var(--season-hover-light);
+  --season-scheme: light;
   --season-accent: var(--season-ink);
   --season-line: color-mix(in srgb, var(--season-ink) 22%, var(--season-card));
   --season-tint: color-mix(in srgb, var(--season-ink) 12%, var(--season-card));
 }
-html[data-seasonal] {
+html[data-theme="dark"][data-seasonal] {
   --season-bg: var(--season-dark);
   --season-card: var(--season-deep);
   --season-text: #f4f5fb;
+  --season-muted: #b4c3d8;
+  --season-row: color-mix(in srgb, var(--season-deep) 86%, var(--season-bright));
+  --season-hover: color-mix(in srgb, var(--season-deep) 76%, var(--season-bright));
+  --season-scheme: dark;
   --season-accent: var(--season-bright);
   --season-line: color-mix(in srgb, var(--season-bright) 23%, var(--season-card));
   --season-tint: color-mix(in srgb, var(--season-bright) 16%, var(--season-card));
@@ -30,10 +38,10 @@ html[data-seasonal] {
 html[data-theme][data-seasonal],
 html[data-theme][data-seasonal] body { background: var(--season-bg); }
 html[data-theme][data-seasonal] :is(#statusCard, #filterCard, #dashboardCard, #mobileTaskbar, .brand, #loginCard, #bootSplash) {
-  color-scheme: dark;
+  color-scheme: var(--season-scheme);
   color: var(--season-text);
   --text: var(--season-text);
-  --muted: #b4c3d8;
+  --muted: var(--season-muted);
   --qjl-surface: var(--season-bg);
   --primary: var(--season-accent);
   --primary-soft: var(--season-tint);
@@ -322,3 +330,39 @@ html[data-seasonal] #mobileTaskbar .mobile-taskbar-btn > span:last-child,
 html[data-seasonal] #statusCard strong,
 html[data-seasonal] #dashboardCard h2,
 html[data-seasonal] #filterCard h2 { color: var(--season-text); }
+
+
+/* Every home surface consumes the same palette, including non-empty task rows. */
+html[data-theme][data-seasonal] #filterCard .issue-row {
+  color: var(--season-text);
+  background: var(--season-row);
+  border-color: var(--season-line);
+}
+html[data-theme][data-seasonal] #filterCard .issue-row:is(:hover, .is-selected) {
+  background: var(--season-hover);
+  border-color: var(--season-accent);
+}
+html[data-theme][data-seasonal] #filterCard .issue-row :is(.issue-summary, .issue-chevron) { color: var(--season-text); }
+html[data-theme][data-seasonal] #filterCard .issue-row .issue-meta { color: var(--season-muted); }
+html[data-theme][data-seasonal] :is(#dashboardCard, #filterCard) .icon-btn,
+html[data-theme][data-seasonal] #mobileTaskbar .mobile-taskbar-icon,
+html[data-theme][data-seasonal] .brand :is(.header-tool-btn, .header-tool-icon) {
+  color: var(--season-accent);
+  background: var(--season-row);
+  border-color: var(--season-line);
+}
+html[data-theme][data-seasonal] .brand .header-tool-btn > span:last-child { color: var(--season-text); }
+html[data-theme][data-seasonal] :is(#filterCard, #loginCard) :is(input, select, textarea) {
+  background-color: var(--season-row) !important;
+  color: var(--season-text);
+  border-color: var(--season-line);
+}
+html[data-theme][data-seasonal] :is(#filterCard, #loginCard) input::placeholder { color: var(--season-muted); }
+html[data-theme][data-seasonal] #filterCard .issue-key-line strong { color: var(--season-accent); }
+html[data-theme][data-seasonal] #filterCard #logAllBtn:not(:disabled) {
+  background: var(--season-ink);
+  color: #fff;
+}
+html[data-theme][data-seasonal] #filterCard #logAllBtn:disabled {
+  color: var(--season-muted); background: var(--season-tint); border-color: var(--season-line);
+}

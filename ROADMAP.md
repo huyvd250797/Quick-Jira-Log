@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.7 — Seasonal Light Palettes
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.7 | 10 bảng màu light mode và đồng bộ tương phản dashboard | Đã xây dựng source |
+| V1.40.0 | Tra cứu & Logwork | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.6 — Live Dashboard Preview
 
 | Phiên bản | Phạm vi | Trạng thái |

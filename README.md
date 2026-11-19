@@ -1,3 +1,28 @@
+# Quick Jira Log V1.39.7 — Seasonal Light Palettes
+
+Light mode và dark mode có bảng màu riêng cho mỗi chủ đề. Nút đổi chế độ tiếp tục lưu lựa chọn của người dùng. Dashboard, đăng nhập, splash và chức năng xem trước áp dụng bảng màu tương ứng chế độ đó.
+
+| Chủ đề | Light mode |
+| --- | --- |
+| Tết Nguyên đán | Đào đỏ, kem cam và nhấn đỏ rượu |
+| Nghỉ mát | Xanh ngọc biển, mint và nhấn teal |
+| Ngày 30/04 | San hô, kem cam và nhấn đỏ cờ |
+| Quốc tế Thiếu nhi | Xanh trời và nhấn xanh cobalt |
+| Sinh nhật | Hồng phấn, hồng mauve và nhấn tím mận |
+| Tết Trung thu | Tím lavender và nhấn tím chàm |
+| Khai giảng | Xanh lá sage và nhấn xanh rêu |
+| Halloween | Tím lilac và nhấn tím nho |
+| Ngày 20/11 | Vàng mật ong, vàng kem và nhấn nâu ấm |
+| Giáng sinh | Xanh băng và nhấn xanh dương |
+
+Thẻ giờ, hàng Sub-task có dữ liệu, ô tìm kiếm và nút làm mới dùng cùng bảng màu. Xem trước trên dashboard thật sử dụng chế độ sáng/tối hiện tại.
+
+Nâng cấp bằng cách tích hợp source vào nhánh deploy hiện có. Giữ Node.js 24.x, cấu hình Vercel và biến môi trường hiện tại. Chạy `npm ci`, `npm test` rồi cập nhật PWA sau deploy. Không cần migration.
+
+Bản kế tiếp đề xuất là V1.40.0 — Tra cứu & Logwork.
+
+---
+
 # Quick Jira Log V1.39.6 — Live Dashboard Preview
 
 - Nút sáng/tối luôn hoạt động, kể cả khi chủ đề đến ngày áp dụng. Lựa chọn này vẫn được lưu và dùng cho các màn chức năng. Dashboard và đăng nhập sử dụng bảng màu tối riêng của chủ đề.

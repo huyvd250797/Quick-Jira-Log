@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.7 — Seasonal Light Palettes
+
+- Thiết kế 10 bảng màu light mode có nền và thẻ mang màu riêng.
+- Bảng màu chủ đề theo lựa chọn sáng/tối ở dashboard, đăng nhập và splash.
+- Đồng bộ nền, chữ và màu hover của các hàng Sub-task có dữ liệu, ô nhập và nút làm mới.
+
+---
+
 # Quick Jira Log V1.39.6 — Live Dashboard Preview
 
 - Dùng màu tối riêng cho dashboard và đăng nhập theo chủ đề. Bật lại nút sáng/tối và lưu lựa chọn bình thường.

@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.7 — Seasonal Light Palettes
+
+- Kiểm tra độ tương phản chữ chính, chữ phụ và chữ nhấn trên nền, thẻ, hàng Sub-task và trạng thái hover của 10 bảng màu light mode. Kết quả tối thiểu 4,61:1.
+- Chạy bộ hồi quy với `npm test`. Kiểm tra chuyển sáng/tối, lưu lựa chọn và xem trước không lưu thiết lập.
+- Chromium tiếp tục bị chặn khi mở socket tại môi trường bàn giao. Cần nghiệm thu hiển thị thực tế trên URL deploy ở PC và Safari iPhone.
+
+---
+
 # Quick Jira Log V1.39.6 — Live Dashboard Preview
 
 - Kiểm thử bật/tắt sáng tối khi chủ đề hoạt động, lưu lựa chọn, mở và đóng xem trước bằng ESC hoặc nút, giữ nội dung cấu hình, giữ vị trí cuộn và xác nhận xem trước không ghi thiết lập.

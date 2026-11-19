@@ -53,5 +53,5 @@ listeners.get('qjl-seasonal-change')();
 assert.equal(root.dataset.theme, 'light');
 assert(!element('lightThemeBtn').disabled);
 const css = fs.readFileSync(path.join(__dirname, '..', 'seasonal-themes.css'), 'utf8');
-assert.match(css, /html\[data-seasonal\] \{\s*--season-bg: var\(--season-dark\)/);
-console.log('Theme preference remains switchable with active themes; home palette uses seasonal dark colors.');
+assert.match(css, /html\[data-theme="dark"\]\[data-seasonal\] \{\s*--season-bg: var\(--season-dark\)/);
+console.log('Theme preference remains switchable with active themes; home palette follows the selected mode.');
