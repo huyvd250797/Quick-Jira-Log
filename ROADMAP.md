@@ -1,3 +1,13 @@
+# Quick Jira Log V1.39.12 — Teachers Day Dual Artwork
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.12 | Ảnh 20/11 riêng theo light/dark, hòa nền sáng PC, giữ sửa header mobile V1.39.11 | Đã xây dựng source |
+| V1.39.13 | Đề xuất mở rộng ảnh light/dark cho các chủ đề còn lại sau duyệt | Chưa xây dựng |
+| V1.40.0 | Tra cứu & Logwork | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.11 — Mobile Theme Header
 
 | Phiên bản | Phạm vi | Trạng thái |

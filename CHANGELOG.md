@@ -1,3 +1,17 @@
+# Quick Jira Log V1.39.12 — Teachers Day Dual Artwork
+
+- Chủ đề 20/11 có hai ảnh riêng: dark mode giữ nguyên ảnh nâu hiện tại; light mode dùng ảnh nền kem, ánh vàng nhẹ theo mẫu đã duyệt, thiệp có chữ 20/11.
+- Đổi sáng/tối chuyển ngay ảnh tương ứng bằng CSS, không thay lịch, không remount hiệu ứng cánh hoa. Dùng chung tại dashboard, header đăng nhập, splash và cả hai kiểu xem trước.
+- Trên PC, ảnh light 20/11 mở rộng phần nền sang trái tới 40% header, hòa cả bốn cạnh vào nền. Menu có thể xuống hàng trong vùng riêng.
+- Bao gồm sửa mobile V1.39.11: ảnh phía trên, logo/nút bên dưới; ngày không có chủ đề không tạo vùng ảnh trống. ZIP nền Boss gửi là V1.39.10, phần sửa mobile đã bàn giao được mang tiếp sang bản này.
+- Chỉ chủ đề 20/11 được tách ảnh light/dark trong bản này. Các chủ đề khác và bảng màu hiện tại giữ nguyên.
+
+Nâng cấp từ V1.39.10 hoặc V1.39.11: tích hợp source vào nhánh deploy, giữ biến môi trường. Dùng Node.js 24.x, `npm ci`, `npm test`; cập nhật PWA sau deploy để nhận cache V1.39.12 và ảnh mới `seasonal-art/teachers-light.webp`. Không cần chạy migration mới. Chưa push GitHub/deploy trong lần bàn giao này.
+
+Phiên bản kế tiếp đề xuất: mở rộng hai bộ ảnh light/dark cho các chủ đề còn lại theo mẫu Boss duyệt; chưa triển khai trong bản này.
+
+---
+
 # Quick Jira Log V1.39.11 — Mobile Theme Header
 
 - Mobile có chủ đề hoạt động: ảnh chủ đề nằm riêng phía trên; logo, tên app, version và hai nút sáng/tối, cài đặt ở hàng bên dưới. Ảnh hòa mềm vào nền, không bị tiêu đề hoặc nút che.

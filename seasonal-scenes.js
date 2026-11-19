@@ -188,7 +188,12 @@ window.QuickJiraSeasonalScenes = (() => {
 
   function scene(id, effect) {
     if (!Object.hasOwn(themes, id)) return '';
-    const base = `<img class="seasonal-photo seasonal-scene-base" src="/seasonal-art/${id}.webp" alt="" decoding="async" draggable="false">`;
+    // Teachers Day has separate authored artwork for each mode; CSS switches
+    // immediately without remounting particles or changing the active schedule.
+    const base = id === 'teachers'
+      ? '<img class="seasonal-photo seasonal-scene-base seasonal-photo-dark" src="/seasonal-art/teachers.webp" alt="" decoding="async" draggable="false">'
+        + '<img class="seasonal-photo seasonal-scene-base seasonal-photo-light" src="/seasonal-art/teachers-light.webp" alt="" decoding="async" draggable="false">'
+      : `<img class="seasonal-photo seasonal-scene-base" src="/seasonal-art/${id}.webp" alt="" decoding="async" draggable="false">`;
     const surface = shader?.kinds[id]
       ? '<canvas class="seasonal-surface" data-seasonal-surface aria-hidden="true"></canvas>'
       : '';

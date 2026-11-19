@@ -216,7 +216,13 @@ for (const id of lib.ids) {
   for (const effect of [0, 1]) {
     const scene = window.QuickJiraSeasonalScenes.scene(id, effect);
     const layers = Array.from(scene.matchAll(/class="[^"]*seasonal-scene-layer[^"]* seasonal-([a-z]+)"/g), match => match[1]);
-    assert.equal((scene.match(/<img /g) || []).length, 1, 'One backdrop per scene');
+    assert.equal((scene.match(/<img /g) || []).length, id === 'teachers' ? 2 : 1,
+      'Only Teachers Day has mutually exclusive authored light/dark backdrops');
+    if (id === 'teachers') {
+      assert.match(scene, /seasonal-photo-dark.*teachers\.webp/);
+      assert.match(scene, /seasonal-photo-light.*teachers-light\.webp/);
+      assert.equal(fs.readFileSync(path.join(root, 'seasonal-art/teachers-light.webp')).toString('ascii',8,12), 'WEBP');
+    }
     if (window.QuickJiraSeasonalShader.kinds[id]) assert.match(scene, /<canvas .*data-seasonal-surface/);
     else assert.equal(layers.length, 1);
     for (const layer of layers) assert(css.includes(`.seasonal-${layer} i`), layer);

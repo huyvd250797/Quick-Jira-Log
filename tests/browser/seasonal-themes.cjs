@@ -97,7 +97,16 @@ async function start() {
               return main.right <= left + 1 && style.pointerEvents === 'none';
             });
             const first = document.querySelector('.hours-card');
-            return {contentFits, sprite: getComputedStyle(first, '::after').backgroundImage,
+            let matchingArtwork = true;
+            if (theme === 'teachers') {
+              const lightArt = document.querySelector('#seasonalHomeScene .seasonal-photo-light');
+              const darkArt = document.querySelector('#seasonalHomeScene .seasonal-photo-dark');
+              await lightArt.decode();
+              matchingArtwork = lightArt.naturalWidth > 0
+                && (getComputedStyle(lightArt).display !== 'none') === (mode === 'light')
+                && (getComputedStyle(darkArt).display !== 'none') === (mode === 'dark');
+            }
+            return {matchingArtwork, contentFits, sprite: getComputedStyle(first, '::after').backgroundImage,
               alpha: getComputedStyle(first, '::after').opacity,
               headerSeparated: actions.right <= scene.left + 1,
               mobileSeparated: ['.logo-refresh-btn', '.brand-copy', '.brand-actions'].every(selector => rect(document.querySelector('.brand ' + selector)).top >= scene.bottom - 1),
@@ -106,6 +115,7 @@ async function start() {
           }, {theme, mode});
           assert.match(metrics.sprite, new RegExp('/seasonal-ornaments/' + theme + '\\.png'));
           assert(Number(metrics.alpha) > 0);
+          assert(metrics.matchingArtwork, theme + " artwork must follow the selected mode");
           assert(metrics.contentFits, theme + ' task text must remain outside decoration');
           assert(!metrics.horizontalOverflow, theme + ' horizontal overflow at ' + viewport.width);
           assert.equal(metrics.sceneRadius, '0px');

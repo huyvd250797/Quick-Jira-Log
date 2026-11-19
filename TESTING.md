@@ -1,3 +1,14 @@
+# Quick Jira Log V1.39.12 — Teachers Day Dual Artwork
+
+- Kiểm tra ảnh light nguồn: nền kem, thiệp chữ 20/11, hoa và rìa không có khung tối hoặc dải trắng. Ảnh xuất WebP quality 93, không crop hoặc đổi tỷ lệ.
+- Đối chiếu checksum: ảnh dark `seasonal-art/teachers.webp` giữ nguyên bytes từ V1.39.10 Boss gửi; không sửa ảnh/chuyển động các chủ đề khác.
+- Đã qua toàn bộ `npm test` (exit 0) và kiểm tra syntax JS. Fixture lịch/preview và hiệu ứng hiện có được giữ.
+- Bộ kiểm thử trình duyệt `npm run test:seasonal-ui` thêm kiểm tra ảnh teacher sáng/tối thực sự hiển thị tương ứng, ảnh sáng tải được; giữ kiểm tra mobile không bị che và ngày không có chủ đề không chừa vùng trống.
+- Giới hạn: Chromium môi trường bàn giao đã bị chặn tạo socket, chưa xác minh layout và FPS thực tế. Sau deploy cần kiểm tra PC 900/1024/1440, iPhone 390/430, sáng/tối, dashboard/đăng nhập/splash, preview nhỏ và dashboard tạm, ESC, tắt/bật chuyển động. Header PC có thể thêm một hàng nút khi vùng menu hẹp.
+- Không cần migration mới.
+
+---
+
 # Quick Jira Log V1.39.11 — Mobile Theme Header
 
 - Đã qua kiểm thử logic `npm test` (exit 0), gồm lịch không có chủ đề, đổi chủ đề theo ngày/tài khoản, tạm xem trước và ESC, đổi sáng/tối, 20 scene, tắt/bật hiệu ứng và dừng khi tab ẩn.
