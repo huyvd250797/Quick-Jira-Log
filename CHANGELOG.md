@@ -1,3 +1,16 @@
+# Quick Jira Log V1.39.10 — Teachers Day Card Lettering
+
+- Bổ sung chữ **20/11** màu nâu vàng, căn theo mặt thiệp cạnh hoa hướng dương trong ảnh chủ đề Ngày 20/11, theo mẫu đã duyệt.
+- Thay ảnh nguồn dùng chung `seasonal-art/teachers.webp`: dashboard, header màn đăng nhập, splash, xem trước nhỏ và xem trước dashboard đều nhận ảnh mới.
+- Giữ hiệu ứng cánh hoa, bố cục V1.39.9, các họa tiết card, lịch áp dụng và bảng màu light/dark hiện tại.
+- Tăng version/cache PWA để nhận ảnh mới sau cập nhật ứng dụng.
+
+Nâng cấp từ V1.39.9: tích hợp source vào nhánh deploy hiện tại, giữ biến môi trường. Dùng Node.js 24.x, chạy `npm ci` và `npm test`. Sau deploy, cập nhật PWA, kiểm tra version V1.39.10 và chọn xem trước Ngày 20/11. Không cần chạy migration mới. Chưa push/deploy trong lần bàn giao này.
+
+Bản kế tiếp đề xuất: V1.40.0 — Tra cứu & Logwork, chọn nhiều Sub-task từ Tra cứu để đưa vào Log tất cả.
+
+---
+
 # Quick Jira Log V1.39.9 — Seamless Theme Cards
 
 - Áp dụng bố cục PC đã duyệt cho đủ 10 chủ đề: logo và menu bên trái, ảnh chủ đề riêng bên phải; menu tự xuống hàng khi cửa sổ hẹp.

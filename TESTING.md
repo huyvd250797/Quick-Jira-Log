@@ -1,3 +1,13 @@
+# Quick Jira Log V1.39.10 — Teachers Day Card Lettering
+
+- Kiểm tra trực quan ảnh nguồn mới: chữ 20/11 rõ, nằm trên mặt thiệp, không còn khoảng trắng ngoài banner.
+- Giữ đường dẫn ảnh dùng chung để các scene và preview tự nhận ảnh mới. Chủ đề teachers dùng ảnh nền + cánh hoa, không dùng video fallback hoặc shader làm biến dạng chữ.
+- Đã qua toàn bộ `npm test` (exit 0) và kiểm tra cú pháp JS sau cập nhật version.
+- Chưa xác minh hiển thị bằng trình duyệt thật: Chromium môi trường bàn giao bị chặn tạo socket ở lần kiểm tra V1.39.9. Cần kiểm tra dashboard, đăng nhập, splash và hai kiểu xem trước trên PC/mobile sau deploy.
+- Không có migration mới, không đổi quy tắc lịch hoặc cấu hình theo tài khoản.
+
+---
+
 # Quick Jira Log V1.39.9 — Seamless Theme Cards
 
 ## Đã thực hiện

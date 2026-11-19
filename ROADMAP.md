@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.10 — Teachers Day Card Lettering
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.10 | Thêm chữ 20/11 vào ảnh chủ đề dùng chung; cập nhật cache PWA | Đã xây dựng source |
+| V1.40.0 | Tra cứu & Logwork, chọn nhiều Sub-task để đưa vào Log tất cả | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.9 — Seamless Theme Cards
 
 | Phiên bản | Mục tiêu và phạm vi | Trạng thái |
