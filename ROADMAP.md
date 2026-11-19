@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.5 — Dashboard Preview & Theme Scope
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.5 | Ô chọn PC, dashboard xem trước và dark mode theo màn hình | Đã xây dựng source |
+| V1.40.0 | Tra cứu & Logwork | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.4 — Stable Scenes & Seasonal Dark Mode
 
 | Phiên bản | Phạm vi | Trạng thái |

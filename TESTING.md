@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.5 — Dashboard Preview & Theme Scope
+
+- Kiểm thử logic mở màn chức năng khi tùy chọn là light mode, đổi lựa chọn trong cài đặt, quay về dashboard chủ đề và khôi phục khi hết lịch.
+- Kiểm tra bản xem trước có các khối dashboard, không có tác vụ gửi dữ liệu Jira và không áp dụng chủ đề đang chỉnh vào giao diện thật.
+- Bộ kiểm tra Playwright có kiểm tra chiều cao và line-height của ô chọn trên các kích thước màn hình, chế độ sáng/tối và dashboard mẫu. Chromium trong môi trường bàn giao bị chặn tại bước mở socket, nên nghiệm thu hiển thị PC và Safari iPhone cần thực hiện trên URL deploy.
+
+---
+
 # Quick Jira Log V1.39.4 — Stable Scenes & Seasonal Dark Mode
 
 - Kiểm thử tự động dark mode khi chủ đề có hiệu lực, khóa nút chuyển sáng/tối, bảo toàn tùy chọn và khôi phục khi hết lịch.

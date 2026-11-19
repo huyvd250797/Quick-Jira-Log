@@ -19,7 +19,7 @@
   --season-tint: color-mix(in srgb, var(--season-ink) 12%, var(--season-card));
 }
 html[data-theme="dark"][data-seasonal],
-html[data-theme="dark"] #seasonalPreview[data-seasonal] {
+#seasonalPreview[data-seasonal] {
   --season-bg: var(--season-dark);
   --season-card: var(--season-deep);
   --season-text: #f4f5fb;
@@ -292,3 +292,45 @@ html[data-seasonal] #loginCard #loginBtn:not(:disabled) {
   html[data-seasonal] #bootSplash .boot-spinner { margin-top: 12px; }
   #seasonalBootScene { height: 95px; }
 }
+
+
+#seasonalDialog select {
+  box-sizing: border-box;
+  display: block;
+  height: 46px;
+  min-height: 46px;
+  max-height: none;
+  padding: 0 34px 0 12px;
+  line-height: normal;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-indent: 0;
+  text-transform: none;
+  appearance: auto;
+}
+#seasonalDialog option { font-size: 15px; line-height: normal; }
+#seasonalDialog .seasonal-effect-row { grid-template-columns: minmax(0, 1fr) auto; }
+#seasonalDialog .seasonal-effect-row > label { display: grid; gap: 6px; }
+#seasonalPreview { color-scheme: dark; padding-bottom: 10px; }
+#seasonalPreview .seasonal-preview-hero { min-height: 105px; display: grid; align-content: end; gap: 6px; }
+.seasonal-preview-brand { display: flex; gap: 8px; align-items: center; width: max-content; max-width: 100%; padding: 4px; border-radius: 8px; background: var(--season-bg); }
+.seasonal-preview-brand img { border-radius: 8px; }
+#seasonalPreviewTitle { justify-self: start; font-size: 11px; }
+#seasonalDialog .seasonal-preview-caption { padding: 9px 12px 0; color: #bdc7d5; font-size: 11px; }
+.seasonal-preview-status { margin: 0 10px; padding: 9px; display: flex; justify-content: space-between; gap: 8px; border: 1px solid var(--season-line); background: var(--season-card); border-radius: 9px; font-size: 11px; }
+.seasonal-preview-status b { color: #84dfb6; }
+.seasonal-preview-heading { margin: 13px 10px 8px; font-size: 13px; }
+.seasonal-preview-hours { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 10px; }
+.seasonal-preview-hours article { min-width: 0; padding: 10px; border: 1px solid var(--season-line); background: var(--season-card); border-radius: 9px; font-size: 11px; }
+#seasonalPreview .seasonal-preview-hours p { margin: 8px 0; }
+.seasonal-preview-hours p b { font-size: 24px; color: #f5f7fc; }
+.seasonal-preview-hours i { display: block; height: 4px; background: linear-gradient(to right, var(--season-bright) var(--progress), var(--season-tint) var(--progress)); border-radius: 3px; }
+.seasonal-preview-hours small { display: block; margin-top: 8px; color: var(--season-bright); font-size: 10px; }
+.seasonal-preview-tasks { position: relative; margin: 10px; padding: 10px 10px 30px; border: 1px solid var(--season-line); background: var(--season-card); border-radius: 9px; }
+.seasonal-preview-tasks h4 { margin: 0 0 10px; font-size: 12px; }
+.seasonal-preview-search { padding: 8px; background: var(--season-bg); border: 1px solid var(--season-line); border-radius: 7px; color: #c0cada; font-size: 11px; }
+#seasonalDialog .seasonal-preview-tasks p { margin: 10px 0; font-size: 10px; color: #c0cada; text-align: center; }
+#seasonalPreviewTaskArt { position: absolute; bottom: 0; right: 0; width: 90px; pointer-events: none; }
+#seasonalPreviewTaskArt img { width: 100%; height: 34px; object-fit: cover; object-position: right; mask-image: radial-gradient(ellipse at right bottom, #000 0%, transparent 70%); }
+.seasonal-preview-nav { display: flex; justify-content: space-around; gap: 4px; margin: 0 10px; padding: 10px 4px; border: 1px solid var(--season-line); border-radius: 9px; background: var(--season-card); font-size: 10px; }

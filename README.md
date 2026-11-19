@@ -1,3 +1,15 @@
+# Quick Jira Log V1.39.5 — Dashboard Preview & Theme Scope
+
+- Sửa ô chọn chủ đề, hiệu ứng và lịch bị cắt chữ trên PC bằng chiều cao cố định 46 px, line-height native và padding dọc bằng 0.
+- Xem trước hiển thị dashboard với dữ liệu minh họa, gồm header, trạng thái Jira, hai thẻ giờ, Sub-task và thanh điều hướng. Chọn chủ đề và hiệu ứng chỉ thay đổi mẫu này. Bấm Lưu cài đặt để lưu theo lịch.
+- Khi chủ đề hoạt động, dashboard và trang đăng nhập dùng dark mode. Các màn chức năng, form và Cài đặt sử dụng chế độ sáng/tối đã lưu. Đổi tùy chọn trong Cài đặt có hiệu lực trên các màn đó. Trở về dashboard sẽ dùng màu tối của chủ đề.
+
+Nâng cấp từ V1.39.4 bằng cách tích hợp toàn bộ source vào nhánh deploy hiện có. Giữ Node.js 24.x, biến môi trường và cấu hình Vercel hiện tại. Chạy `npm ci`, `npm test`, sau đó cập nhật PWA và kiểm tra nhãn V1.39.5. Không cần migration.
+
+Bản kế tiếp đề xuất là V1.40.0 — Tra cứu & Logwork.
+
+---
+
 # Quick Jira Log V1.39.4 — Stable Scenes & Seasonal Dark Mode
 
 Khi chủ đề đang đến ngày áp dụng và được bật, app tự cố định dark mode ở màn Tổng quan, đăng nhập và màn tải. Các màn dùng chung bảng màu của app cũng theo dark mode. Nút sáng/tối được khóa và có nhãn “Tối · Theo chủ đề”. Khi hết lịch, app khôi phục lựa chọn sáng/tối đã lưu.

@@ -19,9 +19,17 @@ const saved = new Map([['preference', 'light']]);
 const root = { dataset: {seasonal: 'moon'}, style: {} };
 const state = {};
 const listeners = new Map();
+let panelOpen = false;
+let syncPage;
 const context = vm.createContext({
+  MutationObserver: class { constructor(callback) { syncPage = callback; } observe() {} },
   state, STORAGE: {theme: 'preference'}, $: element,
-  document: {documentElement: root, querySelector: () => element('meta')},
+  document: {
+    documentElement: root,
+    body: {classList: {contains: () => false}, dataset: {}},
+    querySelectorAll: () => [],
+    querySelector: selector => selector.startsWith('dialog') ? (panelOpen ? {} : null) : element('meta')
+  },
   localStorage: {getItem: key => saved.get(key), setItem: (key, value) => saved.set(key, value)},
   window: {addEventListener: (event, run) => listeners.set(event, run)},
   showToast() {}
@@ -31,7 +39,19 @@ context.applyTheme('light');
 assert.equal(root.dataset.theme, 'dark');
 assert.equal(saved.get('preference'), 'light');
 assert(element('themeBtn').disabled);
-assert(element('lightThemeBtn').disabled);
+assert(!element('lightThemeBtn').disabled);
+panelOpen = true;
+syncPage();
+assert.equal(root.dataset.theme, 'light', 'Feature panels use the saved light theme');
+assert(!element('themeBtn').disabled);
+context.applyTheme('dark');
+assert.equal(saved.get('preference'), 'dark');
+context.applyTheme('light');
+assert.equal(saved.get('preference'), 'light');
+panelOpen = false;
+syncPage();
+assert.equal(root.dataset.theme, 'dark', 'Returning to dashboard restores seasonal dark');
+assert.equal(saved.get('preference'), 'light');
 delete root.dataset.seasonal;
 listeners.get('qjl-seasonal-change')();
 assert.equal(root.dataset.theme, 'light');
@@ -46,4 +66,4 @@ assert.equal(saved.get('preference'), 'dark');
 delete root.dataset.seasonal;
 listeners.get('qjl-seasonal-change')();
 assert.equal(state.theme, 'dark');
-console.log('Seasonal dark mode: active override, disabled controls, persisted preference and expiry restoration passed.');
+console.log('Seasonal dark mode: dashboard override, feature theme, settings changes, return and expiry restoration passed.');

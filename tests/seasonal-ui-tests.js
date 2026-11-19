@@ -169,6 +169,14 @@ assert.deepEqual(JSON.parse(map.get(priorKey)).rules.vacation.schedule, {
   repeat: false, start: '2026-12-21', end: '2026-12-23'
 });
 
+const previewAt = index.indexOf('id="seasonalPreview"');
+const previewEnd = index.indexOf('class="seasonal-rule"', previewAt);
+const dashboardPreview = index.slice(previewAt, previewEnd);
+assert.match(dashboardPreview, /Giờ thường hôm nay/);
+assert.match(dashboardPreview, /Sub-task chưa logwork/);
+assert(!/<(?:button|input|select)\b/.test(dashboardPreview), 'Preview exposes no live Jira actions');
+assert.equal(get('seasonalPreview').dataset.seasonal, 'vacation');
+assert.notEqual(html.dataset.seasonal, 'vacation', 'Editing preview does not apply the theme');
 const css = read('seasonal-themes.css');
 for (const id of lib.ids) {
   assert(css.includes(`[data-seasonal="${id}"]`));

@@ -94,6 +94,7 @@ window.QuickJiraSeasonalThemes = (() => {
       preview.dataset.seasonal = editing;
       art.mount(byId('seasonalPreviewScene'), editing, rule.effect);
       byId('seasonalPreviewTitle').textContent = calendar.themes[editing].name;
+      byId('seasonalPreviewTaskArt').innerHTML = art.corner(editing);
     }
     preview.toggleAttribute('data-seasonal-motion', rule.motion && draft.motion && !reduced.matches && !document.hidden);
     byId('seasonalReduced').hidden = !reduced.matches;

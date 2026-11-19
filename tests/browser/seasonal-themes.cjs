@@ -62,9 +62,17 @@ async function start() {
       await page.clock.setFixedTime(new Date('2026-12-19T17:00:20Z'));
       await page.goto(url);
       await page.waitForFunction(() => document.documentElement.dataset.seasonal === 'christmas' && !document.body.classList.contains('booting'));
-      await page.evaluate(() => applyTheme('dark'));
+      await page.evaluate(() => { localStorage.setItem('quick-jira-log:theme:v1', 'light'); applyTheme('light', {persist:false}); });
       await open(page);
+      await page.waitForFunction(() => document.documentElement.dataset.theme === 'light');
       assert.equal(await page.locator('#seasonalTheme').inputValue(), 'christmas');
+      assert(await page.locator('#seasonalPreview').getByText('Giờ thường hôm nay', {exact:true}).isVisible());
+      for (const id of ['seasonalTheme', 'seasonalEffect', 'seasonalScheduleType']) {
+        assert(await page.locator('#' + id).evaluate(select => {
+          const style = getComputedStyle(select);
+          return style.lineHeight === 'normal' && select.clientHeight >= 42 && parseFloat(style.paddingTop) === 0;
+        }));
+      }
       assert.equal(await page.locator('#seasonalAccount').textContent(), 'Boss A');
       await page.waitForFunction(() => document.querySelector('#seasonalPreviewScene img')?.naturalWidth > 0);
       assert((await page.locator('#seasonalPreview').boundingBox()).height >= 156, 'Preview must not shrink');
@@ -94,6 +102,7 @@ async function start() {
       await page.locator('#seasonalAnnualEnd').fill('20/12');
       await save(page);
       assert.equal(await page.locator('html').getAttribute('data-seasonal'), 'birthday');
+      assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
       const motion = page.locator('#seasonalHomeScene .seasonal-surface');
       await motion.evaluate(canvas => canvas.scrollIntoView());
       await page.waitForFunction(() => document.querySelector('#seasonalHomeScene canvas')?.classList.contains('is-ready'));
@@ -147,10 +156,12 @@ async function start() {
       await save(page);
       assert.equal(await page.locator('html').getAttribute('data-seasonal'), 'christmas');
       assert.equal(await page.locator('html').getAttribute('data-seasonal-motion'), null);
+      await page.locator('#settingsBtn').click();
       await page.evaluate(() => applyTheme('light'));
-      assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), '#eef6ff');
+      assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
       await page.evaluate(() => applyTheme('dark'));
-      assert.equal(await page.locator('meta[name="theme-color"]').getAttribute('content'), '#091a36');
+      assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
+      await closeSettings(page);
       if (process.env.QJL_QA_DIR) await page.screenshot({path: path.join(process.env.QJL_QA_DIR, 'seasonal-christmas.png')});
 
       user = null;

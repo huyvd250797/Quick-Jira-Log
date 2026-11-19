@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.5 — Dashboard Preview & Theme Scope
+
+- Sửa cắt chữ ô chọn trên PC.
+- Thay bản xem trước một thẻ bằng dashboard mẫu có đủ các khối chính và hiệu ứng của chủ đề.
+- Giới hạn dark mode theo chủ đề vào dashboard và đăng nhập, trả các dialog, form và màn chức năng về tùy chọn người dùng.
+
+---
+
 # Quick Jira Log V1.39.4 — Stable Scenes & Seasonal Dark Mode
 
 - Cố định dark mode khi chủ đề hoạt động, khôi phục lựa chọn đã lưu khi hết lịch.

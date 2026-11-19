@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.39.4</title>
+  <title>Quick Jira Log · V1.39.5</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -52,7 +52,7 @@
       <div id="seasonalBootScene" class="seasonal-scene" aria-hidden="true"></div>
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.39.4</div>
+      <div class="boot-version">V1.39.5</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -62,7 +62,7 @@
       <div id="seasonalHomeScene" class="seasonal-scene" aria-hidden="true"></div>
       <button id="brandRefreshBtn" class="logo-refresh-btn" type="button" aria-label="Làm mới dữ liệu, giữ phiên hiện tại" title="Làm mới dữ liệu"><img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" /></button>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.39.4</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.39.5</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -462,7 +462,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.39.4 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.39.5 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -494,11 +494,25 @@
         <div class="seasonal-preview-section">
           <h3 id="seasonalPreviewHeading">Xem trước chủ đề</h3>
           <div id="seasonalPreview" role="region" aria-labelledby="seasonalPreviewHeading">
+            <p class="seasonal-preview-caption">Dashboard xem trước · Dữ liệu minh họa</p>
             <div class="seasonal-preview-hero">
               <div id="seasonalPreviewScene" class="seasonal-scene" aria-hidden="true"></div>
+              <div class="seasonal-preview-brand"><img src="/icons/icon-192-v1152.png" alt="" width="30" height="30"><b>Quick Jira Log</b></div>
               <strong id="seasonalPreviewTitle"></strong>
             </div>
-            <div class="seasonal-preview-metric" aria-hidden="true"><b>40h</b><span> / 40h</span><i></i></div>
+            <div class="seasonal-preview-status"><span>● Jira đã đăng nhập</span><b>Online</b></div>
+            <h4 class="seasonal-preview-heading">Tiến độ giờ thường</h4>
+            <div class="seasonal-preview-hours">
+              <article><span>Giờ thường hôm nay</span><p><b>3h</b> / 8h</p><i style="--progress:37.5%"></i><small>Cần log thêm 5h</small></article>
+              <article><span>Giờ thường tuần này · T2–T6</span><p><b>27h</b> / 40h</p><i style="--progress:67.5%"></i><small>Cần log thêm 13h</small></article>
+            </div>
+            <section class="seasonal-preview-tasks">
+              <h4>Sub-task chưa logwork</h4>
+              <div class="seasonal-preview-search">⌕ Tìm mã task hoặc tên công việc…</div>
+              <p>Không còn Sub-task chưa logwork phù hợp.</p>
+              <span id="seasonalPreviewTaskArt" aria-hidden="true"></span>
+            </section>
+            <div class="seasonal-preview-nav" aria-hidden="true"><span>⌕ Tra cứu</span><span>▥ Dự án</span><span>▤ Tổng hợp</span><span>▦ Lịch</span></div>
           </div>
         </div>
         <div class="seasonal-rule">
