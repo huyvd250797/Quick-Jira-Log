@@ -1,28 +1,29 @@
 /* Seasonal colors are independent of the semantic Jira status palette. */
-[data-seasonal="tet"] { --season-dark: #210f16; --season-deep: #341720; --season-light: #f0c3b2; --season-pale: #ffdfc5; --season-bright: #ffd07f; --season-ink: #852433; --season-row-light: #f7cbb3; --season-hover-light: #e9ac91; }
-[data-seasonal="vacation"] { --season-dark: #081d24; --season-deep: #102d36; --season-light: #aeded9; --season-pale: #cef0e7; --season-bright: #83e5d4; --season-ink: #155a58; --season-row-light: #b9e6dd; --season-hover-light: #92d2c6; }
-[data-seasonal="april"] { --season-dark: #240e13; --season-deep: #3a1720; --season-light: #ebc2b3; --season-pale: #ffdfc8; --season-bright: #f6c781; --season-ink: #7e2435; --season-row-light: #f3c8b3; --season-hover-light: #e5a58f; }
-[data-seasonal="children"] { --season-dark: #121a34; --season-deep: #1b2947; --season-light: #c1daf0; --season-pale: #dae9fb; --season-bright: #a3e6dc; --season-ink: #284e85; --season-row-light: #c8def3; --season-hover-light: #a9cde8; }
-[data-seasonal="birthday"] { --season-dark: #211326; --season-deep: #352039; --season-light: #e8c4dc; --season-pale: #f6daec; --season-bright: #efb7dc; --season-ink: #712b5f; --season-row-light: #edc7e1; --season-hover-light: #dfaaca; }
-[data-seasonal="moon"] { --season-dark: #14172e; --season-deep: #212543; --season-light: #cecaeb; --season-pale: #e4dafa; --season-bright: #f6cb87; --season-ink: #503d77; --season-row-light: #d8ceef; --season-hover-light: #bfb0df; }
-[data-seasonal="school"] { --season-dark: #0b201f; --season-deep: #163230; --season-light: #bcd9c2; --season-pale: #dcebd0; --season-bright: #a9e0cf; --season-ink: #2e5741; --season-row-light: #c6dfbf; --season-hover-light: #aacda8; }
-[data-seasonal="halloween"] { --season-dark: #1b1527; --season-deep: #2b213d; --season-light: #dcc7e9; --season-pale: #eddbf4; --season-bright: #ffc18b; --season-ink: #5c396c; --season-row-light: #e1c9ee; --season-hover-light: #ceb0e0; }
-[data-seasonal="teachers"] { --season-dark: #241710; --season-deep: #38251e; --season-light: #ead0a4; --season-pale: #f7e3bc; --season-bright: #f6cf9b; --season-ink: #6f422c; --season-row-light: #f0d4a5; --season-hover-light: #dfbc83; }
-[data-seasonal="christmas"] { --season-dark: #091a36; --season-deep: #132a49; --season-light: #bfdced; --season-pale: #dceef8; --season-bright: #c0e8ff; --season-ink: #22527d; --season-row-light: #c6e1f1; --season-hover-light: #a3cce5; }
+[data-seasonal="tet"] { --season-dark: #210f16; --season-deep: #341720; --season-light: #fff7f5; --season-pale: #fffdfc; --season-bright: #ffd07f; --season-ink: #8c3441; }
+[data-seasonal="vacation"] { --season-dark: #081d24; --season-deep: #102d36; --season-light: #edfafa; --season-pale: #fcffff; --season-bright: #83e5d4; --season-ink: #14685d; }
+[data-seasonal="april"] { --season-dark: #240e13; --season-deep: #3a1720; --season-light: #fdf2ee; --season-pale: #fffaf8; --season-bright: #f6c781; --season-ink: #993645; }
+[data-seasonal="children"] { --season-dark: #121a34; --season-deep: #1b2947; --season-light: #eff6ff; --season-pale: #fbfdff; --season-bright: #a3e6dc; --season-ink: #315d96; }
+[data-seasonal="birthday"] { --season-dark: #211326; --season-deep: #352039; --season-light: #faf1fa; --season-pale: #fffaff; --season-bright: #efb7dc; --season-ink: #843b75; }
+[data-seasonal="moon"] { --season-dark: #14172e; --season-deep: #212543; --season-light: #f3f3fc; --season-pale: #fdfcff; --season-bright: #f6cb87; --season-ink: #61518b; }
+[data-seasonal="school"] { --season-dark: #0b201f; --season-deep: #163230; --season-light: #edf8f3; --season-pale: #fbfff9; --season-bright: #a9e0cf; --season-ink: #2c6662; }
+[data-seasonal="halloween"] { --season-dark: #1b1527; --season-deep: #2b213d; --season-light: #f8f2fc; --season-pale: #fffbff; --season-bright: #ffc18b; --season-ink: #843e1e; }
+[data-seasonal="teachers"] { --season-dark: #241710; --season-deep: #38251e; --season-light: #fbf4ea; --season-pale: #fffdf7; --season-bright: #f6cf9b; --season-ink: #874a35; }
+[data-seasonal="christmas"] { --season-dark: #091a36; --season-deep: #132a49; --season-light: #eef6ff; --season-pale: #fcfeff; --season-bright: #c0e8ff; --season-ink: #235b92; }
 
 [data-seasonal] {
   --season-bg: var(--season-light);
   --season-card: var(--season-pale);
-  --season-text: #242535;
-  --season-muted: #383e4f;
-  --season-row: var(--season-row-light);
-  --season-hover: var(--season-hover-light);
+  --season-text: #1b2535;
+  --season-muted: #506078;
+  --season-row: var(--season-pale);
+  --season-hover: color-mix(in srgb, var(--season-ink) 9%, var(--season-pale));
   --season-scheme: light;
   --season-accent: var(--season-ink);
   --season-line: color-mix(in srgb, var(--season-ink) 22%, var(--season-card));
   --season-tint: color-mix(in srgb, var(--season-ink) 12%, var(--season-card));
 }
-html[data-theme="dark"][data-seasonal] {
+html[data-theme="dark"][data-seasonal],
+html[data-theme="dark"] #seasonalPreview[data-seasonal] {
   --season-bg: var(--season-dark);
   --season-card: var(--season-deep);
   --season-text: #f4f5fb;
@@ -365,4 +366,30 @@ html[data-theme][data-seasonal] #filterCard #logAllBtn:not(:disabled) {
 }
 html[data-theme][data-seasonal] #filterCard #logAllBtn:disabled {
   color: var(--season-muted); background: var(--season-tint); border-color: var(--season-line);
+}
+
+
+#seasonalPreviewHeading { margin: 0 0 7px; font-size: 13px; color: var(--muted); }
+.seasonal-settings-scroll .seasonal-preview-section { flex-shrink: 0; }
+#seasonalPreview {
+  position: relative; min-block-size: 180px; overflow: hidden;
+  border: 1px solid var(--season-line); border-radius: 12px;
+  background: var(--season-bg); color: var(--season-text);
+}
+.seasonal-preview-hero {
+  position: relative; isolation: isolate; min-height: 116px;
+  display: flex; align-items: end; padding: 12px;
+}
+.seasonal-preview-hero .seasonal-scene { width: 100%; z-index: -1; }
+.seasonal-preview-hero strong {
+  display: inline-block; padding: 5px 9px; border-radius: 7px;
+  background: var(--season-bg); color: var(--season-text); font-size: 13px;
+}
+.seasonal-preview-metric {
+  margin: 0 12px 12px; padding: 10px;
+  background: var(--season-card); border: 1px solid var(--season-line); border-radius: 8px;
+  font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.seasonal-preview-metric i {
+  display: block; height: 4px; margin-top: 8px; background: var(--season-accent); border-radius: 5px;
 }

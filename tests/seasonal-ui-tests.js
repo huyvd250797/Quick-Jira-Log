@@ -179,10 +179,13 @@ assert.deepEqual(JSON.parse(map.get(priorKey)).rules.vacation.schedule, {
   repeat: false, start: '2026-12-21', end: '2026-12-23'
 });
 
-assert(!index.includes('id="seasonalPreview"'));
+assert(index.includes('id="seasonalPreview"'));
+assert.equal(get('seasonalPreview').dataset.seasonal, 'vacation');
 assert(!index.includes('Dữ liệu minh họa'));
 get('seasonalOpenBtn').fire('click');
 change('seasonalTheme', 'tet');
+assert.equal(get('seasonalPreview').dataset.seasonal, 'tet');
+assert(get('seasonalPreviewScene').innerHTML.includes('/seasonal-art/tet.webp'));
 const storageBefore = JSON.stringify([...map]);
 get('settingsOverlay').setAttribute('aria-hidden', 'false');
 get('seasonalDialog').scrollSurface.scrollTop = 230;

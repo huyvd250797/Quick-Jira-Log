@@ -1,3 +1,16 @@
+# Quick Jira Log V1.39.8 — Original Light Palette & Inline Preview
+
+- Khôi phục đúng mã màu light mode của 10 chủ đề từ V1.39.3, gồm nền, thẻ và màu nhấn. Nút sáng/tối tiếp tục đổi chế độ và lưu lựa chọn.
+- Thêm lại khung xem trước nhỏ trong cấu hình, có hình chủ đề, tên và thanh giờ mẫu. Chọn chủ đề hoặc hiệu ứng sẽ cập nhật ngay khung này.
+- Nút **Xem trước** vẫn mở dashboard hiện tại với chủ đề tạm. Bấm **Tắt xem trước** hoặc **ESC** để quay về cấu hình, giữ bản nháp.
+- Giữ cách hiển thị chữ và nền hàng Sub-task đồng bộ để dữ liệu dễ đọc ở hai chế độ.
+
+Nâng cấp bằng cách tích hợp source vào nhánh deploy hiện có, giữ cấu hình Vercel và biến môi trường. Dùng Node.js 24.x, chạy `npm ci` và `npm test`. Cập nhật PWA sau deploy và kiểm tra V1.39.8. Không cần migration.
+
+Bản kế tiếp đề xuất là V1.40.0 — Tra cứu & Logwork.
+
+---
+
 # Quick Jira Log V1.39.7 — Seasonal Light Palettes
 
 Light mode và dark mode có bảng màu riêng cho mỗi chủ đề. Nút đổi chế độ tiếp tục lưu lựa chọn của người dùng. Dashboard, đăng nhập, splash và chức năng xem trước áp dụng bảng màu tương ứng chế độ đó.

@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.8 — Original Light Palette & Inline Preview
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.8 | Khôi phục light mode V1.39.3 và xem trước nhỏ trong cấu hình | Đã xây dựng source |
+| V1.40.0 | Tra cứu & Logwork | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.7 — Seasonal Light Palettes
 
 | Phiên bản | Phạm vi | Trạng thái |

@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.8 — Original Light Palette & Inline Preview
+
+- Đối chiếu chính xác mã nền, thẻ và màu nhấn của 10 chủ đề với V1.39.3. Kiểm tra tương phản chữ tối thiểu 5,79:1 trên nền và thẻ light mode.
+- Kiểm tra đổi chủ đề trong xem trước nhỏ, mở dashboard tạm và thoát bằng nút hoặc ESC mà không ghi cấu hình.
+- Bộ kiểm thử trình duyệt có kiểm tra khung nhỏ cao tối thiểu 180 px. Chromium trong môi trường này bị chặn khi mở socket, cần xác nhận trực quan sau deploy.
+
+---
+
 # Quick Jira Log V1.39.7 — Seasonal Light Palettes
 
 - Kiểm tra độ tương phản chữ chính, chữ phụ và chữ nhấn trên nền, thẻ, hàng Sub-task và trạng thái hover của 10 bảng màu light mode. Kết quả tối thiểu 4,61:1.

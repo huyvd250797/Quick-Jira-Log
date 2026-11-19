@@ -69,8 +69,10 @@ async function start() {
       assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
       await page.locator('#themeBtn').click();
       await open(page);
-      assert.equal(await page.locator('#seasonalPreview').count(), 0);
+      assert.equal(await page.locator('#seasonalPreview').count(), 1);
       await page.locator('#seasonalTheme').selectOption('tet');
+      await page.waitForFunction(() => document.querySelector('#seasonalPreviewScene img')?.naturalWidth > 0);
+      assert((await page.locator('#seasonalPreview').boundingBox()).height >= 180);
       const snapshot = await page.evaluate(() => localStorage.getItem(QuickJiraSeasonal.accountKey(state.user)));
       await page.locator('#seasonalShowPreviewBtn').click();
       await page.waitForFunction(() => QuickJiraSeasonalThemes.previewing);

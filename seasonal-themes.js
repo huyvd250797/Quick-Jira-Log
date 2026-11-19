@@ -9,6 +9,7 @@ window.QuickJiraSeasonalThemes = (() => {
   const form = byId('seasonalForm');
   const picker = byId('seasonalTheme');
   const previewBar = byId('seasonalPreviewBar');
+  const preview = byId('seasonalPreview');
   let livePreview = false;
   let previewScroll = 0;
   let settingsWasOpen = false;
@@ -91,6 +92,17 @@ window.QuickJiraSeasonalThemes = (() => {
   }
 
   function renderPreview() {
+    if (!draft) return;
+    const rule = draft.rules[editing];
+    const stamp = `${editing}:${rule.effect}`;
+    if (preview.dataset.scene !== stamp) {
+      preview.dataset.scene = stamp;
+      preview.dataset.seasonal = editing;
+      art.mount(byId('seasonalPreviewScene'), editing, rule.effect);
+      byId('seasonalPreviewTitle').textContent = calendar.themes[editing].name;
+    }
+    preview.toggleAttribute('data-seasonal-motion', !!rule.motion && draft.motion && !reduced.matches && !document.hidden);
+    art.refresh();
     byId('seasonalReduced').hidden = !reduced.matches;
     if (livePreview) renderHome();
   }
@@ -133,6 +145,7 @@ window.QuickJiraSeasonalThemes = (() => {
     dialog.showModal();
     dialog.querySelector('.seasonal-settings-scroll').scrollTop = previewScroll;
     byId('seasonalShowPreviewBtn').focus({ preventScroll: true });
+    renderPreview();
   }
 
   function renderScheduleFields() {
@@ -259,7 +272,10 @@ window.QuickJiraSeasonalThemes = (() => {
 
   byId('seasonalCloseBtn').addEventListener('click', () => dialog.close());
   byId('seasonalCancel').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => { if (!dialog.open && !livePreview) draft = null; });
+  dialog.addEventListener('close', () => {
+    if (!dialog.open && !livePreview) draft = null;
+    art.refresh();
+  });
 
   picker.addEventListener('change', () => {
     const target = picker.value;

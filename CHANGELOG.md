@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.8 — Original Light Palette & Inline Preview
+
+- Khôi phục 10 bộ mã màu light mode từ V1.39.3.
+- Thêm lại xem trước nhỏ trong cấu hình cùng hiệu ứng đang chọn.
+- Giữ xem trước dashboard thật và thao tác thoát bằng nút hoặc ESC.
+
+---
+
 # Quick Jira Log V1.39.7 — Seasonal Light Palettes
 
 - Thiết kế 10 bảng màu light mode có nền và thẻ mang màu riêng.
