@@ -1,3 +1,15 @@
+# Quick Jira Log V1.39.13 — Theme Artwork Size Alignment
+
+- Sửa vùng ảnh 20/11 trên PC: light/dark cùng chiếm 40% header, dùng chung grid, chiều cao, mask và cách căn ảnh. Đổi chế độ không còn làm vùng ảnh co/giãn hoặc dịch vị trí menu.
+- Hai ảnh dùng chung `object-fit: contain` và neo phải/giữa ở header, splash và xem trước, tránh cách cắt ảnh khác nhau. Giữ nguyên hai tài nguyên ảnh hiện có, không vẽ lại chủ đề.
+- Giữ header mobile có điều kiện V1.39.11: không có chủ đề thì trở về bố cục cũ, không chừa vùng ảnh trống.
+
+Nâng cấp từ V1.39.12: dùng Node.js 24.x, `npm ci`, `npm test`; tích hợp source vào nhánh deploy hiện tại và giữ biến môi trường. Cập nhật PWA sau deploy để nhận V1.39.13. Không cần chạy migration mới. Chưa push GitHub/deploy.
+
+Bản kế tiếp đề xuất: tách ảnh light/dark cho các chủ đề khác sau khi Boss duyệt.
+
+---
+
 # Quick Jira Log V1.39.12 — Teachers Day Dual Artwork
 
 - Chủ đề 20/11 có hai ảnh riêng: dark mode giữ nguyên ảnh nâu hiện tại; light mode dùng ảnh nền kem, ánh vàng nhẹ theo mẫu đã duyệt, thiệp có chữ 20/11.

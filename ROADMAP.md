@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.13 — Theme Artwork Size Alignment
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.13 | Đồng bộ vùng ảnh, grid, mask và cách căn ảnh 20/11 giữa light/dark | Đã xây dựng source |
+| V1.39.14 | Đề xuất ảnh light/dark cho chủ đề kế tiếp sau duyệt | Chưa xây dựng |
+
+---
+
 # Quick Jira Log V1.39.12 — Teachers Day Dual Artwork
 
 | Phiên bản | Phạm vi | Trạng thái |

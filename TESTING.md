@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.13 — Theme Artwork Size Alignment
+
+- Đã qua toàn bộ bộ kiểm thử logic `npm test` (exit 0) và kiểm tra cú pháp JS.
+- Kiểm tra toàn bộ tài nguyên ảnh so với ZIP V1.39.12 giữ nguyên bytes. Chỉ thay cách bố trí/căn ảnh chung và version/cache.
+- Bổ sung kiểm tra trình duyệt: khi đổi sáng/tối ở chủ đề teachers, bounding box của scene, ảnh và vùng menu phải bằng nhau. Kiểm tra 390/900/1024/1440 px, cả khi xem trước tạm.
+- Giới hạn: chưa kiểm chứng visual trên thiết bị thật, Chromium môi trường này bị chặn tạo socket ở các lần trước. Cần nghiệm thu đổi chế độ trên PC và iPhone sau deploy.
+
+---
+
 # Quick Jira Log V1.39.12 — Teachers Day Dual Artwork
 
 - Kiểm tra ảnh light nguồn: nền kem, thiệp chữ 20/11, hoa và rìa không có khung tối hoặc dải trắng. Ảnh xuất WebP quality 93, không crop hoặc đổi tỷ lệ.

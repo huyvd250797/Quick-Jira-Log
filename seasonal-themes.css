@@ -580,16 +580,25 @@ html[data-seasonal] #seasonalTaskArt { display: none; }
 .seasonal-scene .seasonal-photo-light { display: none; }
 html[data-theme="light"] .seasonal-scene .seasonal-photo-dark { display: none; }
 html[data-theme="light"] .seasonal-scene .seasonal-photo-light { display: block; }
-html[data-theme="light"][data-seasonal="teachers"] #seasonalHomeScene,
-html[data-theme="light"] #seasonalPreview[data-seasonal="teachers"] #seasonalPreviewScene {
+html[data-theme][data-seasonal="teachers"] #seasonalHomeScene,
+html[data-theme] #seasonalPreview[data-seasonal="teachers"] #seasonalPreviewScene {
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 95%, transparent), linear-gradient(180deg, transparent, #000 8%, #000 88%, transparent);
   -webkit-mask-composite: source-in;
   mask-image: linear-gradient(90deg, transparent, #000 20%, #000 95%, transparent), linear-gradient(180deg, transparent, #000 8%, #000 88%, transparent);
   mask-composite: intersect;
 }
 @media (min-width: 900px) {
-  html[data-theme="light"][data-seasonal="teachers"] .brand {
+  html[data-theme][data-seasonal="teachers"] .brand {
     grid-template-columns: 60px minmax(0, 1fr) minmax(230px, 40%);
   }
-  html[data-theme="light"][data-seasonal="teachers"] #seasonalHomeScene { width: 40%; }
+  html[data-theme][data-seasonal="teachers"] #seasonalHomeScene { width: 40%; }
+}
+
+/* V1.39.13: both authored variants share the same fitting and anchor.
+   A mode switch changes only the visible image, never the viewport geometry. */
+html[data-theme][data-seasonal="teachers"] #seasonalHomeScene .seasonal-photo,
+html[data-theme][data-seasonal="teachers"] #seasonalBootScene .seasonal-photo,
+html[data-theme] #seasonalPreview[data-seasonal="teachers"] .seasonal-photo {
+  object-fit: contain;
+  object-position: right center;
 }
