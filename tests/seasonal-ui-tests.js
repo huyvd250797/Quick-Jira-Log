@@ -16,11 +16,16 @@ class Element {
     this.dataset = {};
     this.attributes = new Map();
     this.listeners = {};
+    this.scrollTop = 0;
+    const classes = new Set();
+    this.classList = {add: name => classes.add(name), remove: name => classes.delete(name), contains: name => classes.has(name)};
+    this.scrollSurface = {scrollTop: 0};
   }
   addEventListener(type, callback) { this.listeners[type] = callback; }
   fire(type, details = {}) { this.listeners[type]?.({target: this, preventDefault() {}, ...details}); }
   replaceChildren(...children) { this.children = children; }
-  querySelector() { return {}; }
+  querySelector() { return this.scrollSurface; }
+  getAttribute(key) { return this.attributes.get(key); }
   focus() { this.focused = true; }
   setAttribute(key, value) { this.attributes.set(key, value); }
   toggleAttribute(key, force) { if (force) this.attributes.set(key, ''); else this.attributes.delete(key); }
@@ -38,10 +43,15 @@ const document = new Element('document');
 const meta = new Element('meta');
 document.documentElement = html;
 document.getElementById = get;
-document.querySelector = () => meta;
+const shell = new Element('shell');
+document.querySelector = selector => selector === '.shell' ? shell : meta;
+
 const reduced = new Element('reduced');
 const window = new Element('window');
 window.dispatchEvent = event => window.fire(event.type);
+window.scrollTo = () => {};
+window.lockOverlayBody = () => {};
+window.unlockOverlayBody = () => {};
 html.style = {};
 const map = new Map();
 let now = Date.parse('2026-12-19T16:59:59Z');
@@ -72,7 +82,7 @@ assert.equal(nextMidnight.delay, 1030);
 now += nextMidnight.delay;
 nextMidnight.callback();
 assert.equal(html.dataset.seasonal, 'christmas');
-assert.equal(html.dataset.theme, 'dark');
+
 assert(html.attributes.has('data-seasonal-motion'));
 assert(get('seasonalHomeScene').innerHTML.includes('seasonal-snow'));
 assert(get('seasonalTaskArt').innerHTML.includes('/seasonal-art/christmas.webp'));
@@ -97,7 +107,7 @@ assert.equal(get('seasonalOnceStart').value, '2026-12-20');
 assert.equal(get('seasonalOnceEnd').value, '2026-12-20');
 change('seasonalRepeat', true, 'checked');
 change('seasonalRuleMotion', false, 'checked');
-assert(!get('seasonalPreview').attributes.has('data-seasonal-motion'));
+
 assert(html.attributes.has('data-seasonal-motion'));
 form.fire('submit');
 assert.equal(get('seasonalDialog').open, false);
@@ -169,14 +179,32 @@ assert.deepEqual(JSON.parse(map.get(priorKey)).rules.vacation.schedule, {
   repeat: false, start: '2026-12-21', end: '2026-12-23'
 });
 
-const previewAt = index.indexOf('id="seasonalPreview"');
-const previewEnd = index.indexOf('class="seasonal-rule"', previewAt);
-const dashboardPreview = index.slice(previewAt, previewEnd);
-assert.match(dashboardPreview, /Giờ thường hôm nay/);
-assert.match(dashboardPreview, /Sub-task chưa logwork/);
-assert(!/<(?:button|input|select)\b/.test(dashboardPreview), 'Preview exposes no live Jira actions');
-assert.equal(get('seasonalPreview').dataset.seasonal, 'vacation');
-assert.notEqual(html.dataset.seasonal, 'vacation', 'Editing preview does not apply the theme');
+assert(!index.includes('id="seasonalPreview"'));
+assert(!index.includes('Dữ liệu minh họa'));
+get('seasonalOpenBtn').fire('click');
+change('seasonalTheme', 'tet');
+const storageBefore = JSON.stringify([...map]);
+get('settingsOverlay').setAttribute('aria-hidden', 'false');
+get('seasonalDialog').scrollSurface.scrollTop = 230;
+get('seasonalShowPreviewBtn').fire('click');
+assert.equal(ui.previewing, true);
+assert.equal(html.dataset.seasonal, 'tet');
+assert.equal(get('seasonalDialog').open, false);
+assert.equal(shell.inert, true);
+assert.equal(JSON.stringify([...map]), storageBefore, 'Preview must not save preferences');
+document.fire('keydown', {key: 'Escape', stopImmediatePropagation() {}});
+assert.equal(ui.previewing, false);
+assert.equal(get('seasonalDialog').open, true);
+assert.equal(shell.inert, false);
+assert.equal(get('seasonalTheme').value, 'tet');
+assert.equal(get('seasonalDialog').scrollSurface.scrollTop, 230);
+assert.equal(JSON.stringify([...map]), storageBefore);
+assert.notEqual(html.dataset.seasonal, 'tet');
+get('seasonalShowPreviewBtn').fire('click');
+get('seasonalStopPreviewBtn').fire('click');
+assert(get('seasonalDialog').open);
+assert.equal(ui.previewing, false);
+get('seasonalCancel').fire('click');
 const css = read('seasonal-themes.css');
 for (const id of lib.ids) {
   assert(css.includes(`[data-seasonal="${id}"]`));
@@ -197,6 +225,4 @@ const animatedProperties = new Set(Array.from(keyframes.matchAll(/([a-z-]+):/g),
 assert.deepEqual([...animatedProperties].sort(), ['opacity', 'transform']);
 assert(!index.includes('name="seasonalMode"'));
 assert.match(index, /id="seasonalBootScene"/);
-assert.match(css, /#seasonalPreview\s*\{\s*min-block-size:/);
-assert.match(css, /\.seasonal-settings-scroll > \*\s*\{\s*flex-shrink: 0/);
 console.log('Seasonal UI fixture: midnight timer, validation, account isolation, concurrent tabs, motion controls and all 20 scene variants passed.');

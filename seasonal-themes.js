@@ -8,7 +8,10 @@ window.QuickJiraSeasonalThemes = (() => {
   const dialog = byId('seasonalDialog');
   const form = byId('seasonalForm');
   const picker = byId('seasonalTheme');
-  const preview = byId('seasonalPreview');
+  const previewBar = byId('seasonalPreviewBar');
+  let livePreview = false;
+  let previewScroll = 0;
+  let settingsWasOpen = false;
   const scheduleType = byId('seasonalScheduleType');
   const annualRepeat = byId('seasonalRepeat');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -36,16 +39,15 @@ window.QuickJiraSeasonalThemes = (() => {
   }
 
   function renderHome() {
-    const id = calendar.activeTheme(saved, calendar.today());
-    const rule = saved.rules[id];
+    const id = livePreview ? editing : calendar.activeTheme(saved, calendar.today());
+    const prefs = livePreview ? draft : saved;
+    const rule = prefs.rules[id];
     const stamp = id ? `${id}:${rule.effect}` : '';
     if (stamp !== displayed) {
       const themeChanged = !displayed.startsWith(id + ':');
       displayed = stamp;
       if (id) {
         root.dataset.seasonal = id;
-        root.dataset.theme = 'dark';
-        root.style.colorScheme = 'dark';
       } else delete root.dataset.seasonal;
       window.dispatchEvent(new Event('qjl-seasonal-change'));
       art.mount(byId('seasonalHomeScene'), id, rule?.effect);
@@ -53,7 +55,7 @@ window.QuickJiraSeasonalThemes = (() => {
       if (themeChanged || !id) byId('seasonalTaskArt').innerHTML = id ? art.corner(id) : '';
       syncThemeColor();
     }
-    root.toggleAttribute('data-seasonal-motion', !!rule?.motion && saved.motion && !reduced.matches && !document.hidden);
+    root.toggleAttribute('data-seasonal-motion', !!rule?.motion && prefs.motion && !reduced.matches && !document.hidden);
     art.refresh();
   }
 
@@ -67,7 +69,9 @@ window.QuickJiraSeasonalThemes = (() => {
   function setAccount(user) {
     const next = calendar.accountKey(user);
     if (next === key) return;
+    stopPreview({ restore: false });
     if (dialog.open) dialog.close();
+    draft = null;
     key = next;
     name = user?.displayName || user?.username || user?.name || '';
     saved = readPreferences();
@@ -87,18 +91,48 @@ window.QuickJiraSeasonalThemes = (() => {
   }
 
   function renderPreview() {
-    const rule = draft.rules[editing];
-    const stamp = `${editing}:${rule.effect}`;
-    if (preview.dataset.scene !== stamp) {
-      preview.dataset.scene = stamp;
-      preview.dataset.seasonal = editing;
-      art.mount(byId('seasonalPreviewScene'), editing, rule.effect);
-      byId('seasonalPreviewTitle').textContent = calendar.themes[editing].name;
-      byId('seasonalPreviewTaskArt').innerHTML = art.corner(editing);
-    }
-    preview.toggleAttribute('data-seasonal-motion', rule.motion && draft.motion && !reduced.matches && !document.hidden);
     byId('seasonalReduced').hidden = !reduced.matches;
-    art.refresh();
+    if (livePreview) renderHome();
+  }
+
+  function startPreview() {
+    if (!draft || livePreview) return;
+    previewScroll = dialog.querySelector('.seasonal-settings-scroll').scrollTop;
+    const settings = byId('settingsOverlay');
+    settingsWasOpen = settings.getAttribute('aria-hidden') === 'false';
+    livePreview = true;
+    dialog.close();
+    if (settingsWasOpen) {
+      settings.classList.add('hidden');
+      settings.setAttribute('aria-hidden', 'true');
+    }
+    window.unlockOverlayBody?.();
+    document.querySelector('.shell').inert = true;
+    root.toggleAttribute('data-seasonal-preview', true);
+    previewBar.hidden = false;
+    byId('seasonalPreviewLabel').textContent = `Xem trước · ${calendar.themes[editing].name}`;
+    renderHome();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    byId('seasonalStopPreviewBtn').focus({ preventScroll: true });
+  }
+
+  function stopPreview({ restore = true } = {}) {
+    if (!livePreview) return;
+    livePreview = false;
+    previewBar.hidden = true;
+    document.querySelector('.shell').inert = false;
+    root.toggleAttribute('data-seasonal-preview', false);
+    renderHome();
+    if (!restore || !draft) return;
+    const settings = byId('settingsOverlay');
+    if (settingsWasOpen) {
+      settings.classList.remove('hidden');
+      settings.setAttribute('aria-hidden', 'false');
+      window.lockOverlayBody?.();
+    }
+    dialog.showModal();
+    dialog.querySelector('.seasonal-settings-scroll').scrollTop = previewScroll;
+    byId('seasonalShowPreviewBtn').focus({ preventScroll: true });
   }
 
   function renderScheduleFields() {
@@ -225,7 +259,7 @@ window.QuickJiraSeasonalThemes = (() => {
 
   byId('seasonalCloseBtn').addEventListener('click', () => dialog.close());
   byId('seasonalCancel').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => { if (!dialog.open) draft = null; });
+  dialog.addEventListener('close', () => { if (!dialog.open && !livePreview) draft = null; });
 
   picker.addEventListener('change', () => {
     const target = picker.value;
@@ -252,9 +286,14 @@ window.QuickJiraSeasonalThemes = (() => {
     renderStatus();
   });
 
-  byId('seasonalShowPreviewBtn').addEventListener('click', () => {
-    byId('seasonalPreviewHeading').scrollIntoView({ block: 'start', behavior: reduced.matches ? 'instant' : 'smooth' });
-  });
+  byId('seasonalShowPreviewBtn').addEventListener('click', startPreview);
+  byId('seasonalStopPreviewBtn').addEventListener('click', () => stopPreview());
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || !livePreview) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    stopPreview();
+  }, true);
 
   byId('seasonalUp').addEventListener('click', () => movePriority(-1));
   byId('seasonalDown').addEventListener('click', () => movePriority(1));
@@ -288,5 +327,5 @@ window.QuickJiraSeasonalThemes = (() => {
   });
 
   refreshSchedule();
-  return { setAccount, syncThemeColor };
+  return { setAccount, syncThemeColor, get previewing() { return livePreview; } };
 })();

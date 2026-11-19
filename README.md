@@ -1,3 +1,16 @@
+# Quick Jira Log V1.39.6 — Live Dashboard Preview
+
+- Nút sáng/tối luôn hoạt động, kể cả khi chủ đề đến ngày áp dụng. Lựa chọn này vẫn được lưu và dùng cho các màn chức năng. Dashboard và đăng nhập sử dụng bảng màu tối riêng của chủ đề.
+- Nút **Xem trước** trong cấu hình tạm áp dụng chủ đề đang chọn lên chính dashboard và dữ liệu hiện có của app. Có thanh **Tắt xem trước**. Trên PC có thể nhấn **ESC**. Cả hai cách đều trở về cấu hình đang chỉnh với nội dung và vị trí cuộn đã giữ lại.
+- Trong thời gian xem trước, dashboard hiển thị để xem và cuộn. Các thao tác ghi dữ liệu hoặc điều hướng được chặn. Chủ đề tạm chỉ tồn tại trong bộ nhớ. Bấm **Lưu cài đặt** sau khi trở lại cấu hình để lưu.
+- Sửa ghi đè padding native select trên PC do quy tắc CSS cũ có !important.
+
+Nâng cấp bằng cách tích hợp source vào nhánh deploy đang dùng, giữ Node.js 24.x, biến môi trường và cấu hình Vercel. Trong thư mục source chạy `npm ci`, `npm test`. Sau deploy, bấm **Cập nhật** ở PWA và kiểm tra V1.39.6. Không cần migration.
+
+Bản kế tiếp đề xuất là V1.40.0 — Tra cứu & Logwork.
+
+---
+
 # Quick Jira Log V1.39.5 — Dashboard Preview & Theme Scope
 
 - Sửa ô chọn chủ đề, hiệu ứng và lịch bị cắt chữ trên PC bằng chiều cao cố định 46 px, line-height native và padding dọc bằng 0.

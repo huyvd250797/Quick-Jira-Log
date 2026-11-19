@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.6 — Live Dashboard Preview
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.6 | Xem trước dashboard thật, thoát bằng ESC/nút, màu tối chủ đề độc lập nút sáng/tối | Đã xây dựng source |
+| V1.40.0 | Tra cứu & Logwork | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.5 — Dashboard Preview & Theme Scope
 
 | Phiên bản | Phạm vi | Trạng thái |

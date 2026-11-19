@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.6 — Live Dashboard Preview
+
+- Dùng màu tối riêng cho dashboard và đăng nhập theo chủ đề. Bật lại nút sáng/tối và lưu lựa chọn bình thường.
+- Bỏ dashboard mẫu trong cấu hình. Xem trước bằng dashboard hiện tại với chủ đề tạm, quay lại bằng nút hoặc ESC và giữ bản nháp.
+- Chặn thao tác trên dashboard trong lúc xem trước, khôi phục chủ đề theo lịch khi kết thúc.
+
+---
+
 # Quick Jira Log V1.39.5 — Dashboard Preview & Theme Scope
 
 - Sửa cắt chữ ô chọn trên PC.

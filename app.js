@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.39.5';
+const APP_VERSION = '1.39.6';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -760,16 +760,8 @@ function readThemePreference() {
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function seasonalHomeIsVisible() {
-  return !document.querySelector('dialog[open], .settings-overlay[aria-hidden="false"]')
-    && !document.body.classList.contains('mobile-editor-open')
-    && !document.body.classList.contains('desktop-editor-open')
-    && !document.body.dataset.desktopEditor;
-}
-
 function applyTheme(theme, { persist = true } = {}) {
-  const seasonal = !!document.documentElement.dataset.seasonal && seasonalHomeIsVisible();
-  const next = seasonal || theme === 'dark' ? 'dark' : 'light';
+  const next = theme === 'dark' ? 'dark' : 'light';
   state.theme = next;
   document.documentElement.dataset.theme = next;
   document.documentElement.style.colorScheme = next;
@@ -781,36 +773,19 @@ function applyTheme(theme, { persist = true } = {}) {
     themeBtn.setAttribute('aria-label', toDark ? 'Chuyển giao diện tối' : 'Chuyển giao diện sáng');
     themeBtn.setAttribute('title', toDark ? 'Dark mode' : 'Light mode');
   }
-  if (themeBtn) {
-    themeBtn.disabled = seasonal;
-    if (seasonal) {
-      themeBtn.setAttribute('aria-label', 'Chế độ tối theo chủ đề');
-      themeBtn.title = 'Chế độ tối theo chủ đề';
-    }
-  }
+  if (themeBtn) themeBtn.disabled = false;
   if ($('lightThemeBtn')) $('lightThemeBtn').disabled = false;
   if ($('darkThemeBtn')) $('darkThemeBtn').disabled = false;
-  if ($('themeState')) $('themeState').textContent = seasonal ? 'Tối · Theo chủ đề' : next === 'dark' ? 'Tối' : 'Sáng';
+  if ($('themeState')) $('themeState').textContent = next === 'dark' ? 'Tối' : 'Sáng';
   $('lightThemeBtn')?.classList.toggle('active', next === 'light');
   $('darkThemeBtn')?.classList.toggle('active', next === 'dark');
-  if (persist && !seasonal) { try { localStorage.setItem(STORAGE.theme, next); } catch {} }
+  if (persist) { try { localStorage.setItem(STORAGE.theme, next); } catch {} }
   window.QuickJiraSeasonalThemes?.syncThemeColor();
 }
 
 window.addEventListener('qjl-seasonal-change', () => applyTheme(readThemePreference(), { persist: false }));
 
-const seasonalPageObserver = new MutationObserver(() => {
-  applyTheme(readThemePreference(), { persist: false });
-});
-document.querySelectorAll('dialog, .settings-overlay').forEach(panel => {
-  seasonalPageObserver.observe(panel, { attributes: true, attributeFilter: ['open', 'aria-hidden', 'class'] });
-});
-seasonalPageObserver.observe(document.body, {
-  attributes: true, attributeFilter: ['class', 'data-desktop-editor']
-});
-
 function toggleTheme() {
-  if (document.documentElement.dataset.seasonal && seasonalHomeIsVisible()) return;
   applyTheme(state.theme === 'dark' ? 'light' : 'dark');
   showToast(state.theme === 'dark' ? 'Đã bật Dark mode.' : 'Đã bật Light mode.');
 }
@@ -3504,7 +3479,7 @@ $('clearAuditHistoryBtn').addEventListener('click', () => {
   renderAuditHistory();
 });
 document.addEventListener('keydown', event => {
-  if (event.key !== 'Escape' || $('seasonalDialog')?.open) return;
+  if (event.key !== 'Escape' || window.QuickJiraSeasonalThemes?.previewing || $('seasonalDialog')?.open) return;
   if ($('logProgressDialog').open) { event.preventDefault(); if (!state.logProgress?.active) closeLogProgress(); return; }
   if ($('worklogCorrectionDialog').open) {
     event.preventDefault();

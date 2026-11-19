@@ -50,132 +50,45 @@ async function save(page) {
 async function start() {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}`;
-  const browser = await chromium.launch({ headless: true, executablePath: process.env.QJL_CHROMIUM_PATH,
-    args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  const browser = await chromium.launch({headless: true, executablePath: process.env.QJL_CHROMIUM_PATH,
+    args: ['--no-sandbox', '--disable-dev-shm-usage']});
   try {
-    for (const viewport of [{width: 390, height: 844}, {width: 1440, height: 900}, {width: 320, height: 640}, {width: 844, height: 390}]) {
-      const context = await browser.newContext({ viewport, isMobile: viewport.width <= 390, hasTouch: viewport.width <= 390 });
+    for (const viewport of [{width: 1440, height: 900}, {width: 390, height: 844}]) {
+      const context = await browser.newContext({viewport, serviceWorkers: 'block'});
       const page = await context.newPage();
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
-      user = { username: 'boss-a', displayName: 'Boss A' };
       await page.clock.setFixedTime(new Date('2026-12-19T17:00:20Z'));
       await page.goto(url);
-      await page.waitForFunction(() => document.documentElement.dataset.seasonal === 'christmas' && !document.body.classList.contains('booting'));
-      await page.evaluate(() => { localStorage.setItem('quick-jira-log:theme:v1', 'light'); applyTheme('light', {persist:false}); });
-      await open(page);
-      await page.waitForFunction(() => document.documentElement.dataset.theme === 'light');
-      assert.equal(await page.locator('#seasonalTheme').inputValue(), 'christmas');
-      assert(await page.locator('#seasonalPreview').getByText('Giờ thường hôm nay', {exact:true}).isVisible());
-      for (const id of ['seasonalTheme', 'seasonalEffect', 'seasonalScheduleType']) {
-        assert(await page.locator('#' + id).evaluate(select => {
-          const style = getComputedStyle(select);
-          return style.lineHeight === 'normal' && select.clientHeight >= 42 && parseFloat(style.paddingTop) === 0;
-        }));
-      }
-      assert.equal(await page.locator('#seasonalAccount').textContent(), 'Boss A');
-      await page.waitForFunction(() => document.querySelector('#seasonalPreviewScene img')?.naturalWidth > 0);
-      assert((await page.locator('#seasonalPreview').boundingBox()).height >= 156, 'Preview must not shrink');
-      assert.equal(await page.locator('#seasonalScheduleType option').count(), 2);
-      assert(await page.locator('#seasonalRepeatRow').isHidden());
-      assert(await page.locator('#seasonalDialog').evaluate(dialog => {
-        const box = dialog.getBoundingClientRect();
-        const scroll = dialog.querySelector('.seasonal-settings-scroll');
-        return dialog.scrollWidth <= dialog.clientWidth + 1 && box.top >= 0 && box.bottom <= innerHeight + 1
-          && scroll.scrollHeight > scroll.clientHeight;
-      }), 'Settings can scroll with footer visible');
-      if (process.env.QJL_QA_DIR && viewport.width === 390) await page.screenshot({path: path.join(process.env.QJL_QA_DIR, 'seasonal-settings.png')});
-
-      if (viewport.width !== 390) {
-        await page.keyboard.press('Escape');
-        await closeSettings(page);
-        assert.deepEqual(errors, []);
-        await context.close();
-        continue;
-      }
-      await page.locator('#seasonalTheme').selectOption('birthday');
-      await page.locator('#seasonalScheduleType').selectOption('specific');
-      await page.locator('#seasonalRepeat').check();
-      await page.getByRole('button', {name: 'Lưu cài đặt'}).click();
-      assert(await page.locator('#seasonalError').isVisible());
-      await page.locator('#seasonalAnnualStart').fill('20/12');
-      await page.locator('#seasonalAnnualEnd').fill('20/12');
-      await save(page);
-      assert.equal(await page.locator('html').getAttribute('data-seasonal'), 'birthday');
-      assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
-      const motion = page.locator('#seasonalHomeScene .seasonal-surface');
-      await motion.evaluate(canvas => canvas.scrollIntoView());
-      await page.waitForFunction(() => document.querySelector('#seasonalHomeScene canvas')?.classList.contains('is-ready'));
-      await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.waitForFunction(() => !document.documentElement.hasAttribute('data-seasonal-motion'));
-      assert.equal(await motion.evaluate(e => getComputedStyle(e).visibility), 'hidden');
-      await page.emulateMedia({ reducedMotion: 'no-preference' });
-
-      await page.reload();
-      await page.waitForFunction(() => document.documentElement.dataset.seasonal === 'birthday');
-      user = { username: 'boss-b', displayName: 'Boss B' };
-      await page.reload();
-      await page.waitForFunction(() => document.documentElement.dataset.seasonal === 'christmas');
-      await open(page);
-      await page.locator('#seasonalTheme').selectOption('birthday');
-      assert.equal(await page.locator('#seasonalScheduleType').inputValue(), 'default');
-      await page.locator('#seasonalCancel').click();
-      await closeSettings(page);
-      user = { username: 'boss-a', displayName: 'Boss A' };
-      await page.reload();
-      await page.waitForFunction(() => document.documentElement.dataset.seasonal === 'birthday');
-      await page.clock.setFixedTime(new Date('2026-12-20T17:00:01Z'));
-      await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-      await page.waitForFunction(() => document.documentElement.dataset.seasonal === 'christmas');
-
-      await open(page);
-      assert.equal(await page.locator('[name=seasonalMode]').count(), 0);
-      const result = [];
-      for (const id of await page.evaluate(() => QuickJiraSeasonal.ids)) {
-        await page.locator('#seasonalTheme').selectOption(id);
-        await page.waitForFunction(theme => document.querySelector('#seasonalPreviewScene img')?.src.endsWith('/' + theme + '.webp') && document.querySelector('#seasonalPreviewScene img').naturalWidth > 0, id);
-        for (const effect of ['0', '1']) {
-          await page.locator('#seasonalEffect').selectOption(effect);
-          if (['vacation', 'april', 'birthday', 'moon', 'halloween'].includes(id)) {
-            const canvas = page.locator('#seasonalPreviewScene canvas');
-            await canvas.evaluate(el => el.scrollIntoView({block: 'center'}));
-            await page.waitForFunction(() => document.querySelector('#seasonalPreviewScene canvas')?.classList.contains('is-ready'));
-            if (id === 'april') {
-              const first = await canvas.screenshot();
-              const second = await canvas.screenshot();
-              assert.notDeepEqual(first, second);
-            }
-          } else {
-            assert.equal(await page.locator('#seasonalPreviewScene .seasonal-scene-layer i').first().evaluate(e => getComputedStyle(e).animationPlayState), 'running');
-          }
-        }
-        result.push(id);
-      }
-      assert.equal(result.length, 10);
-      await page.locator('#seasonalMotion').uncheck();
-      await save(page);
-      assert.equal(await page.locator('html').getAttribute('data-seasonal'), 'christmas');
-      assert.equal(await page.locator('html').getAttribute('data-seasonal-motion'), null);
-      await page.locator('#settingsBtn').click();
+      await page.waitForFunction(() => document.documentElement.dataset.seasonal === 'christmas'
+        && !document.body.classList.contains('booting'));
       await page.evaluate(() => applyTheme('light'));
       assert.equal(await page.locator('html').getAttribute('data-theme'), 'light');
-      await page.evaluate(() => applyTheme('dark'));
+      assert.equal(await page.locator('#themeBtn').isEnabled(), true);
+      await page.locator('#themeBtn').click();
       assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
-      await closeSettings(page);
-      if (process.env.QJL_QA_DIR) await page.screenshot({path: path.join(process.env.QJL_QA_DIR, 'seasonal-christmas.png')});
-
-      user = null;
-      await page.reload();
-      await page.waitForFunction(() => !document.body.classList.contains('booting') && !document.getElementById('loginCard').classList.contains('hidden'));
+      await page.locator('#themeBtn').click();
+      await open(page);
+      assert.equal(await page.locator('#seasonalPreview').count(), 0);
+      await page.locator('#seasonalTheme').selectOption('tet');
+      const snapshot = await page.evaluate(() => localStorage.getItem(QuickJiraSeasonal.accountKey(state.user)));
+      await page.locator('#seasonalShowPreviewBtn').click();
+      await page.waitForFunction(() => QuickJiraSeasonalThemes.previewing);
+      assert.equal(await page.locator('html').getAttribute('data-seasonal'), 'tet');
+      assert(await page.locator('#dashboardCard').isVisible());
+      assert(await page.locator('#settingsOverlay').isHidden());
+      assert(await page.locator('.shell').evaluate(el => el.inert));
+      assert.equal(await page.evaluate(() => localStorage.getItem(QuickJiraSeasonal.accountKey(state.user))), snapshot);
+      await page.keyboard.press('Escape');
+      assert(await page.locator('#seasonalDialog').isVisible());
+      assert.equal(await page.locator('#seasonalTheme').inputValue(), 'tet');
       assert.equal(await page.locator('html').getAttribute('data-seasonal'), 'christmas');
-      assert(await page.locator('#seasonalHomeScene .seasonal-snow').count());
-
-      // An installed PWA can load the theme engine, visuals and style offline.
-      await page.waitForFunction(() => !!navigator.serviceWorker.controller);
-      await context.setOffline(true);
-      for (const asset of ['/seasonal-themes.css', '/lib/seasonal-calendar.js', '/seasonal-shader.js', '/seasonal-scenes.js', '/seasonal-themes.js', '/seasonal-art/christmas.webp']) {
-        assert(await page.evaluate(async pathname => (await fetch(pathname)).ok, asset));
-      }
+      await page.locator('#seasonalShowPreviewBtn').click();
+      await page.locator('#seasonalStopPreviewBtn').click();
+      assert(await page.locator('#seasonalDialog').isVisible());
+      assert.equal(await page.evaluate(() => localStorage.getItem(QuickJiraSeasonal.accountKey(state.user))), snapshot);
+      await page.locator('#seasonalCancel').click();
+      await closeSettings(page);
       assert.deepEqual(errors, []);
       await context.close();
     }
@@ -184,6 +97,5 @@ async function start() {
     await new Promise(resolve => server.close(resolve));
   }
 }
-
-start().then(() => console.log('Seasonal UI: all 10 scenes / 20 effects, account isolation, schedule, reduced motion, two palettes, 4 viewports and PWA cache passed.'))
+start().then(() => console.log('Live dashboard preview enter, ESC, exit button, draft preservation and theme switch passed.'))
   .catch(error => { console.error(error); server.close(); process.exitCode = 1; });

@@ -1,3 +1,10 @@
+# Quick Jira Log V1.39.6 — Live Dashboard Preview
+
+- Kiểm thử bật/tắt sáng tối khi chủ đề hoạt động, lưu lựa chọn, mở và đóng xem trước bằng ESC hoặc nút, giữ nội dung cấu hình, giữ vị trí cuộn và xác nhận xem trước không ghi thiết lập.
+- Playwright có kịch bản dashboard thật trên màn PC và mobile. Chromium bị chặn tại bước mở socket trong môi trường bàn giao, cần nghiệm thu hiển thị và cuộn trên URL deploy.
+
+---
+
 # Quick Jira Log V1.39.5 — Dashboard Preview & Theme Scope
 
 - Kiểm thử logic mở màn chức năng khi tùy chọn là light mode, đổi lựa chọn trong cài đặt, quay về dashboard chủ đề và khôi phục khi hết lịch.

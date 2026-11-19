@@ -18,8 +18,7 @@
   --season-line: color-mix(in srgb, var(--season-ink) 22%, var(--season-card));
   --season-tint: color-mix(in srgb, var(--season-ink) 12%, var(--season-card));
 }
-html[data-theme="dark"][data-seasonal],
-#seasonalPreview[data-seasonal] {
+html[data-seasonal] {
   --season-bg: var(--season-dark);
   --season-card: var(--season-deep);
   --season-text: #f4f5fb;
@@ -30,7 +29,15 @@ html[data-theme="dark"][data-seasonal],
 
 html[data-theme][data-seasonal],
 html[data-theme][data-seasonal] body { background: var(--season-bg); }
-html[data-theme][data-seasonal] :is(#statusCard, #filterCard, #dashboardCard, #mobileTaskbar, .brand) {
+html[data-theme][data-seasonal] :is(#statusCard, #filterCard, #dashboardCard, #mobileTaskbar, .brand, #loginCard, #bootSplash) {
+  color-scheme: dark;
+  color: var(--season-text);
+  --text: var(--season-text);
+  --muted: #b4c3d8;
+  --qjl-surface: var(--season-bg);
+  --primary: var(--season-accent);
+  --primary-soft: var(--season-tint);
+  --line: var(--season-line);
   --card: var(--season-card);
   --qjl-accent: var(--season-accent);
   --qjl-action-tint: var(--season-tint);
@@ -267,25 +274,6 @@ html[data-seasonal] #loginCard #loginBtn:not(:disabled) {
 .seasonal-priority { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: var(--muted); font-size: .85rem; }
 .seasonal-priority button { min-width: 44px; min-height: 44px; }
 .seasonal-settings-scroll > * { flex-shrink: 0; }
-#seasonalPreviewHeading { scroll-margin-block-start: 8px; margin: 0 0 6px; font-size: .83rem; color: var(--muted); }
-#seasonalPreview {
-  min-block-size: 156px;
-  border: 1px solid var(--season-line);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--season-bg);
-  color: var(--season-text);
-}
-.seasonal-preview-hero { isolation: isolate; position: relative; min-height: clamp(112px, 30vw, 153px); display: flex; align-items: end; padding: 12px; }
-.seasonal-preview-hero .seasonal-scene { z-index: -1; width: 100%; }
-.seasonal-preview-hero strong { background: var(--season-bg); border-radius: 6px; padding: 4px 8px; }
-.seasonal-preview-metric { margin: 0 12px 10px; padding: 7px 10px; background: var(--season-card); border: 1px solid var(--season-line); border-radius: 8px; }
-.seasonal-preview-metric :is(b, span) { font-variant-numeric: tabular-nums; }
-.seasonal-preview-metric i { display: block; height: 4px; margin-top: 4px; background: var(--season-accent); border-radius: 5px; }
-@media (max-width: 370px) {
-  .seasonal-settings-scroll, .seasonal-dialog-head, .seasonal-dialog-footer { padding-inline: 9px; }
-}
-
 @media (max-height: 440px) {
   html[data-seasonal] #bootSplash .boot-card { padding-top: 58px; padding-bottom: 14px; }
   html[data-seasonal] #bootSplash .boot-logo { width: 66px; height: 66px; }
@@ -300,7 +288,7 @@ html[data-seasonal] #loginCard #loginBtn:not(:disabled) {
   height: 46px;
   min-height: 46px;
   max-height: none;
-  padding: 0 34px 0 12px;
+  padding: 0 34px 0 12px !important;
   line-height: normal;
   font-size: 15px;
   font-weight: 500;
@@ -312,25 +300,25 @@ html[data-seasonal] #loginCard #loginBtn:not(:disabled) {
 #seasonalDialog option { font-size: 15px; line-height: normal; }
 #seasonalDialog .seasonal-effect-row { grid-template-columns: minmax(0, 1fr) auto; }
 #seasonalDialog .seasonal-effect-row > label { display: grid; gap: 6px; }
-#seasonalPreview { color-scheme: dark; padding-bottom: 10px; }
-#seasonalPreview .seasonal-preview-hero { min-height: 105px; display: grid; align-content: end; gap: 6px; }
-.seasonal-preview-brand { display: flex; gap: 8px; align-items: center; width: max-content; max-width: 100%; padding: 4px; border-radius: 8px; background: var(--season-bg); }
-.seasonal-preview-brand img { border-radius: 8px; }
-#seasonalPreviewTitle { justify-self: start; font-size: 11px; }
-#seasonalDialog .seasonal-preview-caption { padding: 9px 12px 0; color: #bdc7d5; font-size: 11px; }
-.seasonal-preview-status { margin: 0 10px; padding: 9px; display: flex; justify-content: space-between; gap: 8px; border: 1px solid var(--season-line); background: var(--season-card); border-radius: 9px; font-size: 11px; }
-.seasonal-preview-status b { color: #84dfb6; }
-.seasonal-preview-heading { margin: 13px 10px 8px; font-size: 13px; }
-.seasonal-preview-hours { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 10px; }
-.seasonal-preview-hours article { min-width: 0; padding: 10px; border: 1px solid var(--season-line); background: var(--season-card); border-radius: 9px; font-size: 11px; }
-#seasonalPreview .seasonal-preview-hours p { margin: 8px 0; }
-.seasonal-preview-hours p b { font-size: 24px; color: #f5f7fc; }
-.seasonal-preview-hours i { display: block; height: 4px; background: linear-gradient(to right, var(--season-bright) var(--progress), var(--season-tint) var(--progress)); border-radius: 3px; }
-.seasonal-preview-hours small { display: block; margin-top: 8px; color: var(--season-bright); font-size: 10px; }
-.seasonal-preview-tasks { position: relative; margin: 10px; padding: 10px 10px 30px; border: 1px solid var(--season-line); background: var(--season-card); border-radius: 9px; }
-.seasonal-preview-tasks h4 { margin: 0 0 10px; font-size: 12px; }
-.seasonal-preview-search { padding: 8px; background: var(--season-bg); border: 1px solid var(--season-line); border-radius: 7px; color: #c0cada; font-size: 11px; }
-#seasonalDialog .seasonal-preview-tasks p { margin: 10px 0; font-size: 10px; color: #c0cada; text-align: center; }
-#seasonalPreviewTaskArt { position: absolute; bottom: 0; right: 0; width: 90px; pointer-events: none; }
-#seasonalPreviewTaskArt img { width: 100%; height: 34px; object-fit: cover; object-position: right; mask-image: radial-gradient(ellipse at right bottom, #000 0%, transparent 70%); }
-.seasonal-preview-nav { display: flex; justify-content: space-around; gap: 4px; margin: 0 10px; padding: 10px 4px; border: 1px solid var(--season-line); border-radius: 9px; background: var(--season-card); font-size: 10px; }
+
+
+#seasonalPreviewBar[hidden] { display: none; }
+#seasonalPreviewBar {
+  position: fixed; z-index: 10001; top: max(8px, env(safe-area-inset-top)); left: 50%;
+  transform: translateX(-50%); width: min(620px, calc(100% - 24px)); box-sizing: border-box;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px;
+  color: var(--text); background: var(--card); box-shadow: var(--shadow);
+}
+#seasonalPreviewBar button { min-height: 42px; flex: none; }
+html[data-seasonal-preview] .shell { padding-top: 85px; }
+html[data-seasonal-preview] .shell[inert] { user-select: none; }
+
+html[data-seasonal] :is(#loginCard, #filterCard) :is(input, select, textarea):focus {
+  background-color: var(--season-bg) !important;
+  color: var(--season-text);
+}
+html[data-seasonal] #mobileTaskbar .mobile-taskbar-btn > span:last-child,
+html[data-seasonal] #statusCard strong,
+html[data-seasonal] #dashboardCard h2,
+html[data-seasonal] #filterCard h2 { color: var(--season-text); }
