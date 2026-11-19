@@ -1,3 +1,11 @@
+# Quick Jira Log V1.39.4 — Stable Scenes & Seasonal Dark Mode
+
+- Kiểm thử tự động dark mode khi chủ đề có hiệu lực, khóa nút chuyển sáng/tối, bảo toàn tùy chọn và khôi phục khi hết lịch.
+- Kiểm tra 24 khung hình phân bố đều trong chu kỳ 6 giây cho mỗi biến thể bằng OpenGL ES. Vùng bảo vệ mặt trăng, vùng kiến trúc bên trái cờ, vùng đài phun nước và cột cờ khớp theo pixel ở tất cả các khung kiểm tra. Vùng hiệu ứng có thay đổi.
+- FFprobe xác nhận bốn video dự phòng có 360 khung hình trong 6 giây. Cần xác nhận phát thực tế trên Safari iPhone sau khi deploy.
+
+---
+
 # Quick Jira Log V1.39.3 — Scene Motion Refinement
 
 - Bộ `npm test` kiểm tra lịch, ánh xạ 20 hiệu ứng, các lớp cánh hoa, dơi và tuyết, cũng như việc dừng và dọn renderer. Shader được biên dịch và dựng hai khung cho từng hiệu ứng GPU bằng Mesa OpenGL ES. Đã đối chiếu phần ảnh thay đổi với vùng quy định.

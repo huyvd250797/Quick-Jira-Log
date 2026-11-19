@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.4 — Stable Scenes & Seasonal Dark Mode
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.4 | Dark mode theo chủ đề, sửa méo mặt trăng và Dinh Độc Lập trên trình xem trước, cảnh áp dụng và video dự phòng | Đã xây dựng source |
+| V1.40.0 | Tra cứu & Logwork | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.3 — Scene Motion Refinement
 
 | Phiên bản | Phạm vi | Trạng thái |

@@ -85,7 +85,7 @@ canvas.after = attached => assert.equal(attached, video);
 canvas.isConnected = true;
 art.mount(container, 'april', 1);
 tick(200);
-assert.equal(video.src, '/seasonal-motion/april-1.mp4');
+assert.equal(video.src, '/seasonal-motion/april-1-v2.mp4');
 assert.equal(played, 1);
 assert.equal(video.muted, true);
 assert.equal(video.playsInline, true);

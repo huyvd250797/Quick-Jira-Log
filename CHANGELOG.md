@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.4 — Stable Scenes & Seasonal Dark Mode
+
+- Cố định dark mode khi chủ đề hoạt động, khôi phục lựa chọn đã lưu khi hết lịch.
+- Khóa biên mặt trăng và vùng sáng gần mặt trăng. Giới hạn chuyển động mây và đèn ông sao theo vị trí riêng.
+- Ràng buộc cả điểm gốc và điểm lấy mẫu vào vùng vải cờ để chuyển động không kéo theo nền.
+- Dựng lại bốn video dự phòng 60 FPS và đổi phiên bản cache PWA.
+
+---
+
 # Quick Jira Log V1.39.3 — Scene Motion Refinement
 
 - Dựng hiệu ứng theo kết cấu tranh gốc với WebGL và các đoạn video dự phòng 60 khung hình/giây.

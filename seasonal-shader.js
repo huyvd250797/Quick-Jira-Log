@@ -18,6 +18,27 @@ window.QuickJiraSeasonalShader = (() => {
       return 1.0 - smoothstep(0.22, 1.0, length((p - center) / radius));
     }
 
+    // These silhouettes are defined in the source image's 960 × 279 coordinates.
+    float clothMask(vec2 uv, vec3 color) {
+      vec2 p = uv * vec2(960.0, 279.0);
+      float top = 93.0 - 0.84 * clamp(p.x - 640.0, 0.0, 50.0)
+                       - 0.24 * max(p.x - 690.0, 0.0);
+      float bottom = 218.0 - 0.11 * (p.x - 640.0);
+      // Stay inside the cloth, including its yellow star, and away from the pole.
+      float silhouette = band(p.x, 642.0, 892.0, 22.0) * band(p.y, top, bottom, 18.0);
+      float redFabric = smoothstep(0.08, 0.28, color.r - color.g);
+      float star = region(p, vec2(771.0, 115.0), vec2(67.0, 67.0))
+                 * smoothstep(0.14, 0.32, color.g - color.b)
+                 * smoothstep(0.55, 0.76, color.r);
+      return silhouette * max(redFabric, star);
+    }
+
+    float outsideMoon(vec2 uv) {
+      vec2 p = uv * vec2(960.0, 279.0);
+      // Lock the complete disk, its edge and the near halo.
+      return smoothstep(73.0, 89.0, length(p - vec2(548.0, 111.0)));
+    }
+
     void main() {
       // Top-left image coordinates with the same right-aligned cover fit as the HTML image.
       vec2 p = vec2(1.0 - (1.0 - vUv.x) * fit.x, 0.5 + (vUv.y - 0.5) * fit.y);
@@ -43,15 +64,16 @@ window.QuickJiraSeasonalShader = (() => {
           uv += vec2(-delta.y * 0.038, delta.x * 0.24) * canopy * tip * wind;
         }
       } else if (kind == 2) {
-        // Deform the painted flag and its star continuously, with the right pole stationary.
-        float free = clamp((0.932 - p.x) / 0.29, 0.0, 1.0);
-        float top = 0.018 + free * 0.21;
-        float bottom = 0.67 + free * 0.17;
-        float body = band(p.x, 0.622, 0.934, 0.035) * band(p.y, top - 0.045, bottom + 0.035, 0.11);
+        vec3 original = texture2D(image, p).rgb;
+        float free = clamp((0.931 - p.x) / 0.26, 0.0, 1.0);
         float phase = free * 9.2 - t * mix(4.0, 5.0, variant);
-        uv.y += sin(phase) * free * body * mix(0.043, 0.079, variant);
-        uv.x += cos(phase - 0.4) * free * body * 0.013;
-        shine = cos(phase + 0.45) * free * body * 0.20;
+        float cloth = clothMask(p, original);
+        vec2 ripple = vec2(cos(phase - 0.4) * 0.009, sin(phase) * mix(0.032, 0.056, variant));
+        vec2 samplePoint = p + ripple * free * cloth;
+        // The displacement must also sample cloth. It cannot pull the roof through the flag edge.
+        float sampleCloth = clothMask(samplePoint, texture2D(image, samplePoint).rgb);
+        uv = mix(p, samplePoint, sampleCloth);
+        shine = cos(phase + 0.45) * free * cloth * 0.15;
       } else if (kind == 3) {
         // Use the painted flame silhouette, with its wick fixed and a moving tip.
         float flame = region(p, vec2(0.736, 0.126), vec2(0.025, 0.118));
@@ -63,17 +85,27 @@ window.QuickJiraSeasonalShader = (() => {
                 region(p, vec2(0.735, 0.13), vec2(0.085, 0.21));
       } else if (kind == 4) {
         if (variant < 0.5) {
-          // Drift the illuminated cloud band below the moon.
-          float cloud = region(p, vec2(0.52, 0.67), vec2(0.29, 0.205));
-          uv.x += sin(t) * 0.046 * cloud;
+          vec2 px = p * vec2(960.0, 279.0);
+          float clouds = region(px, vec2(432.0, 182.0), vec2(198.0, 44.0))
+                       * outsideMoon(p);
+          vec2 cloudPoint = p + vec2(sin(t) * 0.032 * clouds, 0.0);
+          uv = mix(p, cloudPoint, outsideMoon(cloudPoint));
         } else {
-          // The lantern pivots from its hanging point, then softly illuminates its paper.
-          vec2 cord = vec2(0.79, 0.065);
-          vec2 delta = p - cord;
-          float paper = region(p, vec2(0.79, 0.51), vec2(0.20, 0.49));
-          float pivot = sin(t * 2.0) * 0.063 * paper;
-          uv += vec2(-delta.y * 0.65, delta.x * 1.57) * pivot;
-          shine = paper * (0.046 + sin(t * 3.0) * 0.074);
+          vec2 px = p * vec2(960.0, 279.0);
+          vec2 cord = vec2(764.0, 21.0);
+          vec2 delta = px - cord;
+          vec3 original = texture2D(image, p).rgb;
+          float lantern = region(px, vec2(772.0, 140.0), vec2(120.0, 116.0))
+                        * band(px.x, 646.0, 887.0, 25.0)
+                        * smoothstep(0.10, 0.30, original.r - original.b)
+                        * outsideMoon(p);
+          float angle = sin(t * 2.0) * 0.049;
+          vec2 sway = angle * vec2(-delta.y, delta.x) / vec2(960.0, 279.0);
+          vec2 paperPoint = p + sway * lantern;
+          vec3 paper = texture2D(image, paperPoint).rgb;
+          float paperEdge = smoothstep(0.095, 0.28, paper.r - paper.b);
+          uv = mix(p, paperPoint, outsideMoon(paperPoint) * paperEdge);
+          shine = lantern * (0.022 + sin(t * 3.0) * 0.058);
         }
       } else if (kind == 5) {
         float eyes = max(region(p, vec2(0.678, 0.515), vec2(0.033, 0.098)),

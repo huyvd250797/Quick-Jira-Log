@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.39.3';
+const APP_VERSION = '1.39.4';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -761,7 +761,8 @@ function readThemePreference() {
 }
 
 function applyTheme(theme, { persist = true } = {}) {
-  const next = theme === 'dark' ? 'dark' : 'light';
+  const seasonal = !!document.documentElement.dataset.seasonal;
+  const next = seasonal || theme === 'dark' ? 'dark' : 'light';
   state.theme = next;
   document.documentElement.dataset.theme = next;
   document.documentElement.style.colorScheme = next;
@@ -773,14 +774,26 @@ function applyTheme(theme, { persist = true } = {}) {
     themeBtn.setAttribute('aria-label', toDark ? 'Chuyển giao diện tối' : 'Chuyển giao diện sáng');
     themeBtn.setAttribute('title', toDark ? 'Dark mode' : 'Light mode');
   }
-  if ($('themeState')) $('themeState').textContent = next === 'dark' ? 'Tối' : 'Sáng';
+  if (themeBtn) {
+    themeBtn.disabled = seasonal;
+    if (seasonal) {
+      themeBtn.setAttribute('aria-label', 'Chế độ tối theo chủ đề');
+      themeBtn.title = 'Chế độ tối theo chủ đề';
+    }
+  }
+  if ($('lightThemeBtn')) $('lightThemeBtn').disabled = seasonal;
+  if ($('darkThemeBtn')) $('darkThemeBtn').disabled = seasonal;
+  if ($('themeState')) $('themeState').textContent = seasonal ? 'Tối · Theo chủ đề' : next === 'dark' ? 'Tối' : 'Sáng';
   $('lightThemeBtn')?.classList.toggle('active', next === 'light');
   $('darkThemeBtn')?.classList.toggle('active', next === 'dark');
-  if (persist) { try { localStorage.setItem(STORAGE.theme, next); } catch {} }
+  if (persist && !seasonal) { try { localStorage.setItem(STORAGE.theme, next); } catch {} }
   window.QuickJiraSeasonalThemes?.syncThemeColor();
 }
 
+window.addEventListener('qjl-seasonal-change', () => applyTheme(readThemePreference(), { persist: false }));
+
 function toggleTheme() {
+  if (document.documentElement.dataset.seasonal) return;
   applyTheme(state.theme === 'dark' ? 'light' : 'dark');
   showToast(state.theme === 'dark' ? 'Đã bật Dark mode.' : 'Đã bật Light mode.');
 }

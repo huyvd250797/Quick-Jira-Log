@@ -42,8 +42,12 @@ window.QuickJiraSeasonalThemes = (() => {
     if (stamp !== displayed) {
       const themeChanged = !displayed.startsWith(id + ':');
       displayed = stamp;
-      if (id) root.dataset.seasonal = id;
-      else delete root.dataset.seasonal;
+      if (id) {
+        root.dataset.seasonal = id;
+        root.dataset.theme = 'dark';
+        root.style.colorScheme = 'dark';
+      } else delete root.dataset.seasonal;
+      window.dispatchEvent(new Event('qjl-seasonal-change'));
       art.mount(byId('seasonalHomeScene'), id, rule?.effect);
       art.mount(byId('seasonalBootScene'), id, rule?.effect);
       if (themeChanged || !id) byId('seasonalTaskArt').innerHTML = id ? art.corner(id) : '';

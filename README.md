@@ -1,3 +1,13 @@
+# Quick Jira Log V1.39.4 — Stable Scenes & Seasonal Dark Mode
+
+Khi chủ đề đang đến ngày áp dụng và được bật, app tự cố định dark mode ở màn Tổng quan, đăng nhập và màn tải. Các màn dùng chung bảng màu của app cũng theo dark mode. Nút sáng/tối được khóa và có nhãn “Tối · Theo chủ đề”. Khi hết lịch, app khôi phục lựa chọn sáng/tối đã lưu.
+
+Bản này sửa hai cảnh **Tết Trung thu** và **Ngày 30/04**. Mây và đèn ông sao chuyển động trong vùng riêng, hình tròn của mặt trăng được khóa. Chuyển động lá cờ chỉ tác động lên phần vải và ngôi sao. Dinh Độc Lập, đài phun nước và cột cờ đứng yên.
+
+Bốn video dự phòng của các hiệu ứng này đã được dựng lại và đổi tên để PWA tải đúng bản mới. Đưa toàn bộ thư mục lên nhánh deploy hiện có rồi bấm **Cập nhật** trong PWA. Thử cả hai hiệu ứng của mỗi chủ đề tại **Cài đặt → Giao diện → Cấu hình giao diện → Xem trước**. Không cần migration.
+
+---
+
 # Quick Jira Log V1.39.3 — Scene Motion Refinement
 
 - Tết, Khai giảng và 20/11 dùng hình cánh mai, cánh phượng đỏ và cánh hướng dương. Halloween có dơi vỗ cánh bay ngang, với ánh sáng thay đổi tại đúng hai mắt bí ngô.

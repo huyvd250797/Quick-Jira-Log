@@ -65,7 +65,8 @@ window.QuickJiraSeasonalScenes = (() => {
       video.playsInline = true;
       video.loop = true;
       video.preload = 'none';
-      video.src = `/seasonal-motion/${entry.id}-${variant}.mp4`;
+      const revision = entry.id === 'april' || entry.id === 'moon' ? '-v2' : '';
+      video.src = `/seasonal-motion/${entry.id}-${variant}${revision}.mp4`;
       video.addEventListener('playing', () => {
         if (canAnimate(entry) && !entry.renderer) video.classList.add('is-ready');
         else video.pause();

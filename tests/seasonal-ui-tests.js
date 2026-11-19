@@ -41,6 +41,8 @@ document.getElementById = get;
 document.querySelector = () => meta;
 const reduced = new Element('reduced');
 const window = new Element('window');
+window.dispatchEvent = event => window.fire(event.type);
+html.style = {};
 const map = new Map();
 let now = Date.parse('2026-12-19T16:59:59Z');
 let nextMidnight;
@@ -48,6 +50,7 @@ window.QuickJiraSeasonal = {...lib, today: () => lib.today(now), untilMidnight: 
 window.matchMedia = () => reduced;
 const context = vm.createContext({window, document, Option: class Option {},
   localStorage: {getItem: key => map.get(key) || null, setItem: (key, value) => map.set(key, value)},
+  Event: class Event { constructor(type) { this.type = type; } },
   getComputedStyle: () => ({getPropertyValue: () => '#091a36'}),
   setTimeout: (callback, delay) => { nextMidnight = {callback, delay}; },
   clearTimeout: () => { nextMidnight = null; }});
@@ -69,6 +72,7 @@ assert.equal(nextMidnight.delay, 1030);
 now += nextMidnight.delay;
 nextMidnight.callback();
 assert.equal(html.dataset.seasonal, 'christmas');
+assert.equal(html.dataset.theme, 'dark');
 assert(html.attributes.has('data-seasonal-motion'));
 assert(get('seasonalHomeScene').innerHTML.includes('seasonal-snow'));
 assert(get('seasonalTaskArt').innerHTML.includes('/seasonal-art/christmas.webp'));
