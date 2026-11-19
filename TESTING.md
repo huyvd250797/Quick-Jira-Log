@@ -1,3 +1,14 @@
+# Quick Jira Log V1.39.11 — Mobile Theme Header
+
+- Đã qua kiểm thử logic `npm test` (exit 0), gồm lịch không có chủ đề, đổi chủ đề theo ngày/tài khoản, tạm xem trước và ESC, đổi sáng/tối, 20 scene, tắt/bật hiệu ứng và dừng khi tab ẩn.
+- Bổ sung kiểm thử trình duyệt `npm run test:seasonal-ui`: ở mobile, cả 10 chủ đề × hai chế độ phải có logo/tên/nút bên dưới đáy ảnh; ngày 22/11 không có chủ đề phải có header flex cũ, scene display none, chiều cao scene 0 và header dưới 100 px.
+- Kiểm tra PC tiếp tục dùng hai cột đã duyệt. CSS mới chỉ nằm trong media max-width 899 px và selector chủ đề đang hoạt động.
+- Giới hạn: chưa xác minh visual/FPS trên thiết bị thật. Chromium trong môi trường bàn giao đã bị chặn tạo socket; cần chạy kịch bản trình duyệt ở môi trường phù hợp và kiểm tra Safari iPhone sau deploy.
+
+Nghiệm thu: thử 320/390/430/768 px, cả 10 chủ đề, cả sáng/tối, mở/thoát preview; ngày không có chủ đề và tắt lịch tất cả chủ đề phải quay về header gọn. Kiểm tra chuyển ngày khi đang mở app, không có khoảng trắng dư phía trên.
+
+---
+
 # Quick Jira Log V1.39.10 — Teachers Day Card Lettering
 
 - Kiểm tra trực quan ảnh nguồn mới: chữ 20/11 rõ, nằm trên mặt thiệp, không còn khoảng trắng ngoài banner.

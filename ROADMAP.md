@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.11 — Mobile Theme Header
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.11 | Tách ảnh và nút trên mobile khi có chủ đề; quay về header cũ khi không có chủ đề | Đã xây dựng source |
+| V1.40.0 | Chọn nhiều Sub-task từ Tra cứu đưa vào Log tất cả | Đề xuất |
+
+---
+
 # Quick Jira Log V1.39.10 — Teachers Day Card Lettering
 
 | Phiên bản | Phạm vi | Trạng thái |

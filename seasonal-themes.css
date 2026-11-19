@@ -511,3 +511,66 @@ html[data-seasonal] #seasonalTaskArt { display: none; }
   html[data-seasonal] #filterCard .issue-row::after,
   #seasonalPreview[data-seasonal] .seasonal-preview-metric::after { display: none; }
 }
+
+/* V1.39.11: only an active (or temporary preview) theme reserves mobile hero space.
+   The scene is a normal grid row, so artwork and controls cannot overlap. */
+@media (max-width: 899px) {
+  html[data-theme][data-seasonal] .brand {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 10px 9px;
+    padding: 0 0 10px;
+    min-height: 0;
+  }
+  html[data-seasonal] #seasonalHomeScene {
+    position: relative;
+    inset: auto;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    height: clamp(108px, 34vw, 190px);
+    max-height: none;
+    border-radius: 0;
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 94%, transparent), linear-gradient(180deg, transparent, #000 9%, #000 80%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 94%, transparent), linear-gradient(180deg, transparent, #000 9%, #000 80%, transparent);
+  }
+  html[data-seasonal] .brand > .logo-refresh-btn { grid-column: 1; grid-row: 2; }
+  html[data-seasonal] .brand .brand-icon { width: 44px; height: 44px; border-radius: 13px; }
+  html[data-seasonal] .brand > .brand-copy { grid-column: 2; grid-row: 2; min-width: 0; }
+  html[data-seasonal] .brand .brand-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  html[data-seasonal] .brand .brand-title-row h1 {
+    font-size: clamp(16px, 4.7vw, 21px);
+    line-height: 1.2;
+    letter-spacing: -.4px;
+    overflow-wrap: anywhere;
+  }
+  html[data-seasonal] .brand .version-badge {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--season-muted);
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  html[data-seasonal] .brand .brand-actions {
+    grid-column: 3;
+    grid-row: 2;
+    margin: 0;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  html[data-seasonal] .brand .header-icon-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+  }
+  html:not([data-seasonal]) #seasonalHomeScene { display: none; }
+}

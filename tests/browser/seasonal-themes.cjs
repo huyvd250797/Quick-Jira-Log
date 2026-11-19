@@ -100,6 +100,7 @@ async function start() {
             return {contentFits, sprite: getComputedStyle(first, '::after').backgroundImage,
               alpha: getComputedStyle(first, '::after').opacity,
               headerSeparated: actions.right <= scene.left + 1,
+              mobileSeparated: ['.logo-refresh-btn', '.brand-copy', '.brand-actions'].every(selector => rect(document.querySelector('.brand ' + selector)).top >= scene.bottom - 1),
               horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 1,
               sceneRadius: getComputedStyle(document.getElementById('seasonalHomeScene')).borderRadius};
           }, {theme, mode});
@@ -109,6 +110,7 @@ async function start() {
           assert(!metrics.horizontalOverflow, theme + ' horizontal overflow at ' + viewport.width);
           assert.equal(metrics.sceneRadius, '0px');
           if (viewport.width >= 900) assert(metrics.headerSeparated, theme + ' menu must not overlap artwork');
+          else assert(metrics.mobileSeparated, theme + ' mobile controls must be below artwork');
         }
         await page.keyboard.press('Escape');
         assert(await page.locator('#seasonalDialog').isVisible());
@@ -135,6 +137,21 @@ async function start() {
       assert.equal(await page.evaluate(() => localStorage.getItem(QuickJiraSeasonal.accountKey(state.user))), snapshot);
       await page.locator('#seasonalCancel').click();
       await closeSettings(page);
+      if (viewport.width < 900) {
+        // A real non-holiday date must remove the hero row, not merely hide the image.
+        await page.clock.setFixedTime(new Date('2026-11-22T05:00:00Z'));
+        await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+        await page.waitForFunction(() => !document.documentElement.hasAttribute('data-seasonal'));
+        const plain = await page.evaluate(() => {
+          const brand = document.querySelector('.brand'), scene = document.getElementById('seasonalHomeScene');
+          return {display: getComputedStyle(brand).display, height: brand.getBoundingClientRect().height,
+            sceneHeight: scene.getBoundingClientRect().height, sceneDisplay: getComputedStyle(scene).display};
+        });
+        assert.equal(plain.display, 'flex');
+        assert.equal(plain.sceneDisplay, 'none');
+        assert.equal(plain.sceneHeight, 0);
+        assert(plain.height < 100, 'Non-themed header must not reserve hero whitespace');
+      }
       assert.deepEqual(errors, []);
       await context.close();
     }

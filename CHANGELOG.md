@@ -1,3 +1,16 @@
+# Quick Jira Log V1.39.11 — Mobile Theme Header
+
+- Mobile có chủ đề hoạt động: ảnh chủ đề nằm riêng phía trên; logo, tên app, version và hai nút sáng/tối, cài đặt ở hàng bên dưới. Ảnh hòa mềm vào nền, không bị tiêu đề hoặc nút che.
+- Áp dụng chung cho 10 chủ đề và xem trước tạm trên dashboard. Giữ chữ 20/11 trên thiệp và hiệu ứng hiện có.
+- Khi không có chủ đề hoạt động (hoặc sau khi thoát xem trước), mobile quay về header cũ; không tạo hàng ảnh, chiều cao hay padding thừa. Không đổi cấu hình lịch theo tài khoản.
+- Giữ bố cục PC V1.39.9 và bảng màu light/dark hiện tại.
+
+Nâng cấp từ V1.39.10: dùng Node.js 24.x, chạy `npm ci` và `npm test`, tích hợp source vào repository đang deploy và giữ biến môi trường. Cập nhật PWA sau deploy để nhận V1.39.11. Không cần chạy migration mới. Chưa push GitHub/deploy trong lần bàn giao này.
+
+Bản kế tiếp đề xuất: V1.40.0 — Tra cứu & Logwork, chọn nhiều Sub-task từ Tra cứu đưa vào Log tất cả.
+
+---
+
 # Quick Jira Log V1.39.10 — Teachers Day Card Lettering
 
 - Bổ sung chữ **20/11** màu nâu vàng, căn theo mặt thiệp cạnh hoa hướng dương trong ảnh chủ đề Ngày 20/11, theo mẫu đã duyệt.
