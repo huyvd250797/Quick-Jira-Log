@@ -1,3 +1,25 @@
+# Quick Jira Log V1.39.9 — Seamless Theme Cards
+
+## Đã thực hiện
+
+- `npm test`: toàn bộ bộ kiểm thử logic và fixture hiện tại qua, gồm lịch theo tài khoản, 20 biến thể scene, dừng chuyển động, fallback media, xem trước/ESC không lưu, chuyển light/dark và đối chiếu bảng màu light V1.39.3.
+- Kiểm tra đủ 10 ảnh PNG RGBA 1774×887, có kênh alpha 0–255, hai cụm họa tiết mỗi chủ đề. Đối chiếu trực quan từng tài nguyên với chủ đề.
+- Kiểm tra syntax JavaScript, tham chiếu tài nguyên đóng gói và version/cache V1.39.9.
+
+## Giới hạn xác minh
+
+- Đã thử Playwright với Chromium hệ thống. Browser dừng khi tạo socket (`Operation not permitted`) trước khi mở trang. Không tuyên bố đã xác minh visual layout hoặc 60 FPS thực tế.
+- Bộ `npm run test:seasonal-ui` bổ sung kịch bản 10 chủ đề × hai chế độ, độ rộng 390/900/1024/1440. Cần chạy ở môi trường có Playwright và Chromium hợp lệ. Có thể đặt `QJL_CHROMIUM_PATH` tới Chromium đã cài.
+
+## Nghiệm thu sau deploy
+
+1. Trên PC 900/1024/1440/1920 px, chọn từng chủ đề rồi Xem trước: menu trái không đè ảnh, nhãn nút đầy đủ, không cuộn ngang; rìa ảnh hòa vào nền, không còn khung bo góc.
+2. Thử light/dark ở 10 chủ đề, xác nhận card đổi đúng họa tiết. Kiểm tra card rỗng, nhiều task và tên task dài. Họa tiết không đè chữ/số/nút.
+3. Thoát bằng ESC/nút, xác nhận cấu hình nháp còn nguyên và chủ đề thực tế trở lại. Lưu lịch rồi thử đăng nhập và tải lại PWA.
+4. Trên iPhone, taskbar giữ vị trí cũ, họa tiết nhỏ hơn và thao tác task bình thường. Bật/tắt chuyển động và Reduce Motion, kiểm tra header/splash/preview như bản trước.
+
+---
+
 # Quick Jira Log V1.39.8 — Original Light Palette & Inline Preview
 
 - Đối chiếu chính xác mã nền, thẻ và màu nhấn của 10 chủ đề với V1.39.3. Kiểm tra tương phản chữ tối thiểu 5,79:1 trên nền và thẻ light mode.

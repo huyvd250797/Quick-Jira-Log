@@ -393,3 +393,121 @@ html[data-theme][data-seasonal] #filterCard #logAllBtn:disabled {
 .seasonal-preview-metric i {
   display: block; height: 4px; margin-top: 8px; background: var(--season-accent); border-radius: 5px;
 }
+
+
+/* V1.39.9 — Seamless Theme Cards.
+   Transparent paired sprites: left/right clusters share one decoded texture.
+   CSS-only decoration also covers dynamically rendered issue rows, without observers. */
+[data-seasonal="tet"] { --season-ornament: url("/seasonal-ornaments/tet.png"); }
+[data-seasonal="vacation"] { --season-ornament: url("/seasonal-ornaments/vacation.png"); }
+[data-seasonal="april"] { --season-ornament: url("/seasonal-ornaments/april.png"); }
+[data-seasonal="children"] { --season-ornament: url("/seasonal-ornaments/children.png"); }
+[data-seasonal="birthday"] { --season-ornament: url("/seasonal-ornaments/birthday.png"); }
+[data-seasonal="moon"] { --season-ornament: url("/seasonal-ornaments/moon.png"); }
+[data-seasonal="school"] { --season-ornament: url("/seasonal-ornaments/school.png"); }
+[data-seasonal="halloween"] { --season-ornament: url("/seasonal-ornaments/halloween.png"); }
+[data-seasonal="teachers"] { --season-ornament: url("/seasonal-ornaments/teachers.png"); }
+[data-seasonal="christmas"] { --season-ornament: url("/seasonal-ornaments/christmas.png"); }
+
+/* A single header surface: no picture frame or visible rounded image edge. */
+html[data-theme][data-seasonal] .brand {
+  background: transparent;
+  border-radius: 0;
+}
+html[data-seasonal] #seasonalHomeScene {
+  border-radius: 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%), linear-gradient(180deg, transparent, #000 12%, #000 76%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 30%), linear-gradient(180deg, transparent, #000 12%, #000 76%, transparent);
+  mask-composite: intersect;
+}
+/* Keep the established mobile taskbar; reserve a separate artwork column on PC. */
+@media (min-width: 900px) {
+  html[data-theme][data-seasonal] .brand {
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr) minmax(230px, 32%);
+    grid-template-rows: minmax(56px, auto) auto;
+    gap: 12px 14px;
+    min-height: 136px;
+    padding: 0 0 12px;
+    align-items: center;
+  }
+  html[data-seasonal] .brand > .logo-refresh-btn { grid-column: 1; grid-row: 1; }
+  html[data-seasonal] .brand > .brand-copy { grid-column: 2; grid-row: 1; }
+  html[data-seasonal] .brand .brand-actions {
+    grid-column: 1 / 3; grid-row: 2;
+    margin: 0; min-width: 0; width: 100%;
+    justify-content: flex-start; flex-wrap: wrap; gap: 8px;
+  }
+  html[data-seasonal] .brand .header-tool-btn {
+    min-height: 44px; padding: 0 10px; font-size: 12px;
+    flex: 0 0 auto; white-space: nowrap;
+  }
+  html[data-seasonal] .brand .header-tool-icon { display: grid; }
+  html[data-seasonal] .brand .header-icon-btn { flex: 0 0 44px; width: 44px; height: 44px; }
+  html[data-seasonal] #seasonalHomeScene {
+    width: 32%; height: 100%; max-height: 180px;
+    top: 0; bottom: auto;
+  }
+}
+@media (min-width: 900px) and (max-width: 1099px) {
+  html[data-seasonal] .brand .header-tool-btn { font-size: 11px; padding-inline: 8px; }
+  html[data-seasonal] .brand .header-tool-icon { width: 20px; }
+}
+
+/* Decorations occupy reserved whitespace, never intercepting clicks or focus. */
+html[data-seasonal] :is(#statusCard, #loginCard, #filterCard, .hours-card),
+html[data-seasonal] #filterCard .issue-row { position: relative; isolation: isolate; }
+html[data-seasonal] :is(#statusCard, #loginCard, #filterCard, .hours-card)::after,
+html[data-seasonal] #filterCard .issue-row::after,
+#seasonalPreview[data-seasonal] .seasonal-preview-metric::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  width: var(--ornament-size, 104px);
+  aspect-ratio: 1;
+  background-image: var(--season-ornament);
+  background-size: 200% 100%;
+  background-position: var(--ornament-side, left) center;
+  background-repeat: no-repeat;
+  opacity: .78;
+  z-index: -1;
+}
+html[data-theme="light"][data-seasonal] :is(#statusCard, #loginCard, #filterCard, .hours-card)::after,
+html[data-theme="light"][data-seasonal] #filterCard .issue-row::after { opacity: .66; }
+html[data-seasonal] .hours-card { min-height: 158px; }
+html[data-seasonal] .hours-card::after { top: 4px; right: 10px; }
+html[data-seasonal] .hours-card:nth-child(even) { --ornament-side: right; }
+html[data-seasonal] .hours-card > span,
+html[data-seasonal] .hours-card > div:first-of-type { padding-right: 104px; }
+html[data-seasonal] #statusCard::after { --ornament-size: 54px; top: 50%; right: 64px; transform: translateY(-50%); opacity: .46; }
+html[data-seasonal] #statusCard .status-left { padding-right: 54px; }
+html[data-seasonal] #filterCard { padding-bottom: 38px; }
+html[data-seasonal] #filterCard::after { --ornament-size: 48px; --ornament-side: right; bottom: -2px; right: 8px; opacity: .48; }
+html[data-seasonal] #filterCard .issue-row { padding-right: 112px; min-height: 94px; }
+html[data-seasonal] #filterCard .issue-row::after { --ornament-size: 82px; top: 50%; right: 26px; transform: translateY(-50%); }
+html[data-seasonal] #filterCard .issue-row:nth-child(even) { --ornament-side: right; }
+html[data-seasonal] #filterCard .issue-row .issue-main { flex: 1; min-width: 0; }
+html[data-seasonal] #filterCard .issue-row .issue-chevron { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+html[data-seasonal] #loginCard::after { --ornament-size: 78px; top: -4px; right: 10px; opacity: .55; }
+html[data-seasonal] #loginCard .card-title { padding-right: 78px; min-height: 50px; }
+/* Replace the former tiny photographic crop with the outer card's new sprite. */
+html[data-seasonal] #seasonalTaskArt { display: none; }
+#seasonalPreview[data-seasonal] .seasonal-preview-metric { position: relative; isolation: isolate; }
+#seasonalPreview[data-seasonal] .seasonal-preview-metric::after { --ornament-size: 48px; top: -9px; right: 8px; opacity: .65; }
+@media (max-width: 899px) {
+  html[data-seasonal] .hours-card { min-height: 144px; }
+  html[data-seasonal] .hours-card::after { --ornament-size: 48px; right: 4px; top: 28px; opacity: .65; }
+  html[data-seasonal] .hours-card > span { padding-right: 0; }
+  html[data-seasonal] .hours-card > div:first-of-type { padding-right: 40px; }
+  html[data-seasonal] #filterCard .issue-row { padding-right: 70px; }
+  html[data-seasonal] #filterCard .issue-row::after { --ornament-size: 48px; right: 20px; opacity: .55; }
+  html[data-seasonal] #statusCard::after { --ornament-size: 36px; right: 53px; opacity: .35; }
+  html[data-seasonal] #statusCard .status-left { padding-right: 32px; }
+}
+@media (forced-colors: active) {
+  html[data-seasonal] :is(#statusCard, #loginCard, #filterCard, .hours-card)::after,
+  html[data-seasonal] #filterCard .issue-row::after,
+  #seasonalPreview[data-seasonal] .seasonal-preview-metric::after { display: none; }
+}

@@ -1,3 +1,12 @@
+# Quick Jira Log V1.39.9 — Seamless Theme Cards
+
+| Phiên bản | Mục tiêu và phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.39.9 | Header PC hai hàng ở trái, ảnh hòa nền bên phải; 10 bộ họa tiết card đồng bộ trên dashboard, đăng nhập và xem trước | Đã xây dựng source; kiểm thử logic qua, cần nghiệm thu trình duyệt thật |
+| V1.40.0 | Tra cứu & Logwork: chọn nhiều Sub-task từ Tra cứu để đưa vào Log tất cả, xem lại danh sách trước xác nhận | Đề xuất, chưa xây dựng |
+
+---
+
 # Quick Jira Log V1.39.8 — Original Light Palette & Inline Preview
 
 | Phiên bản | Phạm vi | Trạng thái |

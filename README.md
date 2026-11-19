@@ -1,3 +1,35 @@
+# Quick Jira Log V1.39.9 — Seamless Theme Cards
+
+- Áp dụng bố cục PC đã duyệt cho đủ 10 chủ đề: logo và menu bên trái, ảnh chủ đề riêng bên phải; menu tự xuống hàng khi cửa sổ hẹp.
+- Ảnh header hòa vào nền bằng lớp mask hai chiều; bỏ khung, viền và bo góc của ảnh header.
+- Thêm hai họa tiết PNG nền trong suốt cho mỗi chủ đề. Luân phiên họa tiết trên card giờ và từng hàng Sub-task; bổ sung điểm nhấn ở card đăng nhập, trạng thái và khối danh sách.
+- Chừa vùng riêng cho họa tiết, tránh vùng chữ, số giờ, thanh tiến độ và nút thao tác. Họa tiết tự thu nhỏ trên mobile, không nhận thao tác chuột/chạm và ẩn trong chế độ forced colors.
+- Giữ nguyên hiệu ứng động header, lịch áp dụng theo tài khoản, tắt/bật chuyển động, nút đổi sáng/tối, bảng màu light V1.39.3, xem trước nhỏ và xem trước dashboard thật có ESC.
+- Họa tiết card là ảnh tĩnh; không thêm vòng lặp animation, DOM observer hoặc xử lý mỗi hàng theo frame.
+
+| Chủ đề | Họa tiết card |
+| --- | --- |
+| Tết Nguyên đán | Hoa mai và bao lì xì |
+| Nghỉ mát | Lá dừa, vỏ sò, sao biển và sóng |
+| Ngày 30/04 | Cờ đỏ sao vàng và nhánh nguyệt quế |
+| Quốc tế Thiếu nhi | Diều giấy, chong chóng và bong bóng |
+| Sinh nhật | Bánh nến và hộp quà |
+| Tết Trung thu | Đèn ông sao, bánh trung thu và đèn lồng |
+| Khai giảng | Sách và hoa phượng |
+| Halloween | Bí ngô và dơi |
+| Ngày 20/11 | Hoa hướng dương, hoa trắng và phong thư |
+| Giáng sinh | Cành thông phủ tuyết, quả châu xanh, quà và bông tuyết trắng |
+
+Nâng cấp từ V1.39.8: tích hợp source vào repository đang deploy, giữ biến môi trường và cấu hình Vercel hiện tại. Dùng Node.js 24.x, chạy `npm ci` rồi `npm test`. Sau deploy, cập nhật ứng dụng/PWA để nhận cache V1.39.9 và đầy đủ thư mục `seasonal-ornaments`.
+
+Không cần chạy migration mới. Chưa push GitHub hoặc deploy trong lần bàn giao này.
+
+Kiểm tra: bộ `npm test` đã qua. Chromium trong môi trường bàn giao bị chặn tạo socket nên chưa xác nhận hiển thị trình duyệt thật và FPS trên thiết bị; xem kịch bản nghiệm thu trong TESTING.md.
+
+Phiên bản kế tiếp đề xuất: V1.40.0 — Tra cứu & Logwork, chọn nhiều Sub-task từ Tra cứu và đưa vào Log tất cả.
+
+---
+
 # Quick Jira Log V1.39.8 — Original Light Palette & Inline Preview
 
 - Khôi phục đúng mã màu light mode của 10 chủ đề từ V1.39.3, gồm nền, thẻ và màu nhấn. Nút sáng/tối tiếp tục đổi chế độ và lưu lựa chọn.

@@ -12,7 +12,7 @@ function contrast(a, b) {
   return (light + .05) / (dark + .05);
 }
 const original = {tet:['#fff7f5','#fffdfc','#8c3441'],vacation:['#edfafa','#fcffff','#14685d'],april:['#fdf2ee','#fffaf8','#993645'],children:['#eff6ff','#fbfdff','#315d96'],birthday:['#faf1fa','#fffaff','#843b75'],moon:['#f3f3fc','#fdfcff','#61518b'],school:['#edf8f3','#fbfff9','#2c6662'],halloween:['#f8f2fc','#fffbff','#843e1e'],teachers:['#fbf4ea','#fffdf7','#874a35'],christmas:['#eef6ff','#fcfeff','#235b92']};
-const palettes = [...css.matchAll(/^\[data-seasonal="([^"]+)"\] \{([^\n]+)\}/gm)];
+const palettes = [...css.matchAll(/^\[data-seasonal="([^"]+)"\] \{([^\n]+)\}/gm)].filter(match => match[2].includes('--season-dark:'));
 assert.equal(palettes.length, 10);
 let min = Infinity;
 for (const [, name, definition] of palettes) {
