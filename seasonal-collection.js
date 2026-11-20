@@ -23,28 +23,31 @@ window.QuickJiraSeasonalCollection = (() => {
       + '<image clip-path="url(#' + clip + ')" x="0" y="' + (mode === 'light' ? -1 : 0) + '" width="3" height="2" preserveAspectRatio="none" href="/seasonal-banners/' + id + '.webp"/></svg>';
   }
   const shapes = {
-    tulip: '<path fill="#c3507c" d="M20 35C6 28 3 17 9 6c5 1 9 5 11 9C22 6 27 3 31 2c6 12 6 24-11 33Z"/><path fill="#ef94b3" d="M20 31C12 22 10 13 12 9c5 3 8 9 8 22Z"/><path fill="#f9c0cd" d="M21 30c1-10 5-19 8-23 3 12 0 19-8 23Z"/>',
-    rose: '<path fill="#a33459" d="M19 34C7 30 1 21 7 13 4 4 17 1 23 5c8-3 16 6 13 12 6 8-7 18-17 17Z"/><path fill="#ef8caa" d="M19 30C10 24 8 14 11 9c7-3 10 3 11 6 5-6 9-6 11-3 5 9-5 16-14 18Z"/><path fill="#ffd0d9" d="M19 27c-2-8-4-14-7-15 1 9 3 13 7 15Z"/>',
+    tulip: '<defs><radialGradient id="petal-t"><stop stop-color="#ffe1ec"/><stop offset=".7" stop-color="#ec7fa7"/><stop offset="1" stop-color="#a73d65"/></radialGradient></defs><path fill="url(#petal-t)" d="M8 4C28 0 36 19 19 34 8 31 1 16 8 4Z"/><path fill="none" stroke="#ffe9ef" stroke-opacity=".5" stroke-width=".5" d="M10 7Q25 19 19 31"/>',
+    rose: '<defs><radialGradient id="petal-r"><stop stop-color="#ffcbd9"/><stop offset=".7" stop-color="#d9688a"/><stop offset="1" stop-color="#8c294c"/></radialGradient></defs><path fill="url(#petal-r)" d="M4 7C13 0 29 2 35 12 34 29 18 34 12 30 11 18 2 17 4 7Z"/><path fill="none" stroke="#ffd6e1" stroke-opacity=".4" stroke-width=".5" d="M8 9Q23 12 17 28"/>',
     bamboo: '<path fill="#538b43" d="M4 33C7 14 22 3 37 2 32 17 17 32 4 33Z"/><path fill="none" stroke="#b7cb6c" d="M5 32 34 5"/>',
-    lotus: '<path fill="#d77ca7" d="M20 34C4 26 3 12 8 7c6 0 10 6 12 12C22 6 27 1 30 1c9 15 7 28-10 33Z"/><path fill="#f9bdd5" d="M20 32C12 20 12 11 15 5c7 5 10 16 5 27Z"/>'
+    lotus: '<defs><linearGradient id="petal-l" x2="0" y2="1"><stop stop-color="#bb4a80"/><stop offset="1" stop-color="#ffe1ee"/></linearGradient></defs><path fill="url(#petal-l)" d="M20 2C38 18 29 31 19 35 6 29 4 16 20 2Z"/><path fill="none" stroke="#ffe5ef" stroke-width=".5" d="M20 5 19 32"/>'
   };
+  function gardenLight() {
+    return '<span class="collection-garden-rays"></span><span class="collection-leaf-shadows"></span>';
+  }
+  function waterLight() {
+    return '<span class="collection-water-light"><i></i><i></i><i></i></span>';
+  }
   function petals(kind, effect) {
+    ++cellSerial;
     return '<span class="collection-petals">' + Array.from({length: effect ? 7 : 4}, (_, i) =>
       '<i style="--x:' + (25 + (i * 29) % 70) + '%;--delay:' + (-i * 1.7) + 's;--duration:' + (6.4 + i % 3) + 's">'
-      + '<svg viewBox="0 0 40 38" aria-hidden="true">' + shapes[kind] + '</svg></i>').join('') + '</span>';
+      + '<svg viewBox="0 0 40 38" aria-hidden="true">' + shapes[kind].replace(/petal-([trl])/g, 'petal-$1-' + cellSerial + '-' + i) + '</svg></i>').join('') + '</span>';
   }
   function clouds() {
     return '<svg class="collection-clouds" viewBox="0 0 960 300" aria-hidden="true"><g><path fill="currentColor" d="M80 217c8-15 28-22 42-13 7-24 38-28 52-11 19-11 43 2 43 18 26-1 46 14 52 28H65c-2-11 4-18 15-22Z"/><path fill="currentColor" d="M460 252c10-17 31-21 46-12 11-25 46-24 57-3 26-9 49 5 51 22 30-1 48 12 51 27H435c-1-17 10-28 25-34Z"/></g></svg>';
   }
   function fireworks() {
-    const rays = Array.from({length: 16}, (_, i) => {
-      const angle = i * Math.PI / 8, x = Math.cos(angle), y = Math.sin(angle);
-      return '<path d="M' + (x * 2).toFixed(2) + ' ' + (y * 2).toFixed(2)
-        + ' ' + (x * 12).toFixed(2) + ' ' + (y * 12).toFixed(2) + '"/>';
-    }).join('');
-    return '<svg class="collection-fireworks" viewBox="0 0 300 100" aria-hidden="true">'
-      + '<g transform="translate(100 30)"><g class="collection-burst">' + rays + '</g></g>'
-      + '<g transform="translate(140 24)"><g class="collection-burst second">' + rays + '</g></g></svg>';
+    return '<span class="collection-fireworks-real">' + [0,1].map(burst => '<span class="collection-spark-burst" style="--burst:'+burst+'">'+Array.from({length:24},(_,i)=>{
+      const angle=i*Math.PI/12, speed=14+(i%4)*3;
+      return '<i style="--dx:'+ (Math.cos(angle)*speed).toFixed(2)+'cqw;--dy:'+(Math.sin(angle)*speed*.45).toFixed(2)+'cqw;--lag:'+(-burst*3.1)+'s;--spark:'+i+'"></i>';
+    }).join('')+'</span>').join('')+'</span>';
   }
   function clockHands() {
     return '<svg class="collection-clock-hands" viewBox="0 0 100 100" aria-hidden="true">'
@@ -79,37 +82,43 @@ window.QuickJiraSeasonalCollection = (() => {
     if (!ids.includes(id)) return '';
     let ambient = '', subject = '', foreground = '';
     const object = (markup, extra = '') => '<span class="collection-part collection-subject ' + extra + '">' + markup + '</span>';
-    if (['lantern','hungking','national'].includes(id)) ambient += '<span class="collection-mist"></span>';
+    // Two distinct compositions per theme, not the same animation at another speed.
     if (id === 'newyear') {
-      ambient += fireworks();
       subject = object(cell(id, 1, 'collection-subject-image') + clockHands());
-      if (effect) foreground += '<span class="collection-festive-glow"></span>';
+      if (effect) ambient += fireworks();
     }
-    if (id === 'lantern') subject = object(cell(id, 1, 'collection-subject-image'));
-    if (id === 'womensday') foreground += petals('tulip', effect);
+    if (id === 'lantern') {
+      subject = object(cell(id, 1, 'collection-subject-image'));
+      if (effect) ambient += waterLight();
+    }
+    if (id === 'womensday') foreground += effect ? gardenLight() : petals('tulip', 0);
     if (id === 'doanngo') {
       subject = object(cell(id, 1, 'collection-subject-image'));
       if (effect) foreground += petals('bamboo', 0);
     }
     if (id === 'family') {
-      subject = object(steam());
-      ambient += '<span class="collection-sunlight"></span>';
+      subject = object(effect ? '' : steam());
+      ambient += effect ? gardenLight() : '';
     }
     if (id === 'vulan') {
       subject = object(cell(id, 1, 'collection-subject-image') + flame());
-      ambient += ripple();
-      if (effect) foreground += petals('lotus', 0);
+      ambient += effect ? petals('lotus', 0) : ripple();
     }
-    if (id === 'hungking' && effect) foreground += festivalFlag();
-    if (id === 'national') subject = object(cell(id, 1, 'collection-subject-image')
-      + '<canvas class="collection-flag-canvas" aria-hidden="true"></canvas>');
-    if (id === 'vietwomen') foreground += petals('rose', effect);
-    if (id === 'culture') ambient += '<span class="collection-bronze-gleam"></span>';
+    if (id === 'hungking') ambient += effect ? gardenLight() : '<span class="collection-mist"></span>';
+    if (id === 'national') {
+      subject = object(cell(id, 1, 'collection-subject-image')
+        + '<canvas class="collection-flag-canvas" aria-hidden="true"></canvas>');
+      if (effect) ambient += gardenLight();
+    }
+    if (id === 'vietwomen') foreground += effect ? gardenLight() : petals('rose', 0);
+    if (id === 'culture') ambient += effect ? '<span class="collection-lantern-light"></span>' : '<span class="collection-bronze-gleam"></span>';
+    if (effect && ['womensday','vietwomen','family','hungking'].includes(id)) foreground += '<canvas class="collection-scene-canvas" aria-hidden="true"></canvas>';
     return '<span class="seasonal-composed collection-' + id + ' collection-scenic" data-collection-theme="' + id + '" data-effect="' + (effect === 1 ? 1 : 0) + '">'
       + '<span class="collection-plane">' + backdrop(id, 'dark') + backdrop(id, 'light')
       + ambient + subject + foreground + '</span></span>';
   }
   function allowed(entry) {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return false;
     if (!entry.visible || document.hidden || !entry.node.isConnected) return false;
     const owner = entry.node.closest('#seasonalPreview') || document.documentElement;
     if (!owner.hasAttribute('data-seasonal-motion')) return false;
@@ -120,9 +129,18 @@ window.QuickJiraSeasonalCollection = (() => {
     return !document.querySelector('dialog[open], .settings-overlay[aria-hidden="false"]');
   }
   function drawFlag(entry, seconds) {
-    if (!entry.image?.complete || !entry.image.naturalWidth || !entry.canvas) return;
+    if (entry.contextLost || !entry.image?.complete || !entry.image.naturalWidth || !entry.canvas) return;
     const canvas = entry.canvas, rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
+    if (entry.gpu === undefined) entry.gpu = window.QuickJiraSeasonalShader?.create(canvas, entry.image, entry.theme, entry.effect) || null;
+    if (entry.gpu) {
+      if (entry.drawWidth !== rect.width || entry.drawHeight !== rect.height) {
+        entry.gpu.resize(rect.width, rect.height); entry.drawWidth = rect.width; entry.drawHeight = rect.height;
+      }
+      if (entry.gpu.draw(seconds)) { entry.mode = document.documentElement.dataset?.theme; entry.node.classList.add(entry.theme === 'national' ? 'collection-flag-ready' : 'collection-scene-ready'); return; }
+      return; // Context restoration rebuilds the GPU renderer; never switch context type in place.
+    }
+    if (entry.theme !== 'national') return; // Static scene remains intact when WebGL is unavailable.
     const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
     const width = Math.round(rect.width * ratio), height = Math.round(rect.height * ratio);
     if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
@@ -131,14 +149,16 @@ window.QuickJiraSeasonalCollection = (() => {
     context.clearRect(0, 0, width, height);
     const sourceWidth = entry.image.naturalWidth / 3, sourceHeight = entry.image.naturalHeight;
     const size = Math.min(width,height), left = (width-size)/2, top = (height-size)/2;
-    const steps = 48, amplitude = size * (entry.effect ? .031 : .019);
+    const steps = 96, amplitude = size * .038;
     if (!entry.node.classList.contains('collection-scenic')) {
       context.fillStyle = "#bfa071";
       context.fillRect(left + size*.075, top + size*.24, Math.max(1,size*.008), size*.62);
     }
     for (let i = 0; i < steps; i += 1) {
-      const x = i / steps, wave = Math.sin(x * Math.PI * 3 - seconds * 2.6) * amplitude * x;
-      const swell = 1 + Math.cos(x * Math.PI * 3 - seconds * 2.6) * .018 * x;
+      const x = i / steps, free = Math.max(0,(x-.08)/.92);
+      const phase = free*9.2-seconds*4.2;
+      const wave = (Math.sin(phase)+.28*Math.sin(phase*1.73+seconds*.7))*amplitude*free;
+      const swell = 1 + Math.cos(phase) * .028 * free;
       context.drawImage(entry.image, sourceWidth * (1 + x), 0, sourceWidth / steps, sourceHeight,
         left + x * size, top + wave + size * (1 - swell) / 2, size / steps + .6, size * swell);
     }
@@ -148,13 +168,12 @@ window.QuickJiraSeasonalCollection = (() => {
     frame = 0;
     let again = false;
     entries.forEach(entry => {
-      if (!entry.node.isConnected) { observer?.unobserve(entry.node); resizeObserver?.unobserve(entry.node); entries.delete(entry); return; }
+      if (!entry.node.isConnected) { observer?.unobserve(entry.node); resizeObserver?.unobserve(entry.node); entry.gpu?.dispose(); entries.delete(entry); return; }
       const active = allowed(entry);
       entry.node.toggleAttribute('data-collection-paused', !active);
       if (!active) { entry.last = 0; return; }
-      if (entry.canvas && entry.image?.complete && entry.image.naturalWidth) {
+      if (entry.canvas && !entry.contextLost && entry.image?.complete && entry.image.naturalWidth) {
         entry.elapsed += entry.last ? Math.min((now - entry.last) / 1000, .05) : 0;
-        entry.elapsed %= Math.PI * 10;
         entry.last = now;
         drawFlag(entry, entry.elapsed);
         again = true;
@@ -164,24 +183,27 @@ window.QuickJiraSeasonalCollection = (() => {
   }
   function refresh() {
     entries.forEach(entry => {
-      if (!entry.node.isConnected) { observer?.unobserve(entry.node); resizeObserver?.unobserve(entry.node); entries.delete(entry); return; }
+      if (!entry.node.isConnected) { observer?.unobserve(entry.node); resizeObserver?.unobserve(entry.node); entry.gpu?.dispose(); entries.delete(entry); return; }
+      if (entry.gpu && entry.mode !== document.documentElement.dataset?.theme) drawFlag(entry, entry.elapsed);
       entry.node.toggleAttribute('data-collection-paused', !allowed(entry));
       if (!allowed(entry)) entry.last = 0;
     });
-    if (!frame && [...entries].some(entry => entry.canvas && entry.image?.complete && entry.image.naturalWidth && allowed(entry))) frame = requestAnimationFrame(tick);
+    if (!frame && [...entries].some(entry => entry.canvas && !entry.contextLost && entry.image?.complete && entry.image.naturalWidth && allowed(entry))) frame = requestAnimationFrame(tick);
   }
   function mount(container) {
     const node = container?.querySelector?.('[data-collection-theme]');
     if (!node?.dataset?.collectionTheme) return;
     refresh();
     if ([...entries].some(item => item.node === node)) return;
-    const entry = {node, effect: Number(node.dataset.effect), visible: typeof IntersectionObserver === 'undefined', elapsed: 0, last: 0};
-    entry.canvas = node.querySelector('.collection-flag-canvas');
+    const entry = {node, theme:node.dataset.collectionTheme, effect: Number(node.dataset.effect), visible: typeof IntersectionObserver === 'undefined', elapsed: 0, last: 0};
+    entry.canvas = node.querySelector('.collection-flag-canvas') || node.querySelector('.collection-scene-canvas');
     entries.add(entry);
     if (entry.canvas) {
+      entry.canvas.addEventListener?.('webglcontextlost', event => { event.preventDefault(); entry.contextLost = true; entry.node.classList.remove?.('collection-flag-ready'); entry.node.classList.remove?.('collection-scene-ready'); });
+      entry.canvas.addEventListener?.('webglcontextrestored', () => { entry.contextLost = false; delete entry.gpu; entry.drawWidth = 0; drawFlag(entry, entry.elapsed); refresh(); });
       entry.image = new Image();
       entry.image.addEventListener('load', () => { if (node.isConnected) { drawFlag(entry, 0); refresh(); } }, {once: true});
-      entry.image.src = '/seasonal-collection/national.webp';
+      entry.image.src = entry.theme === 'national' ? '/seasonal-collection/national.webp' : '/seasonal-banners/' + entry.theme + '.webp';
     }
     if (typeof IntersectionObserver !== 'undefined') {
       observer ||= new IntersectionObserver(changes => {
@@ -202,6 +224,7 @@ window.QuickJiraSeasonalCollection = (() => {
       document.querySelectorAll('dialog, .settings-overlay, #bootSplash, #seasonalPreview').forEach(element =>
         mutationObserver.observe(element, {attributes: true, attributeFilter: ['open','class','aria-hidden','data-seasonal-motion']}));
       document.addEventListener('visibilitychange', refresh);
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', refresh);
     }
     refresh();
   }

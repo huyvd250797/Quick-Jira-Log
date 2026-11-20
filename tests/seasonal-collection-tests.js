@@ -25,7 +25,7 @@ node.canvas={getBoundingClientRect:()=>({width:320,height:160}),getContext:()=>c
 const container={querySelector:()=>node};
 api.mount(container);api.mount(container);assert.equal(images.length,1,'No duplicate image/lifecycle on repeated mount');
 io([{target:node,isIntersecting:true}]);assert.equal(callbacks.size,0,'Do not spin while texture is loading');
-images[0].load();assert.equal(draws.length,48);assert(node.classes.has('collection-flag-ready'));
+images[0].load();assert.equal(draws.length,96);assert(node.classes.has('collection-flag-ready'));
 assert.equal(node.canvas.width,480,'DPR capped at 1.5');assert.equal(node.canvas.height,240);
 assert.equal(draws[0][5],120,'Contain square sprite within rectangular host, no stretching');
 assert.equal(draws[0][8],240,'Destination height preserves the square cell');
@@ -73,3 +73,21 @@ assert.match(css,/\.collection-scenic \.collection-plane \{[^}]*mask-image:url\(
 assert.match(css,/#seasonalPreviewScene:has\(\.collection-scenic\) \{[^}]*mask:none; -webkit-mask:none/);
 assert(css.includes('height:clamp(104px,31vw,142px)'),'Keep compact mobile budget');
 console.log('Artwork blending: shared feather belongs to actual scene plane; transparent host and compact height retained.');
+
+// Both options must differ in actual layers, not just data-effect or serial clip IDs.
+for(const id of ['newyear','lantern','womensday','hungking','doanngo','family','vulan','national','vietwomen','culture']) {
+ const normalize=markup=>markup.replace(/qjl-holiday-cell-\d+/g,'cell').replace(/petal-([trl])-\d+-\d+/g,'petal-$1').replace(/data-effect="[01]"/g,'');
+ assert.notEqual(normalize(api.scene(id,0)),normalize(api.scene(id,1)),id+' needs two different physical compositions');
+}
+let disposedGPU=0, gpuTime=[];
+context.window.QuickJiraSeasonalShader={create(canvas,image,theme){assert.equal(theme,'womensday');return {resize(w,h){assert.equal(w,320);assert.equal(h,160);},draw(t){gpuTime.push(t);return true;},dispose(){disposedGPU++;}};}};
+overlay=false;const garden=new Node();garden.dataset={collectionTheme:'womensday',effect:'1'};
+garden.canvas={getBoundingClientRect:()=>({width:320,height:160}),getContext(){throw Error('GPU scene must not request 2D context');}};
+api.mount({querySelector:()=>garden});io([{target:garden,isIntersecting:true}]);images.at(-1).load();step(300);step(316.667);
+assert(garden.classes.has('collection-scene-ready'));assert(gpuTime.at(-1)>0);
+root.attributes.delete('data-seasonal-motion');api.refresh();step(330);const previousDraws=gpuTime.length;root.dataset.theme='light';mutation();assert.equal(gpuTime.length,previousDraws+1,'Mode change repaints frozen GPU scene without enabling motion');assert.equal(callbacks.size,0);root.attributes.add('data-seasonal-motion');api.refresh();
+context.window.matchMedia=()=>({matches:true});api.refresh();step(334);assert.equal(callbacks.size,0,'Reduced motion must stop GPU frames');
+context.window.matchMedia=()=>({matches:false});api.refresh();step(350);assert.equal(callbacks.size,1);
+garden.isConnected=false;api.refresh();assert.equal(disposedGPU,1,'Detached GPU scene releases resources');
+assert(!fs.readFileSync(path.join(__dirname,'../seasonal-collection.js'),'utf8').includes('elapsed %='),'No periodic phase reset may jump the wind');
+console.log('Motion refinement: 20 distinct compositions, shared shader scene lifecycle, reduced-motion GPU pause, disposal and continuous wind phase passed.');

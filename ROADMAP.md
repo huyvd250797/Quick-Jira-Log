@@ -1,3 +1,13 @@
+# Quick Jira Log V1.40.5 — Holiday Motion & Motif Refinement
+
+| Phiên bản | Mục tiêu | Công việc kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- |
+| V1.40.5 | Đa dạng card và chuyển động 10 chủ đề mới | 40 họa tiết, 20 lựa chọn hiệu ứng, GPU vùng vật thể, cờ vải; không đổi database | Logic, raster và GPU qua kiểm tra; bàn giao source | Đã xây dựng; chờ nghiệm thu thiết bị |
+| V1.40.6 — Theme Device QA | Nghiệm thu PC/iPhone | Chuyển sáng/tối, bật/tắt, FPS thực, bộ nhớ | Kiểm chứng trên thiết bị thật | Đề xuất |
+| V1.41.0 — Lookup & Logwork | Cải tiến tra cứu và logwork | Chốt phạm vi trước khi xây dựng | Boss duyệt phạm vi | Đề xuất |
+
+---
+
 # Quick Jira Log V1.40.4 — Seamless Theme Blending
 
 Sửa mép ảnh của 10 chủ đề mới để hòa mềm vào nền như chủ đề 20/11 cũ, cho cả lightmode và darkmode.

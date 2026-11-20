@@ -3,13 +3,19 @@
 window.QuickJiraSeasonalShader = (() => {
   const kinds = { vacation: 1, april: 2, birthday: 3, moon: 4, halloween: 5 };
   const fragment = `
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+    #else
     precision mediump float;
+    #endif
     varying vec2 vUv;
     uniform sampler2D image;
     uniform vec2 fit;
     uniform float time;
     uniform int kind;
     uniform float variant;
+    uniform float scene;
+    uniform float lightMode;
 
     float band(float x, float left, float right, float feather) {
       return smoothstep(left, left + feather, x) * (1.0 - smoothstep(right - feather, right, x));
@@ -107,6 +113,44 @@ window.QuickJiraSeasonalShader = (() => {
           uv = mix(p, paperPoint, outsideMoon(paperPoint) * paperEdge);
           shine = lantern * (0.022 + sin(t * 3.0) * 0.058);
         }
+       } else if (kind == 7) {
+        // Move only authored living objects; never warp text, buildings or faces.
+        vec2 delta=vec2(0.0);
+        if (scene < 0.5) {
+          float flowers=region(p,vec2(0.77,0.54),vec2(0.13,0.28));
+          delta.x=sin(time*1.4)*0.006*flowers;
+          delta.y=sin(time*1.9+1.0)*0.002*flowers;
+        } else if (scene < 1.5) {
+          float roses=region(p,vec2(0.79,0.51),vec2(0.16,0.30));
+          delta=vec2(sin(time*1.15)*0.004,cos(time*1.7)*0.002)*roses;
+        } else if (scene < 2.5) {
+          float foliage=region(p,vec2(0.64,0.14),vec2(0.26,0.25));
+          delta=vec2(sin(time*1.8-p.x*17.0)*0.004,cos(time*1.2+p.y*9.0)*0.002)*foliage;
+        } else {
+          vec4 original=texture2D(image,vec2(p.x,(p.y+lightMode)*0.5));
+          float redCloth=smoothstep(0.12,0.35,original.r-max(original.g,original.b));
+          float flags=region(p,vec2(0.30,0.36),vec2(0.25,0.36))*redCloth;
+          delta=vec2(sin(time*3.4-p.y*12.0)*0.004,cos(time*2.5-p.x*16.0)*0.003)*flags;
+          vec3 target=texture2D(image,vec2((p+delta).x,((p+delta).y+lightMode)*0.5)).rgb;
+          delta*=smoothstep(0.10,0.30,target.r-max(target.g,target.b));
+        }
+        uv=clamp(p+delta,0.0,1.0);
+        gl_FragColor=texture2D(image,vec2(uv.x,(uv.y+lightMode)*0.5));
+        return;
+      } else if (kind == 6) {
+        // National Day: isolated silk, pinned hoist, two travelling waves and fold lighting.
+        // Same spatial cloth model as April; never displace architecture behind it.
+        float free = smoothstep(0.075, 0.92, p.x);
+        float phase = free * 9.2 - time * 4.2;
+        float gust = 0.82 + 0.18 * sin(time * 0.73);
+        float wave = sin(phase) + 0.28 * sin(phase * 1.73 + time * 0.7);
+        uv += vec2(cos(phase) * 0.010, wave * 0.037) * free * gust;
+        vec2 source = vec2((1.0 + clamp(uv.x,0.0,1.0))/3.0, uv.y);
+        vec4 silk = texture2D(image, source);
+        float inside = step(0.0,uv.x)*step(uv.x,1.0)*step(0.0,uv.y)*step(uv.y,1.0);
+        float fold = 1.0 + cos(phase + 0.45) * free * 0.14;
+        gl_FragColor = vec4(silk.rgb * fold, silk.a * inside);
+        return;
       } else if (kind == 5) {
         float eyes = max(region(p, vec2(0.678, 0.515), vec2(0.033, 0.098)),
                          region(p, vec2(0.787, 0.526), vec2(0.039, 0.108)));
@@ -128,7 +172,7 @@ window.QuickJiraSeasonalShader = (() => {
   }
 
   function create(canvas, image, theme, variant) {
-    const gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false });
+    const gl = canvas.getContext('webgl', { alpha: theme === 'national', premultipliedAlpha: false, antialias: false, depth: false, stencil: false });
     if (!gl) return null;
     const vert = shader(gl, gl.VERTEX_SHADER, `
       attribute vec2 vertex;
@@ -168,7 +212,10 @@ window.QuickJiraSeasonalShader = (() => {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
     gl.uniform1i(gl.getUniformLocation(program, 'image'), 0);
-    gl.uniform1i(gl.getUniformLocation(program, 'kind'), kinds[theme]);
+    const sceneIndex = ['womensday','vietwomen','family','hungking'].indexOf(theme);
+    gl.uniform1i(gl.getUniformLocation(program, 'kind'), sceneIndex >= 0 ? 7 : theme === 'national' ? 6 : kinds[theme]);
+    gl.uniform1f(gl.getUniformLocation(program, 'scene'), sceneIndex);
+    const lightMode = gl.getUniformLocation(program, 'lightMode');
     gl.uniform1f(gl.getUniformLocation(program, 'variant'), variant);
     const fit = gl.getUniformLocation(program, 'fit');
     const time = gl.getUniformLocation(program, 'time');
@@ -177,11 +224,14 @@ window.QuickJiraSeasonalShader = (() => {
       canvas.width = Math.max(1, Math.round(width * ratio));
       canvas.height = Math.max(1, Math.round(height * ratio));
       gl.viewport(0, 0, canvas.width, canvas.height);
-      const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
-      gl.uniform2f(fit, canvas.width / (image.naturalWidth * scale), canvas.height / (image.naturalHeight * scale));
+      const sourceWidth = theme === 'national' ? image.naturalWidth/3 : image.naturalWidth;
+      const sourceHeight = sceneIndex >= 0 ? image.naturalHeight / 2 : image.naturalHeight;
+      const scale = Math.max(canvas.width / sourceWidth, canvas.height / sourceHeight);
+      gl.uniform2f(fit, canvas.width / (sourceWidth * scale), canvas.height / (sourceHeight * scale));
     }
     function draw(seconds) {
       if (gl.isContextLost()) return false;
+      gl.uniform1f(lightMode, document.documentElement.dataset?.theme === 'light' ? 1 : 0);
       gl.uniform1f(time, seconds);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       return true;

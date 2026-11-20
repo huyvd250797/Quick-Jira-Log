@@ -1,6 +1,6 @@
 {
   "name": "quick-jira-log",
-  "version": "1.40.4",
+  "version": "1.40.5",
   "private": true,
   "engines": {
     "node": "24.x"
@@ -64,6 +64,8 @@
     "test:bulk-space": "node tests/browser/bulk-desktop-space.cjs",
     "test:seasonal-ui": "node tests/browser/seasonal-themes.cjs",
     "test:sprite-render": "node tests/seasonal-sprite-render-tests.cjs",
-    "test:blend-render": "node tests/seasonal-blending-render-tests.cjs"
+    "test:blend-render": "node tests/seasonal-blending-render-tests.cjs",
+    "test:gpu-render": "python3 tests/seasonal-gpu-render.py",
+    "test:motif-render": "node tests/seasonal-motif-render-tests.cjs"
   }
 }
