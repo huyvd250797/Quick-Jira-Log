@@ -16,11 +16,11 @@ window.QuickJiraSeasonalCollection = (() => {
   }
   function backdrop(id, mode) {
     const clip = 'qjl-holiday-cell-' + (++cellSerial);
-    // Source is two complete 3:2 scenes. Crop in source coordinates, including
-    // letterbox space: changing mode never changes the common 3:2 scene plane.
-    return '<svg class="collection-backdrop collection-backdrop-' + mode + '" viewBox="0 0 3 2" preserveAspectRatio="xMidYMid meet" overflow="hidden" aria-hidden="true" focusable="false">'
-      + '<defs><clipPath id="' + clip + '" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="3" height="2"/></clipPath></defs>'
-      + '<image clip-path="url(#' + clip + ')" x="' + (mode === 'light' ? -3 : 0) + '" y="0" width="6" height="2" preserveAspectRatio="none" href="/seasonal-backgrounds/' + id + '.webp"/></svg>';
+    // Source is two stacked complete 3:1 scenes. Crop in source coordinates, including
+    // letterbox space: changing mode never changes the common 3:1 scene plane.
+    return '<svg class="collection-backdrop collection-backdrop-' + mode + '" viewBox="0 0 3 1" preserveAspectRatio="xMidYMid meet" overflow="hidden" aria-hidden="true" focusable="false">'
+      + '<defs><clipPath id="' + clip + '" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="3" height="1"/></clipPath></defs>'
+      + '<image clip-path="url(#' + clip + ')" x="0" y="' + (mode === 'light' ? -1 : 0) + '" width="3" height="2" preserveAspectRatio="none" href="/seasonal-banners/' + id + '.webp"/></svg>';
   }
   const shapes = {
     tulip: '<path fill="#c3507c" d="M20 35C6 28 3 17 9 6c5 1 9 5 11 9C22 6 27 3 31 2c6 12 6 24-11 33Z"/><path fill="#ef94b3" d="M20 31C12 22 10 13 12 9c5 3 8 9 8 22Z"/><path fill="#f9c0cd" d="M21 30c1-10 5-19 8-23 3 12 0 19-8 23Z"/>',
@@ -42,9 +42,9 @@ window.QuickJiraSeasonalCollection = (() => {
       return '<path d="M' + (x * 2).toFixed(2) + ' ' + (y * 2).toFixed(2)
         + ' ' + (x * 12).toFixed(2) + ' ' + (y * 12).toFixed(2) + '"/>';
     }).join('');
-    return '<svg class="collection-fireworks" viewBox="0 0 300 200" aria-hidden="true">'
-      + '<g transform="translate(100 53)"><g class="collection-burst">' + rays + '</g></g>'
-      + '<g transform="translate(150 32)"><g class="collection-burst second">' + rays + '</g></g></svg>';
+    return '<svg class="collection-fireworks" viewBox="0 0 300 100" aria-hidden="true">'
+      + '<g transform="translate(100 30)"><g class="collection-burst">' + rays + '</g></g>'
+      + '<g transform="translate(140 24)"><g class="collection-burst second">' + rays + '</g></g></svg>';
   }
   function clockHands() {
     return '<svg class="collection-clock-hands" viewBox="0 0 100 100" aria-hidden="true">'
@@ -66,8 +66,8 @@ window.QuickJiraSeasonalCollection = (() => {
     return '<svg class="collection-silk" viewBox="0 0 960 300" aria-hidden="true"><path d="M535 225c65-45 88 58 157 16s101 34 142-8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>';
   }
   function ripple() {
-    return '<svg class="collection-ripple" viewBox="0 0 300 200" aria-hidden="true">'
-      + '<ellipse cx="120" cy="142" rx="45" ry="3"/><ellipse class="second" cx="120" cy="142" rx="45" ry="3"/></svg>';
+    return '<svg class="collection-ripple" viewBox="0 0 300 100" aria-hidden="true">'
+      + '<ellipse cx="120" cy="72" rx="45" ry="2"/><ellipse class="second" cx="120" cy="72" rx="45" ry="2"/></svg>';
   }
   function festivalFlag() {
     return '<svg class="collection-festival-flag" viewBox="0 0 100 100" aria-hidden="true"><path d="M22 25V89" stroke="#b98d56" stroke-width="2"/>'

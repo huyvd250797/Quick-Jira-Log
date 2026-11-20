@@ -57,3 +57,12 @@ for (let round=0; round<3; round++) for (const id of ['newyear','lantern','women
  }
 }
 console.log('Sprite clipping: Unique source-coordinate clip regions for both modes and simultaneous scenes, no collisions across simultaneous scenes.');
+
+for(const id of ['newyear','lantern','womensday','hungking','doanngo','family','vulan','national','vietwomen','culture']) {
+ const markup=api.scene(id,0);
+ const panels=[...markup.matchAll(/<svg class="collection-backdrop collection-backdrop-(dark|light)"[^>]*viewBox="0 0 3 1"[\s\S]*?<\/svg>/g)];
+ assert.equal(panels.length,2,id+' must have two compact panorama variants');
+ assert(panels[0][0].includes('x="0" y="0" width="3" height="2"'));
+ assert(panels[1][0].includes('x="0" y="-1" width="3" height="2"'));
+}
+console.log('Compact panels: all ten themes use source-coordinate 3:1 viewports and stacked dark/light variants.');

@@ -7,10 +7,12 @@ const ctx=vm.createContext({window:{}});
 vm.runInContext(fs.readFileSync(path.join(root,'seasonal-collection.js'),'utf8'),ctx);
 const art=ctx.window.QuickJiraSeasonalCollection;
 const ids=['newyear','lantern','womensday','hungking','doanngo','family','vulan','national','vietwomen','culture'];
+const textureCache=new Map();
 async function pixels(svg,id,w,h,unclipped=false) {
  // librsvg does not decode embedded WebP; losslessly transcode in memory for this test only.
  const file=svg.match(/href="([^"]+)"/)[1];
- const texture=await sharp(path.join(root,file.replace(/^\//,''))).png().toBuffer();
+ if(!textureCache.has(file)) textureCache.set(file,await sharp(path.join(root,file.replace(/^\//,''))).png().toBuffer());
+ const texture=textureCache.get(file);
  let source=svg.replace('<svg ',`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" `)
   .replace(/href="[^"]+"/,`href="data:image/png;base64,${texture.toString('base64')}"`);
  if(unclipped) source=source.replace(/ clip-path="[^"]+"/,'');
@@ -39,11 +41,11 @@ async function pixels(svg,id,w,h,unclipped=false) {
     const result=await pixels(cell,id,w,h);
     assert.equal(result.outside,0,id+' sprite leaked at '+w+'x'+h);
     assert(result.inside>100,id+' image unexpectedly blank');
-    if(w/h>1.5) {const old=await pixels(cell,id,w,h,true);if(old.outside>0)oldLeaks++;}
+    {const old=await pixels(cell,id,w,h,true);if(old.outside>0)oldLeaks++;}
     cases++;
    }
   }
  }
  assert(oldLeaks>=20,'Regression fixture must reproduce the original adjacent-cell leak');
- console.log(`PASS: ${cases} rendered sprite/viewport cases; no neighbouring pixels or blank layers. Original bug reproduced in ${oldLeaks} wide-viewport cases.`);
+ console.log(`PASS: ${cases} rendered sprite/viewport cases; no neighbouring pixels or blank layers. Unclipped control leaked in ${oldLeaks} comparison cases.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});

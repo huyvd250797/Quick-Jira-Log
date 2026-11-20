@@ -1,3 +1,15 @@
+# Quick Jira Log V1.40.3 — Compact Holiday Banners
+
+| Phiên bản | Mục tiêu | Công việc và dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- |
+| V1.40.3 | Banner thấp theo mẫu duyệt | 20 panorama sáng/tối, khung3:1, hiệu ứng cùng tọa độ; không đổi lịch hoặc database | Logic và render qua kiểm tra; chiều cao giới hạn theo CSS | Đã xây dựng source; chờ nghiệm thu thiết bị |
+| V1.40.4 — Compact Device QA | Kiểm tra sử dụng trên PC/iPhone | Hiệu chỉnh ảnh, không gian dữ liệu và FPS theo phản hồi | Nghiệm thu thiết bị | Đề xuất |
+| V1.41.0 — Lookup & Logwork | Chọn nhiều Sub-task từ Tra cứu | Đưa vào Log tất cả | Thống nhất và kiểm thử luồng | Đề xuất |
+
+Bảng này thay thế đề xuất ở các mục lịch sử dưới đây.
+
+---
+
 # Quick Jira Log V1.40.2 — Scenic Holiday Themes
 
 Bảng hiện tại thay thế đề xuất ở các mục lịch sử bên dưới.

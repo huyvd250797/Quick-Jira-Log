@@ -115,23 +115,23 @@ html[data-seasonal="culture"] :is(#statusCard,#loginCard,#filterCard,.hours-card
    Per-cell clipPaths in seasonal-collection.js crop in source coordinates. */
 svg.collection-stage, svg.collection-subject-image, svg.seasonal-corner-art { overflow:hidden; }
 
-/* V1.40.2: complete photographic scenes, with a single common coordinate plane
+/* V1.40.3: compact panoramic photographic scenes, with a single compact coordinate plane
    for both modes and all moving objects. All artwork fits without stretching. */
 .collection-scenic { background:radial-gradient(ellipse at 68% 50%,var(--season-tint),transparent 78%); }
-.collection-plane { position:absolute; left:50%; top:50%; width:min(100cqw,150cqh); height:min(100cqh,66.666667cqw); transform:translate(-50%,-50%); }
+.collection-plane { position:absolute; left:50%; top:50%; width:min(100cqw,300cqh); height:min(100cqh,33.333333cqw); transform:translate(-50%,-50%); }
 .collection-backdrop { position:absolute; inset:0; width:100%; height:100%; display:block; overflow:hidden; }
 .collection-backdrop-light { display:none; }
 html[data-theme="light"] .collection-backdrop-dark { display:none; }
 html[data-theme="light"] .collection-backdrop-light { display:block; }
 .collection-scenic .collection-subject { right:auto; height:auto; aspect-ratio:1; }
-.collection-newyear.collection-scenic .collection-subject { left:62%; top:47%; width:26%; }
-.collection-lantern.collection-scenic .collection-subject { left:68%; top:14%; width:24%; transform-origin:50% 0; }
-.collection-doanngo.collection-scenic .collection-subject { left:-4%; top:-12%; width:26%; transform-origin:90% 0; }
-.collection-family.collection-scenic .collection-subject { left:20%; top:60%; width:20%; }
-.collection-vulan.collection-scenic .collection-subject { left:74%; top:67%; width:16%; }
-.collection-national.collection-scenic .collection-subject { left:73.5%; top:6%; width:26%; }
-.collection-scenic .collection-ripple ellipse { transform-origin:120px 142px; opacity:.16; }
-.collection-scenic .collection-bronze-gleam { left:13%; top:42%; width:35%; height:43%; opacity:.38; }
+.collection-newyear.collection-scenic .collection-subject { left:72%; top:36%; width:16%; }
+.collection-lantern.collection-scenic .collection-subject { left:77.4%; top:22%; width:14%; transform-origin:50% 0; }
+.collection-doanngo.collection-scenic .collection-subject { left:-2%; top:-12%; width:18%; transform-origin:90% 0; }
+.collection-family.collection-scenic .collection-subject { left:17%; top:38%; width:15%; }
+.collection-vulan.collection-scenic .collection-subject { left:78%; top:54%; width:11%; }
+.collection-national.collection-scenic .collection-subject { left:75.2%; top:3%; width:18%; }
+.collection-scenic .collection-ripple ellipse { transform-origin:120px 72px; opacity:.16; }
+.collection-scenic .collection-bronze-gleam { left:22%; top:23%; width:28%; height:59%; opacity:.38; }
 .collection-mist { position:absolute; left:0; top:46%; width:72%; height:20%; opacity:.20; background:radial-gradient(ellipse,#dfdce429,transparent 67%); animation:collection-cloud-drift 16s ease-in-out infinite alternate; pointer-events:none; }
 .collection-festive-glow { position:absolute; inset:0; background:radial-gradient(ellipse at 48% 23%,#ffd39020,transparent 35%); animation:collection-glow 4s ease-in-out infinite alternate; }
 .collection-scenic[data-effect="1"] .collection-sunlight { animation-duration:4.5s; opacity:.65; }
@@ -146,11 +146,11 @@ html[data-theme] #seasonalPreviewScene:has(.collection-scenic) {
   mask-composite:intersect; -webkit-mask-composite:source-in;
 }
 @media(min-width:900px) {
- html[data-theme][data-seasonal] .brand:has(.collection-scenic) { min-height:204px; }
- html[data-seasonal] #seasonalHomeScene:has(.collection-scenic) { height:204px; max-height:none; }
+ html[data-theme][data-seasonal] .brand:has(.collection-scenic) { min-height:136px; }
+ html[data-seasonal] #seasonalHomeScene:has(.collection-scenic) { height:136px; max-height:180px; }
 }
 @media(max-width:899px) {
- html[data-seasonal] #seasonalHomeScene:has(.collection-scenic) { height:clamp(178px,62vw,280px); }
+ html[data-seasonal] #seasonalHomeScene:has(.collection-scenic) { height:clamp(104px,31vw,142px); }
 }
 @media(prefers-reduced-motion:reduce) {
  .collection-scenic *, .collection-scenic *::after { animation:none !important; }

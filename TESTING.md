@@ -1,3 +1,27 @@
+# Quick Jira Log V1.40.3 — Validation
+
+- `npm test`: PASS, exit0. Kiểm tra Jira/API, lịch20 chủ đề, scope tài khoản, preview/ESC không lưu, chế độ màu, lifecycle và tính liên tục của hiệu ứng cờ.
+- `tests/seasonal-sprite-render-tests.cjs`: PASS105 trường hợp render ảnh thật ở khung rộng/dọc/vuông; không có pixel từ panel lân cận và không có lớp ảnh trống. Đối chứng bỏ clip:55 trường hợp có ảnh lọt. Đã chạy lại test trên đường dẫn tài nguyên cuối cùng `seasonal-banners/`.
+- `tests/seasonal-collection-tests.js`: hai panel3:1/top-dark/bottom-light, clip nguồn và ID riêng cho các scene cùng tồn tại; giữ kiểm tra pause khi ẩn/tắt/ngoài viewport/modal và scope preview.
+- Kiểm tra bản ghép tĩnh của đồng hồ, đèn lồng, nến và cờ trên background mới để căn đối tượng. Đây là render SVG, không phải nghiệm thu toàn trang hoặc FPS.
+- Ảnh1536×1024, hai panorama1536×512; xuất WebP không crop/resize. Giữ bytes ảnh/motif cũ so với ZIPV1.40.2.
+- Height guard trong test trình duyệt: 10 chủ đề mới tối đa142px mobile,136px PC. CSS tại390px:120.9px so với241.8px ở V1.40.2. Chưa xác minh số đo thực tế trong trình duyệt.
+- Đã thử `npm run test:seasonal-ui`: Chromium không khởi chạy, lỗi `socket() failed: Operation not permitted`. Không ghi nhận visual toàn trang hoặc60fps đã qua.
+- Kiểm tra syntax JS, toàn bộ đường dẫn cache tồn tại và đúng phiên bản.
+
+## Nghiệm thu sau deploy
+
+1. Thử 10 chủ đề mới × hai chế độ ở320/390/430/768/900/1024/1440px. Banner mobile thấp, PC không nâng header quá136px; không bóp méo/cắt điểm nhấn, logo/menu không đè ảnh.
+2. Phần dữ liệu lên cao hơn do giảm hero; font, nút, card và taskbar giữ cỡ cũ. Họa tiết không che chữ hoặc thao tác.
+3. Kiểm tra đồng hồ trên bàn, đèn lồng nối móc, nến trên bệ đá và cờ nối cột; kiến trúc, mặt trăng và gương mặt đứng yên.
+4. Preview nhỏ/dashboard tạm, ESC/Tắt xem trước, đăng nhập/splash cùng bộ ảnh; không có ngày chủ đề thì không có khoảng trống hero.
+5. Tắt hiệu ứng từng chủ đề/toàn app, giảm chuyển động, ẩn tab hoặc mở modal: dừng; quay lại: tiếp tục. Đo FPS trên thiết bị đích trước khi xác nhận60fps.
+6. Nâng từ PWA đang mở V1.40.2: popup cập nhật, reload sangV1.40.3 rồi đổi chủ đề; không trộn panel kiểu cũ với banner mới.
+
+Chạy raster tùy chọn qua `npm run test:sprite-render` khi có Sharp ở môi trường phát triển (hoặc NODE_PATH). App không cần Sharp runtime. Không cần migration mới; chưa push/deploy.
+
+---
+
 # Quick Jira Log V1.40.2 — Validation
 
 - Bộ `npm test`: PASS, exit 0. Bao gồm logic Jira/API, lịch và scope tài khoản, preview/ESC không lưu, light/dark và motion lifecycle.

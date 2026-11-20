@@ -113,7 +113,8 @@ async function start() {
                 const clipName = image.getAttribute('clip-path')?.match(/^url\(#([^)]*)\)$/)?.[1];
                 const clip = clipName && document.getElementById(clipName);
                 return clip?.getAttribute('clipPathUnits') === 'userSpaceOnUse'
-                  && clip.querySelector('rect')?.getAttribute('width') === '3';
+                  && clip.querySelector('rect')?.getAttribute('width') === '3'
+                  && clip.querySelector('rect')?.getAttribute('height') === '1';
               });
               const allIDs = [...document.querySelectorAll('clipPath[id^="qjl-holiday-cell-"]')].map(el=>el.id);
               matchingArtwork &&= new Set(allIDs).size === allIDs.length;
@@ -127,10 +128,12 @@ async function start() {
               headerSeparated: actions.right <= scene.left + 1,
               mobileSeparated: ['.logo-refresh-btn', '.brand-copy', '.brand-actions'].every(selector => rect(document.querySelector('.brand ' + selector)).top >= scene.bottom - 1),
               horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+              sceneHeight: scene.height,
               sceneRadius: getComputedStyle(document.getElementById('seasonalHomeScene')).borderRadius};
           }, {theme, mode});
           assert.match(metrics.sprite, new RegExp((require('../../lib/seasonal-calendar').ids.indexOf(theme)>=10 ? '/seasonal-collection/' : '/seasonal-ornaments/') + theme + '\\.(png|webp)'));
           assert(Number(metrics.alpha) > 0);
+          if(require('../../lib/seasonal-calendar').ids.indexOf(theme)>=10) assert(metrics.sceneHeight <= (viewport.width < 900 ? 142.1 : 136.1), theme+' compact hero height');
           assert(metrics.matchingArtwork, theme + " artwork must follow the selected mode");
           if (theme === 'teachers') {
             if (teacherGeometry) metrics.geometry.forEach((value, index) =>

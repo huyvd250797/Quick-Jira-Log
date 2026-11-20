@@ -1,0 +1,73 @@
+{
+  "version": "1.40.3",
+  "release": "Compact Holiday Banners",
+  "source": "Recreated from the approved compact dark/light mobile dashboard concepts as real panoramic artwork, without UI",
+  "format": "1536x1024 WebP, two vertically stacked full-width1536x512 panels; exported without cropping/resizing",
+  "panels": [
+    "top: dark",
+    "bottom: light"
+  ],
+  "rendering": "Shared3:1 coordinate plane for modes and animated objects; each panel uses a unique source clip",
+  "assets": [
+    {
+      "id": "newyear",
+      "file": "newyear.webp",
+      "scene": "Ho Chi Minh City river skyline at night with tall Landmark81 on the far left, gentle gold fireworks above the distant city. Real reflections across water, wooden terrace ledge along bottom. One small cream calendar printed 01/01 at 56% panel width, 76% panel height. Keep an empty spot on the wooden ledge at 80% width 78% height for a separately animated clock: NO CLOCK in the background. Real gold bokeh, navy and gold atmosphere.",
+      "source": "exec-1a20695b-132d-4d17-8aa1-1bb48e5af5c5.png"
+    },
+    {
+      "id": "lantern",
+      "file": "lantern.webp",
+      "scene": "Hoi An heritage riverside at blue hour, ochre houses left and arched bridge across center, reflections below, ONE round moon at 56% width 25% height. Wooden eaves at upper right with ONE hook/short cord at 86% width 8% height for a separately animated red lantern. NO FOREGROUND HANGING LANTERN in background, leave clear sky behind hook. Distant tiny building lanterns allowed. No dates/cards/calendars.",
+      "source": "exec-c0e8e465-80c2-4606-b204-59eeaf2b9cfa.png"
+    },
+    {
+      "id": "womensday",
+      "file": "womensday.webp",
+      "scene": "Sunlit Vietnamese garden veranda, soft bougainvillea at outer edges, table along lower right. One vase of realistic pink tulips at 78% width55% height and one ivory card printed 8/3 at60% width75% height, rose silk on table. Entire flowers/vase/card inside frame; fine natural petals and optical depth.",
+      "source": "exec-eb9d52ec-4a02-4fed-8c80-56d9a5a9987f.png"
+    },
+    {
+      "id": "hungking",
+      "file": "hungking.webp",
+      "scene": "Authentic Hung Temple gateway and stone steps in forested misty mountains at sunrise. Entire gateway centered42% width50% height, foot of stairs visible, small traditional flags near gate. One bronze Dong Son drum in right foreground centered82% width70% height, fully visible, not huge. Weathered stone and bronze, real landscape perspective.",
+      "source": "exec-0c49ae9c-f3c7-4cc0-a89a-8c3ae441b2ae.png"
+    },
+    {
+      "id": "doanngo",
+      "file": "doanngo.webp",
+      "scene": "Traditional Vietnamese courtyard with modest clay tile roof house to the right, bamboo at far left and outer upper corners. Low rustic table with two leaf wrapped bánh ú tro, one amber unwrapped dumpling on plate, lychees and plums. Entire food display centered65% width72% height, surrounded by a real quiet garden.",
+      "source": "exec-f8438818-bcc5-4716-acd6-7dd084afb04b.png"
+    },
+    {
+      "id": "family",
+      "file": "family.webp",
+      "scene": "Real Vietnamese parents and young child reading one book together at a wooden table in a cozy timber-window house overlooking a garden. Natural realistic faces and hands, warm candid smiles, all three complete heads and book fit inside short frame; chest-up group centered52% width52% height. Teapot centered29% width78% height and two cups on table, NO STEAM. Small cream28/6 card at85% width78% height. No cartoon.",
+      "source": "exec-b9d33cda-e40c-4f55-ae06-431776601617.png"
+    },
+    {
+      "id": "vulan",
+      "file": "vulan.webp",
+      "scene": "Quiet Vietnamese temple across lotus pond at purple-pink dusk, temple centered40% width40% height, natural water reflections, pink lotus along lower left, stone ledge at lower right. Keep an empty spot centered84% width84% height on stone for a separately animated ivory candle. NO CANDLE and NO FLAME anywhere in background.",
+      "source": "exec-5e074ed1-eef7-479b-823e-a3323f09876e.png"
+    },
+    {
+      "id": "national",
+      "file": "national.webp",
+      "scene": "Accurate Ho Chi Minh Mausoleum in Ba Dinh Square Hanoi, autumn sky, distant trees and small red flowers at lower left. Building centered37% width58% height with roof and base visible, one thin flagpole exactly76% width from12% height to90% height. NO FLAG CLOTH and NO STAR anywhere because national flag is composited separately to right of pole. Clear open sky on right.",
+      "source": "exec-1605259c-4d3f-40de-9cca-bb208dbdfbe7.png"
+    },
+    {
+      "id": "vietwomen",
+      "file": "vietwomen.webp",
+      "scene": "Beautiful Vietnamese veranda garden. Table along bottom with rose bouquet centered80% width53% height, conical hat centered48% width72% height, one cream card printed20/10 centered64% width75% height, softly folded pink silk. All objects fit inside low frame, real petals/palm leaf fibers/carved wood and natural light.",
+      "source": "exec-0e45d4ec-a27e-4cdd-862d-59fc7788b5bf.png"
+    },
+    {
+      "id": "culture",
+      "file": "culture.webp",
+      "scene": "Authentic Vietnamese heritage pavilion opening onto an old courtyard and temple gate. Bronze Dong Son drum centered31% width63% height, red lacquer fan centered67% width65% height, conical hat centered86% width75% height, small cream24/11 card centered57% width82% height. Entire drum, hat and card visible inside panorama, realistic patina, engraved motifs, timber and depth.",
+      "source": "exec-0ec82c74-8b13-4977-8198-b828de270e4e.png"
+    }
+  ]
+}
