@@ -117,8 +117,8 @@ svg.collection-stage, svg.collection-subject-image, svg.seasonal-corner-art { ov
 
 /* V1.40.3: compact panoramic photographic scenes, with a single compact coordinate plane
    for both modes and all moving objects. All artwork fits without stretching. */
-.collection-scenic { background:radial-gradient(ellipse at 68% 50%,var(--season-tint),transparent 78%); }
-.collection-plane { position:absolute; left:50%; top:50%; width:min(100cqw,300cqh); height:min(100cqh,33.333333cqw); transform:translate(-50%,-50%); }
+.collection-scenic { background:transparent; }
+.collection-plane { position:absolute; left:auto; right:0; top:50%; width:min(100cqw,300cqh); height:min(100cqh,33.333333cqw); transform:translateY(-50%); }
 .collection-backdrop { position:absolute; inset:0; width:100%; height:100%; display:block; overflow:hidden; }
 .collection-backdrop-light { display:none; }
 html[data-theme="light"] .collection-backdrop-dark { display:none; }
@@ -141,9 +141,8 @@ html[data-theme="light"] .collection-backdrop-light { display:block; }
 html[data-seasonal] #seasonalHomeScene:has(.collection-scenic),
 html[data-seasonal] #seasonalBootScene:has(.collection-scenic),
 html[data-theme] #seasonalPreviewScene:has(.collection-scenic) {
-  mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,#000 0%,#000 84%,transparent 100%);
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(180deg,#000 0%,#000 84%,transparent 100%);
-  mask-composite:intersect; -webkit-mask-composite:source-in;
+  /* The host can contain letterbox gutters: feather the actual plane below. */
+  mask:none; -webkit-mask:none;
 }
 @media(min-width:900px) {
  html[data-theme][data-seasonal] .brand:has(.collection-scenic) { min-height:136px; }
@@ -154,4 +153,16 @@ html[data-theme] #seasonalPreviewScene:has(.collection-scenic) {
 }
 @media(prefers-reduced-motion:reduce) {
  .collection-scenic *, .collection-scenic *::after { animation:none !important; }
+}
+
+/* V1.40.4: feather in the actual artwork coordinates, not the larger host.
+   Same 20%/95% horizontal and 8%/88% vertical stops as the Teachers Day theme.
+   All objects and effects are composited first, then fade together into the page. */
+.collection-scenic .collection-plane {
+  -webkit-mask-image:url("/seasonal-feather.svg");
+  mask-image:url("/seasonal-feather.svg");
+  -webkit-mask-size:100% 100%; mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  -webkit-mask-position:center; mask-position:center;
+  mask-mode:alpha;
 }

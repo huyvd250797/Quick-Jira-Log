@@ -66,3 +66,10 @@ for(const id of ['newyear','lantern','womensday','hungking','doanngo','family','
  assert(panels[1][0].includes('x="0" y="-1" width="3" height="2"'));
 }
 console.log('Compact panels: all ten themes use source-coordinate 3:1 viewports and stacked dark/light variants.');
+
+const css=fs.readFileSync(path.join(__dirname,'../seasonal-collection.css'),'utf8');
+assert.match(css,/\.collection-scenic \{ background:transparent; \}/);
+assert.match(css,/\.collection-scenic \.collection-plane \{[^}]*mask-image:url\("\/seasonal-feather\.svg"\)/);
+assert.match(css,/#seasonalPreviewScene:has\(\.collection-scenic\) \{[^}]*mask:none; -webkit-mask:none/);
+assert(css.includes('height:clamp(104px,31vw,142px)'),'Keep compact mobile budget');
+console.log('Artwork blending: shared feather belongs to actual scene plane; transparent host and compact height retained.');

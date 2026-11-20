@@ -128,11 +128,13 @@ async function start() {
               headerSeparated: actions.right <= scene.left + 1,
               mobileSeparated: ['.logo-refresh-btn', '.brand-copy', '.brand-actions'].every(selector => rect(document.querySelector('.brand ' + selector)).top >= scene.bottom - 1),
               horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+              blendOnImage: (()=>{ const plane=document.querySelector('#seasonalHomeScene .collection-plane'); if(!plane)return true; const style=getComputedStyle(plane), host=getComputedStyle(document.getElementById('seasonalHomeScene')); return (style.maskImage||style.webkitMaskImage).includes('seasonal-feather.svg') && host.maskImage==='none' && getComputedStyle(plane.parentElement).backgroundColor==='rgba(0, 0, 0, 0)'; })(),
               sceneHeight: scene.height,
               sceneRadius: getComputedStyle(document.getElementById('seasonalHomeScene')).borderRadius};
           }, {theme, mode});
           assert.match(metrics.sprite, new RegExp((require('../../lib/seasonal-calendar').ids.indexOf(theme)>=10 ? '/seasonal-collection/' : '/seasonal-ornaments/') + theme + '\\.(png|webp)'));
           assert(Number(metrics.alpha) > 0);
+          assert(metrics.blendOnImage, theme+' must feather actual image, not empty host gutters');
           if(require('../../lib/seasonal-calendar').ids.indexOf(theme)>=10) assert(metrics.sceneHeight <= (viewport.width < 900 ? 142.1 : 136.1), theme+' compact hero height');
           assert(metrics.matchingArtwork, theme + " artwork must follow the selected mode");
           if (theme === 'teachers') {
