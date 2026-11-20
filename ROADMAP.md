@@ -1,3 +1,15 @@
+# Quick Jira Log V1.40.1 — Holiday Artwork Clipping Fix
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.40.1 | Sửa lọt ô ảnh lân cận trong 10 chủ đề mới; kiểm thử clip theo tọa độ nguồn | Đã xây dựng source |
+| V1.40.2 — Holiday Device QA | Nghiệm thu PC/iPhone, hiệu chỉnh hình ảnh và chuyển động theo phản hồi | Đề xuất |
+| V1.41.0 — Lookup & Logwork | Chọn nhiều Sub-task từ Tra cứu đưa vào Log tất cả | Đề xuất |
+
+Bảng này thay thế các đề xuất cũ ở phần lịch sử phía dưới.
+
+---
+
 # Quick Jira Log V1.40.0 — Vietnamese Holiday Collection
 
 Bảng này thay thế các đề xuất phiên bản cũ ở phần lịch sử bên dưới.

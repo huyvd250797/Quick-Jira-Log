@@ -107,6 +107,17 @@ async function start() {
                 && (getComputedStyle(lightArt).display !== 'none') === (mode === 'light')
                 && (getComputedStyle(darkArt).display !== 'none') === (mode === 'dark');
             }
+            if (QuickJiraSeasonalCollection.has(theme)) {
+              const cellImages = [...document.querySelectorAll('#seasonalHomeScene svg.collection-stage image, #seasonalHomeScene svg.collection-subject-image image')];
+              matchingArtwork = cellImages.length === 2 && cellImages.every(image => {
+                const clipName = image.getAttribute('clip-path')?.match(/^url\(#([^)]*)\)$/)?.[1];
+                const clip = clipName && document.getElementById(clipName);
+                return clip?.getAttribute('clipPathUnits') === 'userSpaceOnUse'
+                  && clip.querySelector('rect')?.getAttribute('width') === '1';
+              });
+              const allIDs = [...document.querySelectorAll('clipPath[id^="qjl-holiday-cell-"]')].map(el=>el.id);
+              matchingArtwork &&= new Set(allIDs).size === allIDs.length;
+            }
             const boxValues = box => [box.x, box.y, box.width, box.height];
             const visibleArt = document.querySelector('#seasonalHomeScene ' + (mode === 'light' ? '.seasonal-photo-light' : '.seasonal-photo-dark'));
             const geometry = theme === 'teachers'
@@ -180,5 +191,5 @@ async function start() {
     await new Promise(resolve => server.close(resolve));
   }
 }
-start().then(() => console.log('Ten themed card sprites, PC header separation, long task text, both palettes, preview ESC and draft preservation passed.'))
+start().then(() => console.log('Twenty themed card sprites, PC header separation, long task text, both palettes, preview ESC and draft preservation passed.'))
   .catch(error => { console.error(error); server.close(); process.exitCode = 1; });

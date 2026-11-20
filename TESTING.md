@@ -1,3 +1,19 @@
+# Quick Jira Log V1.40.1 — Validation
+
+- `npm test`: PASS (exit 0). Giữ các bộ kiểm thử Jira/API, lịch, chế độ màu, tài khoản và motion lifecycle.
+- `tests/seasonal-collection-tests.js`: bổ sung 90 clip ID duy nhất qua 10 chủ đề × 3 lần dựng × 3 ô ảnh; mỗi ảnh phải gắn đúng clip nguồn 1×1.
+- `tests/seasonal-sprite-render-tests.cjs`: PASS, 90 trường hợp render SVG với ảnh thật (10 chủ đề × 3 ô × khung360×120/160×240/144×144). Kiểm tra có pixel ảnh bên trong và không có pixel ảnh trong vùng letterbox bên ngoài ô nguồn. Bỏ clip để tái hiện lỗi cũ: 30 trường hợp khung rộng bị lọt ảnh cạnh bên; bật clip: 0.
+- Test raster dùng Sharp/librsvg tại môi trường phát triển; ảnh WebP chỉ chuyển PNG không mất dữ liệu trong bộ nhớ vì librsvg không giải mã WebP nhúng. Tài nguyên app không bị đổi hoặc cắt lại.
+- Chạy thêm: `npm run test:sprite-render` khi môi trường có module `sharp` (hoặc NODE_PATH trỏ vào bộ công cụ phát triển có sẵn Sharp). Đây là công cụ test tùy chọn, app không cần Sharp và không thêm dependency runtime.
+- Test trình duyệt đã bổ sung kiểm tra clip tham chiếu đúng và ID không trùng cho các chủ đề mới. Chromium trong môi trường này trước đó không khởi chạy vì socket bị chặn; chưa nghiệm thu toàn trang/đo FPS trên thiết bị thật.
+- Kiểm tra syntax JS; đối chiếu bytes toàn bộ ảnh so với ZIP V1.40.0 giữ nguyên.
+
+Nghiệm thu sau deploy: thử cả 10 chủ đề mới trên PC và mobile, cả light/dark, preview nhỏ/dashboard tạm/splash/đăng nhập. Tết Dương lịch chỉ có một đồng hồ, 8/3 chỉ có một thiệp và một bó hoa, không còn nửa vật thể lặp ở mép; ESC vẫn quay về cấu hình chưa lưu. Đổi kích thước, bật/tắt hiệu ứng và chuyển chế độ không làm ảnh lọt ô bên cạnh.
+
+Không cần migration mới. Chưa push/deploy.
+
+---
+
 # Quick Jira Log V1.40.0 — Validation
 
 - `npm test`: PASS, exit 0. Bao gồm kiểm thử Jira/API hiện có, lịch 20 chủ đề, 40 scene variants, scope tài khoản, ưu tiên, lịch cụ thể, chuyển ngày Việt Nam, xem trước không lưu và ESC.

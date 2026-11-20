@@ -45,3 +45,15 @@ for(const id of ['newyear','lantern','womensday','hungking','doanngo','family','
 }
 const lantern=api.scene('lantern');assert(lantern.indexOf('collection-stage')<lantern.indexOf('collection-subject'));
 console.log('New collection: flag texture/geometry, real timestamp motion, loading/hidden/offscreen/modal pause, preview scope, cleanup and 20 effect variants passed.');
+
+const clips = new Set();
+for (let round=0; round<3; round++) for (const id of ['newyear','lantern','womensday','hungking','doanngo','family','vulan','national','vietwomen','culture']) {
+ const markup=api.scene(id,round%2)+api.corner(id);
+ const definitions=[...markup.matchAll(/<clipPath id="([^"]+)" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="1" height="1"\/><\/clipPath>/g)].map(m=>m[1]);
+ assert.equal(definitions.length,3,id+' must crop all three sprite cells');
+ for (const clip of definitions) {
+  assert(!clips.has(clip),'Clip IDs must be unique across dashboard/splash/inline preview');clips.add(clip);
+  assert(markup.includes('clip-path="url(#'+clip+')"'));
+ }
+}
+console.log('Sprite clipping: 90 unique source-coordinate clip regions, no collisions across simultaneous scenes.');

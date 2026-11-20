@@ -4,10 +4,15 @@
 window.QuickJiraSeasonalCollection = (() => {
   const ids = ['newyear','lantern','womensday','hungking','doanngo','family','vulan','national','vietwomen','culture'];
   const entries = new Set();
-  let frame = 0, observer, resizeObserver, mutationObserver;
+  let frame = 0, observer, resizeObserver, mutationObserver, cellSerial = 0;
   function cell(id, index, className) {
-    return '<svg class="' + className + '" viewBox="0 0 1 1" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">'
-      + '<image x="' + (-index) + '" y="0" width="3" height="1" preserveAspectRatio="none" href="/seasonal-collection/' + id + '.webp"/></svg>';
+    // A rectangular SVG viewport has letterbox space outside its square viewBox.
+    // Clipping only the viewport lets neighbouring sprite cells paint there.
+    // Clip in image coordinates and use unique IDs across every mounted scene.
+    const clip = 'qjl-holiday-cell-' + (++cellSerial);
+    return '<svg class="' + className + '" viewBox="0 0 1 1" preserveAspectRatio="xMidYMid meet" overflow="hidden" aria-hidden="true" focusable="false">'
+      + '<defs><clipPath id="' + clip + '" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="1" height="1"/></clipPath></defs>'
+      + '<image clip-path="url(#' + clip + ')" x="' + (-index) + '" y="0" width="3" height="1" preserveAspectRatio="none" href="/seasonal-collection/' + id + '.webp"/></svg>';
   }
   const shapes = {
     tulip: '<path fill="#c3507c" d="M20 35C6 28 3 17 9 6c5 1 9 5 11 9C22 6 27 3 31 2c6 12 6 24-11 33Z"/><path fill="#ef94b3" d="M20 31C12 22 10 13 12 9c5 3 8 9 8 22Z"/><path fill="#f9c0cd" d="M21 30c1-10 5-19 8-23 3 12 0 19-8 23Z"/>',

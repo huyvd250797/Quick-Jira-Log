@@ -110,3 +110,7 @@ html[data-seasonal="culture"] :is(#statusCard,#loginCard,#filterCard,.hours-card
 
 .collection-culture[data-effect="1"] .collection-bronze-gleam::after { animation-duration:11s; }
 .collection-culture[data-effect="1"] .collection-silk { opacity:.35; animation-duration:8s; }
+
+/* V1.40.1: defend sprite viewports against broad SVG overflow rules.
+   Per-cell clipPaths in seasonal-collection.js crop in source coordinates. */
+svg.collection-stage, svg.collection-subject-image, svg.seasonal-corner-art { overflow:hidden; }

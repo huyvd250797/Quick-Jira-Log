@@ -1,4 +1,4 @@
-const CACHE = 'quick-jira-log-v1.40.0-shell';
+const CACHE = 'quick-jira-log-v1.40.1-shell';
 const DESKTOP_SHELL = ['/lib/working-tree-state.js', '/bulk-desktop-grid.js', '/desktop-workspace.css','/desktop-lookup.css', '/jira-issue-icons.js', '/jira-issue-icons.css', '/jira-working-tree.css', '/jira-working-tree.js', '/project-stats.css', '/project-stats.js', '/lib/project-stats.js', '/calendar-desktop.css', '/jira-search.css', '/jira-search.js', '/jira-detail.css', '/lib/jira-content.js', '/jira-actions.js', '/jira-create.js', '/jira-workspace.css', '/jira-attachments.js', '/jira-detail-reading.js', '/lib/jira-editor-codec.js', '/jira-editor.js', '/jira-editor.css', '/jira-subtask-edit.js', '/jira-subtask-edit.css', '/jira-editor-images.js', '/jira-image-viewer.js'];
 const SEASONAL_COLLECTION = ['newyear','lantern','womensday','hungking','doanngo','family','vulan','national','vietwomen','culture'].map(theme => `/seasonal-collection/${theme}.webp`);
 const TEACHERS_LIGHT_ART = ['/seasonal-art/teachers-light.webp'];
