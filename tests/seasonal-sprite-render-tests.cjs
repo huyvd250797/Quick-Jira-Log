@@ -9,16 +9,19 @@ const art=ctx.window.QuickJiraSeasonalCollection;
 const ids=['newyear','lantern','womensday','hungking','doanngo','family','vulan','national','vietwomen','culture'];
 async function pixels(svg,id,w,h,unclipped=false) {
  // librsvg does not decode embedded WebP; losslessly transcode in memory for this test only.
- const texture=await sharp(path.join(root,'seasonal-collection',id+'.webp')).png().toBuffer();
+ const file=svg.match(/href="([^"]+)"/)[1];
+ const texture=await sharp(path.join(root,file.replace(/^\//,''))).png().toBuffer();
  let source=svg.replace('<svg ',`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" `)
   .replace(/href="[^"]+"/,`href="data:image/png;base64,${texture.toString('base64')}"`);
  if(unclipped) source=source.replace(/ clip-path="[^"]+"/,'');
  const {data,info}=await sharp(Buffer.from(source)).ensureAlpha().raw().toBuffer({resolveWithObject:true});
- const size=Math.min(w,h),left=(w-size)/2,top=(h-size)/2;
+ const box=svg.match(/viewBox="0 0 ([0-9.]+) ([0-9.]+)"/);
+ const ratio=Number(box[1])/Number(box[2]);
+ const cw=Math.min(w,h*ratio),ch=cw/ratio,left=(w-cw)/2,top=(h-ch)/2;
  let outside=0,inside=0;
  for(let y=0;y<h;y++) for(let x=0;x<w;x++) {
   const alpha=data[(y*w+x)*info.channels+3];
-  if(x<left-1 || x>=left+size+1 || y<top-1 || y>=top+size+1) {if(alpha>4)outside++;}
+  if(x<left-1 || x>=left+cw+1 || y<top-1 || y>=top+ch+1) {if(alpha>4)outside++;}
   else if(alpha>20)inside++;
  }
  return {outside,inside};
@@ -28,15 +31,15 @@ async function pixels(svg,id,w,h,unclipped=false) {
  const clipIDs=new Set();
  for(const id of ids) {
   const scene=art.scene(id,0);
-  const cells=[...scene.matchAll(/<svg class="(?:collection-part collection-stage|collection-subject-image)"[\s\S]*?<\/svg>/g)].map(m=>m[0]);
-  cells.push(art.corner(id));assert.equal(cells.length,3);
+  const cells=[...scene.matchAll(/<svg class="(?:collection-backdrop collection-backdrop-(?:dark|light)|collection-subject-image)"[\s\S]*?<\/svg>/g)].map(m=>m[0]);
+  cells.push(art.corner(id));assert(cells.length>=3);
   for(const cell of cells) {
    const clip=cell.match(/<clipPath id="([^"]+)"/)[1];assert(!clipIDs.has(clip));clipIDs.add(clip);
    for(const [w,h] of [[360,120],[160,240],[144,144]]) {
     const result=await pixels(cell,id,w,h);
     assert.equal(result.outside,0,id+' sprite leaked at '+w+'x'+h);
     assert(result.inside>100,id+' image unexpectedly blank');
-    if(w>h) {const old=await pixels(cell,id,w,h,true);if(old.outside>0)oldLeaks++;}
+    if(w/h>1.5) {const old=await pixels(cell,id,w,h,true);if(old.outside>0)oldLeaks++;}
     cases++;
    }
   }

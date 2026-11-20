@@ -1,3 +1,24 @@
+# Quick Jira Log V1.40.2 — Validation
+
+- Bộ `npm test`: PASS, exit 0. Bao gồm logic Jira/API, lịch và scope tài khoản, preview/ESC không lưu, light/dark và motion lifecycle.
+- `tests/seasonal-sprite-render-tests.cjs`: PASS 105 trường hợp render bằng ảnh thật (2 background + đối tượng khi có + motif của mỗi chủ đề × khung rộng/dọc/vuông). Không có pixel từ panel lân cận trong vùng letterbox và không có lớp ảnh trống. Bỏ clip để tái hiện lỗi cũ: 35 trường hợp khung rộng có ảnh lọt.
+- Mỗi background: 2172×724, gồm 2 panel 1086×724, xuất WebP không crop/resize. Clip 3×2 cho background và 1×1 cho vật thể; ID duy nhất giữa dashboard, splash và preview.
+- Bộ palette kiểm tra tương phản chữ chính/phụ/nhấn >=4.5:1 trên light/pale. Bảng màu 10 chủ đề cũ giữ nguyên V1.39.3.
+- Kiểm tra ảnh cũ và lịch: tài nguyên từ V1.40.1 giữ nguyên bytes; chỉ thêm background và điều chỉnh tên một số lựa chọn hiệu ứng cho đúng cảnh mới.
+- Đã thử khởi chạy Chromium với Playwright trong môi trường hiện tại: không khởi chạy được. Chưa nghiệm thu visual toàn trang và chưa đo FPS thiết bị. Không coi test raster là kiểm thử trình duyệt.
+
+## Kiểm tra sau deploy
+
+1. Thử 20 biến thể mới (10 chủ đề × sáng/tối) trên PC 900/1024/1440px và iPhone390/430px. Đối tượng không bị cắt hoặc lặp, ảnh hòa mềm, menu/logo không che ảnh, motif không che task.
+2. Mỗi chủ đề: kiểm tra dashboard, đăng nhập, splash và preview nhỏ; bấm Xem trước rồi ESC/Tắt xem trước phải trở lại cấu hình chưa lưu.
+3. Đồng hồ đúng vị trí trên bàn, đèn lồng treo dưới mái hiên, nến trên bệ đá, cờ nối cột; kiến trúc, mặt trăng và gương mặt phải đứng yên, giữ hình dạng.
+4. Đổi light/dark: cùng vùng ảnh, cùng tỷ lệ và vị trí lớp chuyển động; không xuất hiện viền chia panel. Không có ngày chủ đề thì mobile không để khoảng trống hero.
+5. Tắt hiệu ứng toàn app/từng chủ đề, giảm chuyển động hệ điều hành, ẩn tab, mở modal và cuộn ra ngoài viewport: dừng; quay lại: tiếp tục. Đo timeline FPS trên thiết bị đích, mục tiêu60fps, chưa cam kết từ kiểm thử Node.
+
+Chạy raster test tùy chọn bằng `npm run test:sprite-render` khi có module Sharp hoặc NODE_PATH của bộ công cụ phát triển. App không cần dependency Sharp ở runtime. Không cần migration mới; chưa push/deploy.
+
+---
+
 # Quick Jira Log V1.40.1 — Validation
 
 - `npm test`: PASS (exit 0). Giữ các bộ kiểm thử Jira/API, lịch, chế độ màu, tài khoản và motion lifecycle.

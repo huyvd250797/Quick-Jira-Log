@@ -1,3 +1,15 @@
+# Quick Jira Log V1.40.2 — Scenic Holiday Themes
+
+Bảng hiện tại thay thế đề xuất ở các mục lịch sử bên dưới.
+
+| Phiên bản | Mục tiêu | Công việc và dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- |
+| V1.40.2 | Background chân thực cho 10 chủ đề mới | 20 biến thể sáng/tối, mặt phẳng chung cho hiệu ứng, palette light, cache PWA; không migration | Logic, lifecycle, clip/raster kiểm tra được; ảnh cũ giữ nguyên | Đã xây dựng source, chờ nghiệm thu thiết bị |
+| V1.40.3 — Scenic Device QA | Hoàn thiện trên PC/iPhone | Hiệu chỉnh sau phản hồi về màu, ảnh, vị trí hiệu ứng và FPS | Nghiệm thu thiết bị | Đề xuất |
+| V1.41.0 — Lookup & Logwork | Chọn nhiều Sub-task từ Tra cứu | Đưa lựa chọn vào Log tất cả | Thống nhất nghiệp vụ và kiểm thử luồng | Đề xuất |
+
+---
+
 # Quick Jira Log V1.40.1 — Holiday Artwork Clipping Fix
 
 | Phiên bản | Phạm vi | Trạng thái |

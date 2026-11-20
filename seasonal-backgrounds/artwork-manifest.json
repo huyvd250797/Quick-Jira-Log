@@ -1,0 +1,73 @@
+{
+  "version": "1.40.2",
+  "release": "Scenic Holiday Themes",
+  "source": "Generated from the approved Vietnamese holiday dashboard concepts, recreated as realistic environmental imagery without interface content",
+  "format": "2172x724 WebP, exported without resizing/cropping; two equal 1086x724 landscape panels",
+  "panels": [
+    "dark",
+    "light"
+  ],
+  "rendering": "Common 3:2 plane; per-panel userSpaceOnUse clipPath prevents adjacent-panel bleed; mode switch changes CSS display only",
+  "assets": [
+    {
+      "id": "newyear",
+      "file": "newyear.webp",
+      "scene": "Night city skyline by a broad reflective river in Ho Chi Minh City, accurate tall Landmark 81 silhouette far left, navy sky with delicate sparse golden fireworks. A small cream spiral calendar printed exactly 01/01 rests on a realistic dark wooden riverside terrace ledge at 57% width 75% height. LEAVE the right foreground area around 80% width 65% height as empty wooden ledge for a separately animated gold clock. No clock anywhere, no extra calendar. Refined gold bokeh and real reflections.",
+      "source": "exec-dd1be3bf-1170-47a9-8c2d-481c61e5e781.png"
+    },
+    {
+      "id": "lantern",
+      "file": "lantern.webp",
+      "scene": "Beautiful authentic Vietnamese Hoi An riverside heritage street at blue hour under ONE perfectly round full moon at 49% width 24% height, ancient ochre houses, arched pedestrian bridge, warm lights reflected in the river. Wooden eaves along top right; short cord/hook at 81% width top edge for a separately animated red hanging silk lantern. NO foreground lantern hanging at the right, leave this space as real dark sky/house scenery; distant tiny lantern lights on buildings are fine. No spring blossom framing, keep subdued greenery.",
+      "source": "exec-38ae8494-b0a2-435d-9bc4-8119fc3f48cb.png"
+    },
+    {
+      "id": "womensday",
+      "file": "womensday.webp",
+      "scene": "Lush but uncluttered flowering Vietnamese garden veranda in warm natural morning light, realistic foliage and bokeh depth, pink bougainvillea gently framing far upper edges, a wooden round table at the lower right. On table ONE natural glass vase of pink tulips at 77% width 58% height, ONE ivory greeting card printed exactly 8/3 at 60% width 72% height, folded pale rose silk. True flower textures, naturally uneven petals, no plastic flowers.",
+      "source": "exec-b7b6c915-6359-45f0-b577-11a12664481f.png"
+    },
+    {
+      "id": "hungking",
+      "file": "hungking.webp",
+      "scene": "Dignified authentic ancient Vietnamese Hung Temple gateway, stone steps leading into a forested mountain at warm misty sunrise. Gateway centered at 43% width 38% height, surrounding foliage with depth, a few small traditional festival flags near gate. ONE detailed aged bronze Dong Son drum in right foreground at 82% width 72% height. Carefully straight architectural proportions, natural weathered stone, real bronze patina. No people and no floating ornaments.",
+      "source": "exec-004174a0-2481-4755-9532-922cd97896e8.png"
+    },
+    {
+      "id": "doanngo",
+      "file": "doanngo.webp",
+      "scene": "Peaceful traditional Vietnamese rural courtyard with bamboo at left, modest clay-tile roof house at upper right and lush garden. On natural wooden table in lower right/center, two leaf-wrapped pyramid bánh ú tro, one unwrapped amber translucent dumpling on ceramic plate, fresh lychees and plums. A gracefully hanging bamboo branch at top right framing scene. Real woven leaf fibers, appetizing translucent rice, fresh fruit skin, natural sunlight and atmospheric garden depth.",
+      "source": "exec-32162478-832d-43de-b57f-bcdeb257666f.png"
+    },
+    {
+      "id": "family",
+      "file": "family.webp",
+      "scene": "Cozy real Vietnamese family home with timber windows, soft garden daylight. Vietnamese mother, father and young child with natural realistic faces reading ONE book together at a table, positioned middle of scene. Anatomically correct hands, authentic warm candid smiles, not illustration or cartoon. Porcelain teapot and two cups on table at 23% width 78% height, NO visible steam because steam is animated separately. Small cream 28/6 card at lower right. Window and cream curtain to right, background garden out of focus.",
+      "source": "exec-76b17bd0-f0a5-4d5f-8f8e-c370e02717cc.png"
+    },
+    {
+      "id": "vulan",
+      "file": "vulan.webp",
+      "scene": "Peaceful Vietnamese temple across a lotus pond at purple-pink dusk, real reflections, blooming pink lotus at lower left, a stone ledge at lower right. Temple around 40% width 35% height. Leave a small clear empty spot on stone ledge at 82% width 77% height for one separately animated ivory candle. NO candle, NO flame in background. Natural water, calm dignity, soft subtle mist, no unrelated objects.",
+      "source": "exec-9992b2c2-a127-4f8a-9030-a14176ac7dcc.png"
+    },
+    {
+      "id": "national",
+      "file": "national.webp",
+      "scene": "Accurate recognizable Ho Chi Minh Mausoleum in Ba Dinh Square Hanoi, correct long stone mausoleum front facade under clear early-autumn blue sky, landscaping and small red flowers, distant trees. Building at 38% width 52% height, ONE simple flagpole at 70% width spanning from 12% height to 88% height. NO flag cloth and NO yellow star in the entire background, because one national flag is separately composited and animated on this pole. Large clear sky to RIGHT of pole for flag. Authentic architecture, natural stone detail, no distorted building.",
+      "source": "exec-4d9a8098-91a3-4d4a-b676-41c4d25d568e.png"
+    },
+    {
+      "id": "vietwomen",
+      "file": "vietwomen.webp",
+      "scene": "Elegant real Vietnamese wooden veranda opening onto a sunlit garden courtyard. On table at lower right: natural pink rose bouquet with green leaves at 82% width 55% height, one palm-leaf Vietnamese conical hat at 50% width 72% height, folded pink silk ribbon, ONE cream greeting card printed exactly 20/10 at 65% width 73% height. Real flower and leaf texture, rich carved timber and realistic garden depth, sophisticated warm light.",
+      "source": "exec-aa8a5c0b-8482-497b-9e73-1f6e02cf446f.png"
+    },
+    {
+      "id": "culture",
+      "file": "culture.webp",
+      "scene": "Beautiful authentic Vietnamese heritage pavilion opening onto an old courtyard and temple gate. Weathered carved timber frame, warm sunlight. One realistically detailed bronze Dong Son drum with clear engraved sun motif at 35% width 70% height, one red lacquer folding fan at 69% width 68% height, Vietnamese conical hat at 85% width 77% height, small cream 24/11 card at 60% width 83% height. Natural bronze patina and palm-leaf texture, photographic depth, no floating decorative icons.",
+      "source": "exec-18a26853-eb27-460a-85f5-63e88c1bac60.png"
+    }
+  ]
+}

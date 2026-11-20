@@ -108,12 +108,12 @@ async function start() {
                 && (getComputedStyle(darkArt).display !== 'none') === (mode === 'dark');
             }
             if (QuickJiraSeasonalCollection.has(theme)) {
-              const cellImages = [...document.querySelectorAll('#seasonalHomeScene svg.collection-stage image, #seasonalHomeScene svg.collection-subject-image image')];
+              const cellImages = [...document.querySelectorAll('#seasonalHomeScene svg.collection-backdrop image')];
               matchingArtwork = cellImages.length === 2 && cellImages.every(image => {
                 const clipName = image.getAttribute('clip-path')?.match(/^url\(#([^)]*)\)$/)?.[1];
                 const clip = clipName && document.getElementById(clipName);
                 return clip?.getAttribute('clipPathUnits') === 'userSpaceOnUse'
-                  && clip.querySelector('rect')?.getAttribute('width') === '1';
+                  && clip.querySelector('rect')?.getAttribute('width') === '3';
               });
               const allIDs = [...document.querySelectorAll('clipPath[id^="qjl-holiday-cell-"]')].map(el=>el.id);
               matchingArtwork &&= new Set(allIDs).size === allIDs.length;

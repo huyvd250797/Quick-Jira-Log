@@ -14,6 +14,14 @@ window.QuickJiraSeasonalCollection = (() => {
       + '<defs><clipPath id="' + clip + '" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="1" height="1"/></clipPath></defs>'
       + '<image clip-path="url(#' + clip + ')" x="' + (-index) + '" y="0" width="3" height="1" preserveAspectRatio="none" href="/seasonal-collection/' + id + '.webp"/></svg>';
   }
+  function backdrop(id, mode) {
+    const clip = 'qjl-holiday-cell-' + (++cellSerial);
+    // Source is two complete 3:2 scenes. Crop in source coordinates, including
+    // letterbox space: changing mode never changes the common 3:2 scene plane.
+    return '<svg class="collection-backdrop collection-backdrop-' + mode + '" viewBox="0 0 3 2" preserveAspectRatio="xMidYMid meet" overflow="hidden" aria-hidden="true" focusable="false">'
+      + '<defs><clipPath id="' + clip + '" clipPathUnits="userSpaceOnUse"><rect x="0" y="0" width="3" height="2"/></clipPath></defs>'
+      + '<image clip-path="url(#' + clip + ')" x="' + (mode === 'light' ? -3 : 0) + '" y="0" width="6" height="2" preserveAspectRatio="none" href="/seasonal-backgrounds/' + id + '.webp"/></svg>';
+  }
   const shapes = {
     tulip: '<path fill="#c3507c" d="M20 35C6 28 3 17 9 6c5 1 9 5 11 9C22 6 27 3 31 2c6 12 6 24-11 33Z"/><path fill="#ef94b3" d="M20 31C12 22 10 13 12 9c5 3 8 9 8 22Z"/><path fill="#f9c0cd" d="M21 30c1-10 5-19 8-23 3 12 0 19-8 23Z"/>',
     rose: '<path fill="#a33459" d="M19 34C7 30 1 21 7 13 4 4 17 1 23 5c8-3 16 6 13 12 6 8-7 18-17 17Z"/><path fill="#ef8caa" d="M19 30C10 24 8 14 11 9c7-3 10 3 11 6 5-6 9-6 11-3 5 9-5 16-14 18Z"/><path fill="#ffd0d9" d="M19 27c-2-8-4-14-7-15 1 9 3 13 7 15Z"/>',
@@ -31,12 +39,12 @@ window.QuickJiraSeasonalCollection = (() => {
   function fireworks() {
     const rays = Array.from({length: 16}, (_, i) => {
       const angle = i * Math.PI / 8, x = Math.cos(angle), y = Math.sin(angle);
-      return '<path d="M' + (x * 7).toFixed(2) + ' ' + (y * 7).toFixed(2)
-        + ' ' + (x * 31).toFixed(2) + ' ' + (y * 31).toFixed(2) + '"/>';
+      return '<path d="M' + (x * 2).toFixed(2) + ' ' + (y * 2).toFixed(2)
+        + ' ' + (x * 12).toFixed(2) + ' ' + (y * 12).toFixed(2) + '"/>';
     }).join('');
-    return '<svg class="collection-fireworks" viewBox="0 0 960 300" aria-hidden="true">'
-      + '<g transform="translate(260 65)"><g class="collection-burst">' + rays + '</g></g>'
-      + '<g transform="translate(770 48)"><g class="collection-burst second">' + rays + '</g></g></svg>';
+    return '<svg class="collection-fireworks" viewBox="0 0 300 200" aria-hidden="true">'
+      + '<g transform="translate(100 53)"><g class="collection-burst">' + rays + '</g></g>'
+      + '<g transform="translate(150 32)"><g class="collection-burst second">' + rays + '</g></g></svg>';
   }
   function clockHands() {
     return '<svg class="collection-clock-hands" viewBox="0 0 100 100" aria-hidden="true">'
@@ -58,8 +66,8 @@ window.QuickJiraSeasonalCollection = (() => {
     return '<svg class="collection-silk" viewBox="0 0 960 300" aria-hidden="true"><path d="M535 225c65-45 88 58 157 16s101 34 142-8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg>';
   }
   function ripple() {
-    return '<svg class="collection-ripple" viewBox="0 0 960 300" aria-hidden="true">'
-      + '<ellipse cx="475" cy="255" rx="110" ry="10"/><ellipse class="second" cx="475" cy="255" rx="110" ry="10"/></svg>';
+    return '<svg class="collection-ripple" viewBox="0 0 300 200" aria-hidden="true">'
+      + '<ellipse cx="120" cy="142" rx="45" ry="3"/><ellipse class="second" cx="120" cy="142" rx="45" ry="3"/></svg>';
   }
   function festivalFlag() {
     return '<svg class="collection-festival-flag" viewBox="0 0 100 100" aria-hidden="true"><path d="M22 25V89" stroke="#b98d56" stroke-width="2"/>'
@@ -69,25 +77,37 @@ window.QuickJiraSeasonalCollection = (() => {
   }
   function scene(id, effect = 0) {
     if (!ids.includes(id)) return '';
-    let ambient = '', moving = '', foreground = '';
-    if (['lantern','hungking','national'].includes(id)) ambient += clouds();
-    if (id === 'newyear') { ambient += fireworks(); moving = clockHands(); }
-    if (id === 'womensday') foreground += petals('tulip', effect);
-    if (id === 'doanngo' && effect) foreground += petals('bamboo', 0);
-    if (id === 'family') {
-      moving = steam();
-      ambient += effect ? '<span class="collection-sunlight"></span>' : '<span class="collection-curtain"></span>';
+    let ambient = '', subject = '', foreground = '';
+    const object = (markup, extra = '') => '<span class="collection-part collection-subject ' + extra + '">' + markup + '</span>';
+    if (['lantern','hungking','national'].includes(id)) ambient += '<span class="collection-mist"></span>';
+    if (id === 'newyear') {
+      ambient += fireworks();
+      subject = object(cell(id, 1, 'collection-subject-image') + clockHands());
+      if (effect) foreground += '<span class="collection-festive-glow"></span>';
     }
-    if (id === 'vulan') { moving = flame(); ambient += ripple(); if (effect) foreground += petals('lotus', 0); }
+    if (id === 'lantern') subject = object(cell(id, 1, 'collection-subject-image'));
+    if (id === 'womensday') foreground += petals('tulip', effect);
+    if (id === 'doanngo') {
+      subject = object(cell(id, 1, 'collection-subject-image'));
+      if (effect) foreground += petals('bamboo', 0);
+    }
+    if (id === 'family') {
+      subject = object(steam());
+      ambient += '<span class="collection-sunlight"></span>';
+    }
+    if (id === 'vulan') {
+      subject = object(cell(id, 1, 'collection-subject-image') + flame());
+      ambient += ripple();
+      if (effect) foreground += petals('lotus', 0);
+    }
     if (id === 'hungking' && effect) foreground += festivalFlag();
+    if (id === 'national') subject = object(cell(id, 1, 'collection-subject-image')
+      + '<canvas class="collection-flag-canvas" aria-hidden="true"></canvas>');
     if (id === 'vietwomen') foreground += petals('rose', effect);
-    if (['newyear','womensday','vietwomen','culture'].includes(id) && (effect || id === 'culture')) foreground += ribbon();
     if (id === 'culture') ambient += '<span class="collection-bronze-gleam"></span>';
-    const flag = id === 'national' ? '<canvas class="collection-flag-canvas" aria-hidden="true"></canvas>' : '';
-    return '<span class="seasonal-composed collection-' + id + '" data-collection-theme="' + id + '" data-effect="' + (effect === 1 ? 1 : 0) + '">'
-      + ambient + cell(id, 0, 'collection-part collection-stage')
-      + '<span class="collection-part collection-subject">' + cell(id, 1, 'collection-subject-image') + flag + moving + '</span>'
-      + foreground + '</span>';
+    return '<span class="seasonal-composed collection-' + id + ' collection-scenic" data-collection-theme="' + id + '" data-effect="' + (effect === 1 ? 1 : 0) + '">'
+      + '<span class="collection-plane">' + backdrop(id, 'dark') + backdrop(id, 'light')
+      + ambient + subject + foreground + '</span></span>';
   }
   function allowed(entry) {
     if (!entry.visible || document.hidden || !entry.node.isConnected) return false;
@@ -112,8 +132,10 @@ window.QuickJiraSeasonalCollection = (() => {
     const sourceWidth = entry.image.naturalWidth / 3, sourceHeight = entry.image.naturalHeight;
     const size = Math.min(width,height), left = (width-size)/2, top = (height-size)/2;
     const steps = 48, amplitude = size * (entry.effect ? .031 : .019);
-    context.fillStyle = "#bfa071";
-    context.fillRect(left + size*.075, top + size*.24, Math.max(1,size*.008), size*.62);
+    if (!entry.node.classList.contains('collection-scenic')) {
+      context.fillStyle = "#bfa071";
+      context.fillRect(left + size*.075, top + size*.24, Math.max(1,size*.008), size*.62);
+    }
     for (let i = 0; i < steps; i += 1) {
       const x = i / steps, wave = Math.sin(x * Math.PI * 3 - seconds * 2.6) * amplitude * x;
       const swell = 1 + Math.cos(x * Math.PI * 3 - seconds * 2.6) * .018 * x;

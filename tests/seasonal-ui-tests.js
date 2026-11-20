@@ -242,7 +242,7 @@ for (const id of lib.ids) {
     }
     if (window.QuickJiraSeasonalShader.kinds[id]) assert.match(scene, /<canvas .*data-seasonal-surface/);
     else if (!collection) assert.equal(layers.length, 1);
-    if (collection) { assert.match(scene, /data-collection-theme/); assert.match(scene, /collection-stage/); assert.match(scene, /collection-subject/); }
+    if (collection) { assert.match(scene, /data-collection-theme/); assert.match(scene, /collection-plane/); assert.match(scene, /collection-backdrop-dark/); assert.match(scene, /collection-backdrop-light/); }
     for (const layer of layers) assert(css.includes(`.seasonal-${layer} i`), layer);
     if (['tet', 'school', 'halloween', 'teachers'].includes(id)) assert.match(scene, /<svg.*<path/);
   }
