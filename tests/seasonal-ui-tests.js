@@ -65,6 +65,7 @@ const context = vm.createContext({window, document, Option: class Option {},
   setTimeout: (callback, delay) => { nextMidnight = {callback, delay}; },
   clearTimeout: () => { nextMidnight = null; }});
 vm.runInContext(read('seasonal-shader.js'), context);
+vm.runInContext(read('seasonal-collection.js'), context);
 vm.runInContext(read('seasonal-scenes.js'), context);
 vm.runInContext(read('seasonal-themes.js'), context);
 const ui = window.QuickJiraSeasonalThemes;
@@ -208,15 +209,31 @@ get('seasonalStopPreviewBtn').fire('click');
 assert(get('seasonalDialog').open);
 assert.equal(ui.previewing, false);
 get('seasonalCancel').fire('click');
-const css = read('seasonal-themes.css');
+// A newly-added theme follows the same account-scoped preview/save pipeline.
+get('seasonalOpenBtn').fire('click');
+change('seasonalTheme','national');
+assert.equal(get('seasonalPreview').dataset.seasonal,'national');
+assert(get('seasonalPreviewScene').innerHTML.includes('data-collection-theme="national"'));
+const beforeNationalPreview=JSON.stringify([...map]);
+get('seasonalShowPreviewBtn').fire('click');
+assert.equal(html.dataset.seasonal,'national');
+assert.equal(JSON.stringify([...map]),beforeNationalPreview);
+get('seasonalStopPreviewBtn').fire('click');
+assert(get('seasonalDialog').open);
+assert.equal(get('seasonalTheme').value,'national');
+change('seasonalEnabled',false,'checked');
+get('seasonalCancel').fire('click');
+assert.equal(JSON.stringify([...map]),beforeNationalPreview,'Cancel must not save new rules');
+const css = read('seasonal-themes.css') + '\n' + read('seasonal-collection.css');
 for (const id of lib.ids) {
   assert(css.includes(`[data-seasonal="${id}"]`));
-  const file = fs.readFileSync(path.join(root, "seasonal-art", id + ".webp"));
+  const collection = window.QuickJiraSeasonalCollection.has(id);
+  const file = fs.readFileSync(path.join(root, collection ? "seasonal-collection" : "seasonal-art", id + ".webp"));
   assert.equal(file.toString("ascii", 8, 12), "WEBP");
   for (const effect of [0, 1]) {
     const scene = window.QuickJiraSeasonalScenes.scene(id, effect);
     const layers = Array.from(scene.matchAll(/class="[^"]*seasonal-scene-layer[^"]* seasonal-([a-z]+)"/g), match => match[1]);
-    assert.equal((scene.match(/<img /g) || []).length, id === 'teachers' ? 2 : 1,
+    assert.equal((scene.match(/<img /g) || []).length, collection ? 0 : id === 'teachers' ? 2 : 1,
       'Only Teachers Day has mutually exclusive authored light/dark backdrops');
     if (id === 'teachers') {
       assert.match(scene, /seasonal-photo-dark.*teachers\.webp/);
@@ -224,7 +241,8 @@ for (const id of lib.ids) {
       assert.equal(fs.readFileSync(path.join(root, 'seasonal-art/teachers-light.webp')).toString('ascii',8,12), 'WEBP');
     }
     if (window.QuickJiraSeasonalShader.kinds[id]) assert.match(scene, /<canvas .*data-seasonal-surface/);
-    else assert.equal(layers.length, 1);
+    else if (!collection) assert.equal(layers.length, 1);
+    if (collection) { assert.match(scene, /data-collection-theme/); assert.match(scene, /collection-stage/); assert.match(scene, /collection-subject/); }
     for (const layer of layers) assert(css.includes(`.seasonal-${layer} i`), layer);
     if (['tet', 'school', 'halloween', 'teachers'].includes(id)) assert.match(scene, /<svg.*<path/);
   }
@@ -234,4 +252,4 @@ const animatedProperties = new Set(Array.from(keyframes.matchAll(/([a-z-]+):/g),
 assert.deepEqual([...animatedProperties].sort(), ['opacity', 'transform']);
 assert(!index.includes('name="seasonalMode"'));
 assert.match(index, /id="seasonalBootScene"/);
-console.log('Seasonal UI fixture: midnight timer, validation, account isolation, concurrent tabs, motion controls and all 20 scene variants passed.');
+console.log('Seasonal UI fixture: midnight timer, validation, account isolation, concurrent tabs, motion controls and all 40 scene variants passed.');

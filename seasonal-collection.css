@@ -1,0 +1,112 @@
+/* V1.40.0: twenty-theme collection. New sprites share geometry across both modes. */
+[data-seasonal="newyear"] { --season-dark: #101c35; --season-deep: #1d2b45; --season-light: #f5f6fc; --season-pale: #fffdf7; --season-bright: #f1ce86; --season-ink: #27528b; --season-ornament: url("/seasonal-collection/newyear.webp"); }
+[data-seasonal="lantern"] { --season-dark: #241329; --season-deep: #38203d; --season-light: #fcf1ee; --season-pale: #fffaf6; --season-bright: #f2ce91; --season-ink: #923e50; --season-ornament: url("/seasonal-collection/lantern.webp"); }
+[data-seasonal="womensday"] { --season-dark: #301322; --season-deep: #492638; --season-light: #fff0f4; --season-pale: #fffafd; --season-bright: #f3bbd0; --season-ink: #923d63; --season-ornament: url("/seasonal-collection/womensday.webp"); }
+[data-seasonal="hungking"] { --season-dark: #291317; --season-deep: #402327; --season-light: #faf2e4; --season-pale: #fffaf2; --season-bright: #edcc91; --season-ink: #893c32; --season-ornament: url("/seasonal-collection/hungking.webp"); }
+[data-seasonal="doanngo"] { --season-dark: #0c2722; --season-deep: #193a30; --season-light: #f3f7e9; --season-pale: #fcfdf5; --season-bright: #ecd489; --season-ink: #58682e; --season-ornament: url("/seasonal-collection/doanngo.webp"); }
+[data-seasonal="family"] { --season-dark: #102a28; --season-deep: #23403b; --season-light: #fcf4e8; --season-pale: #fffcf5; --season-bright: #efcf9e; --season-ink: #4b693b; --season-ornament: url("/seasonal-collection/family.webp"); }
+[data-seasonal="vulan"] { --season-dark: #261a32; --season-deep: #3d2b48; --season-light: #f8f0fc; --season-pale: #fdf9ff; --season-bright: #e6bddb; --season-ink: #784786; --season-ornament: url("/seasonal-collection/vulan.webp"); }
+[data-seasonal="national"] { --season-dark: #2e1015; --season-deep: #482026; --season-light: #fcf1e7; --season-pale: #fffaf5; --season-bright: #f0ce80; --season-ink: #963933; --season-ornament: url("/seasonal-collection/national.webp"); }
+[data-seasonal="vietwomen"] { --season-dark: #301722; --season-deep: #482c3a; --season-light: #fff1ed; --season-pale: #fffaf7; --season-bright: #efb8ce; --season-ink: #943d5d; --season-ornament: url("/seasonal-collection/vietwomen.webp"); }
+[data-seasonal="culture"] { --season-dark: #181d37; --season-deep: #2b304c; --season-light: #f8f1e4; --season-pale: #fffaf2; --season-bright: #e8cb8e; --season-ink: #494c84; --season-ornament: url("/seasonal-collection/culture.webp"); }
+
+.seasonal-composed { position:absolute; inset:0; display:block; overflow:hidden; isolation:isolate; background:radial-gradient(ellipse at 65% 42%,var(--season-tint),transparent 75%); }
+.seasonal-composed *, .seasonal-composed *::before, .seasonal-composed *::after { animation-play-state:paused !important; }
+html[data-seasonal-motion] :is(#seasonalHomeScene,#seasonalBootScene) .seasonal-composed *,
+#seasonalPreview[data-seasonal-motion] .seasonal-composed * { animation-play-state:running !important; }
+html[data-seasonal-motion] :is(#seasonalHomeScene,#seasonalBootScene) .seasonal-composed *::after,
+#seasonalPreview[data-seasonal-motion] .seasonal-composed *::after { animation-play-state:running !important; }
+html :is(#seasonalHomeScene,#seasonalBootScene,#seasonalPreview) .seasonal-composed[data-collection-paused] *, html :is(#seasonalHomeScene,#seasonalBootScene,#seasonalPreview) .seasonal-composed[data-collection-paused] *::after { animation-play-state:paused !important; }
+body:has(dialog[open],.settings-overlay[aria-hidden="false"],#bootSplash:not(.leaving)) #seasonalHomeScene .seasonal-composed *,
+#bootSplash.leaving .seasonal-composed * { animation-play-state:paused !important; }
+.collection-part { position:absolute; display:block; }
+.collection-stage { width:60%; height:108%; left:8%; top:-4%; }
+.collection-subject { width:32%; height:96%; right:6%; top:2%; }
+.collection-subject-image { width:100%; height:100%; display:block; }
+.collection-lantern .collection-stage { width:66%; left:9%; }
+.collection-lantern .collection-subject { width:24%; right:9%; top:-4%; height:105%; transform-origin:50% 5%; animation:collection-swing 5.6s ease-in-out infinite alternate; }
+.collection-lantern[data-effect="1"] .collection-subject { animation-duration:3.9s; }
+.collection-womensday .collection-stage,.collection-vietwomen .collection-stage { width:48%; left:15%; }
+.collection-womensday .collection-subject,.collection-vietwomen .collection-subject { width:44%; right:8%; }
+.collection-hungking .collection-stage { width:72%; left:8%; top:-3%; }
+.collection-hungking .collection-subject { width:31%; right:3%; top:20%; height:90%; }
+.collection-doanngo .collection-stage { width:73%; left:14%; }
+.collection-doanngo .collection-subject { width:34%; top:-22%; right:2%; transform-origin:90% 10%; animation:collection-bamboo-sway 6s ease-in-out infinite alternate; }
+.collection-family .collection-stage { width:72%; left:24%; }
+.collection-family .collection-subject { width:34%; right:auto; left:8%; top:19%; height:87%; }
+.collection-vulan .collection-stage { width:62%; left:15%; top:8%; }
+.collection-vulan .collection-subject { width:28%; right:10%; top:8%; }
+.collection-national .collection-stage { width:62%; left:40%; top:5%; }
+.collection-national .collection-subject { width:55%; left:5%; right:auto; height:100%; top:2%; }
+.collection-culture .collection-stage { width:69%; left:7%; }
+.collection-culture .collection-subject { width:31%; right:7%; top:18%; }
+.collection-clouds,.collection-fireworks,.collection-silk,.collection-ripple { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.collection-clouds { color:var(--season-accent); opacity:.13; }
+.collection-clouds g { animation:collection-cloud-drift 14s ease-in-out infinite alternate; }
+.collection-fireworks { color:#e7b958; }
+.collection-burst { fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; animation:collection-firework 6s ease-out infinite; }
+.collection-burst.second { animation-delay:-3s; }
+.collection-clock-hands { position:absolute; inset:0; width:100%; height:100%; }
+.collection-clock-hands g { transform-origin:50px 50px; stroke:#533b20; fill:none; stroke-width:1.5; stroke-linecap:round; }
+.collection-clock-hands .collection-hour { animation:collection-clock-turn 43200s linear infinite; }
+.collection-clock-hands .collection-minute { animation:collection-clock-turn 3600s linear infinite; }
+.collection-clock-hands .collection-second { animation:collection-clock-turn 60s linear infinite; stroke:#b98532; stroke-width:.6; }
+.collection-steam,.collection-flame { position:absolute; inset:0; width:100%; height:100%; }
+.collection-steam path { fill:none; stroke:var(--season-accent); stroke-width:1; stroke-linecap:round; opacity:.6; animation:collection-steam-rise 3.8s ease-out infinite; }
+.collection-steam path:nth-child(2) { animation-delay:-1.4s; }
+.collection-steam path:nth-child(3) { animation-delay:-2.5s; }
+.collection-flame-tongue { transform-origin:50px 40px; animation:collection-flame .23s ease-in-out infinite alternate; }
+.collection-candle-glow { transform-origin:50px 32px; animation:collection-glow 2.7s ease-in-out infinite alternate; }
+.collection-silk { color:var(--season-accent); opacity:.6; transform-origin:60% 75%; animation:collection-silk 5s ease-in-out infinite alternate; }
+.collection-ripple ellipse { fill:none; stroke:var(--season-accent); stroke-width:1.3; opacity:.35; transform-origin:475px 255px; animation:collection-ripple 7s ease-out infinite; }
+.collection-ripple .second { animation-delay:-3.5s; }
+.collection-festival-flag { position:absolute; width:15%; height:46%; left:44%; top:19%; }
+.collection-festival-flag g { transform-origin:23px 27px; animation:collection-flag-sway 2s ease-in-out infinite alternate; }
+.collection-flag-canvas { position:absolute; inset:0; width:100%; height:100%; visibility:hidden; }
+.collection-flag-ready .collection-flag-canvas { visibility:visible; }
+.collection-flag-ready .collection-subject-image { opacity:0; }
+.collection-flagpole { position:absolute; left:7%; top:18%; height:65%; width:2px; background:linear-gradient(90deg,#8c6c34,#eed6a3); }
+.collection-bronze-gleam { position:absolute; left:28%; top:9%; width:32%; height:65%; overflow:hidden; border-radius:50%; pointer-events:none; }
+.collection-bronze-gleam::after { content:""; position:absolute; inset:0; background:linear-gradient(110deg,transparent 20%,#ffe2a947 46%,transparent 65%); animation:collection-metal 7s ease-in-out infinite; }
+.collection-curtain { position:absolute; right:0; top:0; width:12%; height:90%; background:linear-gradient(90deg,transparent,#d1b07a22,#ead1a63d); border-radius:0 0 70% 0; transform-origin:100% 0; animation:collection-silk 8s ease-in-out infinite alternate; }
+.collection-sunlight { position:absolute; inset:0; background:radial-gradient(ellipse at 80% 15%,#e8ce7130,transparent 55%); animation:collection-glow 7s ease-in-out infinite alternate; }
+.collection-petals { position:absolute; inset:0; overflow:hidden; }
+.collection-petals i { display:block; position:absolute; top:-22px; left:var(--x); width:13px; height:16px; animation:collection-petal-fall var(--duration) linear var(--delay) infinite; }
+.collection-petals svg { display:block; width:100%; height:100%; }
+.collection-vulan .collection-petals i { top:82%; animation-name:collection-lotus-float; width:10px; height:12px; }
+@keyframes collection-swing { from { transform:rotate(-3deg); } to { transform:rotate(3deg); } }
+@keyframes collection-bamboo-sway { from { transform:rotate(-1.5deg); } to { transform:rotate(2.5deg); } }
+@keyframes collection-cloud-drift { from { transform:translate3d(-28px,0,0); } to { transform:translate3d(36px,-3px,0); } }
+@keyframes collection-clock-turn { to { transform:rotate(360deg); } }
+@keyframes collection-firework { 0%,16%,100% { opacity:0; transform:scale(.1); } 18% { opacity:.95; } 37% { opacity:.7; transform:scale(1.5); } 60% { opacity:0; transform:scale(1.8); } }
+@keyframes collection-steam-rise { from { transform:translate3d(0,3px,0); opacity:0; } 30% { opacity:.6; } to { transform:translate3d(2px,-15px,0); opacity:0; } }
+@keyframes collection-flame { from { transform:scaleX(.87) scaleY(1.03) rotate(-3deg); } to { transform:scaleX(1.08) scaleY(.95) rotate(4deg); } }
+@keyframes collection-glow { from { opacity:.35; } to { opacity:.7; } }
+@keyframes collection-silk { from { transform:skewX(-2deg) rotate(-1deg); } to { transform:skewX(2deg) rotate(1deg); } }
+@keyframes collection-ripple { from { transform:scale(.65); opacity:0; } 20% { opacity:.3; } to { transform:scale(1.5); opacity:0; } }
+@keyframes collection-flag-sway { from { transform:skewY(-2deg) scaleX(.96); } to { transform:skewY(3deg) scaleX(1); } }
+@keyframes collection-metal { from { transform:translateX(-105%); opacity:0; } 30%,70% { opacity:.7; } to { transform:translateX(105%); opacity:0; } }
+@keyframes collection-petal-fall { from { transform:translate3d(0,-15px,0) rotate(0); } 50% { transform:translate3d(8px,70cqh,0) rotate(130deg); } to { transform:translate3d(-12px,150cqh,0) rotate(290deg); } }
+@keyframes collection-lotus-float { from { transform:translate3d(-12px,0,0) rotate(10deg); opacity:0; } 20%,70% { opacity:.7; } to { transform:translate3d(28px,4px,0) rotate(32deg); opacity:0; } }
+@media (prefers-reduced-motion:reduce) { .seasonal-composed *, .seasonal-composed *::after { animation:none !important; } }
+@media (min-width:900px) {
+  html[data-seasonal] .brand:has(.seasonal-composed) { grid-template-columns:60px minmax(0,1fr) minmax(230px,40%); }
+  html[data-seasonal] .brand:has(.seasonal-composed) #seasonalHomeScene { width:40%; }
+}
+html[data-seasonal="newyear"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="newyear"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="newyear"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+html[data-seasonal="lantern"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="lantern"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="lantern"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+html[data-seasonal="womensday"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="womensday"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="womensday"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+html[data-seasonal="hungking"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="hungking"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="hungking"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+html[data-seasonal="doanngo"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="doanngo"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="doanngo"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+html[data-seasonal="family"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="family"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="family"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+html[data-seasonal="vulan"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="vulan"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="vulan"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+html[data-seasonal="national"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="national"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="national"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+html[data-seasonal="vietwomen"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="vietwomen"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="vietwomen"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+html[data-seasonal="culture"] :is(#statusCard,#loginCard,#filterCard,.hours-card)::after, html[data-seasonal="culture"] #filterCard .issue-row::after, html[data-theme] #seasonalPreview[data-seasonal="culture"] .seasonal-preview-metric::after { background-size:300% 100%; background-position:100% center; }
+
+/* Align overlays to the authored wick and clock centre without moving the objects. */
+.collection-clock-hands { transform:translateY(3%); }
+.collection-flame { transform:translateY(-9%); }
+
+.collection-culture[data-effect="1"] .collection-bronze-gleam::after { animation-duration:11s; }
+.collection-culture[data-effect="1"] .collection-silk { opacity:.35; animation-duration:8s; }

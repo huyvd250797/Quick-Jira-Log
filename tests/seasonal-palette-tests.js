@@ -30,3 +30,12 @@ for (const [, name, definition] of palettes) {
 }
 assert.match(css, /#filterCard \.issue-row \{[^}]*background: var\(--season-row\)/);
 console.log('All ten light palettes match V1.39.3; text contrast minimum ' + min.toFixed(2));
+
+const collectionCss = fs.readFileSync(require('node:path').join(__dirname,'..','seasonal-collection.css'),'utf8');
+const collectionPalettes = [...collectionCss.matchAll(/^\[data-seasonal="([^"]+)"\] \{([^\n]+)\}/gm)].filter(match => match[2].includes('--season-dark:'));
+assert.equal(collectionPalettes.length,10);
+for(const [,name,definition] of collectionPalettes) {
+  const values=Object.fromEntries([...definition.matchAll(/--season-([\w-]+): (#[0-9a-f]{6});/g)].map(m=>[m[1],m[2]]));
+  for(const background of [values.light,values.pale]) for(const foreground of ['#1b2535','#506078',values.ink]) assert(contrast(background,foreground)>=4.5,name+' collection contrast');
+}
+console.log('Ten new light palettes meet 4.5:1 body/secondary/accent text contrast.');

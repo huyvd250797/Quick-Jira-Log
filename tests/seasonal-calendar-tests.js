@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict');
 const { ids, normalize, today, untilMidnight, defaultRange, activeTheme, accountKey, validSchedule } = require('../lib/seasonal-calendar');
 
-assert.equal(ids.length, 10);
+assert.equal(ids.length, 20);
 assert.deepEqual(defaultRange('tet', 2024), ['2024-02-06', '2024-02-14']); // 30 Chạp
 assert.deepEqual(defaultRange('tet', 2026), ['2026-02-14', '2026-02-21']); // 29 Chạp
 assert.deepEqual(defaultRange('tet', 2027), ['2027-02-03', '2027-02-10']);
@@ -49,4 +49,33 @@ assert(!validSchedule({ repeat: true, start: ['05-03'], end: '05-04' }));
 assert.equal(normalize({ rules: { birthday: { schedule: 'bad input' } } }).rules.birthday.schedule, null);
 assert.notEqual(accountKey({ username: 'a', displayName: 'X' }), accountKey({ username: 'b', displayName: 'X' }));
 assert.equal(accountKey({ displayName: 'X' }), '');
-console.log('Seasonal calendar: eight presets, VN midnight, lunar leap months, account keys, priority, annual rollover and one-off ranges passed.');
+console.log('Seasonal calendar: eighteen holiday presets, VN midnight, lunar leap months, account keys, priority, annual rollover and one-off ranges passed.');
+
+const newFixed = {newyear:'01-01',womensday:'03-08',family:'06-28',national:'09-02',vietwomen:'10-20',culture:'11-24'};
+for (const [id, day] of Object.entries(newFixed)) {
+  for (const year of [2026,2027,2030]) {
+    assert.deepEqual(defaultRange(id, year), [`${year}-${day}`,`${year}-${day}`]);
+    assert.equal(activeTheme(normalize(),`${year}-${day}`),id);
+  }
+}
+const lunar2026 = {lantern:'2026-03-03',hungking:'2026-04-26',doanngo:'2026-06-19',vulan:'2026-08-27'};
+const lunarFormatter = new Intl.DateTimeFormat('en-u-ca-chinese',{month:'numeric',day:'numeric',timeZone:'Asia/Ho_Chi_Minh'});
+const lunarDays = {lantern:[1,15],hungking:[3,10],doanngo:[5,5],vulan:[7,15]};
+for (const [id, date] of Object.entries(lunar2026)) assert.deepEqual(defaultRange(id,2026),[date,date]);
+for (const year of [2026,2027,2028,2030]) for (const [id,[month,day]] of Object.entries(lunarDays)) {
+  const [start,end] = defaultRange(id,year);
+  assert.equal(start,end);
+  const parts = Object.fromEntries(lunarFormatter.formatToParts(new Date(start+'T05:00:00Z')).map(p=>[p.type,p.value]));
+  assert.equal(Number(parts.month),month,id+' lunar month '+year);
+  // ICU Chinese calendar uses UTC+8 new moons; VN month 1/2027 starts a day earlier.
+  if (year === 2027 && id === 'lantern') assert.equal(start,'2027-02-20');
+  else assert.equal(Number(parts.day),day,id+' lunar day '+year);
+  assert.equal(activeTheme(normalize(), start), id);
+}
+const legacy = normalize({motion:false,order:['teachers','birthday'],rules:{teachers:{enabled:false,effect:1},birthday:{schedule:{repeat:true,start:'11-20',end:'11-20'}}}});
+assert.deepEqual(legacy.order.slice(0,2),['teachers','birthday']);
+assert.equal(legacy.rules.teachers.enabled,false);
+assert.equal(legacy.rules.teachers.effect,1);
+assert.equal(legacy.rules.birthday.schedule.start,'11-20');
+for (const id of Object.keys(newFixed).concat(Object.keys(lunarDays))) assert.equal(legacy.rules[id].enabled,true);
+console.log('Ten new annual/lunar calendars, independent Intl lunar checks and legacy preference preservation passed.');

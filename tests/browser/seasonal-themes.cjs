@@ -71,7 +71,7 @@ async function start() {
       await open(page);
       assert.equal(await page.locator('#seasonalPreview').count(), 1);
       // Exercise actual dashboard preview, both palettes, sprite assets and reserved text space.
-      for (const theme of ['tet','vacation','april','children','birthday','moon','school','halloween','teachers','christmas']) {
+      for (const theme of require('../../lib/seasonal-calendar').ids) {
         await page.locator('#seasonalTheme').selectOption(theme);
         await page.locator('#seasonalShowPreviewBtn').click();
         await page.waitForFunction(() => QuickJiraSeasonalThemes.previewing);
@@ -86,7 +86,7 @@ async function start() {
           const metrics = await page.evaluate(async ({theme, mode}) => {
             applyTheme(mode);
             await new Promise(resolve => requestAnimationFrame(resolve));
-            const image = new Image(); image.src = '/seasonal-ornaments/' + theme + '.png';
+            const image = new Image(); image.src = QuickJiraSeasonalCollection.has(theme) ? '/seasonal-collection/' + theme + '.webp' : '/seasonal-ornaments/' + theme + '.png';
             await image.decode();
             const rect = el => el.getBoundingClientRect();
             const scene = rect(document.getElementById('seasonalHomeScene'));
@@ -118,7 +118,7 @@ async function start() {
               horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 1,
               sceneRadius: getComputedStyle(document.getElementById('seasonalHomeScene')).borderRadius};
           }, {theme, mode});
-          assert.match(metrics.sprite, new RegExp('/seasonal-ornaments/' + theme + '\\.png'));
+          assert.match(metrics.sprite, new RegExp((require('../../lib/seasonal-calendar').ids.indexOf(theme)>=10 ? '/seasonal-collection/' : '/seasonal-ornaments/') + theme + '\\.(png|webp)'));
           assert(Number(metrics.alpha) > 0);
           assert(metrics.matchingArtwork, theme + " artwork must follow the selected mode");
           if (theme === 'teachers') {

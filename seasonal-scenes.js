@@ -122,6 +122,7 @@ window.QuickJiraSeasonalScenes = (() => {
   }
 
   function refresh() {
+    window.QuickJiraSeasonalCollection?.refresh();
     entries.forEach(entry => {
       if (entry.canvas.isConnected) return;
       visibilityObserver?.unobserve(entry.canvas);
@@ -136,6 +137,7 @@ window.QuickJiraSeasonalScenes = (() => {
   function mount(container, id, effect) {
     if (!container) return;
     container.innerHTML = id ? scene(id, effect) : '';
+    window.QuickJiraSeasonalCollection?.mount(container);
     refresh();
     const canvas = container.querySelector?.('canvas[data-seasonal-surface]');
     if (!canvas?.addEventListener) return;
@@ -187,6 +189,7 @@ window.QuickJiraSeasonalScenes = (() => {
   }
 
   function scene(id, effect) {
+    if (window.QuickJiraSeasonalCollection?.has(id)) return window.QuickJiraSeasonalCollection.scene(id, effect);
     if (!Object.hasOwn(themes, id)) return '';
     // Teachers Day has separate authored artwork for each mode; CSS switches
     // immediately without remounting particles or changing the active schedule.
@@ -202,6 +205,7 @@ window.QuickJiraSeasonalScenes = (() => {
   }
 
   function corner(id) {
+    if (window.QuickJiraSeasonalCollection?.has(id)) return window.QuickJiraSeasonalCollection.corner(id);
     if (!Object.hasOwn(themes, id)) return '';
     return `<img class="seasonal-corner-art" src="/seasonal-art/${id}.webp" alt="" decoding="async" draggable="false">`;
   }

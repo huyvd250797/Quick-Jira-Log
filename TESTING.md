@@ -1,3 +1,25 @@
+# Quick Jira Log V1.40.0 — Validation
+
+- `npm test`: PASS, exit 0. Bao gồm kiểm thử Jira/API hiện có, lịch 20 chủ đề, 40 scene variants, scope tài khoản, ưu tiên, lịch cụ thể, chuyển ngày Việt Nam, xem trước không lưu và ESC.
+- Lịch mới: 6 ngày dương lịch kiểm tra năm 2026/2027/2030; 4 ngày âm kiểm tra năm 2026/2027/2028/2030. Đối chiếu bổ sung Intl Chinese ở các năm phù hợp; tháng Giêng 2027 của lịch Việt Nam sớm hơn ICU Chinese 1 ngày, fixture Việt Nam là 20/02/2027 cho Nguyên Tiêu. Nguồn đối chiếu: https://amlichchuan.com/le/ram-thang-gieng/2027 . Đây là kiểm chứng bổ sung, app vẫn dùng thuật toán lịch Việt Nam UTC+7 có sẵn.
+- 10 bảng màu light cũ giữ nguyên V1.39.3. 10 bảng màu mới đạt tương phản chữ chính/phụ/nhấn >=4.5:1 trên nền light/pale qua kiểm thử công thức WCAG.
+- `tests/seasonal-collection-tests.js`: PASS. Kiểm tra cờ dùng đúng texture riêng, giữ tỷ lệ ảnh trong host chữ nhật, DPR cap1.5, thời gian theo timestamp, không chạy RAF khi ảnh chưa tải, pause khi ẩn/tắt/ngoài viewport/modal, scope preview và giải phóng observer khi bỏ scene.
+- Kiểm tra syntax JS và tài nguyên static/cache; ảnh cũ giữ nguyên bytes so với ZIP V1.39.13.
+- Đã thử `npm run test:seasonal-ui` với Chromium: KHÔNG CHẠY ĐƯỢC, trình duyệt bị chặn `socket() failed: Operation not permitted`. Không coi đây là kiểm thử visual/FPS đã qua. Bộ test trình duyệt đã mở rộng đủ 20 chủ đề tại 390/900/1024/1440px.
+
+## Nghiệm thu sau deploy
+
+1. Mở Cấu hình giao diện, lần lượt chọn 10 chủ đề mới. Kiểm tra preview nhỏ và bấm Xem trước để xem dashboard thật; ESC/Tắt xem trước phải khôi phục cấu hình chưa lưu.
+2. Thử cả light/dark trên PC và iPhone. Ảnh không đè menu, hình học không thay đổi khi đổi chế độ, họa tiết không che chữ và không chặn click.
+3. Dashboard, đăng nhập và splash cùng chủ đề; ngày không có chủ đề mobile không có khoảng trống đầu trang.
+4. Thử hai hiệu ứng mỗi chủ đề, tắt/bật toàn app/từng chủ đề và chế độ giảm chuyển động. Chuyển tab, mở modal và cuộn ảnh ra ngoài viewport phải dừng; quay lại phải tiếp tục không nhảy nhiều khung.
+5. Đo frame timeline/CPU với công cụ trình duyệt trên thiết bị đích; mục tiêu60fps, ưu tiên cờ Quốc khánh khi đổi kích thước và xem trước. Không khẳng định FPS từ kiểm thử Node.
+6. Đăng nhập hai tài khoản, xác nhận lịch/ưu tiên cũ giữ nguyên và chủ đề mới có lịch mặc định; thử lịch âm năm sau và lịch cụ thể lặp hằng năm.
+
+Không cần migration mới.
+
+---
+
 # Quick Jira Log V1.39.13 — Theme Artwork Size Alignment
 
 - Đã qua toàn bộ bộ kiểm thử logic `npm test` (exit 0) và kiểm tra cú pháp JS.

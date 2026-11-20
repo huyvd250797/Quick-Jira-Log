@@ -1,3 +1,15 @@
+# Quick Jira Log V1.40.0 — Vietnamese Holiday Collection
+
+Bảng này thay thế các đề xuất phiên bản cũ ở phần lịch sử bên dưới.
+
+| Phiên bản | Phạm vi | Trạng thái |
+| --- | --- | --- |
+| V1.40.0 | Thêm 10 ngày lễ, ảnh tách lớp, 20 hiệu ứng mới, lịch dương/âm mặc định | Đã xây dựng source |
+| V1.40.1 — Holiday Visual QA | Nghiệm thu và hiệu chỉnh hình ảnh/FPS trên PC, iPhone | Đề xuất |
+| V1.41.0 — Lookup & Logwork | Chọn nhiều Sub-task từ Tra cứu đưa vào Log tất cả | Đề xuất, chưa xây dựng |
+
+---
+
 # Quick Jira Log V1.39.13 — Theme Artwork Size Alignment
 
 | Phiên bản | Phạm vi | Trạng thái |

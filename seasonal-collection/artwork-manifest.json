@@ -1,0 +1,82 @@
+{
+  "version": "1.40.0",
+  "format": "Transparent WebP; three equal square cells per horizontal sheet; no resizing or cropping at export",
+  "cells": [
+    "static scene",
+    "independent subject",
+    "card ornaments"
+  ],
+  "source": "AI-generated artwork using the approved per-theme previews as references",
+  "exports": [
+    {
+      "id": "newyear",
+      "file": "newyear.webp",
+      "staticScene": "a standing cream small calendar printed '01/01' with elegant gold silk ribbon",
+      "subject": "one ornate round gold clock, front facing, clock face with Roman numerals, NO CLOCK HANDS, face centered precisely at middle of this cell and circular face radius about 32% cell width",
+      "ornaments": "small gold firework ornament and a small gold ribbon bow"
+    },
+    {
+      "id": "lantern",
+      "file": "lantern.webp",
+      "staticScene": "a perfectly round warm full moon behind a pink lotus and two subtle golden cloud curls, no lanterns",
+      "subject": "one elegant red and gold round silk lantern hanging from a short straight cord at top center, lantern centered, tassel fully visible",
+      "ornaments": "a tiny lotus and a miniature golden lantern"
+    },
+    {
+      "id": "womensday",
+      "file": "womensday.webp",
+      "staticScene": "standing ivory greeting card printed exactly '8/3', with a small folded pink silk ribbon",
+      "subject": "elegant small bouquet of pink tulips with green leaves and pink bow",
+      "ornaments": "single pink tulip and small pink ribbon bow"
+    },
+    {
+      "id": "hungking",
+      "file": "hungking.webp",
+      "staticScene": "recognizable ancient Vietnamese Hung Temple gate with stone stairs and modest greenery, dignified accurate proportions, no clouds, no flags, no sky",
+      "subject": "a beautiful antique bronze Dong Son drum seen at slight angle",
+      "ornaments": "small circular bronze drum sun pattern and a small lotus"
+    },
+    {
+      "id": "doanngo",
+      "file": "doanngo.webp",
+      "staticScene": "two leaf-wrapped Vietnamese pyramid dumplings, an opened amber banh u tro on plate, two lychees and plums",
+      "subject": "one graceful green bamboo branch with several narrow recognizable bamboo leaves, delicate, branch joint anchored at top-right",
+      "ornaments": "miniature leaf-wrapped rice dumpling and two lychees"
+    },
+    {
+      "id": "family",
+      "file": "family.webp",
+      "staticScene": "warm painterly small Vietnamese family of mother father and child smiling while reading together at a table, cream card '28/6', no background room and no windows",
+      "subject": "a small ivory floral teapot and two small teacups on a wooden tray, no steam",
+      "ornaments": "small cozy house and warm heart-shaped silk ribbon"
+    },
+    {
+      "id": "vulan",
+      "file": "vulan.webp",
+      "staticScene": "large elegant pale pink lotus with green leaf and one pink rose lying beside it, no candle or water",
+      "subject": "one single short ivory pillar candle with wick but NO FLAME, candle body centered horizontally, flat top centered at 40% of cell height, base at 88% height, body width about 30% of cell width",
+      "ornaments": "small pink lotus and a pink rosebud"
+    },
+    {
+      "id": "national",
+      "file": "national.webp",
+      "staticScene": "recognizable Ho Chi Minh Mausoleum at Ba Dinh Square in Hanoi with modest greenery, architectural silhouette front view, no sky no flags",
+      "subject": "one entire beautiful Vietnamese red cloth flag with exactly one centered yellow five-pointed star, FRONT VIEW, flag fills central 85% cell width and 55% cell height, no pole, no other objects, left hoist edge straight vertical, graceful horizontal fabric folds",
+      "ornaments": "small correctly drawn Vietnamese red flag with one yellow five-pointed star and a gold laurel sprig"
+    },
+    {
+      "id": "vietwomen",
+      "file": "vietwomen.webp",
+      "staticScene": "cream standing greeting card printed exactly '20/10', with a small folded rose silk ao dai fabric",
+      "subject": "elegant pink rose bouquet beside one Vietnamese conical hat with pink silk ribbon",
+      "ornaments": "single pink rose and miniature conical hat"
+    },
+    {
+      "id": "culture",
+      "file": "culture.webp",
+      "staticScene": "a refined bronze Dong Son drum, small red lacquer folding fan and cream card printed '24/11' bearing a tiny colorful Dong Ho folk bird",
+      "subject": "one graceful Vietnamese conical hat with red silk strap, entire hat fully visible",
+      "ornaments": "small circular bronze drum motif and a colorful Dong Ho folk bird"
+    }
+  ]
+}
