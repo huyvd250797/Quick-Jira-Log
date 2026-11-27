@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.40.5';
+const APP_VERSION = '1.41.0';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1076,7 +1076,9 @@ function selectIssue({ key, project, summary = '' }, { scroll = true, focusTime 
   const normalizedKey = String(key || '').trim().toUpperCase();
   if (!normalizedKey) return;
   const normalizedProject = project || normalizedKey.split('-')[0] || state.prefs.lastProject || '';
-  const logDate = state.calendarLogContext?.date || getSessionLogDate();
+  const requestedDate = getSessionLogDate();
+  const logDate = state.calendarLogContext?.date || QuickJiraWorkHolidays.automaticDay(requestedDate);
+  state.holidayShiftedFrom = !state.calendarLogContext && logDate !== requestedDate ? requestedDate : '';
   $('key').value = normalizedKey;
   $('project').value = normalizedProject;
   $('date').value = logDate;
@@ -1838,7 +1840,7 @@ function renderWeeklyCalendar(date) {
   const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:calc(${index * 60} * var(--week-minute-px, 1px))">${timeText(from + index * 60)}</span>`).join('');
   const headers = days.map((day, index) => {
     const total = displayed.filter(item => item.date === day && item.overtime !== true && item.overtimeKnown !== false).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-    return `<button type="button" class="week-day-heading${index >= 5 ? ' is-weekend' : ''}${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}${index < 5 && total >= 480 ? ' is-complete' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
+    return `<button type="button" class="week-day-heading${QuickJiraWorkHolidays.isHoliday(day) ? ' is-holiday' : ''}${index >= 5 ? ' is-weekend' : ''}${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}${index < 5 && total >= 480 ? ' is-complete' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}${QuickJiraWorkHolidays.isHoliday(day) ? ' · ' + escapeHtml(QuickJiraWorkHolidays.name(day)) + ' · Tự phân bổ bỏ qua; kéo tay vẫn được.' : ''}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
   }).join('');
   const columns = days.map(day => {
     const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
@@ -2643,6 +2645,8 @@ function parseTimeSpentClient(value) {
 function updateSingleCapacity() {
   const date = $('date')?.value || '';
   if ($('singleLogWeekday')) $('singleLogWeekday').textContent = logWeekday(date);
+  const holiday = QuickJiraWorkHolidays.name(date);
+  if ($('singleHolidayHint')) $('singleHolidayHint').textContent = holiday ? holiday + ' · Ngày nghỉ; vẫn cho phép log thủ công.' : state.holidayShiftedFrom ? 'Tự bỏ qua ngày nghỉ ' + state.holidayShiftedFrom + '; ngày log dự kiến: ' + date + '.' : '';
   const regularDraft = $('overtime')?.checked === true ? 0 : parseTimeSpentClient($('timeSpent')?.value || '');
   const overtimeDraft = $('overtime')?.checked === true ? parseTimeSpentClient($('timeSpent')?.value || '') : 0;
   const capacityReady = state.singleCapacity.date === date && !state.singleCapacity.loading && !state.singleCapacity.error;
@@ -2836,6 +2840,10 @@ function bulkCapacityReady() {
 
 function applyBulkSmartAllocation({ force = false } = {}) {
   if (!bulkCapacityReady()) return false;
+  if (QuickJiraWorkHolidays.isHoliday($('bulkDate').value)) {
+    state.bulkAllocation.message = 'Ngày nghỉ: không tự phân bổ. Chọn ngày khác hoặc kéo tay trên lịch xem trước.';
+    updateBulkTotal(); return false;
+  }
   if (!force && (state.bulkAllocation.autoApplied || state.bulkAllocation.userEdited)) return false;
   const items = bulkDraftList();
   const targets = items.filter(item => item.overtime !== true);
@@ -2885,6 +2893,11 @@ function syncBulkWeekOptions() {
 }
 function syncBulkAllocationControls() {
   const week = bulkPeriodMode() === 'week', auto = bulkAutoMode();
+  const anchor = week ? $('bulkWeek').value : $('bulkDate').value;
+  if (anchor && $('bulkHolidayHint')) {
+    const holidayDates = QuickJiraBatchPlan.days(anchor,week?'week':'day').filter(day=>QuickJiraWorkHolidays.isHoliday(day));
+    $('bulkHolidayHint').textContent = holidayDates.length ? 'Tự bỏ qua ngày nghỉ: ' + holidayDates.join(', ') + (week ? '. Có thể kéo tay vào ngày nghỉ trong lịch xem trước.' : '. Lịch nháp sẽ chuyển sang ' + QuickJiraWorkHolidays.automaticDay(anchor) + '; vẫn có thể kéo tay chỉnh lại.') : 'Tự phân bổ bỏ qua ngày nghỉ; kéo thả thủ công vẫn được phép.';
+  }
   $('bulkDayField').hidden = week; $('bulkDate').disabled = week;
   $('bulkWeekField').hidden = !week;
   if(week) syncBulkWeekOptions();
@@ -3274,6 +3287,7 @@ $('mobileEditorBackdrop')?.addEventListener('click', () => {
 });
 
 $('date').addEventListener('change', () => {
+  state.holidayShiftedFrom = '';
   if (!$('date').value) $('date').value = getSessionLogDate();
   setSessionLogDate($('date').value);
   updateSingleOvertimeHint();

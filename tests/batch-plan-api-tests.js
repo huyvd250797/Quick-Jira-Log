@@ -33,6 +33,9 @@ global.fetch=async(url,o={})=>{const u=new URL(String(url)),method=o.method||'GE
  r=await post({...grouped,requestId:'new-group-old-slots-01'});assert.equal(r.status,409);assert.equal(writes,3,'later groups cannot overlap worklogs already created');
  logs=[];writes=0;fail=true;r=await post({...grouped,requestId:'rollback-overlap-group-01'});assert.notEqual(r.status,200);assert.equal(logs.length,0,'failed overlap group rolls back all created segments');fail=false;
  r=await post({...overlapping,confirmOverlaps:true,exactPlan:[{...overlapping.exactPlan[0],segments:[{start:'12:00',minutes:60}]}]});assert.equal(r.status,409);
+ logs=[];writes=0;const holiday='2026-11-24';
+ r=await post({...body,date:holiday,requestId:'manual-holiday-exact-001',exactPlan:body.exactPlan.map(p=>({...p,date:holiday}))});
+ assert.equal(r.status,200,JSON.stringify(r));assert(writes>0,'Explicit manual holiday placement must create Jira worklogs');assert(logs.every(x=>x.started.startsWith(holiday)),'Never silently move manual holiday writes');
  console.log('Exact plan API: real session/router, exact times and descriptions, replay, fresh overlap, same-day, windows, totals, subtype, rollback, pending-only overlap groups/strict existing guard and legacy isolation passed.');
  }finally{await new Promise(r=>server.close(r));global.fetch=original;}
 })().catch(e=>{console.error(e);process.exit(1);});

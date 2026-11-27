@@ -1,3 +1,15 @@
+# Quick Jira Log V1.41.0 — Holiday-Aware Auto Logwork
+
+| Phiên bản | Mục tiêu | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- |
+| V1.41.0 | Tự né ngày nghỉ khi log tự động | 7 quy tắc nghỉ hằng năm, âm lịch Giỗ Tổ, tách phạm vi tự động/thủ công, thông báo ngày chuyển; không đổi DB | Kiểm thử lịch, phân bổ, kéo tay và API đạt | Đã xây dựng source; chờ nghiệm thu thiết bị |
+| V1.41.1 — Work Holiday Settings | Cấu hình lịch nghỉ riêng | Ngày đơn, khoảng nghỉ Tết; cần Boss chốt phạm vi và đồng bộ | Boss duyệt yêu cầu rồi xây dựng | Đề xuất |
+| Theme Device QA | Kiểm tra chủ đề trên thiết bị thật | FPS, bộ nhớ, chuyển sáng/tối PC/iPhone | Nghiệm thu thiết bị | Hoãn; giữ đề xuất cũ |
+
+V1.41.0 trong đề xuất Lookup & Logwork trước đó được cụ thể hóa theo yêu cầu hiện tại thành Holiday-Aware Auto Logwork. Phần tra cứu chưa thuộc phạm vi lần này.
+
+---
+
 # Quick Jira Log V1.40.5 — Holiday Motion & Motif Refinement
 
 | Phiên bản | Mục tiêu | Công việc kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |

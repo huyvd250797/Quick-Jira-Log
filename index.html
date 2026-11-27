@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="Quick Jira Log" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <title>Quick Jira Log · V1.40.5</title>
+  <title>Quick Jira Log · V1.41.0</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" type="image/png" sizes="64x64" href="/icons/favicon-64-v1152.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-v1152.png" />
@@ -53,7 +53,7 @@
       <div id="seasonalBootScene" class="seasonal-scene" aria-hidden="true"></div>
       <img class="boot-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" />
       <div class="boot-title">Quick Jira Log</div>
-      <div class="boot-version">V1.40.5</div>
+      <div class="boot-version">V1.41.0</div>
       <div class="boot-spinner" aria-hidden="true"></div>
       <div id="bootMessage" class="boot-message">Đang kiểm tra phiên Jira...</div>
     </div>
@@ -63,7 +63,7 @@
       <div id="seasonalHomeScene" class="seasonal-scene" aria-hidden="true"></div>
       <button id="brandRefreshBtn" class="logo-refresh-btn" type="button" aria-label="Làm mới dữ liệu, giữ phiên hiện tại" title="Làm mới dữ liệu"><img class="brand-icon brand-logo" src="/icons/icon-192-v1152.png" alt="Quick Jira Log" /></button>
       <div class="brand-copy">
-        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.40.5</span></div>
+        <div class="brand-title-row"><h1>Quick Jira Log</h1><span class="version-badge">V1.41.0</span></div>
       </div>
       <div class="brand-actions" aria-label="Thao tác ứng dụng">
         <button id="themeBtn" class="header-icon-btn theme-toggle" type="button" aria-label="Chuyển giao diện tối" title="Dark mode">
@@ -169,6 +169,7 @@
       <div class="bulk-sticky-header">
         <div class="card-title bulk-title"><h2>Log tất cả</h2><span id="bulkSelectionCount" class="bulk-selection-count">0 Sub-task</span></div>
         <div class="bulk-plan-options"><fieldset class="bulk-period-radios"><legend class="batch-sr-only">Phạm vi phân bổ</legend><label><input id="bulkPeriodDay" name="bulkPeriod" type="radio" value="day" checked />Theo ngày</label><label><input id="bulkPeriodWeek" name="bulkPeriod" type="radio" value="week" />Theo tuần</label></fieldset><div class="bulk-auto-group"><label class="bulk-auto-option"><input id="bulkAutoAllocate" type="checkbox" checked />Phân bổ tự động</label><button id="bulkAllocationHelpBtn" class="bulk-help-btn" type="button" aria-label="Hướng dẫn phân bổ logwork" aria-haspopup="dialog" aria-controls="bulkAllocationHelpDialog">i</button></div></div>
+        <p id="bulkHolidayHint" class="muted" role="status"></p>
         <div class="bulk-header-controls">
           <label id="bulkDayField" class="bulk-header-date"><span>Ngày logwork <strong id="bulkLogWeekday" class="log-weekday"></strong></span><input id="bulkDate" type="date" required /></label>
           <label id="bulkWeekField" class="bulk-week-field" hidden><span>Tuần logwork</span><span class="bulk-week-picker"><input id="bulkWeek" type="date" aria-label="Chọn một ngày trong tuần logwork" aria-describedby="bulkWeekRange" /><span id="bulkWeekRange"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v4M17 3v4M4 10h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/></svg></span></label>
@@ -227,7 +228,7 @@
         <small id="issueLookupState" class="field-help hidden"></small>
         <div class="worklog-primary-fields">
           <label><span>Ngày logwork <strong id="singleLogWeekday" class="log-weekday"></strong></span>
-            <input id="date" type="date" required />
+            <input id="date" type="date" required /><small id="singleHolidayHint" class="muted" role="status"></small>
           </label>
           <label>
           Thời lượng
@@ -463,7 +464,7 @@
     </nav>
 
     <section id="resultCard" class="result hidden" aria-live="polite"></section>
-    <footer class="app-footer">Quick Jira Log · Version 1.40.5 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
+    <footer class="app-footer">Quick Jira Log · Version 1.41.0 <button id="appIconHelpBtn" class="icon-help-link" type="button" aria-haspopup="dialog">Icon ứng dụng</button></footer>
     <div id="appUpdateBanner" class="app-update-banner hidden" role="status" aria-live="polite">
       <div><strong>Có phiên bản Quick Jira Log mới</strong><span>Cập nhật để dùng bản mới nhất mà không cần hard refresh.</span></div>
       <div class="app-update-actions"><button id="dismissAppUpdateBtn" class="text-btn" type="button">Để sau</button><button id="appUpdateBtn" class="primary" type="button">CẬP NHẬT</button></div>
@@ -605,12 +606,13 @@
   <script src="/lib/calendar-drafts.js" defer></script>
   <script src="/lib/calendar-experience.js" defer></script>
   <script src="/calendar-interactions.js" defer></script>
+  <script src="/lib/seasonal-calendar.js" defer></script>
+  <script src="/lib/work-holidays.js" defer></script>
   <script src="/lib/batch-plan.js" defer></script>
   <script src="/lib/calendar-scroll-bounds.js" defer></script>
   <script src="/calendar-scroll-guard.js" defer></script>
   <script src="/lib/calendar-zoom.js" defer></script>
   <script src="/calendar-zoom.js" defer></script>
-  <script src="/lib/seasonal-calendar.js" defer></script>
   <script src="/seasonal-shader.js" defer></script>
   <script src="/seasonal-collection.js" defer></script>
   <script src="/seasonal-scenes.js" defer></script>
@@ -743,7 +745,7 @@
  </dialog>
  <script src="/lib/project-stats.js" defer></script><script src="/lib/progress-eta.js" defer></script><script src="/stats-scroll-lock.js" defer></script><script src="/project-stats.js" defer></script><script src="/resume-state.js" defer></script><script src="/soft-refresh.js" defer></script>
 <dialog id="bulkAllocationHelpDialog" aria-labelledby="bulkAllocationHelpTitle"><header><h2 id="bulkAllocationHelpTitle">Hướng dẫn Log tất cả</h2><button id="bulkAllocationHelpClose" type="button" class="icon-btn" aria-label="Đóng hướng dẫn">×</button></header>
-<div class="bulk-help-body">
+<div class="bulk-help-body"><p>Tự phân bổ bỏ qua 01/01, Giỗ Tổ Hùng Vương (10/3 âm lịch), 30/04, 01/05, 27/07, 02/09 và 24/11 hằng năm theo lịch nghỉ ứng dụng. Vẫn có thể kéo tay vào ngày nghỉ trong lịch xem trước hoặc chọn ngày thủ công.</p>
 
 <div class="bulk-help-modes">
 <section><h3>1. Theo ngày</h3><p>Chọn ngày muốn log. App xếp các Subtask vào giờ còn trống của <strong>ngày đó</strong>.</p><p><strong>Bật Phân bổ tự động:</strong> chia giờ trống cho các Subtask. Ví dụ ngày còn 6h, có 3 Subtask → mỗi Subtask 2h.</p><p><strong>Tắt Phân bổ tự động:</strong> nhập TimeSpent cho từng Subtask; app tìm chỗ đủ giờ trong ngày đã chọn.</p></section>
