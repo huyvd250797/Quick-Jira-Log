@@ -1,3 +1,15 @@
+# Quick Jira Log V1.41.1 — FIFO Auto Logwork & Holiday Calendar
+
+| Phiên bản | Mục tiêu | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |
+| --- | --- | --- | --- | --- |
+| V1.41.1 | Tạo trước log trước, cân đủ 8h và ngày nghỉ dễ thấy | Giữ created/ID; cân số task rồi gán nhóm liên tiếp; quỹ giờ tới từng phút; tên lễ và nền đỏ; không đổi DB | Kiểm thử thứ tự/quỹ giờ/lịch và API đạt | Đã xây dựng source; chờ nghiệm thu thiết bị |
+| V1.41.2 — Work Holiday Settings | Cấu hình ngày nghỉ riêng | Ngày đơn/khoảng nghỉ Tết; cần Boss chốt đồng bộ | Boss duyệt yêu cầu trước khi xây dựng | Đề xuất |
+| Theme Device QA | Nghiệm thu chủ đề PC/iPhone | FPS, bộ nhớ và chuyển chế độ | Kiểm tra thiết bị thật | Giữ đề xuất cũ |
+
+V1.41.1 được thực hiện theo yêu cầu ưu tiên FIFO và lịch ngày nghỉ hiện tại. Work Holiday Settings chuyển thành đề xuất V1.41.2, chưa triển khai.
+
+---
+
 # Quick Jira Log V1.41.0 — Holiday-Aware Auto Logwork
 
 | Phiên bản | Mục tiêu | Kỹ thuật/dữ liệu | Điều kiện hoàn thành | Trạng thái |

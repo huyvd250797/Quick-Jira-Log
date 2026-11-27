@@ -9,7 +9,7 @@ window.QuickJiraBatch=(()=>{
   return [...by.values()].map(p=>({...p,minutes:p.segments.reduce((n,s)=>n+s.minutes,0),segments:p.segments.sort((a,b)=>a.start.localeCompare(b.start))}));
  }
  function update(){if(!job)return;const rows=plans();$('historySummary').textContent=`${rows.length} Subtask nháp · Giờ đã log được khóa`;job.unused=job.allocationDates.filter(date=>!QuickJiraWorkHolidays.isHoliday(date)).reduce((n,date)=>n+P.free([...(job.occupied[date]||[]),...rows.filter(p=>p.date===date).flatMap(p=>p.segments.map(s=>({start:s.start,end:P.time(P.minute(s.start)+s.minutes)})))]).reduce((n,s)=>n+s.end-s.start,0),0);const pending=rows.filter(p=>!job.status[p.key]);$('batchPreviewTitle').textContent=`${pending.length} Subtask chưa log${job.unplaced.length?' · '+job.unplaced.length+' chưa xếp':''}`;
-  $('batchPreviewState').textContent=[job.shiftedDate?'Ngày '+job.sourceDate+' là ngày nghỉ; tự chuyển sang '+job.shiftedDate+' (chưa log).':'',job.skippedDates?.length?'Tự bỏ qua ngày nghỉ: '+job.skippedDates.join(', ')+'. Vẫn kéo tay vào ngày nghỉ được.':'',job.unplaced.length?`${job.unplaced.length} chưa phân bổ: ${job.unplaced.map(x=>x.key+' — '+x.reason).join('; ')}`:'',`${job.reviewDates[0].slice(8,10)}/${job.reviewDates[0].slice(5,7)}–${job.reviewDates.at(-1).slice(8,10)}/${job.reviewDates.at(-1).slice(5,7)}${job.unused?' · Trống '+minutesLabel(job.unused):''}`].filter(Boolean).join(' · ');
+  $('batchPreviewState').textContent=[job.auto?'Tự phân bổ: Subtask tạo trước xếp trước · Bù quỹ 8h/ngày':'',job.shiftedDate?'Ngày '+job.sourceDate+' là ngày nghỉ; tự chuyển sang '+job.shiftedDate+' (chưa log).':'',job.skippedDates?.length?'Tự bỏ qua ngày nghỉ: '+job.skippedDates.join(', ')+'. Vẫn kéo tay vào ngày nghỉ được.':'',job.unplaced.length?`${job.unplaced.length} chưa phân bổ: ${job.unplaced.map(x=>x.key+' — '+x.reason).join('; ')}`:'',`${job.reviewDates[0].slice(8,10)}/${job.reviewDates[0].slice(5,7)}–${job.reviewDates.at(-1).slice(8,10)}/${job.reviewDates.at(-1).slice(5,7)}${job.unused?' · Trống '+minutesLabel(job.unused):''}`].filter(Boolean).join(' · ');
   $('batchPreviewSave').textContent='Xác nhận log';
   $('batchPreviewSave').disabled=job.running||!pending.length;$('batchConfirmSave').disabled=job.running||!pending.length;
   $('batchPreviewBack').disabled=job.running;$('batchPreviewBack').textContent='Đóng';$('batchPreviewBack').title='Đóng lịch xem trước';
@@ -144,7 +144,7 @@ window.QuickJiraBatch=(()=>{
  async function prepare(){
   if(busy()||state.bulkSubmitInFlight)return;
   if(state.calendarDrafts.size)return showToast('Lưu hoặc bỏ các chỉnh sửa lịch hiện tại trước khi phân bổ.');
-  const items=bulkDraftList().map(x=>({...x,minutes:parseTimeSpentClient(x.timeSpent)}));
+  const items=bulkDraftList().map(x=>{const source=state.filterIssues.find(issue=>issue.key===x.key);return {...x,created:x.created||source?.created||'',issueId:x.issueId||source?.id||'',minutes:parseTimeSpentClient(x.timeSpent)};});
   if(!items.length)return showToast('Chọn ít nhất một Subtask.');
   if(!bulkAutoMode() && items.some(x=>x.overtime))return showToast('Phân bổ lịch chỉ dùng giờ thường. Bỏ chọn OT; log OT bằng luồng hiện tại.');
   const mode=bulkPeriodMode(),date=bulkAllocationDate(),owner=state.user;let dates,allocationDates,reviewDates;
@@ -165,7 +165,7 @@ window.QuickJiraBatch=(()=>{
    const snapshot={bulkScroll:$('bulkItems').scrollTop,items:state.historyItems,date:$('historyDate').value,loaded:state.historyLoaded,view:state.historyView,mode:state.calendarMode,title:$('historyTitle').textContent,error:state.historyError,notice:state.historyNotice};
    const existing = auditBlocks(reviewDates, occupied);
    prepProgress(reviewDates.length+1,reviewDates.length+2,'Đang mở lịch xem trước');
-   job={approved:{},removed:[],mode,dates,allocationDates,reviewDates,sourceDate:date,skippedDates:result.skippedDates,shiftedDate:mode==='day'&&allocationDates[0]!==date?allocationDates[0]:'',occupied,snapshot,owner,unplaced:result.unplaced,unused:result.unused,status:{},requestIds:{},running:false,error:''};
+   job={approved:{},removed:[],auto:bulkAutoMode(),mode,dates,allocationDates,reviewDates,sourceDate:date,skippedDates:result.skippedDates,shiftedDate:mode==='day'&&allocationDates[0]!==date?allocationDates[0]:'',occupied,snapshot,owner,unplaced:result.unplaced,unused:result.unused,status:{},requestIds:{},running:false,error:''};
    state.calendarDrafts.clear();
    state.historyItems=[...existing,...result.plans.map((p,i)=>{const original={...p,id:`new-${i}`,start:p.segments[0].start,end:P.time(P.minute(p.segments[0].start)+p.minutes),timeSpentSeconds:p.minutes*60,batchNew:true,overtime:false,overtimeKnown:true};delete original.segments;
     const target={date:p.date,start:original.start,targetSeconds:p.minutes*60,...(p.segments.length>1?{segments:p.segments.map(s=>({date:p.date,start:s.start,targetSeconds:s.minutes*60}))}:{})};

@@ -1,6 +1,6 @@
 'use strict';
 
-const APP_VERSION = '1.41.0';
+const APP_VERSION = '1.41.1';
 const STORAGE = {
   prefs: 'quick-jira-log:prefs:v1',
   recent: 'quick-jira-log:recent-issues:v1',
@@ -1126,6 +1126,8 @@ function toggleBulkIssue(issue) {
       key,
       project: issue.project || key.split('-')[0] || '',
       summary: issue.summary || '',
+      created: issue.created || '',
+      issueId: issue.id || '',
       timeSpent: '1h',
       description: issue.summary || '',
       overtime: false
@@ -1839,15 +1841,16 @@ function renderWeeklyCalendar(date) {
   const timeText = minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
   const ticks = Array.from({ length: (to - from) / 60 + 1 }, (_, index) => `<span style="top:calc(${index * 60} * var(--week-minute-px, 1px))">${timeText(from + index * 60)}</span>`).join('');
   const headers = days.map((day, index) => {
+    const holidayName = QuickJiraWorkHolidays.name(day);
     const total = displayed.filter(item => item.date === day && item.overtime !== true && item.overtimeKnown !== false).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-    return `<button type="button" class="week-day-heading${QuickJiraWorkHolidays.isHoliday(day) ? ' is-holiday' : ''}${index >= 5 ? ' is-weekend' : ''}${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}${index < 5 && total >= 480 ? ' is-complete' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}${QuickJiraWorkHolidays.isHoliday(day) ? ' · ' + escapeHtml(QuickJiraWorkHolidays.name(day)) + ' · Tự phân bổ bỏ qua; kéo tay vẫn được.' : ''}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span><strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
+    return `<button type="button" class="week-day-heading${QuickJiraWorkHolidays.isHoliday(day) ? ' is-holiday' : ''}${index >= 5 ? ' is-weekend' : ''}${day === vietnamToday() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}${index < 5 && total >= 480 ? ' is-complete' : ''}" aria-pressed="${day === date}"${day === vietnamToday() ? ' aria-current="date"' : ''} data-week-day="${day}" title="Chọn ngày ${day}${QuickJiraWorkHolidays.isHoliday(day) ? ' · ' + escapeHtml(QuickJiraWorkHolidays.name(day)) + ' · Tự phân bổ bỏ qua; kéo tay vẫn được.' : ''}"><span>${['T2','T3','T4','T5','T6','T7','CN'][index]} · ${day.slice(8)}/${day.slice(5,7)}</span>${holidayName ? `<small class="calendar-holiday-name">${escapeHtml(holidayName)}</small>` : ''}<strong>${format(total)}${index < 5 ? ' <small>/ 8h</small>' : ''}</strong><i aria-hidden="true"><b style="width:${Math.min(100, total / 480 * 100)}%"></b></i></button>`;
   }).join('');
   const columns = days.map(day => {
     const events = QuickJiraUi.timedLayout(items.filter(item => item.date === day));
     const slots = Array.from({ length: Math.ceil((to - from) / 30) }, (_, index) => from + index * 30)
       .filter(minute => !events.some(event => event.start < minute + 30 && event.end > minute))
       .map(minute => `<button type="button" class="calendar-time-slot" data-calendar-slot="${timeText(minute)}" style="top:calc(${minute - from} * var(--week-minute-px, 1px));height:calc(30 * var(--week-minute-px, 1px))" aria-label="Logwork ngày ${day.split('-').reverse().join('/')} lúc ${timeText(minute)}"${calendarReadOnly() ? ' disabled' : ''}><span>${timeText(minute)}</span></button>`).join('');
-    return `<div class="week-day-column${isWeekendDateClient(day) ? ' is-weekend' : ''}" data-calendar-date="${day}" data-from-minute="${from}">${slots}${events.map(event => {
+    return `<div class="week-day-column${QuickJiraWorkHolidays.isHoliday(day) ? ' is-holiday' : ''}${isWeekendDateClient(day) ? ' is-weekend' : ''}" data-calendar-date="${day}" data-from-minute="${from}">${slots}${events.map(event => {
       const globalIndex = eventIndexes.get(event.item);
       const appearance = calendarAppearance(event.item);
       const logState = calendarLogLabel(event.item);
@@ -2042,8 +2045,9 @@ function renderMonthlyCalendar(date) {
   $('calendarGrid').innerHTML = QuickJiraUi.monthCells(date).map(day => {
     if (!day) return '<span class="calendar-blank" aria-hidden="true"></span>';
     const total = totals.get(day);
-    const label = `${historyDayLabel(day)} · ${total ? `${formatHistoryTimeSpent(total.minutes)}, ${total.count} worklog` : 'Chưa có worklog'}`;
-    return `<button type="button" class="calendar-day${total ? ' has-worklogs' : ''}${day === todayLocal() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}" data-date="${day}" aria-pressed="${day === date}" aria-label="${escapeHtml(label)}"${day === todayLocal() ? ' aria-current="date"' : ''}><span class="calendar-day-number">${Number(day.slice(-2))}</span><strong>${total ? escapeHtml(formatHistoryTimeSpent(total.minutes)) : '—'}</strong><small>${total ? `${total.count} log` : ''}</small></button>`;
+    const holidayName = QuickJiraWorkHolidays.name(day);
+    const label = `${historyDayLabel(day)}${holidayName ? ' · ' + holidayName : ''} · ${total ? `${formatHistoryTimeSpent(total.minutes)}, ${total.count} worklog` : 'Chưa có worklog'}`;
+    return `<button type="button" class="calendar-day${holidayName ? ' is-holiday' : ''}${total ? ' has-worklogs' : ''}${day === todayLocal() ? ' is-today' : ''}${day === date ? ' is-selected' : ''}" data-date="${day}" aria-pressed="${day === date}" aria-label="${escapeHtml(label)}"${day === todayLocal() ? ' aria-current="date"' : ''}><span class="calendar-day-number">${Number(day.slice(-2))}</span>${holidayName ? `<small class="calendar-holiday-name">${escapeHtml(holidayName)}</small>` : ''}<strong>${total ? escapeHtml(formatHistoryTimeSpent(total.minutes)) : '—'}</strong><small>${total ? `${total.count} log` : ''}</small></button>`;
   }).join('');
   $('calendarGrid').querySelectorAll('[data-date]').forEach(button => button.addEventListener('click', () => {
     $('historyDate').value = button.dataset.date;
@@ -2057,7 +2061,7 @@ function renderMonthlyCalendar(date) {
 function renderCalendarAgenda(date) {
   const items = state.historyItems.filter(item => item.date === date).sort((a, b) => a.start.localeCompare(b.start) || a.key.localeCompare(b.key));
   const minutes = items.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
-  $('calendarDayHeading').innerHTML = `<strong>${escapeHtml(historyDayLabel(date))}</strong><span>${items.length} worklog · ${escapeHtml(formatHistoryTimeSpent(minutes))}</span>`;
+  $('calendarDayHeading').innerHTML = `<strong>${escapeHtml(historyDayLabel(date))}${QuickJiraWorkHolidays.isHoliday(date) ? `<small class="calendar-holiday-name">${escapeHtml(QuickJiraWorkHolidays.name(date))}</small>` : ''}</strong><span>${items.length} worklog · ${escapeHtml(formatHistoryTimeSpent(minutes))}</span>`;
   $('calendarAgenda').innerHTML = items.length ? items.map((item, index) => { const appearance = calendarAppearance(item), logState = calendarLogLabel(item); return `<button class="calendar-event${appearance.classes}" data-log-state="${logState.tone}" style="${appearance.style}" type="button" data-event-index="${index}" title="Xem và sửa ${escapeHtml(item.key)}${appearance.ot ? ' · OT' : ''}">${appearance.badge}<span class="calendar-event-time">${escapeHtml(item.start)}<small>${escapeHtml(item.end)}</small></span><span class="calendar-event-copy"><strong>${window.QuickJiraIssueIcons?.html(item)||''}${escapeHtml(item.key)} <em>${escapeHtml(formatHistoryTimeSpent(item.minutes))}</em> <em class="calendar-log-label">${escapeHtml(logState.label)}</em></strong><span>${escapeHtml(item.summary || item.description || 'Không có mô tả')}</span></span><span class="calendar-event-arrow" aria-hidden="true">›</span></button>`; }).join('') : '<p class="calendar-empty">Chưa có worklog trong ngày này.</p>';
   $('calendarAgenda').querySelectorAll('[data-event-index]').forEach(button => button.addEventListener('click', () => openCorrection(items[Number(button.dataset.eventIndex)])));
 }
@@ -2782,7 +2786,7 @@ async function finishBulkHelp(event,remember=true){
  }
 }
 function openBulkAll() {
-  const issues = state.filterIssues;
+  const issues = QuickJiraBatchPlan.orderItems(state.filterIssues);
   if (!issues.length) {
     showToast('Không có Sub-task chưa logwork để Log tất cả.');
     return;
@@ -2797,6 +2801,8 @@ function openBulkAll() {
       key,
       project: issue.project || key.split('-')[0] || '',
       summary: issue.summary || '',
+      created: issue.created || '',
+      issueId: issue.id || '',
       timeSpent: '1h',
       description: issue.summary || '',
       overtime: false,
@@ -2846,7 +2852,7 @@ function applyBulkSmartAllocation({ force = false } = {}) {
   }
   if (!force && (state.bulkAllocation.autoApplied || state.bulkAllocation.userEdited)) return false;
   const items = bulkDraftList();
-  const targets = items.filter(item => item.overtime !== true);
+  const targets = QuickJiraBatchPlan.orderItems(items.filter(item => item.overtime !== true));
   if (!targets.length) return false;
 
   const alreadyRegular = Number(state.bulkCapacity.regularLoggedMinutes || 0);
